@@ -3,7 +3,7 @@
       <div>
         <span class="pro-eyebrow">DOCUMENT WORKSPACE</span>
         <h2 id="proPanelTitle">문서 다듬기 <span class="pro-badge">Pro</span></h2>
-        <p>품질, 용량, 페이지를 한 곳에서.</p>
+        <p>설정을 바꾸면 옆 페이지에 바로 반영됩니다.</p>
       </div>
       <button class="btn quiet icon" id="proReset" title="설정 초기화" aria-label="설정 초기화"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>
     </div>
@@ -13,13 +13,32 @@
       <div class="pro-preserve-note"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p>기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
 
       <details class="pro-section" open>
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small>이미지의 크기와 품질 조절</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>번호와 워터마크<small>문서 전체에 일괄 배치</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proOptimize" checked><span>이미지 최적화 사용</span></label>
-          <label class="pro-field" for="proPreset"><span>품질 프리셋</span><select id="proPreset"><option value="quality">품질 우선</option><option value="balanced" selected>균형 — 권장</option><option value="small">작은 용량</option></select></label>
-          <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option></select></label>
-          <label class="pro-field pro-range" for="proQuality"><span>이미지 품질 <output id="proQualityValue" for="proQuality">82%</output></span><input type="range" id="proQuality" min="40" max="95" value="82"><span class="pro-range-scale"><small>작은 용량</small><small>높은 품질</small></span></label>
-          <p class="pro-hint">지원되는 이미지를 조정합니다. 용량 변화는 문서에 따라 달라집니다.</p>
+          <label class="pro-check"><input type="checkbox" id="proNumber"><span>페이지 번호 넣기</span></label>
+          <div class="pro-two-fields">
+            <label class="pro-field" for="proStartNumber"><span>시작 번호</span><input id="proStartNumber" type="number" min="1" value="1" inputmode="numeric"></label>
+            <label class="pro-field" for="proSkipPages"><span>앞에서 제외 <small>쪽</small></span><input id="proSkipPages" type="number" min="0" value="0" inputmode="numeric"></label>
+          </div>
+          <label class="pro-field" for="proNumberPosition"><span>번호 위치</span><select id="proNumberPosition"><option value="bottom-center">아래 가운데</option><option value="bottom-right">아래 오른쪽</option></select></label>
+          <label class="pro-field" for="proWatermark"><span>워터마크 <small>선택</small></span><input id="proWatermark" type="text" maxlength="40" placeholder="워터마크 문구 (선택)" autocomplete="off"></label>
+        </div>
+      </details>
+
+      <details class="pro-section">
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small>기울기 보정, 여백과 크기</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <div class="pro-section-body">
+          <label class="pro-check"><input type="checkbox" id="proDeskew"><span>스캔 기울기 자동 보정</span></label>
+          <p class="pro-hint">글줄을 기준으로 ±7° 이내의 기울기를 바로잡습니다. 판별이 어려운 페이지와 링크·양식이 있는 페이지는 유지합니다.</p>
+          <label class="pro-check"><input type="checkbox" id="proCrop"><span>가장자리 여백 재단</span></label>
+          <div class="pro-crop-fields" role="group" aria-label="재단할 여백, 밀리미터 단위">
+            <label class="pro-field" for="proCropTop"><span>위 <small>mm</small></span><input id="proCropTop" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
+            <label class="pro-field" for="proCropRight"><span>오른쪽 <small>mm</small></span><input id="proCropRight" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
+            <label class="pro-field" for="proCropBottom"><span>아래 <small>mm</small></span><input id="proCropBottom" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
+            <label class="pro-field" for="proCropLeft"><span>왼쪽 <small>mm</small></span><input id="proCropLeft" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
+          </div>
+          <label class="pro-field" for="proPaper"><span>출력 페이지 크기</span><select id="proPaper"><option value="original" selected>원래 크기 유지</option><option value="a4">A4에 맞추기</option></select></label>
+          <p class="pro-hint">재단은 보이는 영역을 조정합니다. 민감한 내용을 영구 삭제하는 기능은 아닙니다.</p>
         </div>
       </details>
 
@@ -34,30 +53,13 @@
       </details>
 
       <details class="pro-section">
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small>여백 재단과 A4 맞춤</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small>이미지의 크기와 품질 조절</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proCrop"><span>가장자리 여백 재단</span></label>
-          <div class="pro-crop-fields" role="group" aria-label="재단할 여백, 밀리미터 단위">
-            <label class="pro-field" for="proCropTop"><span>위 <small>mm</small></span><input id="proCropTop" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
-            <label class="pro-field" for="proCropRight"><span>오른쪽 <small>mm</small></span><input id="proCropRight" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
-            <label class="pro-field" for="proCropBottom"><span>아래 <small>mm</small></span><input id="proCropBottom" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
-            <label class="pro-field" for="proCropLeft"><span>왼쪽 <small>mm</small></span><input id="proCropLeft" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
-          </div>
-          <label class="pro-field" for="proPaper"><span>출력 페이지 크기</span><select id="proPaper"><option value="original" selected>원래 크기 유지</option><option value="a4">A4에 맞추기</option></select></label>
-          <p class="pro-hint">재단은 보이는 영역을 조정합니다. 민감한 내용을 영구 삭제하는 기능은 아닙니다.</p>
-        </div>
-      </details>
-
-      <details class="pro-section">
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>번호와 워터마크<small>문서 전체에 일괄 배치</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
-        <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proNumber"><span>페이지 번호 넣기</span></label>
-          <div class="pro-two-fields">
-            <label class="pro-field" for="proStartNumber"><span>시작 번호</span><input id="proStartNumber" type="number" min="1" value="1" inputmode="numeric"></label>
-            <label class="pro-field" for="proSkipPages"><span>앞에서 제외 <small>쪽</small></span><input id="proSkipPages" type="number" min="0" value="0" inputmode="numeric"></label>
-          </div>
-          <label class="pro-field" for="proNumberPosition"><span>번호 위치</span><select id="proNumberPosition"><option value="bottom-center">아래 가운데</option><option value="bottom-right">아래 오른쪽</option></select></label>
-          <label class="pro-field" for="proWatermark"><span>워터마크 <small>선택</small></span><input id="proWatermark" type="text" maxlength="40" placeholder="워터마크 문구 (선택)" autocomplete="off"></label>
+          <label class="pro-check"><input type="checkbox" id="proOptimize" checked><span>이미지 최적화 사용</span></label>
+          <label class="pro-field" for="proPreset"><span>품질 프리셋</span><select id="proPreset"><option value="quality">품질 우선</option><option value="balanced" selected>균형 — 권장</option><option value="small">작은 용량</option></select></label>
+          <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option></select></label>
+          <label class="pro-field pro-range" for="proQuality"><span>이미지 품질 <output id="proQualityValue" for="proQuality">82%</output></span><input type="range" id="proQuality" min="40" max="95" value="82"><span class="pro-range-scale"><small>작은 용량</small><small>높은 품질</small></span></label>
+          <p class="pro-hint">지원되는 이미지를 조정합니다. 용량 변화는 문서에 따라 달라집니다.</p>
         </div>
       </details>
 

@@ -181,36 +181,6 @@ button:disabled{cursor:not-allowed}
 .pro-result>.btn.quiet{height:28px;margin-top:6px;color:var(--ink-2)}
 .pro-mobile-switch{display:none}
 
-/* Wide Pro keeps page navigation, canvas, and settings visible together. */
-@media (min-width:1181px){
-  body[data-mode="pro"] main.layout-row .board-wrap{flex:1 1 32%;padding-left:18px;padding-right:18px}
-  body[data-mode="pro"] main.layout-row .preview{flex:1 1 36%!important;min-width:280px}
-  body[data-mode="pro"] main.layout-row #board{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  body[data-mode="pro"] .legend .lg-item:nth-child(n+3){display:none}
-  body[data-mode="pro"] .legend{font-size:10px;gap:8px}
-  body[data-mode="pro"] .legend .lg-count{font-size:11px}
-}
-/* Medium screens stack the document navigation and canvas to the left. */
-@media (min-width:881px) and (max-width:1180px){
-  :root{--pro-width:320px}
-  .tools{gap:7px}.tools .btn{font-size:11px;padding:0 9px}.tools .btn.icon{padding:0}
-  body[data-mode="pro"] main{display:grid;grid-template-columns:minmax(0,1fr) var(--pro-width);grid-template-rows:minmax(150px,38%) minmax(0,1fr)}
-  body[data-mode="pro"] #boardWrap{grid-column:1;grid-row:1;padding-left:18px;padding-right:18px}
-  body[data-mode="pro"] #board{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-  body[data-mode="pro"] #previewPanel{grid-column:1;grid-row:2;min-height:0!important;min-width:0;width:auto!important;border-top:1px solid var(--line);border-left:0}
-  body[data-mode="pro"] #divider{display:none!important}
-  body[data-mode="pro"] #proPanel{grid-column:2;grid-row:1/-1;width:auto}
-  body[data-mode="pro"] #empty{grid-column:1;grid-row:1/-1;padding:24px}
-  body[data-mode="pro"] .legend .lg-item:nth-child(n+3){display:none}
-  body[data-mode="pro"] .legend{font-size:10px}
-  body[data-mode="pro"] main.preview-off #boardWrap{grid-row:1/-1}
-  body[data-mode="pro"] .dz-body h2{font-size:21px}
-  body[data-mode="pro"] .dz-body{padding:28px 20px}
-  body[data-mode="pro"] .dz-foot{grid-template-columns:1fr}
-  body[data-mode="pro"] .dz-foot div{padding:10px}
-  body[data-mode="pro"] .dz-foot div+div{border-left:0;border-top:1px solid var(--line)}
-  body[data-mode="pro"] .dz-head .right{display:none}
-}
 @media (max-width:880px){
   .topbar{padding:calc(12px + var(--safe-t)) 14px 10px;gap:10px 12px}
   .brand{gap:9px}.brand .mark{width:32px;height:32px;border-radius:5px}.brand .mark svg{width:22px;height:22px}
@@ -245,14 +215,7 @@ button:disabled{cursor:not-allowed}
   body[data-mode="pro"] .pro-mobile-switch{display:flex}
   .pro-mobile-switch button{height:32px;flex:1;border-radius:5px;font-size:12px;color:var(--ink-2);font-weight:650;background:var(--surface-2)}
   .pro-mobile-switch button[aria-pressed="true"]{background:var(--accent-wash);color:var(--accent-ink)}
-  body[data-mode="pro"][data-pro-view="settings"] #proPanel{display:flex}
-  body[data-mode="pro"][data-pro-view="settings"] #boardWrap,
-  body[data-mode="pro"][data-pro-view="settings"] #previewPanel,
-  body[data-mode="pro"][data-pro-view="settings"] #empty,
-  body[data-mode="pro"][data-pro-view="settings"] #divider,
-  body[data-mode="pro"][data-pro-view="settings"] #viewSwitch,
-  body[data-mode="pro"][data-pro-view="settings"] #actionBar{display:none!important}
-  body[data-mode="pro"][data-pro-view="settings"] main{padding-bottom:0}
+
 }
 @media (max-width:380px){
   .topbar{padding-left:10px;padding-right:10px;gap:9px 7px}.brand-txt h1{font-size:12px}.brand{gap:7px}.mode-switch button{min-width:49px}

@@ -107,11 +107,15 @@
     return { width, height, channels, compression, predictor, bytes };
   }
 
+  // Exact Skia/Chromium sRGB matrix/TRC profile (including the single APP2
+  // segment header). Canvas-generated JPEGs carry this profile. Matching every
+  // byte allows their ordinary DeviceRGB pixels without accepting arbitrary ICC.
+  const canvasSRGB = Uint8Array.from('4943435f50524f46494c45000101000001c800000000043000006d6e74725247422058595a2007e00001000100000000000061637370000000000000000000000000000000000000000000000000000000010000f6d6000100000000d32d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000964657363000000f0000000247258595a00000114000000146758595a00000128000000146258595a0000013c00000014777470740000015000000014725452430000016400000028675452430000016400000028625452430000016400000028637072740000018c0000003c6d6c756300000000000000010000000c656e5553000000080000001c007300520047004258595a200000000000006fa2000038f50000039058595a2000000000000062990000b785000018da58595a2000000000000024a000000f840000b6cf58595a20000000000000f6d6000100000000d32d706172610000000000040000000266660000f2a700000d59000013d000000a5b00000000000000006d6c756300000000000000010000000c656e5553000000200000001c0047006f006f0067006c006500200049006e0063002e00200032003000310036'.match(/../g), n => parseInt(n,16));
   // Validate JPEG headers before a browser decoder allocates the source raster.
   function inspectJpeg(bytes, spec) {
     if (bytes[0] !== 255 || bytes[1] !== 216) throw failure('jpeg');
     let offset = 2;
-    let frameFound = false;
+    let frameFound = false, iccFound = false;
     while (offset < bytes.length) {
       if (bytes[offset++] !== 255) throw failure('jpeg');
       while (bytes[offset] === 255) offset++;
@@ -135,7 +139,11 @@
       // Preserve these files instead of risking a changed orientation or color profile.
       if (marker === 225 && length >= 8 && bytes[start] === 69 && bytes[start + 1] === 120 &&
           bytes[start + 2] === 105 && bytes[start + 3] === 102) throw failure('jpeg');
-      if (marker === 226 && length >= 14 && bytes[start] === 73 && bytes[start + 1] === 67 && bytes[start + 2] === 67) throw failure('jpeg');
+      if (marker === 226 && length >= 14 && bytes[start] === 73 && bytes[start + 1] === 67 && bytes[start + 2] === 67) {
+        if (iccFound || spec.channels !== 3 || length-2 !== canvasSRGB.length ||
+            !canvasSRGB.every((v,i) => bytes[start+i] === v)) throw failure('jpeg');
+        iccFound = true;
+      }
       offset += length;
     }
     throw failure('jpeg');

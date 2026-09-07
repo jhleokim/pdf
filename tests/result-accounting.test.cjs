@@ -21,7 +21,7 @@ test('compression-only output never grows and preserves the smallest valid basel
  assert.equal(R.selectOutput(bytes(700),candidate,opts,original).bytes.length,700);
 });
 test('enhancement, crop, numbering and watermark settings are never discarded to reduce size',()=>{
- for(const extra of [{grayscale:true},{contrast:10},{whitePoint:220},{crop:true},{paper:'a4'},{number:true},{watermark:'Copy'}]){
+ for(const extra of [{deskew:true},{grayscale:true},{contrast:10},{whitePoint:220},{crop:true},{paper:'a4'},{number:true},{watermark:'Copy'}]){
   const r=R.selectOutput(bytes(900),bytes(1200),{...opts,...extra},bytes(1000));assert.equal(r.bytes.length,1200);assert.equal(r.retained,false);
  }
 });

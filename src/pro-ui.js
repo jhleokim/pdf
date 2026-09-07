@@ -2,7 +2,7 @@
 let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1600,quality:65}};
-const proControlIds=['proOptimize','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
+const proControlIds=['proOptimize','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
 function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[]]));}
 function proInvalidate(message){
@@ -34,7 +34,7 @@ function setProMode(mode){
   $('proPanel').hidden=mode!=='pro'; $('proMobileSwitch').hidden=mode!=='pro';
   $('btnSave').querySelector('span').textContent=mode==='pro'?'Pro 결과 만들기':'PDF로 저장';
   $('btnSave').title=mode==='pro'?'현재 Pro 설정으로 결과를 만듭니다':'Basic 편집본을 저장합니다';
-  if(mode==='pro' && isMobile()) setProView('settings'); else setProView('workspace');
+  setProView('workspace');
   // Only a UI preference is stored. Documents and result bytes stay in memory.
   try{localStorage.setItem('pdfed-mode',mode);}catch(_){}
   if(mode==='basic'){syncPreviewVisible();$('btnPreview').title='미리보기 표시 / 숨기기';}
@@ -52,7 +52,7 @@ function readProOptions(){
   return {
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
     grayscale:$('proGrayscale').checked,contrast:Number($('proContrast').value),whitePoint:Number($('proWhitePoint').value),
-    crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
+    deskew:$('proDeskew').checked,crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
     paper:$('proPaper').value,number,startNumber:number?proNumberInput('proStartNumber',1,999999,true):1,
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
     numberPosition:$('proNumberPosition').value,watermark:$('proWatermark').value.trim().slice(0,40)
@@ -80,14 +80,16 @@ function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);p
 async function processProDoc(doc,options,pageOffset){
   const signal=proAbort.signal;
   checkProAbort();
+  const deskew=await PDFDeskew.processDocument(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,onProgress:n=>{progress(20+n*20);busy(true,'스캔 기울기를 분석하는 중…');}});
+  checkProAbort();
   const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>{
     const fraction=typeof info==='number'?info:(info?.total ? info.completed/info.total : 1);
-    progress(20+fraction*45);
+    progress(40+fraction*25);
     busy(true,'이미지를 최적화하고 보정하는 중…');
   }});
   checkProAbort();busy(true,'페이지 설정을 적용하는 중…');
   await PDFProDocument.applyDocument(doc,options,{pageOffset,signal,onProgress:n=>progress(65+n*15)});
-  checkProAbort();return report;
+  checkProAbort();return {...report,deskew,settings:describeProSettings(options,report,deskew)};
 }
 async function verifyProText(before,after,signal,quiet=false){
   let a,b;
@@ -111,10 +113,35 @@ async function verifyProText(before,after,signal,quiet=false){
     return {characters,checked};
   }finally{await Promise.allSettled([a?.destroy(),b?.destroy()]);}
 }
+function describeProSettings(o,report,deskew,offset){
+  const applied=[];
+  if(o.number){
+    if(offset===undefined)applied.push(`번호 ${o.startNumber}부터 · 앞 ${o.skipPages}쪽 제외`);
+    else applied.push(offset>=o.skipPages?`페이지 번호 ${o.startNumber+offset-o.skipPages}`:'이 페이지는 번호 제외');
+  }
+  if(o.watermark)applied.push('워터마크');
+  if(o.deskew)applied.push(offset===undefined?`기울기 ${deskew.changed}쪽 보정`:deskew.pages[0]?.angle?`기울기 ${Math.abs(deskew.pages[0].angle).toFixed(1)}° 보정`:`기울기 유지 · ${deskew.pages[0]?.reason||'변경 없음'}`);
+  if(o.crop&&o.margins.some(n=>n>0))applied.push('여백 재단');
+  if(o.paper==='a4')applied.push('A4 맞춤');
+  const scan=o.grayscale||o.contrast>0||o.whitePoint<255;
+  if(scan){
+    if(report.changed){if(o.grayscale)applied.push('회색조');if(o.contrast>0)applied.push(`대비 +${o.contrast}`);if(o.whitePoint<255)applied.push(`흰 배경 ${o.whitePoint}`);}
+    else applied.push(report.imageCount?'스캔 보정: 변경된 이미지 없음':'스캔 보정: 이미지 없음 (텍스트·벡터 유지)');
+  }
+  if(o.optimize)applied.push(`이미지 최적화 ${report.changed}개 변경`);
+  return applied.join(' · ')||'원본 설정';
+}
 function proSummary(report,textCheck){
   const lines=[`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
   if(textCheck.characters)lines.push(`기존 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
   else lines.push('원래 검색 가능한 텍스트가 없는 문서입니다.');
+  if(report.settings)lines.unshift(report.settings);
+  if(report.deskew?.pages.length){
+    const corrected=report.deskew.pages.filter(p=>p.angle);
+    if(corrected.length)lines.push('기울기 보정: '+corrected.map(p=>`${p.page}쪽 ${Math.abs(p.angle).toFixed(1)}°`).join(', '));
+    const kept=report.deskew.pages.filter(p=>!p.angle);
+    if(kept.length)lines.push('기울기 유지: '+kept.map(p=>`${p.page}쪽 (${p.reason})`).join(', '));
+  }
   if(report.notes?.length)lines.push(...report.notes);
   return lines.join('\n');
 }
@@ -145,7 +172,7 @@ async function createProResult(){
     if(imageShare<10)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다.';
     if(result.structureSaved)composition+=`\nPDF 구조 정리로 ${formatBytes(result.structureSaved)} 절감한 내역을 포함합니다.`;
     $('proComposition').textContent=composition;
-    const outputReport=result.retained?{...report,changed:0,skipped:report.imageCount,notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
+    const outputReport=result.retained?{...report,changed:0,skipped:report.imageCount,settings:'추가 압축으로 더 줄지 않아 변경 전 파일 유지',notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
     $('proReport').textContent=proSummary(outputReport,textCheck);$('proResult').hidden=false;
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     $('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -155,7 +182,7 @@ async function createProResult(){
   }finally{finishProWork();}
 }
 $('modeBasic').onclick=()=>setProMode('basic');$('modePro').onclick=()=>setProMode('pro');
-$('proWorkspace').onclick=()=>setProView('workspace');$('proSettings').onclick=()=>setProView('settings');
+$('proWorkspace').onclick=()=>{setProView('workspace');document.querySelector('main').scrollTop=0;};$('proSettings').onclick=()=>{document.querySelector('main').scrollTop=0;setProView('settings');if(!proPreviewOpen)$('proPanel').scrollIntoView({behavior:'smooth',block:'start'});};
 $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();scheduleLivePreview();};
 for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');scheduleLivePreview();});

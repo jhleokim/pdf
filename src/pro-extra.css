@@ -35,18 +35,31 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
 .fill-opacity #annoOpacity{width:76px;accent-color:var(--accent)}
 .fill-opacity output{font-size:11px;min-width:29px;font-variant-numeric:tabular-nums}
 .annotation-hint{padding:10px 14px;font-size:11px;color:var(--ink-2)}
-/* Pro dedicates the working area to a complete page beside its settings. */
-body[data-mode=pro] #previewPanel,body[data-mode=pro] #divider{display:none!important}
-body[data-mode=pro] main{display:grid!important;grid-template-columns:minmax(0,1fr) var(--pro-width);grid-template-rows:minmax(0,1fr)}
+/* A persistent page rail, live canvas, and settings form one workspace. */
+body[data-mode=pro] #previewPanel,body[data-mode=pro] #divider,body[data-mode=pro] #viewSwitch,body[data-mode=pro] #actionBar{display:none!important}
+body[data-mode=pro] main{display:grid!important;grid-template-columns:minmax(0,1fr) var(--pro-width);grid-template-rows:minmax(0,1fr);padding-bottom:0}
 body[data-mode=pro] #boardWrap,body[data-mode=pro] #empty{grid-column:1;grid-row:1;min-width:0}
+body[data-mode=pro] #boardWrap:not([hidden]){display:block!important}
 body[data-mode=pro] #proPanel{grid-column:2;grid-row:1;width:var(--pro-width)}
-body[data-mode=pro].pro-preview-open #boardWrap{display:none!important}
-#proCompare{position:relative;inset:auto;grid-column:1;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
+body[data-mode=pro].pro-preview-open main{grid-template-columns:180px minmax(0,1fr) var(--pro-width)}
+body[data-mode=pro].pro-preview-open #proPanel{grid-column:3}
+body[data-mode=pro].pro-preview-open #boardWrap{padding:0 12px 24px;border-right:1px solid var(--line);background:var(--surface-2);overflow:auto}
+body[data-mode=pro].pro-preview-open main #board{grid-template-columns:minmax(0,1fr)!important;gap:14px;padding-top:14px}
+body[data-mode=pro].pro-preview-open .legend{padding:12px 0;gap:0;position:sticky;top:0;z-index:3;background:var(--surface-2)}
+body[data-mode=pro].pro-preview-open .legend .lg-item{display:none}
+body[data-mode=pro].pro-preview-open .legend::before{content:'전체 페이지';font-size:11px;font-weight:600;color:var(--ink-2)}
+body[data-mode=pro].pro-preview-open .lg-count{margin-left:auto;font-size:10px}
+body[data-mode=pro].pro-preview-open .page{padding:6px 6px 0;border-radius:4px}
+body[data-mode=pro].pro-preview-open .page.previewing{outline:2px solid var(--accent);outline-offset:2px}
+body[data-mode=pro].pro-preview-open .plate{top:10px;left:10px}
+body[data-mode=pro].pro-preview-open .pick{top:10px;right:10px}
+body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
+#proCompare{position:relative;inset:auto;grid-column:2;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
 #proCompare[hidden]{display:none!important}
-#proCompare .compare-head{padding:12px 20px;background:var(--surface);gap:12px;flex:none}
+#proCompare .compare-head{padding:12px 16px;background:var(--surface);gap:8px;flex:none}
 .compare-head h2{font-size:14px;font-weight:600}.compare-head p{font-size:11px;color:var(--ink-3);margin-top:3px}
 .compare-navigation{display:flex;align-items:center;gap:4px}.compare-navigation .btn{font-size:22px}
-.compare-toolbar{padding:9px 20px;flex:none;min-height:44px;font-size:11px;flex-wrap:wrap}.compare-toolbar label{display:flex;align-items:center;gap:6px;white-space:nowrap}.compare-toolbar select{color:var(--ink);font-size:11px;background:var(--surface)}
+.compare-toolbar{padding:9px 16px;flex:none;min-height:44px;font-size:11px;flex-wrap:wrap}.compare-toolbar label{display:flex;align-items:center;gap:6px;white-space:nowrap}.compare-toolbar select{color:var(--ink);font-size:11px;background:var(--surface)}
 .compare-stage{position:relative;flex:1;min-height:0;overflow:hidden}
 .compare-stage .compare-scroll{position:absolute;inset:0;padding:20px;display:flex;align-items:flex-start;justify-content:flex-start;overflow:auto;background:var(--sheet)}
 .compare-stage canvas{display:block;flex:none;margin:auto;box-shadow:0 2px 6px #0002,0 14px 36px -12px #0005}
@@ -54,21 +67,58 @@ body[data-mode=pro].pro-preview-open #boardWrap{display:none!important}
 .show-original .compare-original{opacity:1;pointer-events:auto}
 #compareOriginal{position:absolute;right:18px;bottom:16px;z-index:2;background:var(--surface);color:var(--ink);border-color:var(--line-2);box-shadow:var(--sh-2);font-size:12px}
 #compareOriginal[aria-pressed=true]{background:var(--accent-wash);color:var(--accent-ink)}
-.compare-note{flex:none;min-height:38px;margin:0;font-size:11px;line-height:1.6;padding:9px 20px;background:var(--surface);border-top:1px solid var(--line)}
+.compare-applied{padding:10px 16px;font-size:11px;line-height:1.7;font-weight:600;color:var(--ink-2);background:var(--surface);border-top:1px solid var(--line);max-height:84px;overflow:auto}
+.compare-note{flex:none;min-height:38px;margin:0;font-size:11px;line-height:1.6;padding:8px 16px;background:var(--surface);color:var(--ink-3);max-height:80px;overflow:auto}
 #proCompare[aria-busy=true] #compareState{color:var(--accent-ink)}
+#proCompare[aria-busy=true] .compare-applied{opacity:.4}
 #proCompare[data-error=true] #compareState{color:var(--danger)}
-body[data-mode=pro] #actionBar{display:none!important}
+@media(min-width:881px) and (max-width:1100px){
+ body[data-mode=pro]{--pro-width:300px}
+ body[data-mode=pro].pro-preview-open main{grid-template-columns:140px minmax(0,1fr) var(--pro-width)}
+ body[data-mode=pro].pro-preview-open #boardWrap{padding-left:8px;padding-right:8px}
+ body[data-mode=pro].pro-preview-open .pfoot .src{display:none}
+}
 @media(max-width:880px){
- body[data-mode=pro] main{display:flex!important;flex-direction:column}
- body[data-mode=pro] #proPanel{width:100%;flex:1;min-height:0;padding-bottom:0}
- body[data-mode=pro].pro-preview-open #proCompare{display:flex!important;flex:1;min-height:0}
- body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proCompare{flex:0 0 40%;min-height:170px}
- body[data-mode=pro] #proCompare .compare-head{padding:6px 12px}
+ body[data-mode=pro] main{display:flex!important;flex-direction:column;overflow:auto;scroll-padding:12px}
+ body[data-mode=pro] #proPanel{display:flex!important;width:100%;flex:none;min-height:0;overflow:visible;border-top:1px solid var(--line);padding-bottom:18px}
+ body[data-mode=pro] .pro-panel-scroll{flex:none;overflow:visible}
+ body[data-mode=pro] .pro-panel-footer{position:static}
+ body[data-mode=pro] #boardWrap:not([hidden]){display:block!important;flex:none;max-height:360px;overflow:auto}
+ body[data-mode=pro].pro-preview-open #boardWrap:not([hidden]){height:148px;max-height:none;padding:0 12px 10px;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line)}
+ body[data-mode=pro].pro-preview-open .legend{position:static;padding:7px 0;width:100%}
+ body[data-mode=pro].pro-preview-open main #board{display:flex;align-items:flex-start;width:max-content;padding-top:3px;gap:12px}
+ body[data-mode=pro].pro-preview-open .page{width:76px;flex:none;padding:3px}
+ body[data-mode=pro].pro-preview-open .sheet{height:86px;background:var(--surface)}
+ body[data-mode=pro].pro-preview-open .sheet canvas{width:100%;height:100%;object-fit:contain}
+ body[data-mode=pro].pro-preview-open .plate{left:5px;top:5px;font-size:9px;min-width:16px;height:16px}
+ body[data-mode=pro].pro-preview-open .pick{right:5px;top:5px;transform:scale(.75);transform-origin:top right}
+ body[data-mode=pro].pro-preview-open .pfoot{display:none}
+ body[data-mode=pro].pro-preview-open #proCompare{display:flex!important;flex:none;height:520px;height:clamp(380px,65dvh,680px);min-height:380px}
+ body[data-mode=pro] #proCompare .compare-head{padding:8px 12px}
  body[data-mode=pro] .compare-toolbar{padding:5px 12px;min-height:32px}
- body[data-mode=pro] .compare-note{padding:6px 12px;font-size:10px;min-height:0;max-height:46px;overflow:auto}
+ body[data-mode=pro] .compare-applied{padding:7px 12px;max-height:64px;font-size:10px}
+ body[data-mode=pro] .compare-note{padding:5px 12px;font-size:10px;min-height:0;max-height:42px}
  body[data-mode=pro] .compare-navigation .btn{height:27px;width:27px}
+ body[data-mode=pro] #empty:not([hidden]){display:flex!important;flex:none;min-height:400px}
  #compareOriginal{right:9px;bottom:8px;height:29px;font-size:11px}
  .annotation-tools{padding:8px;gap:6px}.annotation-tools .ab-tool{padding:0 6px}.annotation-tools .ab-tool span{font-size:10px}.annotation-properties{padding:8px 10px;gap:8px}
+}
+
+@media(max-width:880px){
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] main{overflow:hidden}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #boardWrap:not([hidden]){height:94px;padding-bottom:5px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .legend{display:none}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .sheet{height:76px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proCompare{height:280px;min-height:240px;flex:0 1 280px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .compare-head p{display:none}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .compare-note{display:none}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .compare-applied{max-height:36px;padding:3px 12px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proPanel{flex:1;min-height:170px;overflow:hidden;padding:0}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-panel-head{display:none}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-panel-scroll{overflow:auto;flex:1;min-height:0;padding-top:10px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-preserve-note{display:none}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-panel-footer{padding:8px 12px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-footer-hint{display:none}
 }
 
 .app-version{position:fixed;right:12px;bottom:calc(5px + var(--safe-b));z-index:90;font-size:10px;font-weight:400;line-height:1.2;letter-spacing:.01em;color:var(--ink-3);pointer-events:none;font-variant-numeric:tabular-nums}
