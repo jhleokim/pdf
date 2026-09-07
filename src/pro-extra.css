@@ -12,3 +12,61 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
 #proResult{scroll-margin:20px}#proReport{white-space:pre-line;overflow-wrap:anywhere}#proFilename{width:100%}.result-stale{opacity:.6}
 @media(max-width:880px){.pro-mobile-switch:not([hidden]){display:flex;gap:6px}.pro-mobile-switch button{padding:6px 10px;border-radius:6px;border:1px solid var(--line);font-size:12px}.pro-mobile-switch button[aria-pressed=true]{background:var(--accent-wash);color:var(--accent-ink);border-color:var(--accent-line)}#proCompare{width:96vw;height:90vh;border-radius:8px}.compare-head{padding:14px}.compare-toolbar{padding:8px 14px}.compare-scroll{padding:8px}.compare-grid h3{padding:8px;font-size:12px}.compare-note{padding:10px 14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+/* Document markup: a quiet tool strip with separate stroke and fill controls. */
+.anno-bar{display:flex;flex-direction:column;align-items:stretch;padding:0;gap:0}
+.annotation-tools{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.annotation-tools .ab-group{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);padding:3px;border-radius:5px}
+.annotation-tools .ab-tool{width:auto;min-width:32px;height:32px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;border-radius:3px;background:transparent;color:var(--ink-2)}
+.annotation-tools .ab-tool span{font-size:11px;white-space:nowrap}
+.annotation-tools .ab-tool .ic{width:16px;height:16px;stroke-width:1.6}
+.annotation-tools .ab-tool.active{background:var(--surface);color:var(--accent-ink);box-shadow:0 1px 3px #0002}
+.annotation-actions{display:flex;align-items:center;gap:4px}
+.annotation-actions .btn{height:30px;font-size:11px}
+.annotation-properties{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 14px;background:var(--surface)}
+.annotation-property-group{display:flex;align-items:center;gap:8px;min-height:28px}
+.property-label{font-size:11px;font-weight:600;color:var(--ink-2);min-width:32px}
+.annotation-properties .swatch{width:25px;height:25px;border-radius:3px;padding:3px;border:1px solid var(--line-2);background:var(--surface)}
+.annotation-properties input[type=color]{width:100%;height:100%;padding:0;cursor:pointer}
+.annotation-properties input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.annotation-properties input[type=color]::-webkit-color-swatch{border:0;border-radius:1px}
+.stroke-width{display:flex;align-items:center;border:1px solid var(--line);border-radius:3px;height:27px;padding-right:7px;gap:3px;font-size:11px;color:var(--ink-3)}
+.stroke-width #annoWidth{width:43px;border:0;background:transparent;height:25px;font-size:12px;padding:0 4px;color:var(--ink)}
+.fill-opacity{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.fill-opacity #annoOpacity{width:76px;accent-color:var(--accent)}
+.fill-opacity output{font-size:11px;min-width:29px;font-variant-numeric:tabular-nums}
+.annotation-hint{padding:10px 14px;font-size:11px;color:var(--ink-2)}
+/* Pro dedicates the working area to a complete page beside its settings. */
+body[data-mode=pro] #previewPanel,body[data-mode=pro] #divider{display:none!important}
+body[data-mode=pro] main{display:grid!important;grid-template-columns:minmax(0,1fr) var(--pro-width);grid-template-rows:minmax(0,1fr)}
+body[data-mode=pro] #boardWrap,body[data-mode=pro] #empty{grid-column:1;grid-row:1;min-width:0}
+body[data-mode=pro] #proPanel{grid-column:2;grid-row:1;width:var(--pro-width)}
+body[data-mode=pro].pro-preview-open #boardWrap{display:none!important}
+#proCompare{position:relative;inset:auto;grid-column:1;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
+#proCompare[hidden]{display:none!important}
+#proCompare .compare-head{padding:12px 20px;background:var(--surface);gap:12px;flex:none}
+.compare-head h2{font-size:14px;font-weight:600}.compare-head p{font-size:11px;color:var(--ink-3);margin-top:3px}
+.compare-navigation{display:flex;align-items:center;gap:4px}.compare-navigation .btn{font-size:22px}
+.compare-toolbar{padding:9px 20px;flex:none;min-height:44px;font-size:11px;flex-wrap:wrap}.compare-toolbar label{display:flex;align-items:center;gap:6px;white-space:nowrap}.compare-toolbar select{color:var(--ink);font-size:11px;background:var(--surface)}
+.compare-stage{position:relative;flex:1;min-height:0;overflow:hidden}
+.compare-stage .compare-scroll{position:absolute;inset:0;padding:20px;display:flex;align-items:flex-start;justify-content:flex-start;overflow:auto;background:var(--sheet)}
+.compare-stage canvas{display:block;flex:none;margin:auto;box-shadow:0 2px 6px #0002,0 14px 36px -12px #0005}
+.compare-original{opacity:0;pointer-events:none;transition:opacity .12s}
+.show-original .compare-original{opacity:1;pointer-events:auto}
+#compareOriginal{position:absolute;right:18px;bottom:16px;z-index:2;background:var(--surface);color:var(--ink);border-color:var(--line-2);box-shadow:var(--sh-2);font-size:12px}
+#compareOriginal[aria-pressed=true]{background:var(--accent-wash);color:var(--accent-ink)}
+.compare-note{flex:none;min-height:38px;margin:0;font-size:11px;line-height:1.6;padding:9px 20px;background:var(--surface);border-top:1px solid var(--line)}
+#proCompare[aria-busy=true] #compareState{color:var(--accent-ink)}
+#proCompare[data-error=true] #compareState{color:var(--danger)}
+body[data-mode=pro] #actionBar{display:none!important}
+@media(max-width:880px){
+ body[data-mode=pro] main{display:flex!important;flex-direction:column}
+ body[data-mode=pro] #proPanel{width:100%;flex:1;min-height:0;padding-bottom:0}
+ body[data-mode=pro].pro-preview-open #proCompare{display:flex!important;flex:1;min-height:0}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proCompare{flex:0 0 40%;min-height:170px}
+ body[data-mode=pro] #proCompare .compare-head{padding:6px 12px}
+ body[data-mode=pro] .compare-toolbar{padding:5px 12px;min-height:32px}
+ body[data-mode=pro] .compare-note{padding:6px 12px;font-size:10px;min-height:0;max-height:46px;overflow:auto}
+ body[data-mode=pro] .compare-navigation .btn{height:27px;width:27px}
+ #compareOriginal{right:9px;bottom:8px;height:29px;font-size:11px}
+ .annotation-tools{padding:8px;gap:6px}.annotation-tools .ab-tool{padding:0 6px}.annotation-tools .ab-tool span{font-size:10px}.annotation-properties{padding:8px 10px;gap:8px}
+}

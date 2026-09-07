@@ -1,6 +1,6 @@
-<dialog id="proCompare" aria-labelledby="compareTitle">
-  <header class="compare-head"><div><p class="eyebrow">BEFORE / AFTER</p><h2 id="compareTitle">선택 페이지 비교</h2></div><button class="btn icon" id="compareClose" aria-label="비교 닫기"><svg class="ic"><use href="#i-x"/></svg></button></header>
-  <div class="compare-toolbar"><span id="comparePageLabel"></span><label>확대 <select id="compareZoom"><option value="1">화면에 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
-  <div class="compare-grid"><section><h3>원본 편집본</h3><div class="compare-scroll" id="compareBeforeScroll"><canvas id="compareBefore"></canvas></div></section><section><h3>Pro 적용 후</h3><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter"></canvas></div></section></div>
-  <p class="compare-note" id="compareNote">두 화면의 스크롤이 함께 움직입니다.</p>
-</dialog>
+<section id="proCompare" class="live-preview" aria-labelledby="compareTitle" hidden>
+<header class="compare-head"><div><h2 id="compareTitle">페이지 미리보기</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
+<div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
+<div class="compare-stage" id="compareStage"><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter" aria-label="Pro 설정 적용 결과"></canvas></div><div class="compare-scroll compare-original" id="compareBeforeScroll" aria-hidden="true"><canvas id="compareBefore" aria-label="Pro 적용 전 편집본"></canvas></div><button class="btn" id="compareOriginal" aria-pressed="false" title="마우스를 올리거나 눌러 원본 보기" disabled><svg class="ic"><use href="#i-eye"/></svg>원본 보기</button></div>
+<p class="compare-note" id="compareNote">설정 변경을 자동으로 반영합니다.</p>
+</section>
