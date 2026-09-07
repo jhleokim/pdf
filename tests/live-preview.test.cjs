@@ -21,7 +21,7 @@ function harness(){
   document:{body:{classList:{toggle(){}}},addEventListener(){},createElement(){return {style:{},attrs:{},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k]||'';},getContext(){return {};},replaceWith(canvas){published.push(this.id);elements.set(this.id,canvas);}};}},
   requestAnimationFrame:fn=>fn(),showPreview(){},readProOptions:()=>({grayscale:true}),buildEditedDocument:async()=>doc(),
   PDFLib:{PDFDocument:{load:async()=>doc()}},PDFPro:{processDocument:async()=>{if(processing++===0)await new Promise(r=>release=r);return report;}},
-  PDFProDocument:{applyDocument:async()=>{}},verifyProText:async(a,b,signal,quiet)=>assert.equal(quiet,true),DOC_OPTS:{},
+  PDFProDocument:{applyDocument:async()=>{}},PDFDeskew:{processDocument:async()=>({changed:0,pages:[]})},describeProSettings:()=>'test',verifyProText:async(a,b,signal,quiet)=>assert.equal(quiet,true),DOC_OPTS:{},
   pdfjsLib:{getDocument:()=>({promise:Promise.resolve({getPage:async()=>({getViewport:({scale})=>({width:100*scale,height:200*scale}),render:()=>({promise:Promise.resolve()})}),destroy:async()=>{}})})}
  });
  vm.runInContext(code+'\nliveHadPages=true;',c);
