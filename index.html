@@ -876,6 +876,10 @@ body[data-mode=pro] #actionBar{display:none!important}
  #compareOriginal{right:9px;bottom:8px;height:29px;font-size:11px}
  .annotation-tools{padding:8px;gap:6px}.annotation-tools .ab-tool{padding:0 6px}.annotation-tools .ab-tool span{font-size:10px}.annotation-properties{padding:8px 10px;gap:8px}
 }
+
+.app-version{position:fixed;right:12px;bottom:calc(5px + var(--safe-b));z-index:90;font-size:10px;font-weight:400;line-height:1.2;letter-spacing:.01em;color:var(--ink-3);pointer-events:none;font-variant-numeric:tabular-nums}
+@media(max-width:880px){body:not([data-mode=pro]) .app-version{bottom:calc(5px + var(--safe-b) + var(--abH,0px))}}
+.pro-composition{white-space:pre-line;font-size:12px;line-height:1.7;color:var(--ink-2);margin:10px 0;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 </style>
 <!-- pro-styles:end -->
 </head>
@@ -1148,8 +1152,9 @@ body[data-mode=pro] #actionBar{display:none!important}
 
       <section class="pro-result" id="proResult" aria-labelledby="proResultTitle" hidden>
         <div class="pro-result-title"><span class="pro-complete-icon"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span><h3 id="proResultTitle">결과가 준비됐어요</h3></div>
-        <div class="pro-size-comparison"><div><span>편집본</span><strong id="proBeforeSize">—</strong></div><span class="pro-size-arrow" aria-hidden="true">→</span><div><span>Pro 결과</span><strong id="proAfterSize">—</strong></div></div>
+        <div class="pro-size-comparison"><div><span id="proBeforeLabel">최적화 전</span><strong id="proBeforeSize">—</strong></div><span class="pro-size-arrow" aria-hidden="true">→</span><div><span>Pro 결과</span><strong id="proAfterSize">—</strong></div></div>
         <p class="pro-reduction" id="proReduction"></p>
+        <p class="pro-composition" id="proComposition"></p>
         <p class="pro-report" id="proReport"></p>
         <button class="btn primary" id="proDownload"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>결과 PDF 다운로드</button>
         <button class="btn quiet" id="proDiscard">결과 닫기</button>
@@ -3401,6 +3406,36 @@ DEALINGS IN THE FONT SOFTWARE.
   globalThis.PDFProDocument={applyDocument,geometry,visibleBox,displayToPdf};
 })();
 </script>
+<script id="pro-result">
+/* Output selection and size accounting, shared by the browser and regression tests. */
+(function(root){
+  'use strict';
+  function unchangedSource(pages,docs){
+    if(!pages.length)return null;
+    const first=docs.get(pages[0].docId);
+    if(!first||first.kind!=='pdf'||pages.length!==first.count)return null;
+    if(!pages.every((p,i)=>p.docId===pages[0].docId&&p.srcIndex===i&&p.rotation===0&&!(p.annots?.length)))return null;
+    return first.libBytes;
+  }
+  function compressionOnly(o){
+    return o.optimize&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark;
+  }
+  function selectOutput(before,candidate,options,original){
+    const reference=original||before;
+    let bytes=candidate,retained=false;
+    if(compressionOnly(options)){
+      const baseline=original&&original.length<before.length?original:before;
+      if(candidate.length>=baseline.length){bytes=baseline;retained=true;}
+    }
+    return {bytes,reference,retained,originalBasis:!!original,
+      reduction:(1-bytes.length/reference.length)*100,
+      structureSaved:original?Math.max(0,original.length-before.length):0};
+  }
+  const api=Object.freeze({unchangedSource,compressionOnly,selectOutput});
+  root.PDFProResult=api;
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(globalThis);
+</script>
 <script id="pro-live-preview">
 'use strict';
 // Serial jobs and a generation token keep stale processing off the screen.
@@ -3667,19 +3702,29 @@ async function createProResult(){
   proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
   try{
     const fingerprint=proFingerprint();
+    const original=PDFProResult.unchangedSource(pages,docs);
     const edited=await buildEditedDocument();checkProAbort();
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
     // Reload the baseline so new marks cannot reuse cached, already-saved
     // content streams created while baking the user's Basic annotations.
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
-    const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const candidate=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const result=PDFProResult.selectOutput(before,candidate,options,original);
+    const bytes=result.bytes;
     const textCheck=await verifyProText(before,bytes,proAbort.signal);checkProAbort();
     proResult={bytes,fingerprint};
-    $('proBeforeSize').textContent=formatBytes(before.length);$('proAfterSize').textContent=formatBytes(bytes.length);
-    const change=(1-bytes.length/before.length)*100;
-    $('proReduction').textContent=Math.abs(change)<.1 ? '용량 변화가 거의 없습니다.' : change>0 ? `${change.toFixed(1)}% 줄어들었어요` : `${(-change).toFixed(1)}% 증가 · 보정·페이지 설정이 반영됐어요`;
-    $('proReport').textContent=proSummary(report,textCheck);$('proResult').hidden=false;
+    $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
+    $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
+    const change=result.reduction;
+    $('proReduction').textContent=Math.abs(change)<.1 ? '현재 설정으로는 용량이 거의 줄지 않습니다.' : change>0 ? `${change.toFixed(1)}% 절감 · ${formatBytes(result.reference.length-bytes.length)}` : `${(-change).toFixed(1)}% 증가 · 보정·페이지 설정이 반영됐어요`;
+    const imageShare=Math.min(100,report.originalImageBytes/result.reference.length*100);
+    let composition=`이미지 ${report.imageCount}개 · ${formatBytes(report.originalImageBytes)} · 전체 용량의 ${imageShare.toFixed(1)}%`;
+    if(imageShare<10)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다.';
+    if(result.structureSaved)composition+=`\nPDF 구조 정리로 ${formatBytes(result.structureSaved)} 절감한 내역을 포함합니다.`;
+    $('proComposition').textContent=composition;
+    const outputReport=result.retained?{...report,changed:0,skipped:report.imageCount,notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
+    $('proReport').textContent=proSummary(outputReport,textCheck);$('proResult').hidden=false;
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     $('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){
@@ -3706,5 +3751,8 @@ let savedProMode='basic';try{if(localStorage.getItem('pdfed-mode')==='pro')saved
 setProMode(savedProMode);
 </script>
 <!-- pro-runtime:end -->
+<!-- app-version:start -->
+<span class="app-version" aria-label="버전 3.5">v3.5</span>
+<!-- app-version:end -->
 </body>
 </html>

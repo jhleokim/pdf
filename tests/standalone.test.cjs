@@ -17,7 +17,7 @@ test('all HTML control ids are unique and application sources match embedded out
   const markup=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
   const ids=[...markup.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
   assert.equal(new Set(ids).size,ids.length,'Duplicate ids break UI event bindings');
-  for(const name of ['editor','pro-engine','pro-document','pro-live-preview','pro-ui']){
+  for(const name of ['editor','pro-engine','pro-document','pro-result','pro-live-preview','pro-ui']){
     const id=name==='editor'?'editor-code':name;
     const match=html.match(new RegExp(`<script id="${id}">([\\s\\S]*?)<\\/script>`));
     assert.ok(match,`${id} embedded`);
