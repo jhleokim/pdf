@@ -124,19 +124,29 @@ async function createProResult(){
   proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
   try{
     const fingerprint=proFingerprint();
+    const original=PDFProResult.unchangedSource(pages,docs);
     const edited=await buildEditedDocument();checkProAbort();
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
     // Reload the baseline so new marks cannot reuse cached, already-saved
     // content streams created while baking the user's Basic annotations.
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
-    const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const candidate=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const result=PDFProResult.selectOutput(before,candidate,options,original);
+    const bytes=result.bytes;
     const textCheck=await verifyProText(before,bytes,proAbort.signal);checkProAbort();
     proResult={bytes,fingerprint};
-    $('proBeforeSize').textContent=formatBytes(before.length);$('proAfterSize').textContent=formatBytes(bytes.length);
-    const change=(1-bytes.length/before.length)*100;
-    $('proReduction').textContent=Math.abs(change)<.1 ? '용량 변화가 거의 없습니다.' : change>0 ? `${change.toFixed(1)}% 줄어들었어요` : `${(-change).toFixed(1)}% 증가 · 보정·페이지 설정이 반영됐어요`;
-    $('proReport').textContent=proSummary(report,textCheck);$('proResult').hidden=false;
+    $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
+    $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
+    const change=result.reduction;
+    $('proReduction').textContent=Math.abs(change)<.1 ? '현재 설정으로는 용량이 거의 줄지 않습니다.' : change>0 ? `${change.toFixed(1)}% 절감 · ${formatBytes(result.reference.length-bytes.length)}` : `${(-change).toFixed(1)}% 증가 · 보정·페이지 설정이 반영됐어요`;
+    const imageShare=Math.min(100,report.originalImageBytes/result.reference.length*100);
+    let composition=`이미지 ${report.imageCount}개 · ${formatBytes(report.originalImageBytes)} · 전체 용량의 ${imageShare.toFixed(1)}%`;
+    if(imageShare<10)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다.';
+    if(result.structureSaved)composition+=`\nPDF 구조 정리로 ${formatBytes(result.structureSaved)} 절감한 내역을 포함합니다.`;
+    $('proComposition').textContent=composition;
+    const outputReport=result.retained?{...report,changed:0,skipped:report.imageCount,notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
+    $('proReport').textContent=proSummary(outputReport,textCheck);$('proResult').hidden=false;
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     $('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){
