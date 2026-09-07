@@ -810,10 +810,10 @@ body[data-mode=pro] main{display:grid!important;grid-template-columns:minmax(0,1
 body[data-mode=pro] #boardWrap,body[data-mode=pro] #empty{grid-column:1;grid-row:1;min-width:0}
 body[data-mode=pro] #boardWrap:not([hidden]){display:block!important}
 body[data-mode=pro] #proPanel{grid-column:2;grid-row:1;width:var(--pro-width)}
-body[data-mode=pro].pro-preview-open main{grid-template-columns:180px minmax(0,1fr) var(--pro-width)}
-body[data-mode=pro].pro-preview-open #proPanel{grid-column:3}
+body[data-mode=pro].pro-preview-open main{grid-template-columns:var(--pro-rail-width,180px) 8px minmax(0,1fr) var(--pro-width)}
+body[data-mode=pro].pro-preview-open #proPanel{grid-column:4}
 body[data-mode=pro].pro-preview-open #boardWrap{padding:0 12px 24px;border-right:1px solid var(--line);background:var(--surface-2);overflow:auto}
-body[data-mode=pro].pro-preview-open main #board{grid-template-columns:minmax(0,1fr)!important;gap:14px;padding-top:14px}
+body[data-mode=pro].pro-preview-open main #board{grid-template-columns:repeat(var(--pro-thumb-columns,1),minmax(0,1fr))!important;gap:14px;padding-top:14px}
 body[data-mode=pro].pro-preview-open .legend{padding:12px 0;gap:0;position:sticky;top:0;z-index:3;background:var(--surface-2)}
 body[data-mode=pro].pro-preview-open .legend .lg-item{display:none}
 body[data-mode=pro].pro-preview-open .legend::before{content:'전체 페이지';font-size:11px;font-weight:600;color:var(--ink-2)}
@@ -823,7 +823,7 @@ body[data-mode=pro].pro-preview-open .page.previewing{outline:2px solid var(--ac
 body[data-mode=pro].pro-preview-open .plate{top:10px;left:10px}
 body[data-mode=pro].pro-preview-open .pick{top:10px;right:10px}
 body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
-#proCompare{position:relative;inset:auto;grid-column:2;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
+#proCompare{position:relative;inset:auto;grid-column:3;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
 #proCompare[hidden]{display:none!important}
 #proCompare .compare-head{padding:12px 16px;background:var(--surface);gap:8px;flex:none}
 .compare-head h2{font-size:14px;font-weight:600}.compare-head p{font-size:11px;color:var(--ink-3);margin-top:3px}
@@ -843,7 +843,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 #proCompare[data-error=true] #compareState{color:var(--danger)}
 @media(min-width:881px) and (max-width:1100px){
  body[data-mode=pro]{--pro-width:300px}
- body[data-mode=pro].pro-preview-open main{grid-template-columns:140px minmax(0,1fr) var(--pro-width)}
+ body[data-mode=pro].pro-preview-open main{grid-template-columns:var(--pro-rail-width,140px) 8px minmax(0,1fr) var(--pro-width)}
  body[data-mode=pro].pro-preview-open #boardWrap{padding-left:8px;padding-right:8px}
  body[data-mode=pro].pro-preview-open .pfoot .src{display:none}
 }
@@ -893,6 +893,14 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .app-version{position:fixed;right:12px;bottom:calc(5px + var(--safe-b));z-index:90;font-size:10px;font-weight:400;line-height:1.2;letter-spacing:.01em;color:var(--ink-3);pointer-events:none;font-variant-numeric:tabular-nums}
 @media(max-width:880px){body:not([data-mode=pro]) .app-version{bottom:calc(5px + var(--safe-b) + var(--abH,0px))}}
 .pro-composition{white-space:pre-line;font-size:12px;line-height:1.7;color:var(--ink-2);margin:10px 0;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+
+.pro-rail-divider{display:none;grid-column:2;grid-row:1;cursor:col-resize;touch-action:none;background:var(--surface-2);outline:0;z-index:4;align-items:center;justify-content:center}
+.pro-rail-divider span{height:36px;width:2px;border-radius:1px;background:var(--line-2)}
+.pro-rail-divider:hover,.pro-rail-divider:focus-visible{background:var(--accent-wash)}
+.pro-rail-divider:hover span,.pro-rail-divider:focus-visible span{background:var(--accent)}
+.pro-rail-resizing,.pro-rail-resizing *{cursor:col-resize!important;user-select:none!important}
+.pro-warning{padding:10px;background:var(--accent-wash);border-left:2px solid var(--accent);color:var(--ink-2);font-size:12px;line-height:1.7}
+@media(min-width:881px){body[data-mode=pro].pro-preview-open .pro-rail-divider{display:flex}}
 </style>
 <!-- pro-styles:end -->
 </head>
@@ -1088,6 +1096,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
     </div>
   </div>
 <!-- pro-dialog:start -->
+<div id="proRailDivider" class="pro-rail-divider" role="separator" aria-label="페이지 목록 너비" aria-orientation="vertical" aria-controls="boardWrap" tabindex="0" title="드래그하여 목록 넓히기 · 더블클릭 기본 너비 · 방향키로 조절"><span></span></div>
 <section id="proCompare" class="live-preview" aria-labelledby="compareTitle" hidden>
 <header class="compare-head"><div><h2 id="compareTitle">선택한 페이지</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
 <div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
@@ -1109,7 +1118,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 
     <div class="pro-panel-scroll">
       <button class="btn primary" id="proOpen"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>PDF 또는 사진 불러오기</button>
-      <div class="pro-preserve-note"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p>기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
+      <div class="pro-preserve-note"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p id="proPreserveText">기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
 
       <details class="pro-section" open>
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>번호와 워터마크<small>문서 전체에 일괄 배치</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
@@ -1144,7 +1153,9 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
       <details class="pro-section">
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><span>스캔 보정<small>배경과 대비를 깔끔하게</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proGrayscale"><span>이미지를 회색조로 변환</span></label>
+          <label class="pro-check"><input type="checkbox" id="proGrayscale"><span>B&W 흑백으로 변환</span></label>
+          <label class="pro-field pro-range" for="proBWThreshold"><span>흑백 기준 <output id="proBWThresholdValue" for="proBWThreshold">180</output></span><input type="range" id="proBWThreshold" min="100" max="240" value="180"><span class="pro-range-scale"><small>배경을 밝게</small><small>연한 글자까지</small></span></label>
+          <p class="pro-hint">검정·흰색 1비트로 저장합니다. JPEG 품질 대신 흑백 기준과 이미지 크기로 조절합니다. 연한 글자는 기준을 높여 확인하세요.</p>
           <label class="pro-field pro-range" for="proContrast"><span>대비 강화 <output id="proContrastValue" for="proContrast">0</output></span><input type="range" id="proContrast" min="0" max="40" value="0"><span class="pro-range-scale"><small>원본</small><small>또렷하게</small></span></label>
           <label class="pro-field pro-range" for="proWhitePoint"><span>흰 배경 기준 <output id="proWhitePointValue" for="proWhitePoint">255</output></span><input type="range" id="proWhitePoint" min="200" max="255" value="255"><span class="pro-range-scale"><small>배경 정리</small><small>원본</small></span></label>
           <p class="pro-hint">지원되는 스캔 이미지에 적용됩니다. 흐린 글자나 도장이 지워지지 않는지 비교해 보세요.</p>
@@ -1155,10 +1166,12 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small>이미지의 크기와 품질 조절</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
           <label class="pro-check"><input type="checkbox" id="proOptimize" checked><span>이미지 최적화 사용</span></label>
+          <label class="pro-field" for="proCompressionMode"><span>압축 방식</span><select id="proCompressionMode"><option value="preserve" selected>텍스트 유지 · 이미지 압축</option><option value="raster">페이지 전체 압축 · 이미지 PDF</option></select></label>
+          <p id="proRasterWarning" class="pro-warning" hidden>페이지를 이미지로 바꿉니다. 결과 PDF의 텍스트 검색·복사, 링크·양식은 유지되지 않습니다. 원본 파일은 그대로입니다. 보정 없이 압축만 할 때 더 커지면 변경 전 파일을 유지합니다.</p>
           <label class="pro-field" for="proPreset"><span>품질 프리셋</span><select id="proPreset"><option value="quality">품질 우선</option><option value="balanced" selected>균형 — 권장</option><option value="small">작은 용량</option></select></label>
-          <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option></select></label>
+          <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option><option value="1200">1,200 px · 작은 용량</option></select></label>
           <label class="pro-field pro-range" for="proQuality"><span>이미지 품질 <output id="proQualityValue" for="proQuality">82%</output></span><input type="range" id="proQuality" min="40" max="95" value="82"><span class="pro-range-scale"><small>작은 용량</small><small>높은 품질</small></span></label>
-          <p class="pro-hint">지원되는 이미지를 조정합니다. 용량 변화는 문서에 따라 달라집니다.</p>
+          <p class="pro-hint">텍스트 유지 방식의 절감이 작다면 페이지 전체 압축을 사용하세요. 글자 중심 스캔은 B&W를 함께 사용하면 더 작게 저장됩니다.</p>
         </div>
       </details>
 
@@ -2903,6 +2916,8 @@ DEALINGS IN THE FONT SOFTWARE.
   const MAX_EDGE = 16384;
   const MAX_ENCODED_BYTES = 64 * 1024 * 1024;
   const REASONS = {
+    maskSource: '투명도 마스크와 마스크에 사용된 이미지는 원본 그대로 보존했습니다.',
+    bwEmpty: '흑백 변환으로 내용이 사라질 수 있는 이미지는 원본을 유지했습니다.',
     mask: '투명도·마스크가 포함된 이미지는 원본을 유지했습니다.',
     color: 'RGB·회색조 이외의 색상 형식은 원본을 유지했습니다.',
     decode: '별도의 색상 변환 설정이 있는 이미지는 원본을 유지했습니다.',
@@ -2938,11 +2953,13 @@ DEALINGS IN THE FONT SOFTWARE.
       maxDimension: Math.round(bounded(o.maxDimension, 2400, 256, 8192)),
       jpegQuality: bounded(o.jpegQuality, 0.82, 0.4, 0.95),
       grayscale: o.grayscale === true,
+      blackWhite: o.blackWhite === true,
+      bwThreshold: Math.round(bounded(o.bwThreshold,180,100,240)),
       contrast: bounded(o.contrast, 0, 0, 40),
       whitePoint: bounded(o.whitePoint, 255, 200, 255)
     };
   }
-  const isEnhanced = o => o.grayscale || o.contrast > 0 || o.whitePoint < 255;
+  const isEnhanced = o => o.blackWhite || o.grayscale || o.contrast > 0 || o.whitePoint < 255;
   function pdfValue(dict, key, lib) { return dict.lookup(lib.PDFName.of(key)); }
   function numberValue(value) { return value && typeof value.asNumber === 'function' ? value.asNumber() : undefined; }
   function nameValue(value) { return value && typeof value.asString === 'function' ? value.asString() : ''; }
@@ -3201,6 +3218,67 @@ DEALINGS IN THE FONT SOFTWARE.
     if (!blob || blob.type !== 'image/jpeg' || blob.size > MAX_ENCODED_BYTES) throw failure('decodeFailed');
     return new Uint8Array(await blob.arrayBuffer());
   }
+  // Keep mask dependencies out of color processing. A soft mask is an ordinary
+  // DeviceGray image, but its samples describe opacity, not page colors.
+  function maskImages(doc,lib){
+    const protectedImages=new Set(),visited=new Set();
+    const resolve=value=>value instanceof lib.PDFRef?doc.context.lookup(value):value;
+    function protect(value){
+      const object=resolve(value);if(!object||visited.has(object))return;visited.add(object);
+      if(object instanceof lib.PDFRawStream){
+        if(nameValue(pdfValue(object.dict,'Subtype',lib))==='/Image')protectedImages.add(object);
+        protect(object.dict);
+      }else if(object instanceof lib.PDFDict){
+        // G is a transparency group. Its entire resource graph contributes alpha.
+        for(const [,child] of object.entries())protect(child);
+      }else if(object instanceof lib.PDFArray){for(let i=0;i<object.size();i++)protect(object.get(i));}
+    }
+    const scanned=new Set();
+    function find(value){
+      const object=resolve(value);if(!object||scanned.has(object))return;scanned.add(object);
+      const dict=object instanceof lib.PDFRawStream?object.dict:object;
+      if(dict instanceof lib.PDFDict){
+        for(const [key,child] of dict.entries()){
+          if(['/SMask','/Mask'].includes(nameValue(key)))protect(child);
+          else if(!(child instanceof lib.PDFRef))find(child);
+        }
+      }else if(dict instanceof lib.PDFArray){for(let i=0;i<dict.size();i++)if(!(dict.get(i) instanceof lib.PDFRef))find(dict.get(i));}
+    }
+    for(const [,object] of doc.context.enumerateIndirectObjects())find(object);
+    return protectedImages;
+  }
+  async function bitonal(context,width,height,threshold,signal){
+    const gray=new Uint8Array(width*height),rowBytes=Math.ceil(width/8),packed=new Uint8Array(rowBytes*height).fill(255);
+    let min=255,max=0;
+    for(let y=0;y<height;y+=64){
+      abortIfNeeded(signal);const rows=Math.min(64,height-y),data=context.getImageData(0,y,width,rows).data;
+      for(let i=0;i<data.length;i+=4){const v=Math.round(.2126*data[i]+.7152*data[i+1]+.0722*data[i+2]);gray[y*width+i/4]=v;min=Math.min(min,v);max=Math.max(max,v);}
+      await pause();
+    }
+    // Local means rescue faint strokes on uneven paper. Dark solid regions use
+    // the global threshold, so logos do not turn into hollow outlines.
+    const radius=15,columns=new Float64Array(width);let black=0;
+    for(let y=0;y<Math.min(height,radius+1);y++)for(let x=0;x<width;x++)columns[x]+=gray[y*width+x];
+    for(let y=0;y<height;y++){
+      if(y){const enter=y+radius,leave=y-radius-1;for(let x=0;x<width;x++){if(enter<height)columns[x]+=gray[enter*width+x];if(leave>=0)columns[x]-=gray[leave*width+x];}}
+      let sum=0;for(let x=0;x<Math.min(width,radius+1);x++)sum+=columns[x];
+      const rows=Math.min(height-1,y+radius)-Math.max(0,y-radius)+1;
+      for(let x=0;x<width;x++){
+        if(x){if(x+radius<width)sum+=columns[x+radius];if(x-radius-1>=0)sum-=columns[x-radius-1];}
+        const count=rows*(Math.min(width-1,x+radius)-Math.max(0,x-radius)+1),v=gray[y*width+x];
+        if(v<threshold||v<sum/count-8){packed[y*rowBytes+(x>>3)]&=~(128>>(x&7));black++;}
+      }
+      if(y%64===0){abortIfNeeded(signal);await pause();}
+    }
+    if(!black&&max-min>16&&min<240)throw failure('bwEmpty');
+    return {bytes:packed,width,height,bits:1,colorSpace:'DeviceGray',filter:'FlateDecode',packed:true};
+  }
+  async function encodeCanvas(canvas,options,signal){
+    const o=normalizeOptions(options),context=canvasContext(canvas);
+    if(o.blackWhite)return bitonal(context,canvas.width,canvas.height,o.bwThreshold,signal);
+    if(isEnhanced(o))await enhance(context,canvas.width,canvas.height,o,signal);
+    return {bytes:await encode(canvas,o.optimize?o.jpegQuality:.95),width:canvas.width,height:canvas.height,bits:8,colorSpace:'DeviceRGB',filter:'DCTDecode'};
+  }
   async function transform(spec, options, signal) {
     let source, target;
     try {
@@ -3214,12 +3292,8 @@ DEALINGS IN THE FONT SOFTWARE.
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
       context.drawImage(source, 0, 0, width, height);
-      if (isEnhanced(options)) await enhance(context, width, height, options, signal);
-      abortIfNeeded(signal);
-      // Enhancement alone still needs an image encoding; use a high-quality JPEG.
-      const bytes = await encode(target, options.optimize ? options.jpegQuality : 0.95);
-      abortIfNeeded(signal);
-      return { bytes, width, height };
+      const result=await encodeCanvas(target,options,signal);
+      abortIfNeeded(signal);return result;
     } finally {
       if (source && typeof source.close === 'function') source.close();
       else if (source && typeof source.getContext === 'function') source.width = source.height = 1;
@@ -3239,6 +3313,7 @@ DEALINGS IN THE FONT SOFTWARE.
     abortIfNeeded(signal);
     const images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
       object instanceof lib.PDFRawStream && nameValue(pdfValue(object.dict, 'Subtype', lib)) === '/Image');
+    const masks=maskImages(doc,lib);
     const report = { imageCount: images.length, processed: 0, changed: 0, skipped: 0,
       originalImageBytes: 0, resultImageBytes: 0, skipReasons: {}, notes: [] };
     for (const [, stream] of images) report.originalImageBytes += stream.getContents().length;
@@ -3253,8 +3328,10 @@ DEALINGS IN THE FONT SOFTWARE.
       const [ref, stream] = images[i];
       try {
         if (!settings.optimize && !isEnhanced(settings)) throw failure('noAction');
+        if(masks.has(stream))throw failure('maskSource');
         const spec = imageSpec(stream, lib);
         const result = await transform(spec, settings, signal);
+        if(result.packed)result.bytes=doc.context.flateStream(result.bytes).getContents();
         report.processed++;
         if (!isEnhanced(settings) && result.bytes.length >= spec.bytes.length) {
           // A supported image was evaluated, but kept intact because recompression did not help.
@@ -3264,9 +3341,9 @@ DEALINGS IN THE FONT SOFTWARE.
           const set = (key, value) => dict.set(lib.PDFName.of(key), value);
           set('Width', lib.PDFNumber.of(result.width));
           set('Height', lib.PDFNumber.of(result.height));
-          set('BitsPerComponent', lib.PDFNumber.of(8));
-          set('ColorSpace', lib.PDFName.of('DeviceRGB'));
-          set('Filter', lib.PDFName.of('DCTDecode'));
+          set('BitsPerComponent', lib.PDFNumber.of(result.bits));
+          set('ColorSpace', lib.PDFName.of(result.colorSpace));
+          set('Filter', lib.PDFName.of(result.filter));
           set('Length', lib.PDFNumber.of(result.bytes.length));
           dict.delete(lib.PDFName.of('DecodeParms'));
           dict.delete(lib.PDFName.of('DL'));
@@ -3290,10 +3367,10 @@ DEALINGS IN THE FONT SOFTWARE.
     return report;
   }
 
-  root.PDFPro = Object.freeze({ processDocument });
+  root.PDFPro = Object.freeze({ processDocument, encodeCanvas });
   // Pure helpers are exported only in Node for focused regression tests.
   if (typeof module !== 'undefined' && module.exports) module.exports = {
-    processDocument, normalizeOptions, imageSpec, inspectJpeg, undoPredictor, inflateBounded
+    processDocument, normalizeOptions, maskImages, bitonal, imageSpec, inspectJpeg, undoPredictor, inflateBounded
   };
 })(globalThis);
 </script>
@@ -3559,6 +3636,61 @@ DEALINGS IN THE FONT SOFTWARE.
   if(typeof module!=='undefined')module.exports=globalThis.PDFDeskew;
 })();
 </script>
+<script id="pro-pipeline">
+/* Shared preview/export path. Raster compression is explicitly opt-in. */
+(() => {
+  'use strict';
+  const check=signal=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
+  async function rasterize(doc,options,{signal,docOptions={},onProgress}={}){
+    const P=PDFLib,before=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check(signal);
+    const task=pdfjsLib.getDocument({data:before.slice(),...docOptions});
+    const output=await P.PDFDocument.create();
+    const report={imageCount:doc.getPageCount(),sourceImageCount:0,processed:0,changed:0,skipped:0,originalImageBytes:0,resultImageBytes:0,skipReasons:{},notes:[],rasterized:true};
+    for(const [,object] of doc.context.enumerateIndirectObjects())if(object instanceof P.PDFRawStream&&String(object.dict.get(P.PDFName.of('Subtype')))==='/Image'){report.originalImageBytes+=object.getContents().length;report.sourceImageCount++;}
+    try{
+      const pdf=await task.promise;check(signal);
+      for(let i=1;i<=pdf.numPages;i++){
+        check(signal);const source=await pdf.getPage(i),base=source.getViewport({scale:1});
+        const vp=source.getViewport({scale:options.maxDimension/Math.max(base.width,base.height)});
+        const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
+        let render;
+        const abort=()=>render?.cancel();
+        try{
+          render=source.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white',intent:'display'});
+          signal?.addEventListener('abort',abort,{once:true});await render.promise;check(signal);
+          const image=await PDFPro.encodeCanvas(canvas,options,signal);check(signal);
+          const bytes=image.packed?output.context.flateStream(image.bytes).getContents():image.bytes;
+          const stream=output.context.stream(bytes,{Type:'XObject',Subtype:'Image',Width:image.width,Height:image.height,BitsPerComponent:image.bits,ColorSpace:image.colorSpace,Filter:image.filter});
+          const ref=output.context.register(stream),unit=source.userUnit||1,w=base.width*unit,h=base.height*unit,page=output.addPage([w,h]),key=page.node.newXObject('Page',ref);
+          page.pushOperators(P.pushGraphicsState(),P.concatTransformationMatrix(w,0,0,h,0,0),P.drawObject(key),P.popGraphicsState());
+          report.changed++;report.processed++;report.resultImageBytes+=bytes.length;
+        }catch(e){check(signal);throw e;}
+        finally{signal?.removeEventListener('abort',abort);canvas.width=canvas.height=0;source.cleanup();}
+        onProgress?.(i/pdf.numPages,'페이지 전체를 압축하는 중…');
+        await new Promise(r=>setTimeout(r,0));
+      }
+      report.notes.push('페이지 이미지 방식: 결과 PDF의 텍스트 검색·복사, 링크·양식은 유지되지 않습니다. 원본 파일은 변경하지 않았습니다.');
+      return {doc:output,report};
+    }finally{await task.destroy();}
+  }
+  async function apply(doc,options,callbacks={}){
+    const {signal,onProgress}=callbacks;
+    check(signal);
+    const deskew=await PDFDeskew.processDocument(doc,options,{...callbacks,onProgress:n=>onProgress?.(n*.3,'스캔 기울기를 분석하는 중…')});check(signal);
+    let result;
+    if(options.rasterize){
+      await PDFProDocument.applyDocument(doc,options,callbacks);check(signal);
+      result=await rasterize(doc,options,{...callbacks,onProgress:(n,label)=>onProgress?.(.3+n*.7,label)});
+    }else{
+      const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>onProgress?.(.3+.5*(info.total?info.completed/info.total:1),'이미지를 보정하고 압축하는 중…')});check(signal);
+      await PDFProDocument.applyDocument(doc,options,{...callbacks,onProgress:n=>onProgress?.(.8+n*.2,'페이지 설정을 적용하는 중…')});
+      result={doc,report};
+    }
+    check(signal);result.report.deskew=deskew;return result;
+  }
+  globalThis.PDFProPipeline={apply,rasterize};
+})();
+</script>
 <script id="pro-result">
 /* Output selection and size accounting, shared by the browser and regression tests. */
 (function(root){
@@ -3571,7 +3703,7 @@ DEALINGS IN THE FONT SOFTWARE.
     return first.libBytes;
   }
   function compressionOnly(o){
-    return o.optimize&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark;
+    return o.optimize&&!o.blackWhite&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark;
   }
   function selectOutput(before,candidate,options,original){
     const reference=original||before;
@@ -3633,6 +3765,7 @@ function syncLivePreview(){
   if(!visible||proAbort){cancelLivePreview();return;}
   const index=pages.indexOf(livePage());
   $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
+  if(typeof proRailDragging!=='undefined'&&proRailDragging)return;
   if(liveKey()!==liveRequestedKey)scheduleLivePreview();
 }
 function scheduleLivePreview(){
@@ -3666,11 +3799,10 @@ async function updateLivePreview(seq){
     const edited=await buildEditedDocument([p]);check();
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
     const doc=await PDFLib.PDFDocument.load(before);check();
-    const deskew=await PDFDeskew.processDocument(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset});check();
-    const report=await PDFPro.processDocument(doc,options,{signal});check();
-    await PDFProDocument.applyDocument(doc,options,{pageOffset:offset,signal});check();
-    const after=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
-    await verifyProText(before,after,signal,true);check();
+    const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset});check();
+    const report=result.report,deskew=report.deskew;
+    const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
+    if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
     for(const data of [before,after]){loaded.push(await pdfjsLib.getDocument({data,...DOC_OPTS}).promise);check();}
     const canvases=[];
     for(const pdf of loaded){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value)));check();}
@@ -3685,8 +3817,9 @@ async function updateLivePreview(seq){
     $('compareState').textContent='미리보기 업데이트 완료';
     $('compareOriginal').disabled=false;
     let note='원본 보기에 마우스를 올려 비교하세요. 터치·키보드에서는 눌러 전환합니다.';
-    if(options.grayscale&&report.changed===0)note=report.imageCount===0?'이 페이지에는 보정할 이미지가 없습니다. 텍스트와 벡터 색상은 유지됩니다.':'변환 가능한 이미지가 없어 원본을 유지했습니다. '+report.notes.join(' ');
+    if((options.blackWhite||options.grayscale)&&report.changed===0)note=report.imageCount===0?'이 페이지에는 보정할 이미지가 없습니다. 텍스트와 벡터 색상은 유지됩니다.':'변환 가능한 이미지가 없어 원본을 유지했습니다. '+report.notes.join(' ');
     else if(report.skipped)note=`이미지 ${report.changed}개 반영 · ${report.skipped}개 원본 유지. `+report.notes.join(' ');
+    if(options.rasterize)note='페이지 전체 압축 결과입니다. 저장본은 텍스트 검색·복사와 링크·양식을 지원하지 않습니다.';
     $('compareApplied').textContent=describeProSettings(options,report,deskew,offset);
     $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
   }catch(e){
@@ -3721,12 +3854,58 @@ document.addEventListener('keydown',e=>{
 });
 new ResizeObserver(()=>{if(typeof proReady!=='undefined'&&proReady)syncLivePreview();}).observe($('compareStage'));
 </script>
+<script id="pro-rail">
+/* Resizable page navigator; only the preferred width is persisted. */
+let proRailDragging=false;
+(() => {
+  const handle=$('proRailDivider'),main=document.querySelector('main');
+  let preferred=null,drag=null;
+  try{const n=Number(localStorage.getItem('pdfed-pro-rail-width'));if(n>=120&&n<=520)preferred=n;}catch(_){}
+  const defaultWidth=()=>innerWidth<=1100?140:180;
+  function limits(){
+    const panel=parseFloat(getComputedStyle(document.body).getPropertyValue('--pro-width'))||342;
+    return {min:120,max:Math.max(120,Math.min(520,Math.floor(main.clientWidth-panel-328)))};
+  }
+  function apply(value=preferred??defaultWidth()){
+    const {min,max}=limits(),width=Math.max(min,Math.min(max,value));
+    main.style.setProperty('--pro-rail-width',width+'px');
+    main.style.setProperty('--pro-thumb-columns',Math.max(1,Math.floor((width-8)/154)));
+    handle.setAttribute('aria-valuemin',min);handle.setAttribute('aria-valuemax',max);handle.setAttribute('aria-valuenow',Math.round(width));
+    return width;
+  }
+  function save(){try{if(preferred===null)localStorage.removeItem('pdfed-pro-rail-width');else localStorage.setItem('pdfed-pro-rail-width',preferred);}catch(_) {}}
+  function finish(cancel=false){
+    if(!drag)return;
+    if(cancel){preferred=drag.preferred;apply();}else save();
+    const id=drag.id;drag=null;proRailDragging=false;document.body.classList.remove('pro-rail-resizing');
+    if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);
+    if(typeof syncLivePreview==='function')syncLivePreview();
+  }
+  handle.onpointerdown=e=>{
+    if(e.button!==0||innerWidth<=880)return;
+    e.preventDefault();drag={id:e.pointerId,x:e.clientX,width:apply(),preferred};proRailDragging=true;
+    document.body.classList.add('pro-rail-resizing');handle.setPointerCapture(e.pointerId);handle.focus();
+  };
+  handle.onpointermove=e=>{if(drag&&e.pointerId===drag.id)preferred=apply(drag.width+e.clientX-drag.x);};
+  handle.onpointerup=()=>finish();handle.onpointercancel=()=>finish(true);handle.onlostpointercapture=()=>finish(true);
+  handle.ondblclick=()=>{preferred=null;apply();save();};
+  handle.onkeydown=e=>{
+    if(e.key==='Escape'&&drag){e.preventDefault();e.stopPropagation();finish(true);return;}
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+    e.preventDefault();
+    if(e.key==='Home')preferred=null;
+    else preferred=e.key==='End'?limits().max:apply()+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?64:24);
+    if(preferred!==null)preferred=apply();else apply();save();
+  };
+  new ResizeObserver(()=>{if(!drag)apply();}).observe(main);apply();
+})();
+</script>
 <script id="pro-ui">
 'use strict';
 let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
-const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1600,quality:65}};
-const proControlIds=['proOptimize','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
+const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
+const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
 function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[]]));}
 function proInvalidate(message){
@@ -3775,7 +3954,8 @@ function readProOptions(){
   const crop=$('proCrop').checked, number=$('proNumber').checked;
   return {
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
-    grayscale:$('proGrayscale').checked,contrast:Number($('proContrast').value),whitePoint:Number($('proWhitePoint').value),
+    blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
+    rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
     deskew:$('proDeskew').checked,crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
     paper:$('proPaper').value,number,startNumber:number?proNumberInput('proStartNumber',1,999999,true):1,
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
@@ -3783,10 +3963,17 @@ function readProOptions(){
   };
 }
 function refreshProControls(){
+  $('proBWThresholdValue').value=$('proBWThreshold').value;
+  $('proBWThreshold').disabled=!$('proGrayscale').checked;
+  $('proContrast').disabled=$('proGrayscale').checked;$('proWhitePoint').disabled=$('proGrayscale').checked;
+  $('proRasterWarning').hidden=!$('proOptimize').checked||$('proCompressionMode').value!=='raster';
+  $('proCompressionMode').disabled=!$('proOptimize').checked;
   $('proQualityValue').value=$('proQuality').value+'%';
   $('proContrastValue').value=$('proContrast').value;
   $('proWhitePointValue').value=$('proWhitePoint').value;
   ['proPreset','proResolution','proQuality'].forEach(id=>$(id).disabled=!$('proOptimize').checked);
+  $('proQuality').disabled=!$('proOptimize').checked||$('proGrayscale').checked;
+  $('proPreserveText').textContent=$('proOptimize').checked&&$('proCompressionMode').value==='raster'?'페이지 전체를 이미지로 압축합니다. 결과에는 검색·복사·링크·양식이 유지되지 않습니다.':'기존 텍스트와 검색 정보를 유지하며 이미지와 페이지 설정을 조정합니다.';
   ['Top','Right','Bottom','Left'].forEach(s=>$('proCrop'+s).disabled=!$('proCrop').checked);
   ['proStartNumber','proSkipPages','proNumberPosition'].forEach(id=>$(id).disabled=!$('proNumber').checked);
 }
@@ -3804,16 +3991,8 @@ function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);p
 async function processProDoc(doc,options,pageOffset){
   const signal=proAbort.signal;
   checkProAbort();
-  const deskew=await PDFDeskew.processDocument(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,onProgress:n=>{progress(20+n*20);busy(true,'스캔 기울기를 분석하는 중…');}});
-  checkProAbort();
-  const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>{
-    const fraction=typeof info==='number'?info:(info?.total ? info.completed/info.total : 1);
-    progress(40+fraction*25);
-    busy(true,'이미지를 최적화하고 보정하는 중…');
-  }});
-  checkProAbort();busy(true,'페이지 설정을 적용하는 중…');
-  await PDFProDocument.applyDocument(doc,options,{pageOffset,signal,onProgress:n=>progress(65+n*15)});
-  checkProAbort();return {...report,deskew,settings:describeProSettings(options,report,deskew)};
+  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
+  checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
 }
 async function verifyProText(before,after,signal,quiet=false){
   let a,b;
@@ -3847,17 +4026,19 @@ function describeProSettings(o,report,deskew,offset){
   if(o.deskew)applied.push(offset===undefined?`기울기 ${deskew.changed}쪽 보정`:deskew.pages[0]?.angle?`기울기 ${Math.abs(deskew.pages[0].angle).toFixed(1)}° 보정`:`기울기 유지 · ${deskew.pages[0]?.reason||'변경 없음'}`);
   if(o.crop&&o.margins.some(n=>n>0))applied.push('여백 재단');
   if(o.paper==='a4')applied.push('A4 맞춤');
-  const scan=o.grayscale||o.contrast>0||o.whitePoint<255;
+  if(o.rasterize)applied.push('페이지 전체 압축 · 검색·복사 불가');
+  const scan=o.blackWhite||o.grayscale||o.contrast>0||o.whitePoint<255;
   if(scan){
-    if(report.changed){if(o.grayscale)applied.push('회색조');if(o.contrast>0)applied.push(`대비 +${o.contrast}`);if(o.whitePoint<255)applied.push(`흰 배경 ${o.whitePoint}`);}
+    if(report.changed){if(o.blackWhite)applied.push('B&W 흑백');else if(o.grayscale)applied.push('회색조');if(o.contrast>0)applied.push(`대비 +${o.contrast}`);if(o.whitePoint<255)applied.push(`흰 배경 ${o.whitePoint}`);}
     else applied.push(report.imageCount?'스캔 보정: 변경된 이미지 없음':'스캔 보정: 이미지 없음 (텍스트·벡터 유지)');
   }
-  if(o.optimize)applied.push(`이미지 최적화 ${report.changed}개 변경`);
+  if(o.optimize)applied.push(o.rasterize?`${report.changed}쪽 압축`:`이미지 ${report.changed}개 압축·보정`);
   return applied.join(' · ')||'원본 설정';
 }
 function proSummary(report,textCheck){
-  const lines=[`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
-  if(textCheck.characters)lines.push(`기존 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
+  const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
+  if(textCheck.rasterized)lines.push('페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
+  else if(textCheck.characters)lines.push(`기존 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
   else lines.push('원래 검색 가능한 텍스트가 없는 문서입니다.');
   if(report.settings)lines.unshift(report.settings);
   if(report.deskew?.pages.length){
@@ -3882,21 +4063,21 @@ async function createProResult(){
     // content streams created while baking the user's Basic annotations.
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
-    const candidate=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
     const result=PDFProResult.selectOutput(before,candidate,options,original);
     const bytes=result.bytes;
-    const textCheck=await verifyProText(before,bytes,proAbort.signal);checkProAbort();
+    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal);checkProAbort();
     proResult={bytes,fingerprint};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
     const change=result.reduction;
     $('proReduction').textContent=Math.abs(change)<.1 ? '현재 설정으로는 용량이 거의 줄지 않습니다.' : change>0 ? `${change.toFixed(1)}% 절감 · ${formatBytes(result.reference.length-bytes.length)}` : `${(-change).toFixed(1)}% 증가 · 보정·페이지 설정이 반영됐어요`;
     const imageShare=Math.min(100,report.originalImageBytes/result.reference.length*100);
-    let composition=`이미지 ${report.imageCount}개 · ${formatBytes(report.originalImageBytes)} · 전체 용량의 ${imageShare.toFixed(1)}%`;
-    if(imageShare<10)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다.';
+    let composition=`입력 이미지 ${report.sourceImageCount??report.imageCount}개 · ${formatBytes(report.originalImageBytes)} · 전체 용량의 ${imageShare.toFixed(1)}%`;
+    if(imageShare<10&&!report.rasterized)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다. 더 큰 절감이 필요하면 페이지 전체 압축을 선택해 보세요.';
     if(result.structureSaved)composition+=`\nPDF 구조 정리로 ${formatBytes(result.structureSaved)} 절감한 내역을 포함합니다.`;
     $('proComposition').textContent=composition;
-    const outputReport=result.retained?{...report,changed:0,skipped:report.imageCount,settings:'추가 압축으로 더 줄지 않아 변경 전 파일 유지',notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
+    const outputReport=result.retained?{...report,rasterized:false,changed:0,skipped:report.imageCount,settings:'추가 압축으로 더 줄지 않아 변경 전 파일 유지',notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
     $('proReport').textContent=proSummary(outputReport,textCheck);$('proResult').hidden=false;
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     $('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -3925,7 +4106,7 @@ setProMode(savedProMode);
 </script>
 <!-- pro-runtime:end -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 3.6">v3.6</span>
+<span class="app-version" aria-label="버전 3.7">v3.7</span>
 <!-- app-version:end -->
 </body>
 </html>
