@@ -818,6 +818,64 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
 #proResult{scroll-margin:20px}#proReport{white-space:pre-line;overflow-wrap:anywhere}#proFilename{width:100%}.result-stale{opacity:.6}
 @media(max-width:880px){.pro-mobile-switch:not([hidden]){display:flex;gap:6px}.pro-mobile-switch button{padding:6px 10px;border-radius:6px;border:1px solid var(--line);font-size:12px}.pro-mobile-switch button[aria-pressed=true]{background:var(--accent-wash);color:var(--accent-ink);border-color:var(--accent-line)}#proCompare{width:96vw;height:90vh;border-radius:8px}.compare-head{padding:14px}.compare-toolbar{padding:8px 14px}.compare-scroll{padding:8px}.compare-grid h3{padding:8px;font-size:12px}.compare-note{padding:10px 14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+/* Document markup: a quiet tool strip with separate stroke and fill controls. */
+.anno-bar{display:flex;flex-direction:column;align-items:stretch;padding:0;gap:0}
+.annotation-tools{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.annotation-tools .ab-group{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);padding:3px;border-radius:5px}
+.annotation-tools .ab-tool{width:auto;min-width:32px;height:32px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;border-radius:3px;background:transparent;color:var(--ink-2)}
+.annotation-tools .ab-tool span{font-size:11px;white-space:nowrap}
+.annotation-tools .ab-tool .ic{width:16px;height:16px;stroke-width:1.6}
+.annotation-tools .ab-tool.active{background:var(--surface);color:var(--accent-ink);box-shadow:0 1px 3px #0002}
+.annotation-actions{display:flex;align-items:center;gap:4px}
+.annotation-actions .btn{height:30px;font-size:11px}
+.annotation-properties{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 14px;background:var(--surface)}
+.annotation-property-group{display:flex;align-items:center;gap:8px;min-height:28px}
+.property-label{font-size:11px;font-weight:600;color:var(--ink-2);min-width:32px}
+.annotation-properties .swatch{width:25px;height:25px;border-radius:3px;padding:3px;border:1px solid var(--line-2);background:var(--surface)}
+.annotation-properties input[type=color]{width:100%;height:100%;padding:0;cursor:pointer}
+.annotation-properties input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.annotation-properties input[type=color]::-webkit-color-swatch{border:0;border-radius:1px}
+.stroke-width{display:flex;align-items:center;border:1px solid var(--line);border-radius:3px;height:27px;padding-right:7px;gap:3px;font-size:11px;color:var(--ink-3)}
+.stroke-width #annoWidth{width:43px;border:0;background:transparent;height:25px;font-size:12px;padding:0 4px;color:var(--ink)}
+.fill-opacity{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.fill-opacity #annoOpacity{width:76px;accent-color:var(--accent)}
+.fill-opacity output{font-size:11px;min-width:29px;font-variant-numeric:tabular-nums}
+.annotation-hint{padding:10px 14px;font-size:11px;color:var(--ink-2)}
+/* Pro dedicates the working area to a complete page beside its settings. */
+body[data-mode=pro] #previewPanel,body[data-mode=pro] #divider{display:none!important}
+body[data-mode=pro] main{display:grid!important;grid-template-columns:minmax(0,1fr) var(--pro-width);grid-template-rows:minmax(0,1fr)}
+body[data-mode=pro] #boardWrap,body[data-mode=pro] #empty{grid-column:1;grid-row:1;min-width:0}
+body[data-mode=pro] #proPanel{grid-column:2;grid-row:1;width:var(--pro-width)}
+body[data-mode=pro].pro-preview-open #boardWrap{display:none!important}
+#proCompare{position:relative;inset:auto;grid-column:1;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
+#proCompare[hidden]{display:none!important}
+#proCompare .compare-head{padding:12px 20px;background:var(--surface);gap:12px;flex:none}
+.compare-head h2{font-size:14px;font-weight:600}.compare-head p{font-size:11px;color:var(--ink-3);margin-top:3px}
+.compare-navigation{display:flex;align-items:center;gap:4px}.compare-navigation .btn{font-size:22px}
+.compare-toolbar{padding:9px 20px;flex:none;min-height:44px;font-size:11px;flex-wrap:wrap}.compare-toolbar label{display:flex;align-items:center;gap:6px;white-space:nowrap}.compare-toolbar select{color:var(--ink);font-size:11px;background:var(--surface)}
+.compare-stage{position:relative;flex:1;min-height:0;overflow:hidden}
+.compare-stage .compare-scroll{position:absolute;inset:0;padding:20px;display:flex;align-items:flex-start;justify-content:flex-start;overflow:auto;background:var(--sheet)}
+.compare-stage canvas{display:block;flex:none;margin:auto;box-shadow:0 2px 6px #0002,0 14px 36px -12px #0005}
+.compare-original{opacity:0;pointer-events:none;transition:opacity .12s}
+.show-original .compare-original{opacity:1;pointer-events:auto}
+#compareOriginal{position:absolute;right:18px;bottom:16px;z-index:2;background:var(--surface);color:var(--ink);border-color:var(--line-2);box-shadow:var(--sh-2);font-size:12px}
+#compareOriginal[aria-pressed=true]{background:var(--accent-wash);color:var(--accent-ink)}
+.compare-note{flex:none;min-height:38px;margin:0;font-size:11px;line-height:1.6;padding:9px 20px;background:var(--surface);border-top:1px solid var(--line)}
+#proCompare[aria-busy=true] #compareState{color:var(--accent-ink)}
+#proCompare[data-error=true] #compareState{color:var(--danger)}
+body[data-mode=pro] #actionBar{display:none!important}
+@media(max-width:880px){
+ body[data-mode=pro] main{display:flex!important;flex-direction:column}
+ body[data-mode=pro] #proPanel{width:100%;flex:1;min-height:0;padding-bottom:0}
+ body[data-mode=pro].pro-preview-open #proCompare{display:flex!important;flex:1;min-height:0}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proCompare{flex:0 0 40%;min-height:170px}
+ body[data-mode=pro] #proCompare .compare-head{padding:6px 12px}
+ body[data-mode=pro] .compare-toolbar{padding:5px 12px;min-height:32px}
+ body[data-mode=pro] .compare-note{padding:6px 12px;font-size:10px;min-height:0;max-height:46px;overflow:auto}
+ body[data-mode=pro] .compare-navigation .btn{height:27px;width:27px}
+ #compareOriginal{right:9px;bottom:8px;height:29px;font-size:11px}
+ .annotation-tools{padding:8px;gap:6px}.annotation-tools .ab-tool{padding:0 6px}.annotation-tools .ab-tool span{font-size:10px}.annotation-properties{padding:8px 10px;gap:8px}
+}
 </style>
 <!-- pro-styles:end -->
 </head>
@@ -944,41 +1002,37 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
     </div>
 
     <div class="anno-bar" id="annoBar" hidden>
-      <div class="ab-group" role="group" aria-label="강조 도구">
-        <button class="ab-tool active" data-tool="none" title="선택 / 이동"><svg class="ic"><use href="#i-cursor"/></svg></button>
-        <button class="ab-tool" data-tool="rect" title="사각형"><svg class="ic"><use href="#i-rect"/></svg></button>
-        <button class="ab-tool" data-tool="ellipse" title="타원"><svg class="ic"><use href="#i-ellipse"/></svg></button>
-        <button class="ab-tool" data-tool="cloud" title="클라우드 마크"><svg class="ic"><use href="#i-cloud"/></svg></button>
-        <button class="ab-tool" data-tool="image" title="사진 넣기 — 페이지 위에 붙입니다"><svg class="ic"><use href="#i-stamp"/></svg></button>
+      <div class="annotation-tools" role="toolbar" aria-label="문서 마크업">
+        <div class="ab-group" role="group" aria-label="도형과 이미지">
+          <button class="ab-tool active" data-tool="none" title="선택 및 이동" aria-label="선택 및 이동"><svg class="ic"><use href="#i-cursor"/></svg><span>선택</span></button>
+          <button class="ab-tool" data-tool="rect" title="사각형" aria-label="사각형"><svg class="ic"><use href="#i-rect"/></svg><span>사각형</span></button>
+          <button class="ab-tool" data-tool="ellipse" title="타원" aria-label="타원"><svg class="ic"><use href="#i-ellipse"/></svg><span>타원</span></button>
+          <button class="ab-tool" data-tool="cloud" title="수정 구름" aria-label="수정 구름"><svg class="ic"><use href="#i-cloud"/></svg><span>수정 구름</span></button>
+          <button class="ab-tool" data-tool="image" title="이미지 삽입" aria-label="이미지 삽입"><svg class="ic"><use href="#i-photo"/></svg><span>이미지</span></button>
+        </div>
+        <div class="annotation-actions">
+          <button class="btn quiet icon" id="annoDel" disabled title="선택한 마크업 삭제" aria-label="선택한 마크업 삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
+          <button class="btn quiet" id="annoClear" disabled title="페이지 마크업 모두 삭제">모두 지우기</button>
+        </div>
       </div>
-
-      <span class="ab-sep"></span>
-      <div class="ab-field" title="테두리색"><span>선</span>
-        <span class="swatch"><input type="color" id="annoStroke" value="#BF342E" aria-label="테두리색"></span>
+      <div id="annoProperties" class="annotation-properties">
+        <div class="annotation-property-group" role="group" aria-label="테두리 설정">
+          <span class="property-label">테두리</span>
+          <span class="swatch"><input type="color" id="annoStroke" value="#BF342E" aria-label="테두리 색상"></span>
+          <label class="stroke-width"><input type="number" id="annoWidth" min="0.5" max="12" step="0.5" value="2" aria-label="테두리 두께"><span>pt</span></label>
+          <div class="ab-dash" role="group" aria-label="선 종류">
+            <button class="ab-dbtn active" data-dash="solid" title="실선" aria-label="실선"><svg viewBox="0 0 22 8"><path d="M1 4h20"/></svg></button>
+            <button class="ab-dbtn" data-dash="dashed" title="파선" aria-label="파선"><svg viewBox="0 0 22 8"><path d="M1 4h5M9 4h5M17 4h4"/></svg></button>
+          </div>
+        </div>
+        <div class="annotation-property-group" role="group" aria-label="채움 설정">
+          <span class="property-label">채움</span>
+          <span class="swatch" id="fillSwatch"><input type="color" id="annoFill" value="#FFE082" aria-label="채움 색상"></span>
+          <button class="ab-nofill" id="annoNoFill" title="채움 없음" aria-label="채움 없음" aria-pressed="false"><svg class="ic"><use href="#i-drop"/></svg></button>
+          <label class="fill-opacity"><input type="range" id="annoOpacity" min="0" max="100" step="5" value="35" aria-label="채움 불투명도"><output id="annoOpacityVal">35%</output></label>
+        </div>
       </div>
-      <div class="ab-field" title="채우기색"><span>면</span>
-        <span class="swatch" id="fillSwatch"><input type="color" id="annoFill" value="#FFE082" aria-label="채우기색"></span>
-        <button class="ab-nofill" id="annoNoFill" title="채우기 없음"><svg class="ic"><use href="#i-drop"/></svg></button>
-      </div>
-
-      <span class="ab-sep"></span>
-      <div class="ab-field" title="선 두께"><span>두께</span>
-        <input type="number" id="annoWidth" min="0.5" max="12" step="0.5" value="2" aria-label="선 두께(pt)">
-      </div>
-      <div class="ab-dash" role="group" aria-label="선 종류">
-        <button class="ab-dbtn active" data-dash="solid" title="실선"><svg viewBox="0 0 22 8"><path d="M1 4h20"/></svg></button>
-        <button class="ab-dbtn" data-dash="dashed" title="파선"><svg viewBox="0 0 22 8"><path d="M1 4h5M9 4h5M17 4h4"/></svg></button>
-      </div>
-
-      <span class="ab-sep"></span>
-      <div class="ab-field" title="불투명도"><span>농도</span>
-        <input type="range" id="annoOpacity" min="10" max="100" step="5" value="35" aria-label="불투명도">
-        <output id="annoOpacityVal">35%</output>
-      </div>
-
-      <span class="ab-sep"></span>
-      <button class="btn danger" id="annoDel" disabled title="선택한 강조 삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
-      <button class="btn" id="annoClear" disabled title="이 페이지 강조 전체 삭제">전체 지우기</button>
+      <p id="annoImageHint" class="annotation-hint" hidden>드래그하여 이미지를 배치하고, 모서리로 크기를 조절하세요.</p>
     </div>
 
     <div class="pv-body" id="pvBody">
@@ -1016,6 +1070,14 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
       </div>
     </div>
   </div>
+<!-- pro-dialog:start -->
+<section id="proCompare" class="live-preview" aria-labelledby="compareTitle" hidden>
+<header class="compare-head"><div><h2 id="compareTitle">페이지 미리보기</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
+<div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
+<div class="compare-stage" id="compareStage"><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter" aria-label="Pro 설정 적용 결과"></canvas></div><div class="compare-scroll compare-original" id="compareBeforeScroll" aria-hidden="true"><canvas id="compareBefore" aria-label="Pro 적용 전 편집본"></canvas></div><button class="btn" id="compareOriginal" aria-pressed="false" title="마우스를 올리거나 눌러 원본 보기" disabled><svg class="ic"><use href="#i-eye"/></svg>원본 보기</button></div>
+<p class="compare-note" id="compareNote">설정 변경을 자동으로 반영합니다.</p>
+</section>
+<!-- pro-dialog:end -->
 <!-- pro-panel:start -->
 <aside class="pro-panel" id="proPanel" aria-labelledby="proPanelTitle" hidden>
     <div class="pro-panel-head">
@@ -1096,8 +1158,8 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
 
     <div class="pro-panel-footer">
       <p class="pro-status" id="proStatus" role="status" aria-live="polite">파일을 추가하면 시작할 수 있어요.</p>
-      <div class="pro-footer-actions"><button class="btn" id="proPreview" disabled><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>선택 페이지 비교</button><button class="btn primary" id="proExport" disabled>결과 만들기<svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></button></div>
-      <p class="pro-footer-hint">설정은 결과 PDF를 만들 때 적용됩니다.</p>
+      <div class="pro-footer-actions"><button class="btn" id="proPreview" disabled><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span id="proPreviewLabel">미리보기 닫기</span></button><button class="btn primary" id="proExport" disabled>결과 만들기<svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></button></div>
+      <p class="pro-footer-hint">설정은 미리보기에 자동 반영됩니다. 결과를 만들어 저장하세요.</p>
     </div>
   </aside>
 <!-- pro-panel:end -->
@@ -1144,14 +1206,6 @@ body[data-mode="pro"] #colsCtrl{display:none!important}
 </div>
 
 <div id="modal"><button class="close" id="modalClose"><svg class="ic lg"><use href="#i-x"/></svg></button><div class="frame"><canvas id="modalCanvas"></canvas></div></div>
-<!-- pro-dialog:start -->
-<dialog id="proCompare" aria-labelledby="compareTitle">
-  <header class="compare-head"><div><p class="eyebrow">BEFORE / AFTER</p><h2 id="compareTitle">선택 페이지 비교</h2></div><button class="btn icon" id="compareClose" aria-label="비교 닫기"><svg class="ic"><use href="#i-x"/></svg></button></header>
-  <div class="compare-toolbar"><span id="comparePageLabel"></span><label>확대 <select id="compareZoom"><option value="1">화면에 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
-  <div class="compare-grid"><section><h3>원본 편집본</h3><div class="compare-scroll" id="compareBeforeScroll"><canvas id="compareBefore"></canvas></div></section><section><h3>Pro 적용 후</h3><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter"></canvas></div></section></div>
-  <p class="compare-note" id="compareNote">두 화면의 스크롤이 함께 움직입니다.</p>
-</dialog>
-<!-- pro-dialog:end -->
 <div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button></div></div>
 <input type="file" id="fileInput" accept="application/pdf,.pdf,image/*" multiple hidden>
 <input type="file" id="stampInput" accept="image/*" hidden>
@@ -1465,6 +1519,10 @@ function syncCounts(){
 
   ['btnRotL','btnRotR','btnDel','mbRotL','mbRotR','mbDel'].forEach(id => $(id).disabled = n === 0);
   ['btnAll','btnSave','btnReset','mbSave'].forEach(id => $(id).disabled = !any);
+  const all = any && n === pages.length;
+  $('btnAll').lastChild.textContent = all ? '전체 해제' : '전체 선택';
+  $('mbAll').textContent = all ? '전체 해제' : '전체';
+  for(const id of ['btnAll','mbAll']) $(id).setAttribute('aria-pressed',String(all));
   const stat = $('infoDesktop').querySelectorAll('.stat-row b')[2];
   if(stat) stat.textContent = n;
   const stat2 = $('infoMobile').querySelectorAll('.stat-row b')[2];
@@ -1551,6 +1609,8 @@ async function showPreview(p){
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
   setPvTitle(p);
+  if(typeof syncLivePreview === 'function') syncLivePreview();
+  if(document.body.dataset.mode === 'pro') return;
   if(!previewVisible()) return;               // 안 보이면 렌더링 비용을 쓰지 않는다
 
   $('pvPlaceholder').hidden = true;
@@ -1561,6 +1621,7 @@ async function showPreview(p){
   const page = await d.pdfjsDoc.getPage(p.srcIndex + 1);
   if(my !== pvToken) return;
 
+  $('annoBar').hidden = false;
   const box = $('pvBody').getBoundingClientRect();
   const rot = (page.getViewport({ scale: 1 }).rotation + p.rotation) % 360;
   const probe = page.getViewport({ scale: 1, rotation: rot });
@@ -1684,7 +1745,7 @@ function annoToSVG(a, w, h){
   el.setAttribute('fill', a.fill || 'none');
   el.setAttribute('fill-opacity', a.fill ? a.opacity : 0);
   el.setAttribute('stroke', a.stroke);
-  el.setAttribute('stroke-opacity', a.opacity);
+  el.setAttribute('stroke-opacity', 1);
   el.setAttribute('stroke-width', sw);
   if(dash) el.setAttribute('stroke-dasharray', dash);
   el.setAttribute('class','anno'); el.dataset.uid = a.id;
@@ -1714,6 +1775,7 @@ function renderAnnots(){
   }
   $('annoDel').disabled = !selAnno;
   $('annoClear').disabled = list.length === 0;
+  syncAnnotationControls();
 }
 
 /* ── 오버레이 포인터: 그리기 / 선택 / 이동 / 리사이즈 ── */
@@ -1734,6 +1796,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     }else if(e.target.classList && e.target.classList.contains('anno')){
       selAnno = e.target.dataset.uid;
       const a = curAnnots().find(x => x.id === selAnno);
+      if(a.shape !== 'image'){ Object.assign(annoStyle,{stroke:a.stroke,fill:a.fill,lineWidth:a.lineWidth,dash:a.dash,opacity:a.opacity}); }
       drag = { mode:'move', a, ox: pt.x - a.nx*w, oy: pt.y - a.ny*h };
       renderAnnots();
     }else{ selAnno = null; renderAnnots(); }
@@ -2029,6 +2092,7 @@ document.addEventListener('drop', e => {
 
 /* ── 전체화면 보기 ── */
 async function preview(p){
+  if(document.body.dataset.mode === 'pro'){ previewUid=p.uid;setLivePreviewOpen(true);return; }
   const pdf = docs.get(p.docId).pdfjsDoc;
   const page = await pdf.getPage(p.srcIndex + 1);
   const base = page.getViewport({ scale: 1 });
@@ -2082,7 +2146,7 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
     const s = hexToRgb(a.stroke), f = a.fill ? hexToRgb(a.fill) : null;
     const sColor = rgb(s.r,s.g,s.b), fColor = f ? rgb(f.r,f.g,f.b) : undefined;
     const dash = a.dash === 'dashed' ? [a.lineWidth*3, a.lineWidth*2] : undefined;
-    const common = { borderColor:sColor, borderWidth:a.lineWidth, borderOpacity:a.opacity,
+    const common = { borderColor:sColor, borderWidth:a.lineWidth, borderOpacity:1,
       color:fColor, opacity: f ? a.opacity : undefined, borderDashArray:dash };
 
     if(a.shape === 'ellipse'){
@@ -2090,7 +2154,7 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
     }else if(a.shape === 'cloud'){
       const r = cloudRadius(W, H);
       const { start, segs } = cloudSamples(X, Y, W, H, r);
-      const gs = outDoc.context.obj({ Type:'ExtGState', ca:(f ? a.opacity : 0), CA:a.opacity });
+      const gs = outDoc.context.obj({ Type:'ExtGState', ca:(f ? a.opacity : 0), CA:1 });
       const gsName = pg.node.newExtGState('GSa'+(annoUidSeq++), outDoc.context.register(gs));
       const ops = [ pushGraphicsState(), setGraphicsState(gsName),
         setLineWidth(a.lineWidth), setStrokingColor(sColor) ];
@@ -2175,7 +2239,8 @@ $('fileInput').onchange = e => { loadFiles(e.target.files); e.target.value = '';
 
 const selectAll = () => { pages.forEach(p => p.el.classList.add('selected')); syncCounts(); };
 const selectNone = () => { pages.forEach(p => p.el.classList.remove('selected')); lastClicked = null; syncCounts(); };
-$('btnAll').onclick = $('mbAll').onclick = selectAll;
+const toggleAll = () => selected().length === pages.length ? selectNone() : selectAll();
+$('btnAll').onclick = $('mbAll').onclick = toggleAll;
 $('mbNone').onclick = selectNone;
 $('btnDel').onclick = $('mbDel').onclick = () => remove(selected());
 $('btnRotL').onclick = $('mbRotL').onclick = () => rotate(selected(), -90);
@@ -2247,12 +2312,30 @@ $('drawerTab').onclick = () => $('drawer').classList.toggle('open');
 $('btnInfo').onclick = () => { renderInfo(); $('sheet').classList.add('open'); };
 $('sheetScrim').onclick = () => $('sheet').classList.remove('open');
 
+function syncAnnotationControls(){
+  const a=curAnnots().find(x=>x.id===selAnno);
+  const imageSelected=a?.shape==='image'||annoStyle.tool==='image';
+  $('annoProperties').hidden=imageSelected;
+  $('annoImageHint').hidden=!imageSelected;
+  $('annoStroke').value=annoStyle.stroke;
+  if(annoStyle.fill) $('annoFill').value=annoStyle.fill;
+  $('annoNoFill').classList.toggle('on',!annoStyle.fill);
+  $('annoNoFill').setAttribute('aria-pressed',String(!annoStyle.fill));
+  $('fillSwatch').classList.toggle('off',!annoStyle.fill);
+  $('annoWidth').value=annoStyle.lineWidth;
+  $('annoOpacity').value=Math.round(annoStyle.opacity*100);
+  $('annoOpacity').disabled=!annoStyle.fill;
+  $('annoOpacityVal').textContent=Math.round(annoStyle.opacity*100)+'%';
+  document.querySelectorAll('.ab-dbtn').forEach(b=>b.classList.toggle('active',b.dataset.dash===annoStyle.dash));
+  document.querySelectorAll('.ab-tool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===annoStyle.tool)));
+}
 /* 강조 툴바 */
 function setTool(t){
   annoStyle.tool = t;
   if(t !== 'image') pendingStamp = null;
   document.querySelectorAll('.ab-tool').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
   $('pvOverlay').classList.toggle('draw', t !== 'none');
+  syncAnnotationControls();
 }
 document.querySelectorAll('.ab-tool').forEach(b => b.onclick = () => {
   const t = b.dataset.tool;
@@ -2284,9 +2367,10 @@ $('annoOpacity').oninput = e => {
   applyStyleToSelected();
 };
 function applyStyleToSelected(){
+  syncAnnotationControls();
   if(!selAnno) return;
   const a = curAnnots().find(x => x.id === selAnno); if(!a) return;
-  if(a.shape === 'image'){ a.opacity = annoStyle.opacity; renderAnnots(); return; }
+  if(a.shape === 'image') return;
   a.stroke = annoStyle.stroke; a.fill = annoStyle.fill; a.lineWidth = annoStyle.lineWidth;
   a.dash = annoStyle.dash; a.opacity = annoStyle.opacity;
   renderAnnots();
@@ -3317,9 +3401,148 @@ DEALINGS IN THE FONT SOFTWARE.
   globalThis.PDFProDocument={applyDocument,geometry,visibleBox,displayToPdf};
 })();
 </script>
+<script id="pro-live-preview">
+'use strict';
+// Serial jobs and a generation token keep stale processing off the screen.
+let proPreviewOpen=true, liveTimer, liveController=null, liveSequence=0;
+let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false;
+let originalHover=false, originalPinned=false;
+const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
+function liveKey(){
+  return JSON.stringify([proFingerprint(),livePage()?.uid,proControlIds.map(id=>{
+    const el=$(id);return el.type==='checkbox'?el.checked:el.value;
+  }),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
+}
+function cancelLivePreview(){
+  clearTimeout(liveTimer);liveSequence++;liveController?.abort();liveRequestedKey='';
+}
+function showOriginal(){
+  const show=!$('compareOriginal').disabled&&(originalHover||originalPinned);
+  $('compareStage').classList.toggle('show-original',show);
+  $('compareOriginal').setAttribute('aria-pressed',String(show));
+  $('compareBeforeScroll').setAttribute('aria-hidden',String(!show));
+  $('compareAfterScroll').setAttribute('aria-hidden',String(show));
+}
+function setLivePreviewOpen(open){
+  proPreviewOpen=open;
+  if(open&&isMobile())setProView('workspace');
+  syncLivePreview();
+}
+function syncLivePreview(){
+  if(!proReady)return;
+  const any=pages.length>0;
+  if(any&&!liveHadPages)proPreviewOpen=true;
+  liveHadPages=any;
+  const visible=proMode==='pro'&&any&&proPreviewOpen;
+  $('proCompare').hidden=!visible;
+  document.body.classList.toggle('pro-preview-open',visible);
+  $('proPreview').setAttribute('aria-pressed',String(visible));
+  $('proPreviewLabel').textContent=visible?'미리보기 닫기':'페이지 미리보기';
+  if(proMode==='pro'&&isMobile()){
+    $('segBoard').classList.toggle('on',!visible);$('segPreview').classList.toggle('on',visible);
+    $('segBoard').setAttribute('aria-selected',String(!visible));$('segPreview').setAttribute('aria-selected',String(visible));
+  }
+  if(proMode==='pro'){
+    $('btnPreview').setAttribute('aria-pressed',String(visible));
+    $('btnPreview').title=visible?'미리보기 닫기':'페이지 미리보기';
+    $('btnPreview').classList.toggle('active',visible);
+  }
+  if(!visible||proAbort){cancelLivePreview();return;}
+  const index=pages.indexOf(livePage());
+  $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
+  if(liveKey()!==liveRequestedKey)scheduleLivePreview();
+}
+function scheduleLivePreview(){
+  if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort)return;
+  cancelLivePreview();liveRequestedKey=liveKey();
+  const seq=liveSequence;
+  $('compareState').textContent='변경 사항 반영 중…';
+  $('proCompare').setAttribute('aria-busy','true');
+  $('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();
+  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},300);
+}
+async function liveCanvas(pdf,factor){
+  const page=await pdf.getPage(1),base=page.getViewport({scale:1}),slot=$('compareAfterScroll');
+  const fit=Math.max(.05,Math.min((slot.clientWidth-40)/base.width,(slot.clientHeight-40)/base.height));
+  const scale=Math.min(8,fit*factor),dpr=Math.min(devicePixelRatio||1,2);
+  const vp=page.getViewport({scale:scale*dpr}),canvas=document.createElement('canvas');
+  canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
+  canvas.style.width=base.width*scale+'px';canvas.style.height=base.height*scale+'px';
+  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  return canvas;
+}
+async function updateLivePreview(seq){
+  if(seq!==liveSequence)return;
+  const controller=new AbortController();liveController=controller;
+  const signal=controller.signal,check=()=>{
+    if(signal.aborted||seq!==liveSequence)throw new DOMException('Superseded','AbortError');
+  };
+  let loaded=[];
+  try{
+    const p=livePage(),offset=pages.indexOf(p),options=readProOptions();
+    const edited=await buildEditedDocument([p]);check();
+    const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
+    const doc=await PDFLib.PDFDocument.load(before);check();
+    const report=await PDFPro.processDocument(doc,options,{signal});check();
+    await PDFProDocument.applyDocument(doc,options,{pageOffset:offset,signal});check();
+    const after=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
+    await verifyProText(before,after,signal,true);check();
+    for(const data of [before,after]){loaded.push(await pdfjsLib.getDocument({data,...DOC_OPTS}).promise);check();}
+    const canvases=[];
+    for(const pdf of loaded){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value)));check();}
+    // Publish both detached canvases together, after all cancellation checks.
+    for(let i=0;i<2;i++){
+      const id=i?'compareAfter':'compareBefore',old=$(id),canvas=canvases[i];
+      canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);
+    }
+    const old=liveDocs;liveDocs=loaded;loaded=[];
+    await Promise.allSettled(old.map(d=>d.destroy()));check();
+    $('comparePageLabel').textContent=`${offset+1} / ${pages.length}페이지`;
+    $('compareState').textContent='미리보기 업데이트 완료';
+    $('compareOriginal').disabled=false;
+    let note='원본 보기에 마우스를 올려 비교하세요. 터치·키보드에서는 눌러 전환합니다.';
+    if(options.grayscale&&report.changed===0)note=report.imageCount===0?'이 페이지에는 보정할 이미지가 없습니다. 텍스트와 벡터 색상은 유지됩니다.':'변환 가능한 이미지가 없어 원본을 유지했습니다. '+report.notes.join(' ');
+    else if(report.skipped)note=`이미지 ${report.changed}개 반영 · ${report.skipped}개 원본 유지. `+report.notes.join(' ');
+    $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
+  }catch(e){
+    if(e.name!=='AbortError'&&seq===liveSequence){
+      $('compareState').textContent='미리보기를 업데이트하지 못했습니다';
+      $('compareNote').textContent=e.message;$('proCompare').setAttribute('data-error','true');
+    }
+  }finally{
+    await Promise.allSettled(loaded.map(d=>d.destroy()));
+    if(liveController===controller)liveController=null;
+    if(seq===liveSequence)$('proCompare').setAttribute('aria-busy','false');
+  }
+}
+$('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('segPreview'):$('proPreview')).focus();};
+$('comparePrev').onclick=()=>{const p=pages[pages.indexOf(livePage())-1];if(p)showPreview(p);};
+$('compareNext').onclick=()=>{const p=pages[pages.indexOf(livePage())+1];if(p)showPreview(p);};
+$('compareZoom').onchange=scheduleLivePreview;
+$('compareOriginal').addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){originalHover=true;showOriginal();}});
+$('compareOriginal').addEventListener('pointerleave',()=>{originalHover=false;showOriginal();});
+$('compareOriginal').onclick=()=>{originalPinned=!originalPinned;showOriginal();};
+$('compareOriginal').addEventListener('blur',()=>{originalPinned=false;showOriginal();});
+let liveScrollSync=false;
+for(const [a,b] of [['compareBeforeScroll','compareAfterScroll'],['compareAfterScroll','compareBeforeScroll']])$(a).addEventListener('scroll',()=>{
+  if(liveScrollSync)return;liveScrollSync=true;
+  const x=$(a),y=$(b);y.scrollTop=x.scrollTop/Math.max(1,x.scrollHeight-x.clientHeight)*Math.max(0,y.scrollHeight-y.clientHeight);y.scrollLeft=x.scrollLeft/Math.max(1,x.scrollWidth-x.clientWidth)*Math.max(0,y.scrollWidth-y.clientWidth);
+  requestAnimationFrame(()=>liveScrollSync=false);
+});
+const basicPreviewToggle=$('btnPreview').onclick;
+$('btnPreview').onclick=()=>proMode==='pro'?setLivePreviewOpen(!proPreviewOpen):basicPreviewToggle();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&proMode==='pro'&&proPreviewOpen&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))setLivePreviewOpen(false);
+});
+new ResizeObserver(()=>{if(proReady)syncLivePreview();}).observe($('compareStage'));
+
+const basicBoardTab=$('segBoard').onclick,basicPreviewTab=$('segPreview').onclick;
+$('segBoard').onclick=()=>{if(proMode==='pro'){setLivePreviewOpen(false);setProView('workspace');setMobileView('board');}else basicBoardTab();};
+$('segPreview').onclick=()=>{if(proMode==='pro'){setLivePreviewOpen(true);setMobileView('preview');}else basicPreviewTab();};
+</script>
 <script id="pro-ui">
 'use strict';
-let proMode='basic', proResult=null, proAbort=null, proCompareDocs=[];
+let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1600,quality:65}};
 const proControlIds=['proOptimize','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
@@ -3336,8 +3559,9 @@ function syncProState(){
   $('proOpen').hidden=any;
   $('proExport').disabled=!any||working; $('proPreview').disabled=!any||working;
   if(proResult && proResult.fingerprint!==proFingerprint()) proInvalidate('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.');
+  syncLivePreview();
   if(!any) $('proStatus').textContent='파일을 추가하면 시작할 수 있어요.';
-  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 먼저 한 페이지를 비교해 보세요.`;
+  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 설정 변경은 미리보기에 자동 반영됩니다.`;
 }
 function setProView(view){
   document.body.dataset.proView=view;
@@ -3356,6 +3580,7 @@ function setProMode(mode){
   if(mode==='pro' && isMobile()) setProView('settings'); else setProView('workspace');
   // Only a UI preference is stored. Documents and result bytes stay in memory.
   try{localStorage.setItem('pdfed-mode',mode);}catch(_){}
+  if(mode==='basic'){syncPreviewVisible();$('btnPreview').title='미리보기 표시 / 숨기기';}
   syncProState();
 }
 function proNumberInput(id,min,max,integer=false){
@@ -3386,10 +3611,11 @@ function refreshProControls(){
 }
 function resetProOptions(){
   for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}
-  refreshProControls();proInvalidate();syncProState();toast('Pro 설정을 초기화했습니다');
+  refreshProControls();proInvalidate();syncProState();scheduleLivePreview();toast('Pro 설정을 초기화했습니다');
 }
 function checkProAbort(){if(proAbort?.signal.aborted)throw new DOMException('취소했습니다.','AbortError');}
 function startProWork(label){
+  cancelLivePreview();
   proAbort=new AbortController();$('busyCancel').hidden=false;$('busyCancel').disabled=false;
   busy(true,label);syncProState();
 }
@@ -3406,7 +3632,7 @@ async function processProDoc(doc,options,pageOffset){
   await PDFProDocument.applyDocument(doc,options,{pageOffset,signal,onProgress:n=>progress(65+n*15)});
   checkProAbort();return report;
 }
-async function verifyProText(before,after,signal){
+async function verifyProText(before,after,signal,quiet=false){
   let a,b;
   try{
     a=await pdfjsLib.getDocument({data:before.slice(),...DOC_OPTS}).promise;
@@ -3422,7 +3648,7 @@ async function verifyProText(before,after,signal){
       const result=bt.items.map(x=>x.str||'').join('').replace(/\s/g,'');
       if(original && !result.includes(original))throw new Error(`${i}페이지의 기존 텍스트 보존을 확인하지 못했습니다. 페이지 재단을 줄이거나 원래 크기로 다시 시도해 주세요.`);
       characters+=original.length;checked++;
-      busy(true,`기존 텍스트 확인 중… ${i}/${a.numPages}`);progress(80+i/a.numPages*18);
+      if(!quiet){busy(true,`기존 텍스트 확인 중… ${i}/${a.numPages}`);progress(80+i/a.numPages*18);}
       await idle();
     }
     return {characters,checked};
@@ -3461,61 +3687,12 @@ async function createProResult(){
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
   }finally{finishProWork();}
 }
-async function renderComparePage(pdf,canvas,factor){
-  const page=await pdf.getPage(1), base=page.getViewport({scale:1});
-  const slot=canvas.parentElement;
-  const fit=Math.min((slot.clientWidth-32)/base.width,(slot.clientHeight-32)/base.height);
-  const cssScale=Math.max(.1,fit)*factor,dpr=Math.min(devicePixelRatio||1,2);
-  const vp=page.getViewport({scale:cssScale*dpr});
-  canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
-  canvas.style.width=base.width*cssScale+'px';canvas.style.height=base.height*cssScale+'px';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-}
-let compareRendering=false;
-async function drawCompare(){
-  if(proCompareDocs.length!==2||compareRendering)return;
-  compareRendering=true;$('compareZoom').disabled=true;
-  try{await Promise.all([renderComparePage(proCompareDocs[0],$('compareBefore'),Number($('compareZoom').value)),renderComparePage(proCompareDocs[1],$('compareAfter'),Number($('compareZoom').value))]);}
-  finally{compareRendering=false;$('compareZoom').disabled=false;}
-}
-async function compareProPage(){
-  if(!pages.length||document.body.classList.contains('is-busy'))return;
-  let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  const p=pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0], offset=pages.indexOf(p);
-  startProWork('선택 페이지를 준비하는 중…');await idle();
-  try{
-    const edited=await buildEditedDocument([p]);checkProAbort();
-    const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
-    const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
-    const report=await processProDoc(doc,options,offset);
-    const after=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
-    const checked=await verifyProText(before,after,proAbort.signal);checkProAbort();
-    const loaded=await Promise.allSettled([pdfjsLib.getDocument({data:before,...DOC_OPTS}).promise,pdfjsLib.getDocument({data:after,...DOC_OPTS}).promise]);
-    const fulfilled=loaded.filter(x=>x.status==='fulfilled').map(x=>x.value);
-    if(proAbort.signal.aborted||loaded.some(x=>x.status==='rejected')){
-      await Promise.allSettled(fulfilled.map(d=>d.destroy()));checkProAbort();
-      throw loaded.find(x=>x.status==='rejected').reason;
-    }
-    proCompareDocs=fulfilled;
-    $('comparePageLabel').textContent=`${offset+1} / ${pages.length}페이지`;
-    $('compareNote').textContent=`${report.changed}개 이미지 변경 · ${report.skipped}개 원본 유지. 두 화면의 스크롤이 함께 움직입니다.`;
-    $('compareZoom').value='1';$('proCompare').showModal();
-    await drawCompare();
-  }catch(e){
-    if(e.name==='AbortError')toast('비교를 취소했습니다.');else{console.error(e);toast(e.message||'페이지를 비교하지 못했습니다.',true);}
-  }finally{finishProWork();}
-}
-async function closeProCompare(){
-  $('proCompare').close();
-  const old=proCompareDocs;proCompareDocs=[];
-  await Promise.allSettled(old.map(d=>d.destroy()));
-}
 $('modeBasic').onclick=()=>setProMode('basic');$('modePro').onclick=()=>setProMode('pro');
 $('proWorkspace').onclick=()=>setProView('workspace');$('proSettings').onclick=()=>setProView('settings');
 $('proOpen').onclick=()=>pickFiles(false);
-$('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();};
-for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');});
-$('proReset').onclick=resetProOptions;$('proExport').onclick=createProResult;$('proPreview').onclick=compareProPage;
+$('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();scheduleLivePreview();};
+for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');scheduleLivePreview();});
+$('proReset').onclick=resetProOptions;$('proExport').onclick=createProResult;$('proPreview').onclick=()=>setLivePreviewOpen(!proPreviewOpen);
 $('proDownload').onclick=()=>{
   if(!proResult)return;
   if(proResult.fingerprint!==proFingerprint()){proInvalidate();syncProState();toast('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.',true);return;}
@@ -3524,14 +3701,6 @@ $('proDownload').onclick=()=>{
 };
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
 $('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';};
-$('compareClose').onclick=closeProCompare;$('proCompare').addEventListener('cancel',e=>{e.preventDefault();closeProCompare();});
-$('compareZoom').onchange=()=>drawCompare().catch(e=>toast(e.message,true));
-let compareSyncing=false;
-for(const [a,b] of [['compareBeforeScroll','compareAfterScroll'],['compareAfterScroll','compareBeforeScroll']])$(a).addEventListener('scroll',()=>{
-  if(compareSyncing)return;compareSyncing=true;
-  const x=$(a),y=$(b);y.scrollTop=x.scrollTop/Math.max(1,x.scrollHeight-x.clientHeight)*Math.max(0,y.scrollHeight-y.clientHeight);y.scrollLeft=x.scrollLeft/Math.max(1,x.scrollWidth-x.clientWidth)*Math.max(0,y.scrollWidth-y.clientWidth);
-  requestAnimationFrame(()=>compareSyncing=false);
-});
 proReady=true;refreshProControls();
 let savedProMode='basic';try{if(localStorage.getItem('pdfed-mode')==='pro')savedProMode='pro';}catch(_){}
 setProMode(savedProMode);

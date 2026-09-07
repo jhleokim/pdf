@@ -229,3 +229,29 @@ test('cancellation stops before mutation and unsupported streams are counted wit
   assert.ok(report.notes.length);
   assert.equal(doc.context.lookup(ref), stream);
 });
+
+test('grayscale transforms RGB pixels when optimization is off, without altering the source stream', async () => {
+  let encodedPixels;
+  globalThis.document={createElement(){
+    const canvas={width:0,height:0,pixels:null};
+    const context={
+      createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};},
+      putImageData(strip){canvas.pixels=strip.data.slice();},
+      drawImage(source){canvas.pixels=source.pixels.slice();},
+      getImageData(){return {data:canvas.pixels.slice()};}
+    };
+    canvas.getContext=()=>context;
+    canvas.toBlob=(cb,type)=>{encodedPixels=canvas.pixels.slice();cb(new Blob([new Uint8Array(12)],{type}));};
+    return canvas;
+  }};
+  try{
+    const doc=await P.PDFDocument.create();
+    const colors=Uint8Array.from([255,0,0,0,255,0,0,0,255,255,255,255]);
+    const [ref,source]=image(doc,{Width:4,Height:1},colors);
+    const report=await engine.processDocument(doc,{optimize:false,grayscale:true});
+    assert.equal(report.changed,1);
+    assert.deepEqual([...encodedPixels],[54,54,54,255,182,182,182,255,18,18,18,255,255,255,255,255]);
+    assert.deepEqual([...source.getContents()],[...colors]);
+    assert.notEqual(doc.context.lookup(ref),source);
+  }finally{delete globalThis.document;}
+});

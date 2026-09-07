@@ -235,6 +235,10 @@ function syncCounts(){
 
   ['btnRotL','btnRotR','btnDel','mbRotL','mbRotR','mbDel'].forEach(id => $(id).disabled = n === 0);
   ['btnAll','btnSave','btnReset','mbSave'].forEach(id => $(id).disabled = !any);
+  const all = any && n === pages.length;
+  $('btnAll').lastChild.textContent = all ? '전체 해제' : '전체 선택';
+  $('mbAll').textContent = all ? '전체 해제' : '전체';
+  for(const id of ['btnAll','mbAll']) $(id).setAttribute('aria-pressed',String(all));
   const stat = $('infoDesktop').querySelectorAll('.stat-row b')[2];
   if(stat) stat.textContent = n;
   const stat2 = $('infoMobile').querySelectorAll('.stat-row b')[2];
@@ -321,6 +325,8 @@ async function showPreview(p){
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
   setPvTitle(p);
+  if(typeof syncLivePreview === 'function') syncLivePreview();
+  if(document.body.dataset.mode === 'pro') return;
   if(!previewVisible()) return;               // 안 보이면 렌더링 비용을 쓰지 않는다
 
   $('pvPlaceholder').hidden = true;
@@ -331,6 +337,7 @@ async function showPreview(p){
   const page = await d.pdfjsDoc.getPage(p.srcIndex + 1);
   if(my !== pvToken) return;
 
+  $('annoBar').hidden = false;
   const box = $('pvBody').getBoundingClientRect();
   const rot = (page.getViewport({ scale: 1 }).rotation + p.rotation) % 360;
   const probe = page.getViewport({ scale: 1, rotation: rot });
@@ -454,7 +461,7 @@ function annoToSVG(a, w, h){
   el.setAttribute('fill', a.fill || 'none');
   el.setAttribute('fill-opacity', a.fill ? a.opacity : 0);
   el.setAttribute('stroke', a.stroke);
-  el.setAttribute('stroke-opacity', a.opacity);
+  el.setAttribute('stroke-opacity', 1);
   el.setAttribute('stroke-width', sw);
   if(dash) el.setAttribute('stroke-dasharray', dash);
   el.setAttribute('class','anno'); el.dataset.uid = a.id;
@@ -484,6 +491,7 @@ function renderAnnots(){
   }
   $('annoDel').disabled = !selAnno;
   $('annoClear').disabled = list.length === 0;
+  syncAnnotationControls();
 }
 
 /* ── 오버레이 포인터: 그리기 / 선택 / 이동 / 리사이즈 ── */
@@ -504,6 +512,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     }else if(e.target.classList && e.target.classList.contains('anno')){
       selAnno = e.target.dataset.uid;
       const a = curAnnots().find(x => x.id === selAnno);
+      if(a.shape !== 'image'){ Object.assign(annoStyle,{stroke:a.stroke,fill:a.fill,lineWidth:a.lineWidth,dash:a.dash,opacity:a.opacity}); }
       drag = { mode:'move', a, ox: pt.x - a.nx*w, oy: pt.y - a.ny*h };
       renderAnnots();
     }else{ selAnno = null; renderAnnots(); }
@@ -799,6 +808,7 @@ document.addEventListener('drop', e => {
 
 /* ── 전체화면 보기 ── */
 async function preview(p){
+  if(document.body.dataset.mode === 'pro'){ previewUid=p.uid;setLivePreviewOpen(true);return; }
   const pdf = docs.get(p.docId).pdfjsDoc;
   const page = await pdf.getPage(p.srcIndex + 1);
   const base = page.getViewport({ scale: 1 });
@@ -852,7 +862,7 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
     const s = hexToRgb(a.stroke), f = a.fill ? hexToRgb(a.fill) : null;
     const sColor = rgb(s.r,s.g,s.b), fColor = f ? rgb(f.r,f.g,f.b) : undefined;
     const dash = a.dash === 'dashed' ? [a.lineWidth*3, a.lineWidth*2] : undefined;
-    const common = { borderColor:sColor, borderWidth:a.lineWidth, borderOpacity:a.opacity,
+    const common = { borderColor:sColor, borderWidth:a.lineWidth, borderOpacity:1,
       color:fColor, opacity: f ? a.opacity : undefined, borderDashArray:dash };
 
     if(a.shape === 'ellipse'){
@@ -860,7 +870,7 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
     }else if(a.shape === 'cloud'){
       const r = cloudRadius(W, H);
       const { start, segs } = cloudSamples(X, Y, W, H, r);
-      const gs = outDoc.context.obj({ Type:'ExtGState', ca:(f ? a.opacity : 0), CA:a.opacity });
+      const gs = outDoc.context.obj({ Type:'ExtGState', ca:(f ? a.opacity : 0), CA:1 });
       const gsName = pg.node.newExtGState('GSa'+(annoUidSeq++), outDoc.context.register(gs));
       const ops = [ pushGraphicsState(), setGraphicsState(gsName),
         setLineWidth(a.lineWidth), setStrokingColor(sColor) ];
@@ -945,7 +955,8 @@ $('fileInput').onchange = e => { loadFiles(e.target.files); e.target.value = '';
 
 const selectAll = () => { pages.forEach(p => p.el.classList.add('selected')); syncCounts(); };
 const selectNone = () => { pages.forEach(p => p.el.classList.remove('selected')); lastClicked = null; syncCounts(); };
-$('btnAll').onclick = $('mbAll').onclick = selectAll;
+const toggleAll = () => selected().length === pages.length ? selectNone() : selectAll();
+$('btnAll').onclick = $('mbAll').onclick = toggleAll;
 $('mbNone').onclick = selectNone;
 $('btnDel').onclick = $('mbDel').onclick = () => remove(selected());
 $('btnRotL').onclick = $('mbRotL').onclick = () => rotate(selected(), -90);
@@ -1017,12 +1028,30 @@ $('drawerTab').onclick = () => $('drawer').classList.toggle('open');
 $('btnInfo').onclick = () => { renderInfo(); $('sheet').classList.add('open'); };
 $('sheetScrim').onclick = () => $('sheet').classList.remove('open');
 
+function syncAnnotationControls(){
+  const a=curAnnots().find(x=>x.id===selAnno);
+  const imageSelected=a?.shape==='image'||annoStyle.tool==='image';
+  $('annoProperties').hidden=imageSelected;
+  $('annoImageHint').hidden=!imageSelected;
+  $('annoStroke').value=annoStyle.stroke;
+  if(annoStyle.fill) $('annoFill').value=annoStyle.fill;
+  $('annoNoFill').classList.toggle('on',!annoStyle.fill);
+  $('annoNoFill').setAttribute('aria-pressed',String(!annoStyle.fill));
+  $('fillSwatch').classList.toggle('off',!annoStyle.fill);
+  $('annoWidth').value=annoStyle.lineWidth;
+  $('annoOpacity').value=Math.round(annoStyle.opacity*100);
+  $('annoOpacity').disabled=!annoStyle.fill;
+  $('annoOpacityVal').textContent=Math.round(annoStyle.opacity*100)+'%';
+  document.querySelectorAll('.ab-dbtn').forEach(b=>b.classList.toggle('active',b.dataset.dash===annoStyle.dash));
+  document.querySelectorAll('.ab-tool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===annoStyle.tool)));
+}
 /* 강조 툴바 */
 function setTool(t){
   annoStyle.tool = t;
   if(t !== 'image') pendingStamp = null;
   document.querySelectorAll('.ab-tool').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
   $('pvOverlay').classList.toggle('draw', t !== 'none');
+  syncAnnotationControls();
 }
 document.querySelectorAll('.ab-tool').forEach(b => b.onclick = () => {
   const t = b.dataset.tool;
@@ -1054,9 +1083,10 @@ $('annoOpacity').oninput = e => {
   applyStyleToSelected();
 };
 function applyStyleToSelected(){
+  syncAnnotationControls();
   if(!selAnno) return;
   const a = curAnnots().find(x => x.id === selAnno); if(!a) return;
-  if(a.shape === 'image'){ a.opacity = annoStyle.opacity; renderAnnots(); return; }
+  if(a.shape === 'image') return;
   a.stroke = annoStyle.stroke; a.fill = annoStyle.fill; a.lineWidth = annoStyle.lineWidth;
   a.dash = annoStyle.dash; a.opacity = annoStyle.opacity;
   renderAnnots();

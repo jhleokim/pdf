@@ -1,5 +1,5 @@
 'use strict';
-let proMode='basic', proResult=null, proAbort=null, proCompareDocs=[];
+let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1600,quality:65}};
 const proControlIds=['proOptimize','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
@@ -16,8 +16,9 @@ function syncProState(){
   $('proOpen').hidden=any;
   $('proExport').disabled=!any||working; $('proPreview').disabled=!any||working;
   if(proResult && proResult.fingerprint!==proFingerprint()) proInvalidate('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.');
+  syncLivePreview();
   if(!any) $('proStatus').textContent='파일을 추가하면 시작할 수 있어요.';
-  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 먼저 한 페이지를 비교해 보세요.`;
+  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 설정 변경은 미리보기에 자동 반영됩니다.`;
 }
 function setProView(view){
   document.body.dataset.proView=view;
@@ -36,6 +37,7 @@ function setProMode(mode){
   if(mode==='pro' && isMobile()) setProView('settings'); else setProView('workspace');
   // Only a UI preference is stored. Documents and result bytes stay in memory.
   try{localStorage.setItem('pdfed-mode',mode);}catch(_){}
+  if(mode==='basic'){syncPreviewVisible();$('btnPreview').title='미리보기 표시 / 숨기기';}
   syncProState();
 }
 function proNumberInput(id,min,max,integer=false){
@@ -66,10 +68,11 @@ function refreshProControls(){
 }
 function resetProOptions(){
   for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}
-  refreshProControls();proInvalidate();syncProState();toast('Pro 설정을 초기화했습니다');
+  refreshProControls();proInvalidate();syncProState();scheduleLivePreview();toast('Pro 설정을 초기화했습니다');
 }
 function checkProAbort(){if(proAbort?.signal.aborted)throw new DOMException('취소했습니다.','AbortError');}
 function startProWork(label){
+  cancelLivePreview();
   proAbort=new AbortController();$('busyCancel').hidden=false;$('busyCancel').disabled=false;
   busy(true,label);syncProState();
 }
@@ -86,7 +89,7 @@ async function processProDoc(doc,options,pageOffset){
   await PDFProDocument.applyDocument(doc,options,{pageOffset,signal,onProgress:n=>progress(65+n*15)});
   checkProAbort();return report;
 }
-async function verifyProText(before,after,signal){
+async function verifyProText(before,after,signal,quiet=false){
   let a,b;
   try{
     a=await pdfjsLib.getDocument({data:before.slice(),...DOC_OPTS}).promise;
@@ -102,7 +105,7 @@ async function verifyProText(before,after,signal){
       const result=bt.items.map(x=>x.str||'').join('').replace(/\s/g,'');
       if(original && !result.includes(original))throw new Error(`${i}페이지의 기존 텍스트 보존을 확인하지 못했습니다. 페이지 재단을 줄이거나 원래 크기로 다시 시도해 주세요.`);
       characters+=original.length;checked++;
-      busy(true,`기존 텍스트 확인 중… ${i}/${a.numPages}`);progress(80+i/a.numPages*18);
+      if(!quiet){busy(true,`기존 텍스트 확인 중… ${i}/${a.numPages}`);progress(80+i/a.numPages*18);}
       await idle();
     }
     return {characters,checked};
@@ -141,61 +144,12 @@ async function createProResult(){
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
   }finally{finishProWork();}
 }
-async function renderComparePage(pdf,canvas,factor){
-  const page=await pdf.getPage(1), base=page.getViewport({scale:1});
-  const slot=canvas.parentElement;
-  const fit=Math.min((slot.clientWidth-32)/base.width,(slot.clientHeight-32)/base.height);
-  const cssScale=Math.max(.1,fit)*factor,dpr=Math.min(devicePixelRatio||1,2);
-  const vp=page.getViewport({scale:cssScale*dpr});
-  canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
-  canvas.style.width=base.width*cssScale+'px';canvas.style.height=base.height*cssScale+'px';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-}
-let compareRendering=false;
-async function drawCompare(){
-  if(proCompareDocs.length!==2||compareRendering)return;
-  compareRendering=true;$('compareZoom').disabled=true;
-  try{await Promise.all([renderComparePage(proCompareDocs[0],$('compareBefore'),Number($('compareZoom').value)),renderComparePage(proCompareDocs[1],$('compareAfter'),Number($('compareZoom').value))]);}
-  finally{compareRendering=false;$('compareZoom').disabled=false;}
-}
-async function compareProPage(){
-  if(!pages.length||document.body.classList.contains('is-busy'))return;
-  let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  const p=pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0], offset=pages.indexOf(p);
-  startProWork('선택 페이지를 준비하는 중…');await idle();
-  try{
-    const edited=await buildEditedDocument([p]);checkProAbort();
-    const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
-    const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
-    const report=await processProDoc(doc,options,offset);
-    const after=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
-    const checked=await verifyProText(before,after,proAbort.signal);checkProAbort();
-    const loaded=await Promise.allSettled([pdfjsLib.getDocument({data:before,...DOC_OPTS}).promise,pdfjsLib.getDocument({data:after,...DOC_OPTS}).promise]);
-    const fulfilled=loaded.filter(x=>x.status==='fulfilled').map(x=>x.value);
-    if(proAbort.signal.aborted||loaded.some(x=>x.status==='rejected')){
-      await Promise.allSettled(fulfilled.map(d=>d.destroy()));checkProAbort();
-      throw loaded.find(x=>x.status==='rejected').reason;
-    }
-    proCompareDocs=fulfilled;
-    $('comparePageLabel').textContent=`${offset+1} / ${pages.length}페이지`;
-    $('compareNote').textContent=`${report.changed}개 이미지 변경 · ${report.skipped}개 원본 유지. 두 화면의 스크롤이 함께 움직입니다.`;
-    $('compareZoom').value='1';$('proCompare').showModal();
-    await drawCompare();
-  }catch(e){
-    if(e.name==='AbortError')toast('비교를 취소했습니다.');else{console.error(e);toast(e.message||'페이지를 비교하지 못했습니다.',true);}
-  }finally{finishProWork();}
-}
-async function closeProCompare(){
-  $('proCompare').close();
-  const old=proCompareDocs;proCompareDocs=[];
-  await Promise.allSettled(old.map(d=>d.destroy()));
-}
 $('modeBasic').onclick=()=>setProMode('basic');$('modePro').onclick=()=>setProMode('pro');
 $('proWorkspace').onclick=()=>setProView('workspace');$('proSettings').onclick=()=>setProView('settings');
 $('proOpen').onclick=()=>pickFiles(false);
-$('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();};
-for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');});
-$('proReset').onclick=resetProOptions;$('proExport').onclick=createProResult;$('proPreview').onclick=compareProPage;
+$('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();scheduleLivePreview();};
+for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');scheduleLivePreview();});
+$('proReset').onclick=resetProOptions;$('proExport').onclick=createProResult;$('proPreview').onclick=()=>setLivePreviewOpen(!proPreviewOpen);
 $('proDownload').onclick=()=>{
   if(!proResult)return;
   if(proResult.fingerprint!==proFingerprint()){proInvalidate();syncProState();toast('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.',true);return;}
@@ -204,14 +158,6 @@ $('proDownload').onclick=()=>{
 };
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
 $('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';};
-$('compareClose').onclick=closeProCompare;$('proCompare').addEventListener('cancel',e=>{e.preventDefault();closeProCompare();});
-$('compareZoom').onchange=()=>drawCompare().catch(e=>toast(e.message,true));
-let compareSyncing=false;
-for(const [a,b] of [['compareBeforeScroll','compareAfterScroll'],['compareAfterScroll','compareBeforeScroll']])$(a).addEventListener('scroll',()=>{
-  if(compareSyncing)return;compareSyncing=true;
-  const x=$(a),y=$(b);y.scrollTop=x.scrollTop/Math.max(1,x.scrollHeight-x.clientHeight)*Math.max(0,y.scrollHeight-y.clientHeight);y.scrollLeft=x.scrollLeft/Math.max(1,x.scrollWidth-x.clientWidth)*Math.max(0,y.scrollWidth-y.clientWidth);
-  requestAnimationFrame(()=>compareSyncing=false);
-});
 proReady=true;refreshProControls();
 let savedProMode='basic';try{if(localStorage.getItem('pdfed-mode')==='pro')savedProMode='pro';}catch(_){}
 setProMode(savedProMode);
