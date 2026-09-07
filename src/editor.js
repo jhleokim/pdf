@@ -1172,22 +1172,24 @@ window.addEventListener('resize', () => {
 })();
 
 /* ── 테마 (자동 / 밝게 / 어둡게) ── */
-const THEMES = ['auto','light','dark'];
+const THEMES = ['light','dark','auto'];
 const THEME_ICON = { auto:'#i-auto', light:'#i-sun', dark:'#i-moon' };
 const THEME_NAME = { auto:'시스템 설정을 따름', light:'밝은 화면', dark:'어두운 화면' };
-let theme = 'auto';
+let theme = 'light';
 function applyTheme(t, announce){
   theme = t;
-  if(t === 'auto') document.documentElement.removeAttribute('data-theme');
-  else document.documentElement.setAttribute('data-theme', t);
+  const resolved=t==='auto' ? (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light') : t;
+  document.documentElement.setAttribute('data-theme', resolved);
+  document.querySelector('meta[name=theme-color]').content=resolved==='dark'?'#202124':'#f4f5f5';
   $('themeIcon').firstElementChild.setAttribute('href', THEME_ICON[t]);
   $('btnTheme').title = '화면 테마 — ' + THEME_NAME[t];
-  try{ localStorage.setItem('pdfed-theme', t); }catch(_){}
+  try{ localStorage.setItem('pdfed-theme-v2', t); }catch(_){}
   if(announce) toast(THEME_NAME[t]);
   const p = pages.find(x => x.uid === previewUid); if(p) showPreview(p);
 }
-try{ const saved = localStorage.getItem('pdfed-theme'); if(THEMES.includes(saved)) theme = saved; }catch(_){}
+try{ const saved = localStorage.getItem('pdfed-theme-v2'); if(THEMES.includes(saved)) theme = saved; }catch(_){}
 $('btnTheme').onclick = () => applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length], true);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(theme==='auto')applyTheme('auto',false);});
 
 /* ── 단축키 ── */
 document.addEventListener('keydown', e => {
