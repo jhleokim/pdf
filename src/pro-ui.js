@@ -1,8 +1,8 @@
 'use strict';
 let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
-const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1600,quality:65}};
-const proControlIds=['proOptimize','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
+const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
+const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
 function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[]]));}
 function proInvalidate(message){
@@ -51,7 +51,8 @@ function readProOptions(){
   const crop=$('proCrop').checked, number=$('proNumber').checked;
   return {
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
-    grayscale:$('proGrayscale').checked,contrast:Number($('proContrast').value),whitePoint:Number($('proWhitePoint').value),
+    blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
+    rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
     deskew:$('proDeskew').checked,crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
     paper:$('proPaper').value,number,startNumber:number?proNumberInput('proStartNumber',1,999999,true):1,
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
@@ -59,10 +60,17 @@ function readProOptions(){
   };
 }
 function refreshProControls(){
+  $('proBWThresholdValue').value=$('proBWThreshold').value;
+  $('proBWThreshold').disabled=!$('proGrayscale').checked;
+  $('proContrast').disabled=$('proGrayscale').checked;$('proWhitePoint').disabled=$('proGrayscale').checked;
+  $('proRasterWarning').hidden=!$('proOptimize').checked||$('proCompressionMode').value!=='raster';
+  $('proCompressionMode').disabled=!$('proOptimize').checked;
   $('proQualityValue').value=$('proQuality').value+'%';
   $('proContrastValue').value=$('proContrast').value;
   $('proWhitePointValue').value=$('proWhitePoint').value;
   ['proPreset','proResolution','proQuality'].forEach(id=>$(id).disabled=!$('proOptimize').checked);
+  $('proQuality').disabled=!$('proOptimize').checked||$('proGrayscale').checked;
+  $('proPreserveText').textContent=$('proOptimize').checked&&$('proCompressionMode').value==='raster'?'페이지 전체를 이미지로 압축합니다. 결과에는 검색·복사·링크·양식이 유지되지 않습니다.':'기존 텍스트와 검색 정보를 유지하며 이미지와 페이지 설정을 조정합니다.';
   ['Top','Right','Bottom','Left'].forEach(s=>$('proCrop'+s).disabled=!$('proCrop').checked);
   ['proStartNumber','proSkipPages','proNumberPosition'].forEach(id=>$(id).disabled=!$('proNumber').checked);
 }
@@ -80,16 +88,8 @@ function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);p
 async function processProDoc(doc,options,pageOffset){
   const signal=proAbort.signal;
   checkProAbort();
-  const deskew=await PDFDeskew.processDocument(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,onProgress:n=>{progress(20+n*20);busy(true,'스캔 기울기를 분석하는 중…');}});
-  checkProAbort();
-  const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>{
-    const fraction=typeof info==='number'?info:(info?.total ? info.completed/info.total : 1);
-    progress(40+fraction*25);
-    busy(true,'이미지를 최적화하고 보정하는 중…');
-  }});
-  checkProAbort();busy(true,'페이지 설정을 적용하는 중…');
-  await PDFProDocument.applyDocument(doc,options,{pageOffset,signal,onProgress:n=>progress(65+n*15)});
-  checkProAbort();return {...report,deskew,settings:describeProSettings(options,report,deskew)};
+  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
+  checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
 }
 async function verifyProText(before,after,signal,quiet=false){
   let a,b;
@@ -123,17 +123,19 @@ function describeProSettings(o,report,deskew,offset){
   if(o.deskew)applied.push(offset===undefined?`기울기 ${deskew.changed}쪽 보정`:deskew.pages[0]?.angle?`기울기 ${Math.abs(deskew.pages[0].angle).toFixed(1)}° 보정`:`기울기 유지 · ${deskew.pages[0]?.reason||'변경 없음'}`);
   if(o.crop&&o.margins.some(n=>n>0))applied.push('여백 재단');
   if(o.paper==='a4')applied.push('A4 맞춤');
-  const scan=o.grayscale||o.contrast>0||o.whitePoint<255;
+  if(o.rasterize)applied.push('페이지 전체 압축 · 검색·복사 불가');
+  const scan=o.blackWhite||o.grayscale||o.contrast>0||o.whitePoint<255;
   if(scan){
-    if(report.changed){if(o.grayscale)applied.push('회색조');if(o.contrast>0)applied.push(`대비 +${o.contrast}`);if(o.whitePoint<255)applied.push(`흰 배경 ${o.whitePoint}`);}
+    if(report.changed){if(o.blackWhite)applied.push('B&W 흑백');else if(o.grayscale)applied.push('회색조');if(o.contrast>0)applied.push(`대비 +${o.contrast}`);if(o.whitePoint<255)applied.push(`흰 배경 ${o.whitePoint}`);}
     else applied.push(report.imageCount?'스캔 보정: 변경된 이미지 없음':'스캔 보정: 이미지 없음 (텍스트·벡터 유지)');
   }
-  if(o.optimize)applied.push(`이미지 최적화 ${report.changed}개 변경`);
+  if(o.optimize)applied.push(o.rasterize?`${report.changed}쪽 압축`:`이미지 ${report.changed}개 압축·보정`);
   return applied.join(' · ')||'원본 설정';
 }
 function proSummary(report,textCheck){
-  const lines=[`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
-  if(textCheck.characters)lines.push(`기존 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
+  const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
+  if(textCheck.rasterized)lines.push('페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
+  else if(textCheck.characters)lines.push(`기존 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
   else lines.push('원래 검색 가능한 텍스트가 없는 문서입니다.');
   if(report.settings)lines.unshift(report.settings);
   if(report.deskew?.pages.length){
@@ -158,21 +160,21 @@ async function createProResult(){
     // content streams created while baking the user's Basic annotations.
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
-    const candidate=await doc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
     const result=PDFProResult.selectOutput(before,candidate,options,original);
     const bytes=result.bytes;
-    const textCheck=await verifyProText(before,bytes,proAbort.signal);checkProAbort();
+    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal);checkProAbort();
     proResult={bytes,fingerprint};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
     const change=result.reduction;
     $('proReduction').textContent=Math.abs(change)<.1 ? '현재 설정으로는 용량이 거의 줄지 않습니다.' : change>0 ? `${change.toFixed(1)}% 절감 · ${formatBytes(result.reference.length-bytes.length)}` : `${(-change).toFixed(1)}% 증가 · 보정·페이지 설정이 반영됐어요`;
     const imageShare=Math.min(100,report.originalImageBytes/result.reference.length*100);
-    let composition=`이미지 ${report.imageCount}개 · ${formatBytes(report.originalImageBytes)} · 전체 용량의 ${imageShare.toFixed(1)}%`;
-    if(imageShare<10)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다.';
+    let composition=`입력 이미지 ${report.sourceImageCount??report.imageCount}개 · ${formatBytes(report.originalImageBytes)} · 전체 용량의 ${imageShare.toFixed(1)}%`;
+    if(imageShare<10&&!report.rasterized)composition+='\n이미지 비중이 낮아 품질을 낮춰도 용량 절감 효과가 작습니다. 텍스트·벡터는 유지합니다. 더 큰 절감이 필요하면 페이지 전체 압축을 선택해 보세요.';
     if(result.structureSaved)composition+=`\nPDF 구조 정리로 ${formatBytes(result.structureSaved)} 절감한 내역을 포함합니다.`;
     $('proComposition').textContent=composition;
-    const outputReport=result.retained?{...report,changed:0,skipped:report.imageCount,settings:'추가 압축으로 더 줄지 않아 변경 전 파일 유지',notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
+    const outputReport=result.retained?{...report,rasterized:false,changed:0,skipped:report.imageCount,settings:'추가 압축으로 더 줄지 않아 변경 전 파일 유지',notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
     $('proReport').textContent=proSummary(outputReport,textCheck);$('proResult').hidden=false;
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     $('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});

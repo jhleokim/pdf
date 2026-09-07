@@ -9,6 +9,8 @@
   const MAX_EDGE = 16384;
   const MAX_ENCODED_BYTES = 64 * 1024 * 1024;
   const REASONS = {
+    maskSource: '투명도 마스크와 마스크에 사용된 이미지는 원본 그대로 보존했습니다.',
+    bwEmpty: '흑백 변환으로 내용이 사라질 수 있는 이미지는 원본을 유지했습니다.',
     mask: '투명도·마스크가 포함된 이미지는 원본을 유지했습니다.',
     color: 'RGB·회색조 이외의 색상 형식은 원본을 유지했습니다.',
     decode: '별도의 색상 변환 설정이 있는 이미지는 원본을 유지했습니다.',
@@ -44,11 +46,13 @@
       maxDimension: Math.round(bounded(o.maxDimension, 2400, 256, 8192)),
       jpegQuality: bounded(o.jpegQuality, 0.82, 0.4, 0.95),
       grayscale: o.grayscale === true,
+      blackWhite: o.blackWhite === true,
+      bwThreshold: Math.round(bounded(o.bwThreshold,180,100,240)),
       contrast: bounded(o.contrast, 0, 0, 40),
       whitePoint: bounded(o.whitePoint, 255, 200, 255)
     };
   }
-  const isEnhanced = o => o.grayscale || o.contrast > 0 || o.whitePoint < 255;
+  const isEnhanced = o => o.blackWhite || o.grayscale || o.contrast > 0 || o.whitePoint < 255;
   function pdfValue(dict, key, lib) { return dict.lookup(lib.PDFName.of(key)); }
   function numberValue(value) { return value && typeof value.asNumber === 'function' ? value.asNumber() : undefined; }
   function nameValue(value) { return value && typeof value.asString === 'function' ? value.asString() : ''; }
@@ -307,6 +311,67 @@
     if (!blob || blob.type !== 'image/jpeg' || blob.size > MAX_ENCODED_BYTES) throw failure('decodeFailed');
     return new Uint8Array(await blob.arrayBuffer());
   }
+  // Keep mask dependencies out of color processing. A soft mask is an ordinary
+  // DeviceGray image, but its samples describe opacity, not page colors.
+  function maskImages(doc,lib){
+    const protectedImages=new Set(),visited=new Set();
+    const resolve=value=>value instanceof lib.PDFRef?doc.context.lookup(value):value;
+    function protect(value){
+      const object=resolve(value);if(!object||visited.has(object))return;visited.add(object);
+      if(object instanceof lib.PDFRawStream){
+        if(nameValue(pdfValue(object.dict,'Subtype',lib))==='/Image')protectedImages.add(object);
+        protect(object.dict);
+      }else if(object instanceof lib.PDFDict){
+        // G is a transparency group. Its entire resource graph contributes alpha.
+        for(const [,child] of object.entries())protect(child);
+      }else if(object instanceof lib.PDFArray){for(let i=0;i<object.size();i++)protect(object.get(i));}
+    }
+    const scanned=new Set();
+    function find(value){
+      const object=resolve(value);if(!object||scanned.has(object))return;scanned.add(object);
+      const dict=object instanceof lib.PDFRawStream?object.dict:object;
+      if(dict instanceof lib.PDFDict){
+        for(const [key,child] of dict.entries()){
+          if(['/SMask','/Mask'].includes(nameValue(key)))protect(child);
+          else if(!(child instanceof lib.PDFRef))find(child);
+        }
+      }else if(dict instanceof lib.PDFArray){for(let i=0;i<dict.size();i++)if(!(dict.get(i) instanceof lib.PDFRef))find(dict.get(i));}
+    }
+    for(const [,object] of doc.context.enumerateIndirectObjects())find(object);
+    return protectedImages;
+  }
+  async function bitonal(context,width,height,threshold,signal){
+    const gray=new Uint8Array(width*height),rowBytes=Math.ceil(width/8),packed=new Uint8Array(rowBytes*height).fill(255);
+    let min=255,max=0;
+    for(let y=0;y<height;y+=64){
+      abortIfNeeded(signal);const rows=Math.min(64,height-y),data=context.getImageData(0,y,width,rows).data;
+      for(let i=0;i<data.length;i+=4){const v=Math.round(.2126*data[i]+.7152*data[i+1]+.0722*data[i+2]);gray[y*width+i/4]=v;min=Math.min(min,v);max=Math.max(max,v);}
+      await pause();
+    }
+    // Local means rescue faint strokes on uneven paper. Dark solid regions use
+    // the global threshold, so logos do not turn into hollow outlines.
+    const radius=15,columns=new Float64Array(width);let black=0;
+    for(let y=0;y<Math.min(height,radius+1);y++)for(let x=0;x<width;x++)columns[x]+=gray[y*width+x];
+    for(let y=0;y<height;y++){
+      if(y){const enter=y+radius,leave=y-radius-1;for(let x=0;x<width;x++){if(enter<height)columns[x]+=gray[enter*width+x];if(leave>=0)columns[x]-=gray[leave*width+x];}}
+      let sum=0;for(let x=0;x<Math.min(width,radius+1);x++)sum+=columns[x];
+      const rows=Math.min(height-1,y+radius)-Math.max(0,y-radius)+1;
+      for(let x=0;x<width;x++){
+        if(x){if(x+radius<width)sum+=columns[x+radius];if(x-radius-1>=0)sum-=columns[x-radius-1];}
+        const count=rows*(Math.min(width-1,x+radius)-Math.max(0,x-radius)+1),v=gray[y*width+x];
+        if(v<threshold||v<sum/count-8){packed[y*rowBytes+(x>>3)]&=~(128>>(x&7));black++;}
+      }
+      if(y%64===0){abortIfNeeded(signal);await pause();}
+    }
+    if(!black&&max-min>16&&min<240)throw failure('bwEmpty');
+    return {bytes:packed,width,height,bits:1,colorSpace:'DeviceGray',filter:'FlateDecode',packed:true};
+  }
+  async function encodeCanvas(canvas,options,signal){
+    const o=normalizeOptions(options),context=canvasContext(canvas);
+    if(o.blackWhite)return bitonal(context,canvas.width,canvas.height,o.bwThreshold,signal);
+    if(isEnhanced(o))await enhance(context,canvas.width,canvas.height,o,signal);
+    return {bytes:await encode(canvas,o.optimize?o.jpegQuality:.95),width:canvas.width,height:canvas.height,bits:8,colorSpace:'DeviceRGB',filter:'DCTDecode'};
+  }
   async function transform(spec, options, signal) {
     let source, target;
     try {
@@ -320,12 +385,8 @@
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
       context.drawImage(source, 0, 0, width, height);
-      if (isEnhanced(options)) await enhance(context, width, height, options, signal);
-      abortIfNeeded(signal);
-      // Enhancement alone still needs an image encoding; use a high-quality JPEG.
-      const bytes = await encode(target, options.optimize ? options.jpegQuality : 0.95);
-      abortIfNeeded(signal);
-      return { bytes, width, height };
+      const result=await encodeCanvas(target,options,signal);
+      abortIfNeeded(signal);return result;
     } finally {
       if (source && typeof source.close === 'function') source.close();
       else if (source && typeof source.getContext === 'function') source.width = source.height = 1;
@@ -345,6 +406,7 @@
     abortIfNeeded(signal);
     const images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
       object instanceof lib.PDFRawStream && nameValue(pdfValue(object.dict, 'Subtype', lib)) === '/Image');
+    const masks=maskImages(doc,lib);
     const report = { imageCount: images.length, processed: 0, changed: 0, skipped: 0,
       originalImageBytes: 0, resultImageBytes: 0, skipReasons: {}, notes: [] };
     for (const [, stream] of images) report.originalImageBytes += stream.getContents().length;
@@ -359,8 +421,10 @@
       const [ref, stream] = images[i];
       try {
         if (!settings.optimize && !isEnhanced(settings)) throw failure('noAction');
+        if(masks.has(stream))throw failure('maskSource');
         const spec = imageSpec(stream, lib);
         const result = await transform(spec, settings, signal);
+        if(result.packed)result.bytes=doc.context.flateStream(result.bytes).getContents();
         report.processed++;
         if (!isEnhanced(settings) && result.bytes.length >= spec.bytes.length) {
           // A supported image was evaluated, but kept intact because recompression did not help.
@@ -370,9 +434,9 @@
           const set = (key, value) => dict.set(lib.PDFName.of(key), value);
           set('Width', lib.PDFNumber.of(result.width));
           set('Height', lib.PDFNumber.of(result.height));
-          set('BitsPerComponent', lib.PDFNumber.of(8));
-          set('ColorSpace', lib.PDFName.of('DeviceRGB'));
-          set('Filter', lib.PDFName.of('DCTDecode'));
+          set('BitsPerComponent', lib.PDFNumber.of(result.bits));
+          set('ColorSpace', lib.PDFName.of(result.colorSpace));
+          set('Filter', lib.PDFName.of(result.filter));
           set('Length', lib.PDFNumber.of(result.bytes.length));
           dict.delete(lib.PDFName.of('DecodeParms'));
           dict.delete(lib.PDFName.of('DL'));
@@ -396,9 +460,9 @@
     return report;
   }
 
-  root.PDFPro = Object.freeze({ processDocument });
+  root.PDFPro = Object.freeze({ processDocument, encodeCanvas });
   // Pure helpers are exported only in Node for focused regression tests.
   if (typeof module !== 'undefined' && module.exports) module.exports = {
-    processDocument, normalizeOptions, imageSpec, inspectJpeg, undoPredictor, inflateBounded
+    processDocument, normalizeOptions, maskImages, bitonal, imageSpec, inspectJpeg, undoPredictor, inflateBounded
   };
 })(globalThis);

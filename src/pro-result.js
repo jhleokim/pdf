@@ -9,7 +9,7 @@
     return first.libBytes;
   }
   function compressionOnly(o){
-    return o.optimize&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark;
+    return o.optimize&&!o.blackWhite&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark;
   }
   function selectOutput(before,candidate,options,original){
     const reference=original||before;

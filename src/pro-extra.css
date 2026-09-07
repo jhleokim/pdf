@@ -41,10 +41,10 @@ body[data-mode=pro] main{display:grid!important;grid-template-columns:minmax(0,1
 body[data-mode=pro] #boardWrap,body[data-mode=pro] #empty{grid-column:1;grid-row:1;min-width:0}
 body[data-mode=pro] #boardWrap:not([hidden]){display:block!important}
 body[data-mode=pro] #proPanel{grid-column:2;grid-row:1;width:var(--pro-width)}
-body[data-mode=pro].pro-preview-open main{grid-template-columns:180px minmax(0,1fr) var(--pro-width)}
-body[data-mode=pro].pro-preview-open #proPanel{grid-column:3}
+body[data-mode=pro].pro-preview-open main{grid-template-columns:var(--pro-rail-width,180px) 8px minmax(0,1fr) var(--pro-width)}
+body[data-mode=pro].pro-preview-open #proPanel{grid-column:4}
 body[data-mode=pro].pro-preview-open #boardWrap{padding:0 12px 24px;border-right:1px solid var(--line);background:var(--surface-2);overflow:auto}
-body[data-mode=pro].pro-preview-open main #board{grid-template-columns:minmax(0,1fr)!important;gap:14px;padding-top:14px}
+body[data-mode=pro].pro-preview-open main #board{grid-template-columns:repeat(var(--pro-thumb-columns,1),minmax(0,1fr))!important;gap:14px;padding-top:14px}
 body[data-mode=pro].pro-preview-open .legend{padding:12px 0;gap:0;position:sticky;top:0;z-index:3;background:var(--surface-2)}
 body[data-mode=pro].pro-preview-open .legend .lg-item{display:none}
 body[data-mode=pro].pro-preview-open .legend::before{content:'전체 페이지';font-size:11px;font-weight:600;color:var(--ink-2)}
@@ -54,7 +54,7 @@ body[data-mode=pro].pro-preview-open .page.previewing{outline:2px solid var(--ac
 body[data-mode=pro].pro-preview-open .plate{top:10px;left:10px}
 body[data-mode=pro].pro-preview-open .pick{top:10px;right:10px}
 body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
-#proCompare{position:relative;inset:auto;grid-column:2;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
+#proCompare{position:relative;inset:auto;grid-column:3;grid-row:1;width:auto;height:auto;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;min-width:0;min-height:0;background:var(--paper);display:flex;flex-direction:column;padding:0}
 #proCompare[hidden]{display:none!important}
 #proCompare .compare-head{padding:12px 16px;background:var(--surface);gap:8px;flex:none}
 .compare-head h2{font-size:14px;font-weight:600}.compare-head p{font-size:11px;color:var(--ink-3);margin-top:3px}
@@ -74,7 +74,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 #proCompare[data-error=true] #compareState{color:var(--danger)}
 @media(min-width:881px) and (max-width:1100px){
  body[data-mode=pro]{--pro-width:300px}
- body[data-mode=pro].pro-preview-open main{grid-template-columns:140px minmax(0,1fr) var(--pro-width)}
+ body[data-mode=pro].pro-preview-open main{grid-template-columns:var(--pro-rail-width,140px) 8px minmax(0,1fr) var(--pro-width)}
  body[data-mode=pro].pro-preview-open #boardWrap{padding-left:8px;padding-right:8px}
  body[data-mode=pro].pro-preview-open .pfoot .src{display:none}
 }
@@ -124,3 +124,11 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .app-version{position:fixed;right:12px;bottom:calc(5px + var(--safe-b));z-index:90;font-size:10px;font-weight:400;line-height:1.2;letter-spacing:.01em;color:var(--ink-3);pointer-events:none;font-variant-numeric:tabular-nums}
 @media(max-width:880px){body:not([data-mode=pro]) .app-version{bottom:calc(5px + var(--safe-b) + var(--abH,0px))}}
 .pro-composition{white-space:pre-line;font-size:12px;line-height:1.7;color:var(--ink-2);margin:10px 0;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+
+.pro-rail-divider{display:none;grid-column:2;grid-row:1;cursor:col-resize;touch-action:none;background:var(--surface-2);outline:0;z-index:4;align-items:center;justify-content:center}
+.pro-rail-divider span{height:36px;width:2px;border-radius:1px;background:var(--line-2)}
+.pro-rail-divider:hover,.pro-rail-divider:focus-visible{background:var(--accent-wash)}
+.pro-rail-divider:hover span,.pro-rail-divider:focus-visible span{background:var(--accent)}
+.pro-rail-resizing,.pro-rail-resizing *{cursor:col-resize!important;user-select:none!important}
+.pro-warning{padding:10px;background:var(--accent-wash);border-left:2px solid var(--accent);color:var(--ink-2);font-size:12px;line-height:1.7}
+@media(min-width:881px){body[data-mode=pro].pro-preview-open .pro-rail-divider{display:flex}}

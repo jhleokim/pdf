@@ -85,6 +85,42 @@
   const markCanvas=await render(await markDoc.save()),pixels=markCanvas.getContext('2d').getImageData(0,0,markCanvas.width,markCanvas.height).data;
   assert(pixels.some((n,i)=>i%4!==3&&n<250),'Korean watermark not visible');
   record('crop / A4 / cover exclusion / Korean watermark / preview = export',{ocr:combinedText,previewMatches:true});
+
+  // Regression for missing regions: embedded PNG transparency is a separate
+  // DeviceGray image referenced by SMask, not a regular color image.
+  const maskDoc=await P.PDFDocument.create(),maskCanvas=document.createElement('canvas');maskCanvas.width=500;maskCanvas.height=500;
+  const mc=maskCanvas.getContext('2d');mc.fillStyle='rgba(210,25,40,.7)';mc.fillRect(40,40,420,420);mc.clearRect(150,150,200,200);
+  const masked=await maskDoc.embedPng(await png(maskCanvas)),mp=maskDoc.addPage([600,800]);mp.drawImage(masked,{x:50,y:250,width:500,height:500});mp.drawText('MASK REGION MUST SURVIVE',{x:50,y:150,size:22});
+  const maskBytes=await maskDoc.save(),maskLoaded=await P.PDFDocument.load(maskBytes),maskBefore=await render(maskBytes);
+  const mr=await PDFPro.processDocument(maskLoaded,{...defaults,optimize:true,blackWhite:true});
+  const maskAfter=await render(await maskLoaded.save()),mbp=maskBefore.getContext('2d').getImageData(0,0,maskBefore.width,maskBefore.height).data,map=maskAfter.getContext('2d').getImageData(0,0,maskAfter.width,maskAfter.height).data;
+  assert(mbp.length===map.length&&mbp.every((n,i)=>n===map[i]),'Transparent page region disappeared or changed');
+  assert(mr.skipReasons.maskSource===1,'Soft mask was not protected');download(maskBytes,'mask-fixture.pdf');art.append(maskBefore,maskAfter);record('transparent region preservation',{pixelIdentical:true,report:mr});
+  const bw=await PDFProPipeline.apply(await P.PDFDocument.load(bytes),{...defaults,optimize:true,maxDimension:2400,jpegQuality:.82,blackWhite:true,bwThreshold:180});
+  const bwBytes=await bw.doc.save(),bwCanvas=await render(bwBytes);art.append(bwCanvas);download(bwBytes,'bw-text-preserved.pdf');
+  assert(JSON.stringify(await texts(bwBytes))===JSON.stringify(beforeText),'B&W changed OCR');
+  const bwImages=bw.doc.context.enumerateIndirectObjects().filter(([,o])=>o instanceof P.PDFRawStream&&String(o.dict.get(P.PDFName.of('Subtype')))==='/Image');
+  assert(bwImages.every(([,o])=>o.dict.lookup(P.PDFName.of('BitsPerComponent')).asNumber()===1),'B&W was re-encoded as JPEG');
+  assert(bwBytes.length<bytes.length*.25,'B&W scan compression too small');record('B&W 1-bit and OCR',{before:bytes.length,after:bwBytes.length});
+  for(const blackWhite of [false,true]){
+   const settings={...defaults,rasterize:true,optimize:true,maxDimension:1200,jpegQuality:.5,blackWhite,bwThreshold:180};
+   const whole=await PDFProPipeline.apply(await P.PDFDocument.load(bytes),settings),wholeBytes=await whole.doc.save();
+   assert(whole.doc.getPageCount()===3,'Raster lost pages');assert((await texts(wholeBytes)).every(t=>!t),'Raster output unexpectedly claims preserved text');
+   assert(wholeBytes.length<bytes.length*.3,'Whole-page compression failed to reduce large scan');
+   const rendered=await render(wholeBytes);art.append(rendered);download(wholeBytes,blackWhite?'whole-bw.pdf':'whole-color.pdf');
+   record(blackWhite?'whole-page B&W':'whole-page color',{before:bytes.length,after:wholeBytes.length,pages:3});
+  }
+  const transparentRaster=await PDFProPipeline.apply(await P.PDFDocument.load(maskBytes),{...defaults,rasterize:true,optimize:true,maxDimension:1200,jpegQuality:.5});
+  const trc=await render(await transparentRaster.doc.save());
+  const color=pixel(trc,160,160);assert(color[0]>color[1]+60,'Whole-page compression lost transparent color region');record('whole-page transparency rendering',{pixel:color});
+
+  const physical=await P.PDFDocument.create();physical.addPage([300,400]).node.set(P.PDFName.of('UserUnit'),P.PDFNumber.of(2));
+  physical.getPage(0).drawText('Physical size',{x:25,y:200,size:20});
+  const physicalResult=await PDFProPipeline.apply(await P.PDFDocument.load(await physical.save()),{...defaults,rasterize:true,optimize:true,maxDimension:600,jpegQuality:.5});
+  assert(physicalResult.doc.getPage(0).getWidth()===600&&physicalResult.doc.getPage(0).getHeight()===800,'Raster changed physical UserUnit size');
+  const stop=new AbortController();stop.abort();let cancelledRaster=false;
+  try{await PDFProPipeline.apply(await P.PDFDocument.load(bytes),{...defaults,rasterize:true,optimize:true,maxDimension:1200,jpegQuality:.5},{signal:stop.signal});}catch(e){cancelledRaster=e.name==='AbortError';}
+  assert(cancelledRaster,'Raster cancellation failed');record('raster physical size / cancellation','pass');
   out.dataset.state='passed';out.textContent='PASS — '+results.length+' checks\n'+JSON.stringify(results,null,2);
  }catch(e){out.dataset.state='failed';out.textContent+='\nFAIL: '+e.stack;console.error(e);}
 })();

@@ -10,7 +10,7 @@
 
     <div class="pro-panel-scroll">
       <button class="btn primary" id="proOpen"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>PDF 또는 사진 불러오기</button>
-      <div class="pro-preserve-note"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p>기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
+      <div class="pro-preserve-note"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p id="proPreserveText">기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
 
       <details class="pro-section" open>
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>번호와 워터마크<small>문서 전체에 일괄 배치</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
@@ -45,7 +45,9 @@
       <details class="pro-section">
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><span>스캔 보정<small>배경과 대비를 깔끔하게</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proGrayscale"><span>이미지를 회색조로 변환</span></label>
+          <label class="pro-check"><input type="checkbox" id="proGrayscale"><span>B&W 흑백으로 변환</span></label>
+          <label class="pro-field pro-range" for="proBWThreshold"><span>흑백 기준 <output id="proBWThresholdValue" for="proBWThreshold">180</output></span><input type="range" id="proBWThreshold" min="100" max="240" value="180"><span class="pro-range-scale"><small>배경을 밝게</small><small>연한 글자까지</small></span></label>
+          <p class="pro-hint">검정·흰색 1비트로 저장합니다. JPEG 품질 대신 흑백 기준과 이미지 크기로 조절합니다. 연한 글자는 기준을 높여 확인하세요.</p>
           <label class="pro-field pro-range" for="proContrast"><span>대비 강화 <output id="proContrastValue" for="proContrast">0</output></span><input type="range" id="proContrast" min="0" max="40" value="0"><span class="pro-range-scale"><small>원본</small><small>또렷하게</small></span></label>
           <label class="pro-field pro-range" for="proWhitePoint"><span>흰 배경 기준 <output id="proWhitePointValue" for="proWhitePoint">255</output></span><input type="range" id="proWhitePoint" min="200" max="255" value="255"><span class="pro-range-scale"><small>배경 정리</small><small>원본</small></span></label>
           <p class="pro-hint">지원되는 스캔 이미지에 적용됩니다. 흐린 글자나 도장이 지워지지 않는지 비교해 보세요.</p>
@@ -56,10 +58,12 @@
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small>이미지의 크기와 품질 조절</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
           <label class="pro-check"><input type="checkbox" id="proOptimize" checked><span>이미지 최적화 사용</span></label>
+          <label class="pro-field" for="proCompressionMode"><span>압축 방식</span><select id="proCompressionMode"><option value="preserve" selected>텍스트 유지 · 이미지 압축</option><option value="raster">페이지 전체 압축 · 이미지 PDF</option></select></label>
+          <p id="proRasterWarning" class="pro-warning" hidden>페이지를 이미지로 바꿉니다. 결과 PDF의 텍스트 검색·복사, 링크·양식은 유지되지 않습니다. 원본 파일은 그대로입니다. 보정 없이 압축만 할 때 더 커지면 변경 전 파일을 유지합니다.</p>
           <label class="pro-field" for="proPreset"><span>품질 프리셋</span><select id="proPreset"><option value="quality">품질 우선</option><option value="balanced" selected>균형 — 권장</option><option value="small">작은 용량</option></select></label>
-          <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option></select></label>
+          <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option><option value="1200">1,200 px · 작은 용량</option></select></label>
           <label class="pro-field pro-range" for="proQuality"><span>이미지 품질 <output id="proQualityValue" for="proQuality">82%</output></span><input type="range" id="proQuality" min="40" max="95" value="82"><span class="pro-range-scale"><small>작은 용량</small><small>높은 품질</small></span></label>
-          <p class="pro-hint">지원되는 이미지를 조정합니다. 용량 변화는 문서에 따라 달라집니다.</p>
+          <p class="pro-hint">텍스트 유지 방식의 절감이 작다면 페이지 전체 압축을 사용하세요. 글자 중심 스캔은 B&W를 함께 사용하면 더 작게 저장됩니다.</p>
         </div>
       </details>
 

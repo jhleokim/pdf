@@ -28,7 +28,7 @@ block('mode-switch', '<div class="mode-switch" role="group" aria-label="작업 �
 block('pro-panel', read('src/pro-panel.html'), '</main>');
 html=html.replace(/<!-- pro-dialog:start -->[\s\S]*?<!-- pro-dialog:end -->\s*/, '');
 block('pro-dialog', read('src/pro-dialog.html'), '<!-- pro-panel:start -->');
-block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-deskew.js', 'pro-result.js', 'pro-live-preview.js', 'pro-ui.js'].map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
+block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js'].map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')
   .replace('<h1>PDF 페이지 편집기</h1>', '<h1>PDF Studio</h1>')
   .replace('OFFLINE · 로컬 처리', '내 기기에서 안전하게')

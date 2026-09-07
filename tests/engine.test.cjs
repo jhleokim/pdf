@@ -51,10 +51,10 @@ function pngPredict(data, width, channels, filters) {
 
 test('options clamp resource-sensitive controls and never request an upsample', () => {
   assert.deepEqual(engine.normalizeOptions({}), { optimize: true, maxDimension: 2400,
-    jpegQuality: .82, grayscale: false, contrast: 0, whitePoint: 255 });
+    jpegQuality: .82, grayscale: false, blackWhite:false, bwThreshold:180, contrast: 0, whitePoint: 255 });
   assert.deepEqual(engine.normalizeOptions({ optimize: false, maxDimension: Infinity,
     jpegQuality: 8, contrast: -1, whitePoint: 2 }), { optimize: false,
-    maxDimension: 2400, jpegQuality: .95, grayscale: false, contrast: 0, whitePoint: 200 });
+    maxDimension: 2400, jpegQuality: .95, grayscale: false, blackWhite:false, bwThreshold:180, contrast: 0, whitePoint: 200 });
 });
 
 test('real PDF dictionaries conservatively reject masks, CMYK, indexed colors and unsafe sizes', async () => {
@@ -266,4 +266,29 @@ test('grayscale transforms RGB pixels when optimization is off, without altering
     assert.deepEqual([...source.getContents()],[...colors]);
     assert.notEqual(doc.context.lookup(ref),source);
   }finally{delete globalThis.document;}
+});
+
+
+test('soft-mask images and nested transparency-group resources are never recolored or resized',async()=>{
+ const doc=await P.PDFDocument.create();
+ const [maskRef,mask]=image(doc,{ColorSpace:'DeviceGray'},new Uint8Array(16).fill(128));
+ const [,parent]=image(doc,{SMask:maskRef});
+ const [groupImageRef,groupImage]=image(doc);
+ const nested=doc.context.register(doc.context.stream('q /Alpha Do Q',{Type:'XObject',Subtype:'Form',BBox:[0,0,4,4],Resources:{XObject:{Alpha:groupImageRef}}}));
+ const form=doc.context.register(doc.context.stream('q /Nested Do Q',{Type:'XObject',Subtype:'Form',BBox:[0,0,4,4],Resources:{XObject:{Nested:nested}}}));
+ doc.context.register(doc.context.obj({Type:'ExtGState',SMask:{S:'Luminosity',G:form}}));
+ const result=await engine.processDocument(doc,{optimize:true,grayscale:true});
+ assert.equal(result.changed,0);assert.equal(result.skipReasons.maskSource,2);assert.equal(result.skipReasons.mask,1);
+ assert.equal(doc.context.lookup(maskRef),mask);assert.equal(mask.dict.lookup(name('ColorSpace')).asString(),'/DeviceGray');
+ assert.equal(doc.context.lookup(groupImageRef),groupImage);assert.equal(parent.dict.lookup(name('SMask')),mask);
+});
+
+test('B&W uses one bit per pixel, preserves faint strokes, and pads odd-width rows correctly',async()=>{
+ const width=65,height=33,data=new Uint8ClampedArray(width*height*4).fill(255);
+ for(let y=8;y<25;y++)for(let x=10;x<14;x++){const i=(y*width+x)*4;data[i]=data[i+1]=data[i+2]=210;}
+ const result=await engine.bitonal({getImageData(){return {data};}},width,height,180);
+ const black=(x,y)=>!(result.bytes[y*Math.ceil(width/8)+(x>>3)]&(128>>(x&7)));
+ assert.equal(result.bits,1);assert.equal(result.bytes.length,9*33);assert.equal(black(11,16),true);assert.equal(black(40,16),false);
+ assert.equal(result.bytes[8]&127,127,'unused row bits stay white');
+ await assert.rejects(engine.bitonal({getImageData(){return {data};}},width,height,180,AbortSignal.abort()),{name:'AbortError'});
 });

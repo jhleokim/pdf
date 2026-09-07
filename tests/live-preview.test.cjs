@@ -24,6 +24,7 @@ function harness(){
   PDFProDocument:{applyDocument:async()=>{}},PDFDeskew:{processDocument:async()=>({changed:0,pages:[]})},describeProSettings:()=>'test',verifyProText:async(a,b,signal,quiet)=>assert.equal(quiet,true),DOC_OPTS:{},
   pdfjsLib:{getDocument:()=>({promise:Promise.resolve({getPage:async()=>({getViewport:({scale})=>({width:100*scale,height:200*scale}),render:()=>({promise:Promise.resolve()})}),destroy:async()=>{}})})}
  });
+ c.PDFProPipeline={apply:async(d,o,cb)=>{await c.PDFDeskew.processDocument(d,o,cb);const r=await c.PDFPro.processDocument(d,o,cb);await c.PDFProDocument.applyDocument(d,o,cb);return {doc:d,report:{...r,deskew:{changed:0,pages:[]}}};}};
  vm.runInContext(code+'\nliveHadPages=true;',c);
  return {c,element,published,release:()=>release(),isWaiting:()=>!!release};
 }
