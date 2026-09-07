@@ -1,0 +1,6 @@
+<dialog id="proCompare" aria-labelledby="compareTitle">
+  <header class="compare-head"><div><p class="eyebrow">BEFORE / AFTER</p><h2 id="compareTitle">선택 페이지 비교</h2></div><button class="btn icon" id="compareClose" aria-label="비교 닫기"><svg class="ic"><use href="#i-x"/></svg></button></header>
+  <div class="compare-toolbar"><span id="comparePageLabel"></span><label>확대 <select id="compareZoom"><option value="1">화면에 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
+  <div class="compare-grid"><section><h3>원본 편집본</h3><div class="compare-scroll" id="compareBeforeScroll"><canvas id="compareBefore"></canvas></div></section><section><h3>Pro 적용 후</h3><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter"></canvas></div></section></div>
+  <p class="compare-note" id="compareNote">두 화면의 스크롤이 함께 움직입니다.</p>
+</dialog>
