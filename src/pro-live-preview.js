@@ -1,14 +1,22 @@
 'use strict';
 // Serial jobs and a generation token keep stale processing off the screen.
 let proPreviewOpen=true, liveTimer, liveController=null, liveSequence=0;
-let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false;
+let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false, liveCache=null;
 let originalHover=false, originalPinned=false;
 let liveOutputSize=null;
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
-function liveKey(){
+function liveContentKey(){
   return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
     const el=$(id);return el.type==='checkbox'?el.checked:el.value;
-  }),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
+  })]);
+}
+function liveKey(){
+  return JSON.stringify([liveContentKey(),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
+}
+function releaseLivePreview(){
+  const old=liveDocs;liveDocs=[];liveCache=null;liveOutputSize=null;
+  if(old.length)liveQueue=liveQueue.catch(()=>{}).then(()=>Promise.allSettled(old.map(d=>d.destroy())));
+  for(const id of ['compareBefore','compareAfter']){$(id).width=0;$(id).height=0;}
 }
 function cancelLivePreview(){
   clearTimeout(liveTimer);liveSequence++;liveController?.abort();liveRequestedKey='';
@@ -39,7 +47,7 @@ function syncLivePreview(){
     $('btnPreview').title=visible?'미리보기 닫기':'페이지 미리보기';
     $('btnPreview').classList.toggle('active',visible);
   }
-  if(!visible||proAbort){cancelLivePreview();return;}
+  if(!visible||proAbort){cancelLivePreview();if(!visible)releaseLivePreview();return;}
   const index=pages.indexOf(livePage());
   $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
   if(typeof proRailDragging!=='undefined'&&proRailDragging)return;
@@ -49,20 +57,24 @@ function scheduleLivePreview(){
   if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort)return;
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
-  $('compareState').textContent='변경 사항 반영 중…';
+  const redraw=liveCache?.key===liveContentKey();
+  $('compareState').textContent=redraw?'화면 조정 중…':'변경 사항 반영 중…';
   $('proCompare').setAttribute('aria-busy','true');
   $('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();
-  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},300);
+  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},redraw?40:250);
 }
-async function liveCanvas(pdf,factor){
+async function liveCanvas(pdf,factor,signal){
   const page=await pdf.getPage(1),base=page.getViewport({scale:1}),slot=$('compareAfterScroll');
   const fit=Math.max(.05,Math.min((slot.clientWidth-40)/base.width,(slot.clientHeight-40)/base.height));
-  const scale=Math.min(8,fit*factor),dpr=Math.min(devicePixelRatio||1,2);
+  const dpr=Math.min(devicePixelRatio||1,2),scale=Math.min(8,fit*factor,Math.sqrt(16000000/(base.width*base.height))/dpr);
   const vp=page.getViewport({scale:scale*dpr}),canvas=document.createElement('canvas');
   canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
   canvas.style.width=base.width*scale+'px';canvas.style.height=base.height*scale+'px';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-  return canvas;
+  const task=page.render({canvasContext:canvas.getContext('2d'),viewport:vp}),abort=()=>task.cancel();
+  signal.addEventListener('abort',abort,{once:true});
+  try{signal.throwIfAborted();await task.promise;signal.throwIfAborted();return canvas;}
+  catch(e){canvas.width=canvas.height=0;if(signal.aborted)throw new DOMException('Superseded','AbortError');throw e;}
+  finally{signal.removeEventListener('abort',abort);}
 }
 async function updateLivePreview(seq){
   if(seq!==liveSequence)return;
@@ -70,25 +82,33 @@ async function updateLivePreview(seq){
   const signal=controller.signal,check=()=>{
     if(signal.aborted||seq!==liveSequence)throw new DOMException('Superseded','AbortError');
   };
-  let loaded=[];
+  let loaded=[],canvases=[];
   try{
-    const p=livePage(),offset=pages.indexOf(p),options=readProOptions();
-    const edited=await buildEditedDocument([p]);check();
-    const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
-    const doc=await PDFLib.PDFDocument.load(before);check();
-    const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
-    const report=result.report,deskew=report.deskew;
-    const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
-    if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
-    for(const data of [before,after]){loaded.push(await pdfjsLib.getDocument({data,...DOC_OPTS}).promise);check();}
-    const canvases=[];
-    for(const pdf of loaded){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value)));check();}
+    const p=livePage(),offset=pages.indexOf(p),options=readProOptions(),key=liveContentKey();
+    let report=liveCache?.key===key?liveCache.report:null;
+    if(!report){
+      const edited=await buildEditedDocument([p]);check();
+      const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
+      const doc=await PDFLib.PDFDocument.load(before);check();
+      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
+      report=result.report;
+      const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
+      if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
+      for(const data of [before,after]){
+        const task=pdfjsLib.getDocument({data,...DOC_OPTS});
+        try{loaded.push(await task.promise);}catch(e){await task.destroy();throw e;}check();
+      }
+    }
+    const renderDocs=loaded.length?loaded:liveDocs,deskew=report.deskew;
+    for(const pdf of renderDocs){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value),signal));check();}
     // Publish both detached canvases together, after all cancellation checks.
     for(let i=0;i<2;i++){
       const id=i?'compareAfter':'compareBefore',old=$(id),canvas=canvases[i];
-      canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);
+      canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);old.width=old.height=0;
     }
-    const old=liveDocs;liveDocs=loaded;loaded=[];
+    canvases=[];
+    const old=loaded.length?liveDocs:[];if(loaded.length){liveDocs=loaded;loaded=[];}
+    liveCache={key,report};
     const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
     liveOutputSize={width:outputViewport.width*(outputPage.userUnit||1),height:outputViewport.height*(outputPage.userUnit||1)};
     await Promise.allSettled(old.map(d=>d.destroy()));check();
@@ -101,12 +121,16 @@ async function updateLivePreview(seq){
     if(options.rasterize)note=report.ocr?.pages?'이미지 압축 후 확인한 OCR을 추가했습니다. 원래 링크·양식은 유지되지 않습니다.':'페이지 전체 압축 결과입니다. 저장본은 텍스트 검색·복사와 링크·양식을 지원하지 않습니다.';
     $('compareApplied').textContent=describeProSettings(options,report,deskew,offset);
     $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
+    $('compareDetails').setAttribute('data-warning',String(!!report.skipped||!!options.rasterize));
+    $('compareDetails').querySelector('summary').textContent=report.skipped?'원본 유지 내역 보기':options.rasterize?'출력 방식 안내':'미리보기 안내';
   }catch(e){
     if(e.name!=='AbortError'&&seq===liveSequence){
       $('compareState').textContent='미리보기를 업데이트하지 못했습니다';
       $('compareNote').textContent=e.message;$('proCompare').setAttribute('data-error','true');
+      $('compareDetails').open=true;$('compareDetails').setAttribute('data-warning','true');
     }
   }finally{
+    for(const c of canvases)c.width=c.height=0;
     await Promise.allSettled(loaded.map(d=>d.destroy()));
     if(liveController===controller)liveController=null;
     if(seq===liveSequence)$('proCompare').setAttribute('aria-busy','false');

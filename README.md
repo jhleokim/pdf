@@ -1,11 +1,21 @@
 # PDF Studio — Basic & Pro
 
-현재 버전: **v3.9**. 화면 우측 하단에서 확인할 수 있습니다.
+현재 버전: **v4.0**. 화면 우측 하단에서 확인할 수 있습니다.
+
+## v4.0 작업 경험과 처리 최적화
+
+- 현재 Hana 녹색·중립 회색·차콜 테마를 유지하면서 문서 주변의 반복 안내와 설정 여백을 정리했습니다. 적용 중인 번호·워터마크·도장·OCR·페이지 규격·스캔·압축 상태를 접힌 항목에서 확인할 수 있습니다. 꺼진 기능의 세부 입력은 숨기며, 값은 다시 켰을 때 유지됩니다.
+- 결과를 만들면 상단과 하단의 주 버튼이 **PDF 다운로드**로 전환됩니다. Ctrl/⌘+S도 준비된 결과를 저장하며, 문서나 설정이 바뀌면 결과가 무효화되어 다시 만들도록 표시합니다. 상세 처리 보고는 결과에서 펼쳐 볼 수 있습니다.
+- 모바일 Pro에서도 **파일 추가**를 바로 사용할 수 있습니다. 조작 버튼의 터치 영역을 확대하고 페이지 목록·미리보기·설정이 함께 보이는 구성을 유지합니다.
+- Pro 확대율·화면 크기 변경은 검증된 현재 페이지의 전후 PDF를 메모리에서 재사용합니다. 문서·페이지·선택 범위·설정이 바뀌면 다시 처리합니다. 미리보기를 닫거나 Basic으로 전환하면 캐시를 해제합니다.
+- Basic/Pro에서 취소된 렌더링을 중단하고, 완성된 캔버스를 교체하여 이전 페이지가 뒤늦게 나타나는 것을 방지합니다. 미리보기 캔버스는 각 16MP 이하로 제한합니다. 문서 초기화 시 PDF 객체·OCR·임시 도장도 해제합니다.
+- 웹과 단독 실행본을 소스 모듈 선택으로 생성합니다. 단독 실행본은 Gemini UI/클라이언트 모듈을 처음부터 제외하며, Tesseract와 언어 데이터는 동일하게 내장합니다.
+- 검증: Node 테스트 50개와 실제 브라우저 PDF/OCR/저장/모바일 검사를 사용합니다. 작은 합성 문서의 확대 변경은 추가 보정 1회·PDF 읽기/저장 각 2회에서 모두 0회로 감소했습니다. 단일 PC 측정 약 474ms → 190ms이며 일반 성능 보장은 아닙니다. 모든 페이지 썸네일을 미리 만드는 기존 파일 불러오기 방식은 이번 변경 범위에 포함하지 않았습니다.
 
 브라우저 안에서 동작하는 **오프라인 지원** PDF 페이지 편집기입니다.
 기본 편집과 Tesseract OCR은 `index.html` 한 파일에서 로컬로 처리합니다. 별도로 표시하고 동의한 Gemini 인식만 페이지 이미지를 외부로 전송합니다.
 
-웹 배포본은 `index.html`이며 선택 기능인 Gemini에는 인터넷과 Cloudflare Worker가 필요합니다. 단독 실행본은 `npm run build:standalone`으로 생성하는 `dist/PDF-Studio-Standalone-v3.9.html`입니다. 단독 실행본에는 Gemini 숨김 버튼·확인창·API 연결 모듈이 없으며, 편집과 Tesseract OCR에 서버·CDN·계정·API 키가 필요하지 않습니다. 웹 배포는 `wrangler.jsonc`에 따라 Worker와 `.deploy/index.html`만 배포합니다.
+웹 배포본은 `index.html`이며 선택 기능인 Gemini에는 인터넷과 Cloudflare Worker가 필요합니다. 단독 실행본은 `npm run build:standalone`으로 생성하는 `dist/PDF-Studio-Standalone-v4.0.html`입니다. 단독 실행본에는 Gemini 숨김 버튼·확인창·API 연결 모듈이 없으며, 편집과 Tesseract OCR에 서버·CDN·계정·API 키가 필요하지 않습니다. 웹 배포는 `wrangler.jsonc`에 따라 Worker와 `.deploy/index.html`만 배포합니다.
 
 ## 작업 모드
 
@@ -86,7 +96,7 @@ node --test tests/*.test.cjs
 ## 사용
 
 GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
-단독 실행본 `PDF-Studio-Standalone-v3.9.html`은 더블클릭하면 서버나 설치 없이 열립니다. 단독 실행본의 OCR은 Tesseract만 제공합니다.
+단독 실행본 `PDF-Studio-Standalone-v4.0.html`은 더블클릭하면 서버나 설치 없이 열립니다. 단독 실행본의 OCR은 Tesseract만 제공합니다.
 
 ### 단축키
 
@@ -139,7 +149,8 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 
 ### 추가 검증
 
-- `node --test tests/standalone-local.test.cjs`: 단독 실행본의 클라우드 진입점·연결 모듈 제외, 내장 로컬 엔진 보존, 스크립트 구문을 검사합니다.
+- `node tests/create-workspace.cjs` → `/tests/fixtures/workspace-check.html`, `/tests/fixtures/workspace-mobile.html`: 확대 캐시, 설정 상태, 저장 버튼·단축키, 빠른 페이지 전환, 모바일 조작 공간, 문서 초기화를 검사합니다.
+- `node --test tests/standalone-local.test.cjs`: 단독 실행본의 클라우드 모듈 제외, 내장 로컬 엔진 보존, 스크립트 구문과 웹 빌드 재현성을 검사합니다.
 - `node --test tests/gemini-worker.test.cjs`: 동의 누락·잘못된 이미지·출처·크기·비밀키·429·잘린 결과 검사. Google 호출은 모의 응답을 사용합니다.
 - `node tests/create-ocr-ui.cjs` → `/tests/fixtures/ocr-ui-check.html`: 합성 PDF로 숨김 8회·매회 동의·업로드 차단·로컬 결과 재사용·취소·검색 PDF를 검사합니다.
 - `node tests/create-tools-browser.cjs`: HTTP 요청이 차단된 상태에서 실제 한글/영어 OCR, 진행률, 원본 픽셀 보존 및 PDF 검색 추출을 검사합니다.

@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),web=fs.readFileSync(path.join(root,'index.html'),'utf8');
 test('standalone removes cloud entry points and client while preserving local engines',async()=>{
-  const {standaloneHTML}=await import('../scripts/build-standalone.mjs'),offline=standaloneHTML(web);
+  const {buildHTML}=await import('../scripts/build.mjs'),offline=buildHTML({standalone:true});
   assert.match(web,/id="geminiTools"/);
   assert.match(web,/id="pro-gemini"/);
   assert.doesNotMatch(offline,/id="(?:gemini\w*|pro-gemini)"|geminiClicks|\/api\/ocr\/gemini|generativelanguage\.googleapis\.com/);
@@ -11,5 +11,5 @@ test('standalone removes cloud entry points and client while preserving local en
     assert.ok(script(offline,id),id);assert.equal(script(offline,id),script(web,id),id+' unchanged');
   }
   for(const match of offline.matchAll(/<script\b(?![^>]*type="application\/octet-stream")[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);
-  assert.throws(()=>standaloneHTML(web.replace('id="geminiTools"','id="renamedCloudTools"')),/Expected one/);
+  assert.equal(buildHTML().replace(/\r\n/g,'\n'),web.replace(/\r\n/g,'\n'),'Hosted build remains independently reproducible');
 });

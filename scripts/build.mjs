@@ -9,6 +9,7 @@ for(const [file,expected] of Object.entries(ocrManifest.files)){
   const bytes=readFileSync(resolve(root,'vendor/ocr',file));
   if(bytes.length!==expected.bytes||createHash('sha256').update(bytes).digest('hex')!==expected.sha256)throw new Error('OCR asset integrity mismatch: '+file);
 }
+export function buildHTML({standalone=false}={}){
 let html = read('index.html');
 function block(name, content, before) {
   const start = `<!-- ${name}:start -->`, end = `<!-- ${name}:end -->`;
@@ -29,11 +30,12 @@ const appStart = '<script id="editor-code">';
 const a = html.indexOf(appStart), b = html.indexOf('</script>', a);
 if (a < 0 || b < 0) throw new Error('Missing editor-code block');
 html = html.slice(0, a + appStart.length) + '\n' + read('src/editor.js') + '\n' + html.slice(b);
-block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n</style>`, '</head>');
+block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/pro-workspace.css')}\n</style>`, '</head>');
 block('mode-switch', '<div class="mode-switch" role="group" aria-label="작업 모드"><button id="modeBasic" aria-pressed="true">Basic</button><button id="modePro" aria-pressed="false">Pro</button></div><div class="pro-mobile-switch" id="proMobileSwitch" hidden><button id="proWorkspace">미리보기 크게</button><button id="proSettings">설정과 함께</button></div>', '<div class="tools">');
 const panel=read('src/pro-panel.html');
+const toolPanel=read('src/pro-tools.html').replace('<!-- cloud-ocr-tools -->',standalone?'':read('src/pro-gemini-tools.html')).replace('<!-- cloud-ocr-dialog -->',standalone?'':read('src/pro-gemini-dialog.html'));
 const panelSplit=panel.indexOf('<details class="pro-section">',panel.indexOf('</details>'));
-block('pro-panel',panel.slice(0,panelSplit)+read('src/pro-tools.html')+'\n'+panel.slice(panelSplit), '</main>');
+block('pro-panel',panel.slice(0,panelSplit)+toolPanel+'\n'+panel.slice(panelSplit), '</main>');
 block('stamp-dialog',read('src/stamp-dialog.html'),'</body>');
 html=html.replace(/<!-- pro-dialog:start -->[\s\S]*?<!-- pro-dialog:end -->\s*/, '');
 block('pro-dialog', read('src/pro-dialog.html'), '<!-- pro-panel:start -->');
@@ -41,13 +43,16 @@ const assets={'ocr-client':'tesseract.min.js','ocr-core':'tesseract-core-lstm.wa
 block('ocr-assets',Object.entries(assets).map(([id,file])=>`<script type="application/octet-stream" id="${id}">${readFileSync(resolve(root,'vendor/ocr',file)).toString('base64')}</script>`).join('\n'),'</body>');
 block('ocr-licenses','<details hidden><summary>OCR licenses</summary><pre>'+['LICENSE-tesseract.js','LICENSE-tesseract.js-core','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt','NOTICE.txt'].map(f=>read('vendor/ocr/'+f).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('\n')+'</pre></details>','</body>');
 html=html.replace(/<!-- pro-runtime:start -->[\s\S]*?<!-- pro-runtime:end -->\s*/, '');
-block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','pro-tools-ui.js'].map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
+block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','pro-tools-ui.js','pro-gemini-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')).map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')
   .replace('<h1>PDF 페이지 편집기</h1>', '<h1>PDF Studio</h1>')
   .replace('OFFLINE · 로컬 처리', '내 기기에서 안전하게')
   .replace('<h2>여기에 파일을 놓으세요</h2>', '<h2>문서 작업, 가볍게 시작하세요</h2>')
   .replace('여러 개를 한 번에 올리면 하나의 문서로 합쳐서 편집합니다.<br>사진은 자동으로 페이지가 됩니다.', 'PDF나 사진을 이곳에 놓으세요.<br>합치고, 정리하고, 필요한 만큼 다듬을 수 있어요.')
   .replace('<div id="busy"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span></div></div>', '<div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button></div></div>');
-// Hosted build. build-standalone.mjs produces the local-only download separately.
-writeFileSync(resolve(root, 'index.html'), html + '\n', 'utf8');
-console.log(`Built web index.html (${(Buffer.byteLength(html)/1048576).toFixed(2)} MiB); no external assets.`);
+return html+'\n';
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const html=buildHTML();writeFileSync(resolve(root,'index.html'),html,'utf8');
+ console.log('Built web index.html ('+(Buffer.byteLength(html)/1048576).toFixed(2)+' MiB); no external assets.');
+}
