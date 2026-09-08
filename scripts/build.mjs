@@ -48,6 +48,6 @@ html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio
   .replace('<h2>여기에 파일을 놓으세요</h2>', '<h2>문서 작업, 가볍게 시작하세요</h2>')
   .replace('여러 개를 한 번에 올리면 하나의 문서로 합쳐서 편집합니다.<br>사진은 자동으로 페이지가 됩니다.', 'PDF나 사진을 이곳에 놓으세요.<br>합치고, 정리하고, 필요한 만큼 다듬을 수 있어요.')
   .replace('<div id="busy"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span></div></div>', '<div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button></div></div>');
-// Both HTTP hosting and a double-clicked standalone use this exact artifact.
+// Hosted build. build-standalone.mjs produces the local-only download separately.
 writeFileSync(resolve(root, 'index.html'), html + '\n', 'utf8');
-console.log(`Built standalone index.html (${(Buffer.byteLength(html)/1048576).toFixed(2)} MiB); no external assets.`);
+console.log(`Built web index.html (${(Buffer.byteLength(html)/1048576).toFixed(2)} MiB); no external assets.`);
