@@ -188,7 +188,7 @@ async function createProResult(){
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
   }finally{finishProWork();}
 }
-$('modeBasic').onclick=()=>setProMode('basic');$('modePro').onclick=()=>setProMode('pro');
+$('modeBasic').onclick=()=>setProMode('basic');$('modePro').onclick=()=>{if(proMode!=='pro')setProMode('pro');};
 $('proWorkspace').onclick=()=>{setProView('workspace');document.querySelector('main').scrollTop=0;};$('proSettings').onclick=()=>{document.querySelector('main').scrollTop=0;setProView('settings');if(!proPreviewOpen)$('proPanel').scrollIntoView({behavior:'smooth',block:'start'});};
 $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();};

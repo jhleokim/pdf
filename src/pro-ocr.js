@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const check=signal=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
-  function bytes(id){return Uint8Array.from(atob(document.getElementById(id).textContent.trim()),c=>c.charCodeAt(0));}
+  function bytes(id){const data=document.getElementById(id).textContent.trim();if(Uint8Array.fromBase64)return Uint8Array.fromBase64(data);const raw=atob(data),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+  function fastCore(){try{return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,15,1,13,0,65,1,253,15,65,2,253,15,253,128,2,11]));}catch(_){return false;}}
   function bounded(promise,signal,ms=120000){
     return new Promise((resolve,reject)=>{
       const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);};
@@ -18,23 +19,31 @@
     if(!globalThis.Tesseract){
       const script=document.createElement('script');script.textContent=new TextDecoder().decode(bytes('ocr-client'));document.head.appendChild(script);
     }
-    // 5.1.1 accepts {code,data} while loading but reads .data as a language name
+    // Upstream accepts {code,data} while loading but reads .data as a language name
     // during initialize. Normalize only that message in our worker bootstrap.
     const bootstrap=`self.addEventListener('message',e=>{const m=e.data;if(m.action==='initialize'&&Array.isArray(m.payload?.langs))m.payload.langs=m.payload.langs.map(l=>typeof l==='string'?l:l.code);});\n`;
-    const url=URL.createObjectURL(new Blob([bootstrap,bytes('ocr-core'),'\n',bytes('ocr-worker')],{type:'application/javascript'}));
+    const accelerated=fastCore()&&!!document.getElementById('ocr-core-fast');
+    const url=URL.createObjectURL(new Blob([bootstrap,bytes(accelerated?'ocr-core-fast':'ocr-core'),'\n',bytes('ocr-worker')],{type:'application/javascript'}));
     const languages=(language==='eng'?['eng']:['kor','eng']).map(code=>({code,data:bytes('ocr-lang-'+code)}));
-    let worker,closed=false,rejectFault;
+    let worker,closed=false,rejectFault,passIndex=0,lastProgress=0,reading=false;
+    const emit=value=>{lastProgress=Math.max(lastProgress,Math.min(1,value));onProgress?.({status:'recognizing text',progress:lastProgress});};
+    const logger=m=>{if(reading){if(m.status==='recognizing text')emit((passIndex+(m.progress||0))/(layout==='auto'?2:1));}else onProgress?.({status:'preparing engine',progress:0});};
     const fault=new Promise((_,reject)=>{rejectFault=reject;});fault.catch(()=>{});
-    const pending=Tesseract.createWorker(languages,1,{workerPath:url,workerBlobURL:false,corePath:'embedded.js',cacheMethod:'none',logger:m=>onProgress?.(m),errorHandler:e=>rejectFault(new Error('인식 엔진: '+String(e)))});
+    const pending=Tesseract.createWorker(languages,1,{workerPath:url,workerBlobURL:false,corePath:'embedded.js',cacheMethod:'none',logger,errorHandler:e=>rejectFault(new Error('인식 엔진: '+String(e)))});
     pending.then(w=>{if(closed)w.terminate().catch(()=>{});},()=>{});
-    const close=async()=>{closed=true;signal?.removeEventListener('abort',close);if(worker)await worker.terminate().catch(()=>{});URL.revokeObjectURL(url);};
+    const close=async()=>{if(closed)return;closed=true;signal?.removeEventListener('abort',close);if(worker)await worker.terminate().catch(()=>{});URL.revokeObjectURL(url);};
     signal?.addEventListener('abort',close,{once:true});
     try{worker=await bounded(Promise.race([pending,fault]),signal);check(signal);await bounded(worker.setParameters({tessedit_pageseg_mode:'3',preserve_interword_spaces:'1',user_defined_dpi:'300'}),signal);}
     catch(e){await close();throw e;}
-    return {close,async recognize(canvas){
+    return {close,accelerated,async recognize(canvas){
+      reading=true;passIndex=0;lastProgress=0;emit(0);
+      // Encode once and reuse for both layout passes instead of serializing the canvas twice.
+      const blob=await bounded(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),signal);
+      if(!blob)throw new Error('인식용 이미지를 준비하지 못했습니다.');
+      const input=new Uint8Array(await bounded(blob.arrayBuffer(),signal));
       async function pass(psm){
       check(signal);await bounded(worker.setParameters({tessedit_pageseg_mode:psm}),signal);
-      const {data}=await bounded(worker.recognize(canvas,{}, {text:true,blocks:true}),signal);check(signal);
+      const {data}=await bounded(Promise.race([worker.recognize(input,{}, {text:true,blocks:true}),fault]),signal);check(signal);
       const rawWords=(data.words||data.blocks?.flatMap(b=>b.paragraphs.flatMap(p=>p.lines.flatMap(l=>l.words)))||[])
         .filter(w=>w.text?.trim()&&w.bbox&&w.bbox.x1>w.bbox.x0&&w.bbox.y1>w.bbox.y0)
         .map(w=>({text:w.text.trim(),confidence:w.confidence||0,box:[w.bbox.x0/canvas.width,w.bbox.y0/canvas.height,w.bbox.x1/canvas.width,w.bbox.y1/canvas.height]}));
@@ -53,11 +62,11 @@
       return {text:data.text.trim(),confidence:data.confidence||0,words,psm};
       }
       const first=await pass(layout==='auto'?'3':layout);
-      if(layout!=='auto')return first;
-      onProgress?.({status:'checking missed lines',progress:0});
+      if(layout!=='auto'){emit(1);return first;}
+      passIndex=1;emit(.5);
       const alternate=await pass('6');
       const score=r=>r.words.reduce((sum,w)=>sum+(w.confidence>=40?[...w.text].length*w.confidence/100:0),0);
-      return score(alternate)>score(first)*1.03?alternate:first;
+      emit(1);return score(alternate)>score(first)*1.03?alternate:first;
     }};
   }
   function makeFont(doc,records){

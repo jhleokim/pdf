@@ -1,5 +1,4 @@
-Tesseract.js 5.1.1 and tesseract.js-core 5.1.1: Apache-2.0.
-The corresponding license texts are included in this directory and the standalone HTML.
+Tesseract.js 7.0.0 and tesseract.js-core 7.0.0: Apache-2.0.
+Includes embedded LSTM baseline and relaxed SIMD cores, selected locally.
 Language models: @tesseract.js-data/kor and /eng 4.0.0_best_int, Apache-2.0.
 Sources: https://github.com/naptha/tesseract.js and https://github.com/tesseract-ocr/tessdata_best
-Original upstream assets are bundled without modification. A non-SIMD LSTM core supports offline file:// use; core and worker are composed into one Blob at runtime. Language bytes are passed directly to the worker. No CDN or recognition service is used.

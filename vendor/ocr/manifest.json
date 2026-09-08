@@ -1,19 +1,19 @@
 {
-  "tesseract": "5.1.1",
-  "core": "5.1.1",
+  "tesseract": "7.0.0",
+  "core": "7.0.0",
   "languages": "4.0.0_best_int",
   "files": {
     "tesseract.min.js": {
-      "bytes": 66695,
-      "sha256": "a8e29918d098b2b06e1012bdaeffb4aec0445c5d5654709023e0bd1f442a80e8"
+      "bytes": 62961,
+      "sha256": "000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e"
     },
     "worker.min.js": {
-      "bytes": 123724,
-      "sha256": "aca1229639fc9907d86f96e825955a2b7c5716d17f3bc3acd71f9c7ab66181fc"
+      "bytes": 111307,
+      "sha256": "576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d"
     },
     "tesseract-core-lstm.wasm.js": {
-      "bytes": 3938277,
-      "sha256": "8f04aa0cc81e7bde33f80e92fa01a7a665f0b4884d098acf5de9c7104a11dfaa"
+      "bytes": 3896484,
+      "sha256": "eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680"
     },
     "lang/kor.traineddata.gz": {
       "bytes": 1572336,
@@ -38,6 +38,10 @@
     "worker.min.js.LICENSE.txt": {
       "bytes": 466,
       "sha256": "45f54171aeaa1d10c0c1a66f374b7bba1f02472b1487fbe892eec04f840002ac"
+    },
+    "tesseract-core-relaxedsimd-lstm.wasm.js": {
+      "bytes": 3905767,
+      "sha256": "861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3"
     }
   }
 }
