@@ -9,7 +9,7 @@ function harness(){
  const element=id=>{
   if(!elements.has(id))elements.set(id,{id,value:'1',clientWidth:500,clientHeight:600,attrs:{},classList:{toggle(){}},
    setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k]||'';},removeAttribute(k){delete this.attrs[k];},
-   addEventListener(){},focus(){},replaceWith(canvas){published.push(id);elements.set(id,canvas);}});
+   addEventListener(){},querySelector(){return element(id+'-summary');},focus(){},replaceWith(canvas){published.push(id);elements.set(id,canvas);}});
   return elements.get(id);
  };
  let processing=0;
@@ -26,7 +26,7 @@ function harness(){
  });
  c.PDFProPipeline={apply:async(d,o,cb)=>{await c.PDFDeskew.processDocument(d,o,cb);const r=await c.PDFPro.processDocument(d,o,cb);await c.PDFProDocument.applyDocument(d,o,cb);return {doc:d,report:{...r,deskew:{changed:0,pages:[]}}};}};
  vm.runInContext(code+'\nliveHadPages=true;',c);
- return {c,element,published,release:()=>release(),isWaiting:()=>!!release};
+ return {c,element,published,release:()=>release(),isWaiting:()=>!!release,processing:()=>processing};
 }
 test('a superseded preview never publishes stale canvases and the newer result succeeds',async()=>{
  const h=harness();const first=vm.runInContext('updateLivePreview(0)',h.c);
@@ -37,6 +37,19 @@ test('a superseded preview never publishes stale canvases and the newer result s
  assert.deepEqual(h.published,['compareBefore','compareAfter']);
  assert.equal(h.element('compareState').textContent,'미리보기 업데이트 완료');
  assert.equal(h.element('compareOriginal').disabled,false);
+});
+
+test('zoom and viewport resizing reuse the processed PDF; document edits invalidate it',async()=>{
+ const h=harness(),first=vm.runInContext('updateLivePreview(0)',h.c);
+ while(!h.isWaiting())await new Promise(r=>setImmediate(r));h.release();await first;
+ h.element('compareZoom').value='2';h.element('compareStage').clientWidth=800;
+ await vm.runInContext('updateLivePreview(0)',h.c);
+ assert.equal(h.processing(),1,'Display changes must not reapply PDF transformations');
+ assert.equal(h.published.length,4,'Both canvases redraw from the cached documents');
+ h.c.proFingerprint=()=>'edited';await vm.runInContext('updateLivePreview(0)',h.c);
+ assert.equal(h.processing(),2,'Document edits must regenerate the transformed PDF');
+ vm.runInContext('setLivePreviewOpen(false)',h.c);
+ assert.equal(vm.runInContext('liveCache===null&&liveDocs.length===0',h.c),true,'Closing releases cached document references');
 });
 test('closing a preview cancels in-flight work without publishing an obsolete result',async()=>{
  const h=harness();const job=vm.runInContext('updateLivePreview(0)',h.c);

@@ -911,6 +911,69 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 @media(max-width:650px){.stamp-editor-body{grid-template-columns:1fr;padding:12px;gap:14px}.stamp-canvas-wrap{min-height:150px;max-height:32dvh}#stampCanvas{max-height:30dvh}.stamp-editor-controls{grid-template-columns:1fr 1fr;gap:12px}.stamp-editor-controls>.stamp-actions,.stamp-editor-controls>.pro-hint{grid-column:1/-1}.stamp-editor header,.stamp-editor footer{padding:12px}.stamp-editor{max-height:96dvh}}
 .pro-tool-title{display:inline-flex;align-items:center;gap:6px}.pro-beta{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface-2);color:var(--ink-2);font-size:9px;font-weight:650;line-height:1.2;letter-spacing:.04em;white-space:nowrap}
 .gemini-tools{display:grid;gap:10px;padding-top:12px;border-top:1px solid var(--line-2)}.gemini-tools[hidden]{display:none}.gemini-dialog{position:fixed;inset:0;margin:auto;box-sizing:border-box;width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:24px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px #0004}.gemini-dialog::backdrop{background:#0006}.gemini-dialog h2{margin:0;font-size:18px}.gemini-dialog p{font-size:13px;line-height:1.7}.gemini-consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:600;padding:14px 0}.gemini-consent input{flex:none;margin-top:3px;accent-color:var(--accent)}.gemini-dialog .stamp-actions{justify-content:flex-end}
+/* v4 workspace refinements; the existing Hana/charcoal palette is unchanged. */
+.topbar{row-gap:9px;padding-top:calc(12px + var(--safe-t));padding-bottom:10px}
+.tools{padding-top:9px}
+.pro-add-files{display:none}
+.pro-panel-head{padding:14px 16px 12px}
+.pro-panel-head h2{font-size:17px}
+.pro-panel-head p{font-size:11px;line-height:1.5}
+.pro-panel-scroll{padding:12px}
+.pro-section{box-shadow:0 1px 2px rgba(20,24,28,.035)}
+.pro-section summary{padding:11px 12px;font-size:13px;min-height:54px}
+.pro-section summary small{font-size:11px;line-height:1.4}
+.pro-section.has-settings summary small{color:var(--accent-ink)}
+.pro-section-body{gap:13px;padding:13px 14px 15px}
+.pro-section-body [hidden],.pro-preserve-note[hidden]{display:none!important}
+.pro-field{font-size:12px}
+.pro-field select,.pro-field input[type=number],.pro-field input[type=text]{font-size:13px;height:36px}
+.pro-check{font-size:13px;min-height:32px}
+.pro-hint{line-height:1.7}
+.pro-panel-footer{padding:11px 14px 12px}
+.pro-status{margin-bottom:8px}
+.pro-footer-actions{grid-template-columns:1fr 1.2fr}
+.pro-report-details{border-top:1px solid var(--line);padding-top:10px;margin:10px 0;color:var(--ink-2);font-size:12px}
+.pro-report-details>summary{cursor:pointer;padding:6px 0;font-weight:600}
+#proCompare .compare-head{padding:9px 14px}
+.compare-head>div:first-child{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.compare-head p{margin:0;font-variant-numeric:tabular-nums}
+.compare-toolbar{padding:6px 14px;min-height:36px}
+.compare-toolbar select{min-height:30px;font-size:12px;border-radius:4px}
+.compare-applied{font-weight:500;padding:7px 14px;max-height:56px}
+.compare-details{flex:none;background:var(--surface);border-top:1px solid var(--line);font-size:11px;color:var(--ink-3)}
+.compare-details>summary{cursor:pointer;padding:7px 14px;min-height:28px}
+.compare-details .compare-note{padding:0 14px 10px;min-height:0;max-height:96px;overflow:auto}
+.compare-details[data-warning=true]>summary{color:var(--accent-ink);font-weight:600}
+@media(min-width:881px){body[data-mode=pro] main{padding-bottom:38px}body[data-mode=pro] #proPanel{padding-bottom:0}}
+.btn:focus-visible,summary:focus-visible,.pro-field input:focus-visible,.pro-field select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:880px){
+ .topbar{padding:calc(8px + var(--safe-t)) 12px 8px;row-gap:5px}
+ .pro-mobile-switch{padding:4px 0;border-bottom:0}
+ .pro-mobile-switch button{min-height:40px}
+ body[data-mode=pro] .tools{padding-top:5px}
+ body[data-mode=pro] .tools::before{content:none}
+ body[data-mode=pro] .tools .pro-add-files{display:inline-flex;width:auto;min-height:44px;padding:0 12px;font-size:13px;margin-right:auto}
+ body[data-mode=pro] .tools .btn.icon,body[data-mode=pro] .tools #btnSave{width:44px;height:44px}
+ body[data-mode=pro].pro-preview-open #boardWrap:not([hidden]){height:116px;padding:0 12px 8px}
+ body[data-mode=pro].pro-preview-open .legend{padding:5px 0}
+ body[data-mode=pro].pro-preview-open .sheet{height:74px}
+ body[data-mode=pro].pro-preview-open .page{width:70px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #boardWrap:not([hidden]){height:88px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proCompare{height:clamp(280px,34dvh,330px);min-height:280px;flex:0 1 clamp(280px,34dvh,330px)}
+ body[data-mode=pro] #proCompare .compare-head{padding:5px 10px}
+ body[data-mode=pro] .compare-navigation .btn{width:40px;height:40px}
+ body[data-mode=pro] .compare-toolbar{padding:3px 10px}
+ body[data-mode=pro] #compareOriginal{min-height:40px;padding:0 11px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .compare-details:not([data-warning=true]){display:none}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .compare-details .compare-note{display:block;max-height:60px}
+ .pro-section summary{min-height:58px;font-size:14px}
+ .pro-section-body{padding:13px;gap:13px}
+ .pro-field{font-size:13px}
+ .pro-field select,.pro-field input[type=number],.pro-field input[type=text]{height:44px;font-size:16px}
+ .pro-check{min-height:40px;font-size:14px}
+ .pro-panel-footer .btn{min-height:44px}
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-panel-footer{padding:8px 12px}
+}
 </style>
 <!-- pro-styles:end -->
 </head>
@@ -1108,11 +1171,11 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 <!-- pro-dialog:start -->
 <div id="proRailDivider" class="pro-rail-divider" role="separator" aria-label="페이지 목록 너비" aria-orientation="vertical" aria-controls="boardWrap" tabindex="0" title="드래그하여 목록 넓히기 · 더블클릭 기본 너비 · 방향키로 조절"><span></span></div>
 <section id="proCompare" class="live-preview" aria-labelledby="compareTitle" hidden>
-<header class="compare-head"><div><h2 id="compareTitle">선택한 페이지</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
+<header class="compare-head"><div><h2 id="compareTitle">현재 미리보기</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
 <div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
 <div class="compare-stage" id="compareStage"><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter" aria-label="Pro 설정 적용 결과"></canvas></div><div class="compare-scroll compare-original" id="compareBeforeScroll" aria-hidden="true"><canvas id="compareBefore" aria-label="Pro 적용 전 편집본"></canvas></div><button class="btn" id="compareOriginal" aria-pressed="false" title="마우스를 올리거나 눌러 원본 보기" disabled><svg class="ic"><use href="#i-eye"/></svg>원본 보기</button></div>
 <p class="compare-applied" id="compareApplied" role="status"></p>
-<p class="compare-note" id="compareNote">설정 변경을 자동으로 반영합니다.</p>
+<details class="compare-details" id="compareDetails"><summary>미리보기 안내</summary><p class="compare-note" id="compareNote">설정 변경을 자동으로 반영합니다.</p></details>
 </section>
 <!-- pro-dialog:end -->
 <!-- pro-panel:start -->
@@ -1121,20 +1184,20 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
       <div>
         <span class="pro-eyebrow">DOCUMENT WORKSPACE</span>
         <h2 id="proPanelTitle">문서 다듬기 <span class="pro-badge">Pro</span></h2>
-        <p>설정을 바꾸면 옆 페이지에 바로 반영됩니다.</p>
+        <p>선택한 페이지로 확인 · 문서 전체에 적용</p>
       </div>
       <button class="btn quiet icon" id="proReset" title="설정 초기화" aria-label="설정 초기화"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>
     </div>
 
     <div class="pro-panel-scroll">
       <button class="btn primary" id="proOpen"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>PDF 또는 사진 불러오기</button>
-      <div class="pro-preserve-note"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p id="proPreserveText">기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
+      <div class="pro-preserve-note" hidden><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><p id="proPreserveText">기존 텍스트와 검색 정보를 유지하며<br>이미지와 페이지 설정을 조정합니다.</p></div>
 
       <details class="pro-section" open>
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>번호와 워터마크<small>문서 전체에 일괄 배치</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>번호와 워터마크<small id="proNumberSummary">사용 안 함</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
           <label class="pro-check"><input type="checkbox" id="proNumber"><span>페이지 번호 넣기</span></label>
-          <div class="pro-two-fields">
+          <div class="pro-two-fields" id="proNumberFields" hidden>
             <label class="pro-field" for="proStartNumber"><span>시작 번호</span><input id="proStartNumber" type="number" min="1" value="1" inputmode="numeric"></label>
             <label class="pro-field" for="proSkipPages"><span>앞에서 제외 <small>쪽</small></span><input id="proSkipPages" type="number" min="0" value="0" inputmode="numeric"></label>
           </div>
@@ -1144,7 +1207,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
       </details>
 
       <details class="pro-section" id="stampSection">
-  <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>도장·서명 <small>사진에서 만들고, 원하는 곳에 찍기</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+  <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>도장·서명 <small id="stampSummary">사진에서 만들고, 원하는 곳에 찍기</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
   <div class="pro-section-body">
     <label class="stamp-drop" id="stampDrop"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>도장·서명 이미지 놓기<small>또는 클릭해 사진 선택 · PNG, JPG, WEBP</small></span><input type="file" id="stampFile" accept="image/png,image/jpeg,image/webp" aria-label="도장·서명 이미지 선택"></label>
     <div id="stampActive" hidden>
@@ -1165,7 +1228,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
   </div>
 </details>
 <details class="pro-section" id="ocrSection">
-  <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 8h10M12 8v9m-3 0h6"/></svg></span><span><span class="pro-tool-title">텍스트 인식 <span class="pro-beta">BETA</span></span><small>스캔을 검색·복사 가능한 PDF로</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+  <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 8h10M12 8v9m-3 0h6"/></svg></span><span><span class="pro-tool-title">텍스트 인식 <span class="pro-beta">BETA</span></span><small id="ocrSummary">스캔을 검색·복사 가능한 PDF로</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
   <div class="pro-section-body">
     <p class="pro-hint">원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.</p>
     <label class="pro-field" for="ocrLanguage"><span>인식 언어</span><select id="ocrLanguage"><option value="kor+eng">한국어 + 영어</option><option value="eng">영어</option></select></label>
@@ -1200,12 +1263,12 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
   </form>
 </dialog>
 <details class="pro-section">
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small>기울기 보정, 여백과 크기</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small id="proPageSummary">사용 안 함</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
           <label class="pro-check"><input type="checkbox" id="proDeskew"><span>스캔 기울기 자동 보정</span></label>
           <p class="pro-hint">글줄을 기준으로 ±7° 이내의 기울기를 바로잡습니다. 판별이 어려운 페이지와 링크·양식이 있는 페이지는 유지합니다.</p>
           <label class="pro-check"><input type="checkbox" id="proCrop"><span>가장자리 여백 재단</span></label>
-          <div class="pro-crop-fields" role="group" aria-label="재단할 여백, 밀리미터 단위">
+          <div id="proCropFields" hidden class="pro-crop-fields" role="group" aria-label="재단할 여백, 밀리미터 단위">
             <label class="pro-field" for="proCropTop"><span>위 <small>mm</small></span><input id="proCropTop" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
             <label class="pro-field" for="proCropRight"><span>오른쪽 <small>mm</small></span><input id="proCropRight" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
             <label class="pro-field" for="proCropBottom"><span>아래 <small>mm</small></span><input id="proCropBottom" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
@@ -1217,11 +1280,11 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
       </details>
 
       <details class="pro-section">
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><span>스캔 보정<small>배경과 대비를 깔끔하게</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><span>스캔 보정<small id="proScanSummary">사용 안 함</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
           <label class="pro-check"><input type="checkbox" id="proGrayscale"><span>B&W 흑백으로 변환</span></label>
           <label class="pro-field pro-range" for="proBWThreshold"><span>흑백 기준 <output id="proBWThresholdValue" for="proBWThreshold">180</output></span><input type="range" id="proBWThreshold" min="100" max="240" value="180"><span class="pro-range-scale"><small>배경을 밝게</small><small>연한 글자까지</small></span></label>
-          <p class="pro-hint">검정·흰색 1비트로 저장합니다. JPEG 품질 대신 흑백 기준과 이미지 크기로 조절합니다. 연한 글자는 기준을 높여 확인하세요.</p>
+          <p id="proBWHelp" class="pro-hint">검정·흰색 1비트로 저장합니다. JPEG 품질 대신 흑백 기준과 이미지 크기로 조절합니다. 연한 글자는 기준을 높여 확인하세요.</p>
           <label class="pro-field pro-range" for="proContrast"><span>대비 강화 <output id="proContrastValue" for="proContrast">0</output></span><input type="range" id="proContrast" min="0" max="40" value="0"><span class="pro-range-scale"><small>원본</small><small>또렷하게</small></span></label>
           <label class="pro-field pro-range" for="proWhitePoint"><span>흰 배경 기준 <output id="proWhitePointValue" for="proWhitePoint">255</output></span><input type="range" id="proWhitePoint" min="200" max="255" value="255"><span class="pro-range-scale"><small>배경 정리</small><small>원본</small></span></label>
           <p class="pro-hint">지원되는 스캔 이미지에 적용됩니다. 흐린 글자나 도장이 지워지지 않는지 비교해 보세요.</p>
@@ -1229,7 +1292,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
       </details>
 
       <details class="pro-section">
-        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small>이미지의 크기와 품질 조절</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
+        <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small id="proOptimizeSummary">텍스트 유지 · 2400 px</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
           <label class="pro-check"><input type="checkbox" id="proOptimize" checked><span>이미지 최적화 사용</span></label>
           <label class="pro-field" for="proCompressionMode"><span>압축 방식</span><select id="proCompressionMode"><option value="preserve" selected>텍스트 유지 · 이미지 압축</option><option value="raster">페이지 전체 압축 · 이미지 PDF</option></select></label>
@@ -1249,8 +1312,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
         <div class="pro-result-title"><span class="pro-complete-icon"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span><h3 id="proResultTitle">결과가 준비됐어요</h3></div>
         <div class="pro-size-comparison"><div><span id="proBeforeLabel">최적화 전</span><strong id="proBeforeSize">—</strong></div><span class="pro-size-arrow" aria-hidden="true">→</span><div><span>Pro 결과</span><strong id="proAfterSize">—</strong></div></div>
         <p class="pro-reduction" id="proReduction"></p>
-        <p class="pro-composition" id="proComposition"></p>
-        <p class="pro-report" id="proReport"></p>
+        <details class="pro-report-details"><summary>처리 내역 보기</summary><p class="pro-composition" id="proComposition"></p><p class="pro-report" id="proReport"></p></details>
         <button class="btn primary" id="proDownload"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>결과 PDF 다운로드</button>
         <button class="btn quiet" id="proDiscard">결과 닫기</button>
       </section>
@@ -1258,8 +1320,8 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 
     <div class="pro-panel-footer">
       <p class="pro-status" id="proStatus" role="status" aria-live="polite">파일을 추가하면 시작할 수 있어요.</p>
-      <div class="pro-footer-actions"><button class="btn" id="proPreview" disabled><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span id="proPreviewLabel">미리보기 닫기</span></button><button class="btn primary" id="proExport" disabled>결과 만들기<svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></button></div>
-      <p class="pro-footer-hint">설정은 미리보기에 자동 반영됩니다. 결과를 만들어 저장하세요.</p>
+      <div class="pro-footer-actions"><button class="btn" id="proPreview" disabled><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span id="proPreviewLabel">미리보기 닫기</span></button><button class="btn primary" id="proExport" disabled><span id="proExportLabel">결과 만들기</span><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></button></div>
+
     </div>
   </aside>
 <!-- pro-panel:end -->
@@ -1692,7 +1754,7 @@ function select(idx, e){
 /* ════════════════════════════════════════════════════════════
    미리보기
    ════════════════════════════════════════════════════════════ */
-let pvToken = 0, pvZoom = 1, pvFitScale = 1, pvScale = 1;
+let pvToken = 0, pvZoom = 1, pvFitScale = 1, pvScale = 1, pvRenderTask=null;
 const PV_ZOOM_MIN = 0.4, PV_ZOOM_MAX = 8;
 const previewVisible = () => !$('previewPanel').hidden &&
   !(mainEl.classList.contains('preview-off')) &&
@@ -1706,6 +1768,7 @@ function setPvTitle(p){
 
 async function showPreview(p){
   if(!p) return;
+  const my=++pvToken;pvRenderTask?.cancel();pvRenderTask=null;
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
   setPvTitle(p);
@@ -1716,7 +1779,6 @@ async function showPreview(p){
   $('pvPlaceholder').hidden = true;
   $('pvZoomCtrl').hidden = false;
 
-  const my = ++pvToken;
   const d = docs.get(p.docId);
   const page = await d.pdfjsDoc.getPage(p.srcIndex + 1);
   if(my !== pvToken) return;
@@ -1728,15 +1790,18 @@ async function showPreview(p){
   const pad = isMobile() ? 20 : 36;
   pvFitScale = Math.max(0.05, Math.min((box.width - pad) / probe.width, (box.height - pad) / probe.height));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  let cssScale = Math.min(pvFitScale * pvZoom, 8);
+  let cssScale = Math.min(pvFitScale * pvZoom, 8, Math.sqrt(16000000/(probe.width*probe.height))/dpr);
   const vp = page.getViewport({ scale: cssScale * dpr, rotation: rot });
 
-  const c = $('pvCanvas');
+  const c = document.createElement('canvas');c.id='pvCanvas';
   c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
   c.style.width = Math.floor(vp.width / dpr) + 'px';
   c.style.height = Math.floor(vp.height / dpr) + 'px';
-  await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-  if(my !== pvToken) return;
+  const task=page.render({canvasContext:c.getContext('2d'),viewport:vp});pvRenderTask=task;
+  try{await task.promise;}catch(e){c.width=c.height=0;if(my!==pvToken||e.name==='RenderingCancelledException')return;throw e;}
+  finally{if(pvRenderTask===task)pvRenderTask=null;}
+  if(my !== pvToken){c.width=c.height=0;return;}
+  const old=$('pvCanvas');c.setAttribute('aria-label',old.getAttribute('aria-label')||'페이지 미리보기');old.replaceWith(c);old.width=old.height=0;
 
   $('pvStage').hidden = false;
   $('pvZoomVal').textContent = Math.round(pvZoom * 100) + '%';
@@ -1752,6 +1817,7 @@ function setZoom(z){
   if(p) showPreview(p);
 }
 function clearPreview(){
+  pvRenderTask?.cancel();pvRenderTask=null;$('pvCanvas').width=$('pvCanvas').height=0;
   previewUid = null; pvToken++; pvZoom = 1; selAnno = null;
   $('pvStage').hidden = true; $('pvPlaceholder').hidden = false;
   $('pvZoomCtrl').hidden = true; $('annoBar').hidden = true;
@@ -2306,7 +2372,7 @@ function downloadPdf(bytes,name){
 
 async function save(){
   if(!pages.length || document.body.classList.contains('is-busy')) return;
-  if(document.body.dataset.mode==='pro' && typeof createProResult==='function') return createProResult();
+  if(document.body.dataset.mode==='pro' && typeof proPrimaryAction==='function') return proPrimaryAction();
   $('btnSave').disabled = true; $('mbSave').disabled = true;
   busy(true, 'PDF를 만드는 중…'); progress(12);
   await idle();
@@ -2349,7 +2415,10 @@ $('btnSave').onclick = $('mbSave').onclick = save;
 $('btnReset').onclick = () => {
   if(!confirm('불러온 문서와 편집 내용을 모두 지웁니다. 계속할까요?')) return;
   stamps.forEach(s => URL.revokeObjectURL(s.url)); stamps.clear();
+  clearPreview();
+  for(const d of docs.values())void d.pdfjsDoc?.destroy().catch(()=>{});
   docs.clear(); pages = []; origCount = 0; docSeq = 0; lastClicked = null;
+  if(typeof resetTools==='function')resetTools();
   clearPreview(); render();
 };
 
@@ -2971,7 +3040,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 3.9">v3.9</span>
+<span class="app-version" aria-label="버전 4.0">v4.0</span>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -4442,14 +4511,22 @@ Sources: https://github.com/naptha/tesseract.js and https://github.com/tesseract
 'use strict';
 // Serial jobs and a generation token keep stale processing off the screen.
 let proPreviewOpen=true, liveTimer, liveController=null, liveSequence=0;
-let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false;
+let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false, liveCache=null;
 let originalHover=false, originalPinned=false;
 let liveOutputSize=null;
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
-function liveKey(){
+function liveContentKey(){
   return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
     const el=$(id);return el.type==='checkbox'?el.checked:el.value;
-  }),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
+  })]);
+}
+function liveKey(){
+  return JSON.stringify([liveContentKey(),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
+}
+function releaseLivePreview(){
+  const old=liveDocs;liveDocs=[];liveCache=null;liveOutputSize=null;
+  if(old.length)liveQueue=liveQueue.catch(()=>{}).then(()=>Promise.allSettled(old.map(d=>d.destroy())));
+  for(const id of ['compareBefore','compareAfter']){$(id).width=0;$(id).height=0;}
 }
 function cancelLivePreview(){
   clearTimeout(liveTimer);liveSequence++;liveController?.abort();liveRequestedKey='';
@@ -4480,7 +4557,7 @@ function syncLivePreview(){
     $('btnPreview').title=visible?'미리보기 닫기':'페이지 미리보기';
     $('btnPreview').classList.toggle('active',visible);
   }
-  if(!visible||proAbort){cancelLivePreview();return;}
+  if(!visible||proAbort){cancelLivePreview();if(!visible)releaseLivePreview();return;}
   const index=pages.indexOf(livePage());
   $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
   if(typeof proRailDragging!=='undefined'&&proRailDragging)return;
@@ -4490,20 +4567,24 @@ function scheduleLivePreview(){
   if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort)return;
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
-  $('compareState').textContent='변경 사항 반영 중…';
+  const redraw=liveCache?.key===liveContentKey();
+  $('compareState').textContent=redraw?'화면 조정 중…':'변경 사항 반영 중…';
   $('proCompare').setAttribute('aria-busy','true');
   $('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();
-  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},300);
+  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},redraw?40:250);
 }
-async function liveCanvas(pdf,factor){
+async function liveCanvas(pdf,factor,signal){
   const page=await pdf.getPage(1),base=page.getViewport({scale:1}),slot=$('compareAfterScroll');
   const fit=Math.max(.05,Math.min((slot.clientWidth-40)/base.width,(slot.clientHeight-40)/base.height));
-  const scale=Math.min(8,fit*factor),dpr=Math.min(devicePixelRatio||1,2);
+  const dpr=Math.min(devicePixelRatio||1,2),scale=Math.min(8,fit*factor,Math.sqrt(16000000/(base.width*base.height))/dpr);
   const vp=page.getViewport({scale:scale*dpr}),canvas=document.createElement('canvas');
   canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
   canvas.style.width=base.width*scale+'px';canvas.style.height=base.height*scale+'px';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-  return canvas;
+  const task=page.render({canvasContext:canvas.getContext('2d'),viewport:vp}),abort=()=>task.cancel();
+  signal.addEventListener('abort',abort,{once:true});
+  try{signal.throwIfAborted();await task.promise;signal.throwIfAborted();return canvas;}
+  catch(e){canvas.width=canvas.height=0;if(signal.aborted)throw new DOMException('Superseded','AbortError');throw e;}
+  finally{signal.removeEventListener('abort',abort);}
 }
 async function updateLivePreview(seq){
   if(seq!==liveSequence)return;
@@ -4511,25 +4592,33 @@ async function updateLivePreview(seq){
   const signal=controller.signal,check=()=>{
     if(signal.aborted||seq!==liveSequence)throw new DOMException('Superseded','AbortError');
   };
-  let loaded=[];
+  let loaded=[],canvases=[];
   try{
-    const p=livePage(),offset=pages.indexOf(p),options=readProOptions();
-    const edited=await buildEditedDocument([p]);check();
-    const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
-    const doc=await PDFLib.PDFDocument.load(before);check();
-    const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
-    const report=result.report,deskew=report.deskew;
-    const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
-    if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
-    for(const data of [before,after]){loaded.push(await pdfjsLib.getDocument({data,...DOC_OPTS}).promise);check();}
-    const canvases=[];
-    for(const pdf of loaded){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value)));check();}
+    const p=livePage(),offset=pages.indexOf(p),options=readProOptions(),key=liveContentKey();
+    let report=liveCache?.key===key?liveCache.report:null;
+    if(!report){
+      const edited=await buildEditedDocument([p]);check();
+      const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
+      const doc=await PDFLib.PDFDocument.load(before);check();
+      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
+      report=result.report;
+      const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
+      if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
+      for(const data of [before,after]){
+        const task=pdfjsLib.getDocument({data,...DOC_OPTS});
+        try{loaded.push(await task.promise);}catch(e){await task.destroy();throw e;}check();
+      }
+    }
+    const renderDocs=loaded.length?loaded:liveDocs,deskew=report.deskew;
+    for(const pdf of renderDocs){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value),signal));check();}
     // Publish both detached canvases together, after all cancellation checks.
     for(let i=0;i<2;i++){
       const id=i?'compareAfter':'compareBefore',old=$(id),canvas=canvases[i];
-      canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);
+      canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);old.width=old.height=0;
     }
-    const old=liveDocs;liveDocs=loaded;loaded=[];
+    canvases=[];
+    const old=loaded.length?liveDocs:[];if(loaded.length){liveDocs=loaded;loaded=[];}
+    liveCache={key,report};
     const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
     liveOutputSize={width:outputViewport.width*(outputPage.userUnit||1),height:outputViewport.height*(outputPage.userUnit||1)};
     await Promise.allSettled(old.map(d=>d.destroy()));check();
@@ -4542,12 +4631,16 @@ async function updateLivePreview(seq){
     if(options.rasterize)note=report.ocr?.pages?'이미지 압축 후 확인한 OCR을 추가했습니다. 원래 링크·양식은 유지되지 않습니다.':'페이지 전체 압축 결과입니다. 저장본은 텍스트 검색·복사와 링크·양식을 지원하지 않습니다.';
     $('compareApplied').textContent=describeProSettings(options,report,deskew,offset);
     $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
+    $('compareDetails').setAttribute('data-warning',String(!!report.skipped||!!options.rasterize));
+    $('compareDetails').querySelector('summary').textContent=report.skipped?'원본 유지 내역 보기':options.rasterize?'출력 방식 안내':'미리보기 안내';
   }catch(e){
     if(e.name!=='AbortError'&&seq===liveSequence){
       $('compareState').textContent='미리보기를 업데이트하지 못했습니다';
       $('compareNote').textContent=e.message;$('proCompare').setAttribute('data-error','true');
+      $('compareDetails').open=true;$('compareDetails').setAttribute('data-warning','true');
     }
   }finally{
+    for(const c of canvases)c.width=c.height=0;
     await Promise.allSettled(loaded.map(d=>d.destroy()));
     if(liveController===controller)liveController=null;
     if(seq===liveSequence)$('proCompare').setAttribute('aria-busy','false');
@@ -4632,7 +4725,16 @@ function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.sr
 function proInvalidate(message){
   if(!proResult) return;
   proResult=null; $('proResult').hidden=true;
+  syncProAction();
   if(message) $('proStatus').textContent=message;
+}
+function syncProAction(){
+  const ready=!!proResult;
+  $('proExportLabel').textContent=ready?'PDF 다운로드':'결과 만들기';
+  if(proMode==='pro'){
+    $('btnSave').querySelector('span').textContent=ready?'PDF 다운로드':'Pro 결과 만들기';
+    $('btnSave').title=ready?'완성된 PDF를 다운로드합니다':'현재 Pro 설정으로 결과를 만듭니다';
+  }
 }
 function syncProState(){
   if(!proReady) return;
@@ -4640,10 +4742,11 @@ function syncProState(){
   $('proOpen').hidden=any;
   $('proExport').disabled=!any||working; $('proPreview').disabled=!any||working;
   if(proResult && proResult.fingerprint!==proFingerprint()) proInvalidate('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.');
+  syncProAction();syncProSummaries();
   syncLivePreview();
   if(typeof syncToolsState==='function'&&typeof toolsRevision!=='undefined')syncToolsState();
   if(!any) $('proStatus').textContent='파일을 추가하면 시작할 수 있어요.';
-  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 설정 변경은 미리보기에 자동 반영됩니다.`;
+  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 문서 전체에 적용`;
 }
 function setProView(view){
   document.body.dataset.proView=view;
@@ -4699,6 +4802,21 @@ function refreshProControls(){
   $('proPreserveText').textContent=$('proOptimize').checked&&$('proCompressionMode').value==='raster'?'페이지 전체를 이미지로 압축합니다. 결과에는 검색·복사·링크·양식이 유지되지 않습니다.':'기존 텍스트와 검색 정보를 유지하며 이미지와 페이지 설정을 조정합니다.';
   ['Top','Right','Bottom','Left'].forEach(s=>$('proCrop'+s).disabled=!$('proCrop').checked);
   ['proStartNumber','proSkipPages','proNumberPosition'].forEach(id=>$(id).disabled=!$('proNumber').checked);
+  $('proNumberFields').hidden=!$('proNumber').checked;
+  $('proNumberPosition').closest('label').hidden=!$('proNumber').checked;
+  $('proCropFields').hidden=!$('proCrop').checked;
+  $('proBWThreshold').closest('label').hidden=!$('proGrayscale').checked;
+  $('proBWHelp').hidden=!$('proGrayscale').checked;
+  for(const id of ['proContrast','proWhitePoint'])$(id).closest('label').hidden=$('proGrayscale').checked;
+  for(const id of ['proCompressionMode','proPreset','proResolution','proQuality'])$(id).closest('label').hidden=!$('proOptimize').checked||(id==='proQuality'&&$('proGrayscale').checked);
+  syncProSummaries();
+}
+function syncProSummaries(){
+  const set=(id,items)=>{const el=$(id);el.textContent=items.filter(Boolean).join(' · ')||'사용 안 함';el.closest('details').classList.toggle('has-settings',items.some(Boolean));};
+  set('proNumberSummary',[$('proNumber').checked&&'페이지 번호',$('proWatermark').value.trim()&&'워터마크']);
+  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
+  set('proScanSummary',[$('proGrayscale').checked?'B&W 흑백':Number($('proContrast').value)>0&&'대비 강화',!$('proGrayscale').checked&&Number($('proWhitePoint').value)<255&&'배경 정리']);
+  set('proOptimizeSummary',[$('proOptimize').checked&&($('proCompressionMode').value==='raster'?'페이지 전체 압축':'텍스트 유지'),$('proOptimize').checked&&$('proResolution').value+' px']);
 }
 function resetProOptions(){
   if(typeof resetTools==='function')resetTools();
@@ -4817,13 +4935,16 @@ $('proWorkspace').onclick=()=>{setProView('workspace');document.querySelector('m
 $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();};
 for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();});
-$('proReset').onclick=resetProOptions;$('proExport').onclick=createProResult;$('proPreview').onclick=()=>setLivePreviewOpen(!proPreviewOpen);
-$('proDownload').onclick=()=>{
+$('proReset').onclick=resetProOptions;$('proExport').onclick=proPrimaryAction;$('proPreview').onclick=()=>setLivePreviewOpen(!proPreviewOpen);
+function proPrimaryAction(){return proResult?downloadProResult():createProResult();}
+function downloadProResult(){
   if(!proResult)return;
   if(proResult.fingerprint!==proFingerprint()){proInvalidate();syncProState();toast('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.',true);return;}
   const name=($('proFilename').value.trim().replace(/\.pdf$/i,'').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/[. ]+$/g,'')||'편집본').slice(0,100);
   downloadPdf(proResult.bytes,name+'.pdf');toast('Pro 결과 PDF를 저장했습니다');
-};
+}
+$('proDownload').onclick=downloadProResult;
+const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.textContent='+ 파일 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
 $('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';};
 proReady=true;refreshProControls();
@@ -4832,10 +4953,18 @@ setProMode(savedProMode);
 </script>
 <script id="pro-tools-ui">
 'use strict';
+const ocrActionIds=['ocrSample','ocrRun'];
 let toolsRevision=0,stampAsset=null,stampMarks=[],stampPositioning=false,stampSource=null,stampOriginal=null,stampPixels=null,stampUndoState=null,stampShowingSource=false;
 let stampShelf=[],stampEditing=null,stampLoadSequence=0,ocrRecords=[],ocrAccepted=false,ocrRunning=false,toolsLastState='';
 const stampControlIds=['stampScope','stampAnchor','stampX','stampY','stampWidth','stampOpacity'];
-function toolsChanged(){toolsRevision++;proInvalidate();scheduleLivePreview();}
+function toolsChanged(){toolsRevision++;proInvalidate();syncToolSummaries();scheduleLivePreview();}
+function syncToolSummaries(){
+  const marks=stampMarks.length+(stampAsset?1:0),recognized=ocrRecords.filter(r=>r.words.length).length;
+  $('stampSummary').textContent=marks?`도장 ${marks}개 배치`:'사진에서 만들고, 원하는 곳에 찍기';
+  $('stampSection').classList.toggle('has-settings',marks>0);
+  $('ocrSummary').textContent=recognized?`${recognized}쪽 · ${ocrAccepted?'검색 텍스트 포함':'인식 결과 확인 중'}`:'스캔을 검색·복사 가능한 PDF로';
+  $('ocrSection').classList.toggle('has-settings',recognized>0);
+}
 function toolDownload(data,name,type){const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),8000);}
 function toolTargets(scope){return scope==='all'?pages:scope==='selected'?selected():[livePage()].filter(Boolean);}
 function currentStamp(){
@@ -4853,7 +4982,8 @@ function readToolOptions(o,strict=false){
 }
 function syncToolsState(){
   if(ocrRunning)return;
-  for(const id of ['ocrSample','ocrRun','geminiRun'])$(id).disabled=!pages.length||!!proAbort;
+  syncToolSummaries();
+  for(const id of ocrActionIds)$(id).disabled=!pages.length||!!proAbort;
   const state=JSON.stringify([pages.map(p=>p.uid),previewUid,selected().map(p=>p.uid),toolsRevision]);
   if(state!==toolsLastState){if(stampAsset&&$('stampScope').value!=='all')proInvalidate();toolsLastState=state;renderStampMarks();}
   if(ocrRecords.length){
@@ -4861,6 +4991,7 @@ function syncToolsState(){
     const stale=ocrRecords.some(r=>{const p=pages.find(p=>p.uid===r.uid);return !p||ocrKey(p,o)!==r.key;});
     $('ocrAccept').disabled=stale||!ocrRecords.some(r=>r.words.length)||ocrAccepted;
     if(stale)$('ocrStatus').textContent='페이지 또는 보정 설정이 바뀌었습니다. 이전 인식은 저장하지 않습니다. 다시 인식해 주세요.';
+    if(stale)$('ocrSummary').textContent='설정 변경 · 다시 인식 필요';
     else if(ocrAccepted)$('ocrStatus').textContent=`검색용 텍스트 ${ocrRecords.filter(r=>r.words.length).length}쪽이 결과 PDF에 포함됩니다.`;
   }
 }
@@ -4948,13 +5079,14 @@ $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGestur
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
 async function runOCR(sample,provider='tesseract',confirmedList=null,consent=false){
   if(ocrRunning||proAbort||!pages.length)return;
+  if(provider!=='tesseract'&&typeof PDFGemini==='undefined')return;
   if(provider==='gemini'&&consent!==true){toast('민감정보 없는 문서임을 먼저 확인해 주세요.',true);return;}
   const list=confirmedList||toolTargets(sample?'current':$('ocrScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let o;try{o=readProOptions();}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
   const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value;let engine=null,recognizingPage=0,position=0,reused=0;
   const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
-  ocrRunning=true;for(const id of ['ocrSample','ocrRun','geminiRun'])$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':'텍스트 인식을 준비하는 중…');
+  ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':'텍스트 인식을 준비하는 중…');
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
@@ -5006,6 +5138,11 @@ $('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$(
 $('ocrAccept').onclick=()=>{ocrAccepted=true;toolsChanged();syncToolsState();};
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
 $('ocrTxt').onclick=()=>toolDownload('\ufeff'+ocrRecords.map(r=>`[${r.page}쪽]\n${r.text}`).join('\n\n'),'인식한 텍스트.txt','text/plain;charset=utf-8');
+syncToolsState();
+</script>
+<script id="pro-gemini-ui">
+'use strict';
+ocrActionIds.push('geminiRun');
 let geminiClicks=0,geminiCheck=null,geminiPending=null,geminiReady=false;
 $('modePro').addEventListener('click',()=>{
   if(++geminiClicks!==8)return;

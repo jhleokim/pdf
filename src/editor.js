@@ -308,7 +308,7 @@ function select(idx, e){
 /* ════════════════════════════════════════════════════════════
    미리보기
    ════════════════════════════════════════════════════════════ */
-let pvToken = 0, pvZoom = 1, pvFitScale = 1, pvScale = 1;
+let pvToken = 0, pvZoom = 1, pvFitScale = 1, pvScale = 1, pvRenderTask=null;
 const PV_ZOOM_MIN = 0.4, PV_ZOOM_MAX = 8;
 const previewVisible = () => !$('previewPanel').hidden &&
   !(mainEl.classList.contains('preview-off')) &&
@@ -322,6 +322,7 @@ function setPvTitle(p){
 
 async function showPreview(p){
   if(!p) return;
+  const my=++pvToken;pvRenderTask?.cancel();pvRenderTask=null;
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
   setPvTitle(p);
@@ -332,7 +333,6 @@ async function showPreview(p){
   $('pvPlaceholder').hidden = true;
   $('pvZoomCtrl').hidden = false;
 
-  const my = ++pvToken;
   const d = docs.get(p.docId);
   const page = await d.pdfjsDoc.getPage(p.srcIndex + 1);
   if(my !== pvToken) return;
@@ -344,15 +344,18 @@ async function showPreview(p){
   const pad = isMobile() ? 20 : 36;
   pvFitScale = Math.max(0.05, Math.min((box.width - pad) / probe.width, (box.height - pad) / probe.height));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  let cssScale = Math.min(pvFitScale * pvZoom, 8);
+  let cssScale = Math.min(pvFitScale * pvZoom, 8, Math.sqrt(16000000/(probe.width*probe.height))/dpr);
   const vp = page.getViewport({ scale: cssScale * dpr, rotation: rot });
 
-  const c = $('pvCanvas');
+  const c = document.createElement('canvas');c.id='pvCanvas';
   c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
   c.style.width = Math.floor(vp.width / dpr) + 'px';
   c.style.height = Math.floor(vp.height / dpr) + 'px';
-  await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-  if(my !== pvToken) return;
+  const task=page.render({canvasContext:c.getContext('2d'),viewport:vp});pvRenderTask=task;
+  try{await task.promise;}catch(e){c.width=c.height=0;if(my!==pvToken||e.name==='RenderingCancelledException')return;throw e;}
+  finally{if(pvRenderTask===task)pvRenderTask=null;}
+  if(my !== pvToken){c.width=c.height=0;return;}
+  const old=$('pvCanvas');c.setAttribute('aria-label',old.getAttribute('aria-label')||'페이지 미리보기');old.replaceWith(c);old.width=old.height=0;
 
   $('pvStage').hidden = false;
   $('pvZoomVal').textContent = Math.round(pvZoom * 100) + '%';
@@ -368,6 +371,7 @@ function setZoom(z){
   if(p) showPreview(p);
 }
 function clearPreview(){
+  pvRenderTask?.cancel();pvRenderTask=null;$('pvCanvas').width=$('pvCanvas').height=0;
   previewUid = null; pvToken++; pvZoom = 1; selAnno = null;
   $('pvStage').hidden = true; $('pvPlaceholder').hidden = false;
   $('pvZoomCtrl').hidden = true; $('annoBar').hidden = true;
@@ -922,7 +926,7 @@ function downloadPdf(bytes,name){
 
 async function save(){
   if(!pages.length || document.body.classList.contains('is-busy')) return;
-  if(document.body.dataset.mode==='pro' && typeof createProResult==='function') return createProResult();
+  if(document.body.dataset.mode==='pro' && typeof proPrimaryAction==='function') return proPrimaryAction();
   $('btnSave').disabled = true; $('mbSave').disabled = true;
   busy(true, 'PDF를 만드는 중…'); progress(12);
   await idle();
@@ -965,7 +969,10 @@ $('btnSave').onclick = $('mbSave').onclick = save;
 $('btnReset').onclick = () => {
   if(!confirm('불러온 문서와 편집 내용을 모두 지웁니다. 계속할까요?')) return;
   stamps.forEach(s => URL.revokeObjectURL(s.url)); stamps.clear();
+  clearPreview();
+  for(const d of docs.values())void d.pdfjsDoc?.destroy().catch(()=>{});
   docs.clear(); pages = []; origCount = 0; docSeq = 0; lastClicked = null;
+  if(typeof resetTools==='function')resetTools();
   clearPreview(); render();
 };
 

@@ -8,7 +8,16 @@ function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.sr
 function proInvalidate(message){
   if(!proResult) return;
   proResult=null; $('proResult').hidden=true;
+  syncProAction();
   if(message) $('proStatus').textContent=message;
+}
+function syncProAction(){
+  const ready=!!proResult;
+  $('proExportLabel').textContent=ready?'PDF 다운로드':'결과 만들기';
+  if(proMode==='pro'){
+    $('btnSave').querySelector('span').textContent=ready?'PDF 다운로드':'Pro 결과 만들기';
+    $('btnSave').title=ready?'완성된 PDF를 다운로드합니다':'현재 Pro 설정으로 결과를 만듭니다';
+  }
 }
 function syncProState(){
   if(!proReady) return;
@@ -16,10 +25,11 @@ function syncProState(){
   $('proOpen').hidden=any;
   $('proExport').disabled=!any||working; $('proPreview').disabled=!any||working;
   if(proResult && proResult.fingerprint!==proFingerprint()) proInvalidate('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.');
+  syncProAction();syncProSummaries();
   syncLivePreview();
   if(typeof syncToolsState==='function'&&typeof toolsRevision!=='undefined')syncToolsState();
   if(!any) $('proStatus').textContent='파일을 추가하면 시작할 수 있어요.';
-  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 설정 변경은 미리보기에 자동 반영됩니다.`;
+  else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 문서 전체에 적용`;
 }
 function setProView(view){
   document.body.dataset.proView=view;
@@ -75,6 +85,21 @@ function refreshProControls(){
   $('proPreserveText').textContent=$('proOptimize').checked&&$('proCompressionMode').value==='raster'?'페이지 전체를 이미지로 압축합니다. 결과에는 검색·복사·링크·양식이 유지되지 않습니다.':'기존 텍스트와 검색 정보를 유지하며 이미지와 페이지 설정을 조정합니다.';
   ['Top','Right','Bottom','Left'].forEach(s=>$('proCrop'+s).disabled=!$('proCrop').checked);
   ['proStartNumber','proSkipPages','proNumberPosition'].forEach(id=>$(id).disabled=!$('proNumber').checked);
+  $('proNumberFields').hidden=!$('proNumber').checked;
+  $('proNumberPosition').closest('label').hidden=!$('proNumber').checked;
+  $('proCropFields').hidden=!$('proCrop').checked;
+  $('proBWThreshold').closest('label').hidden=!$('proGrayscale').checked;
+  $('proBWHelp').hidden=!$('proGrayscale').checked;
+  for(const id of ['proContrast','proWhitePoint'])$(id).closest('label').hidden=$('proGrayscale').checked;
+  for(const id of ['proCompressionMode','proPreset','proResolution','proQuality'])$(id).closest('label').hidden=!$('proOptimize').checked||(id==='proQuality'&&$('proGrayscale').checked);
+  syncProSummaries();
+}
+function syncProSummaries(){
+  const set=(id,items)=>{const el=$(id);el.textContent=items.filter(Boolean).join(' · ')||'사용 안 함';el.closest('details').classList.toggle('has-settings',items.some(Boolean));};
+  set('proNumberSummary',[$('proNumber').checked&&'페이지 번호',$('proWatermark').value.trim()&&'워터마크']);
+  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
+  set('proScanSummary',[$('proGrayscale').checked?'B&W 흑백':Number($('proContrast').value)>0&&'대비 강화',!$('proGrayscale').checked&&Number($('proWhitePoint').value)<255&&'배경 정리']);
+  set('proOptimizeSummary',[$('proOptimize').checked&&($('proCompressionMode').value==='raster'?'페이지 전체 압축':'텍스트 유지'),$('proOptimize').checked&&$('proResolution').value+' px']);
 }
 function resetProOptions(){
   if(typeof resetTools==='function')resetTools();
@@ -193,13 +218,16 @@ $('proWorkspace').onclick=()=>{setProView('workspace');document.querySelector('m
 $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();};
 for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();});
-$('proReset').onclick=resetProOptions;$('proExport').onclick=createProResult;$('proPreview').onclick=()=>setLivePreviewOpen(!proPreviewOpen);
-$('proDownload').onclick=()=>{
+$('proReset').onclick=resetProOptions;$('proExport').onclick=proPrimaryAction;$('proPreview').onclick=()=>setLivePreviewOpen(!proPreviewOpen);
+function proPrimaryAction(){return proResult?downloadProResult():createProResult();}
+function downloadProResult(){
   if(!proResult)return;
   if(proResult.fingerprint!==proFingerprint()){proInvalidate();syncProState();toast('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.',true);return;}
   const name=($('proFilename').value.trim().replace(/\.pdf$/i,'').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/[. ]+$/g,'')||'편집본').slice(0,100);
   downloadPdf(proResult.bytes,name+'.pdf');toast('Pro 결과 PDF를 저장했습니다');
-};
+}
+$('proDownload').onclick=downloadProResult;
+const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.textContent='+ 파일 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
 $('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';};
 proReady=true;refreshProControls();
