@@ -4,6 +4,7 @@ tests/fixtures/
 tests/*.log
 work/
 .deploy/
+dist/
 .wrangler/
 .dev.vars*
 .env*

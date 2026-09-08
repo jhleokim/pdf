@@ -5,7 +5,7 @@
 브라우저 안에서 동작하는 **오프라인 지원** PDF 페이지 편집기입니다.
 기본 편집과 Tesseract OCR은 `index.html` 한 파일에서 로컬로 처리합니다. 별도로 표시하고 동의한 Gemini 인식만 페이지 이미지를 외부로 전송합니다.
 
-웹에 올리는 파일과 standalone 파일은 동일한 `index.html`입니다. 기본 기능에는 서버·CDN·계정·API 키가 필요하지 않습니다. 선택 기능인 Gemini에는 인터넷과 Cloudflare Worker가 필요합니다. 웹 배포는 `wrangler.jsonc`에 따라 Worker와 `.deploy/index.html`만 배포합니다.
+웹 배포본은 `index.html`이며 선택 기능인 Gemini에는 인터넷과 Cloudflare Worker가 필요합니다. 단독 실행본은 `npm run build:standalone`으로 생성하는 `dist/PDF-Studio-Standalone-v3.9.html`입니다. 단독 실행본에는 Gemini 숨김 버튼·확인창·API 연결 모듈이 없으며, 편집과 Tesseract OCR에 서버·CDN·계정·API 키가 필요하지 않습니다. 웹 배포는 `wrangler.jsonc`에 따라 Worker와 `.deploy/index.html`만 배포합니다.
 
 ## 작업 모드
 
@@ -71,7 +71,7 @@ node --test tests/*.test.cjs
 
 회귀 검사는 마스크의 DeviceGray 원본 유지와 B&W의 연한 글자·1비트 패킹도 포함합니다. 실제 브라우저 코덱·렌더 검증은 `node tests/create-pro-browser.cjs` 실행 후 로컬 서버의 `/tests/fixtures/pro-check.html`에서 확인합니다. 합성 문서로 각도·숨은 OCR·회색조·대비·배경·압축·재단·A4·한글 워터마크·번호 및 미리보기/저장 결과 일치를 검사합니다. 생성한 테스트 파일은 Git에서 제외됩니다.
 
-`index.html`을 더블클릭하거나 정적 서버에서 열어 확인합니다. `src/`를 수정했다면 반드시 빌드를 다시 실행하세요.
+웹 기능은 `index.html`을 정적 서버에서 열어 확인합니다. 단독 실행은 `npm run build:standalone` 후 `dist/`의 HTML을 더블클릭합니다. `src/`를 수정했다면 해당 빌드를 다시 실행하세요.
 
 ## 기능
 
@@ -86,7 +86,7 @@ node --test tests/*.test.cjs
 ## 사용
 
 GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
-내려받아 `index.html`을 더블클릭해도 똑같이 동작합니다 — 서버도, 설치도 필요 없습니다.
+단독 실행본 `PDF-Studio-Standalone-v3.9.html`은 더블클릭하면 서버나 설치 없이 열립니다. 단독 실행본의 OCR은 Tesseract만 제공합니다.
 
 ### 단축키
 
@@ -122,11 +122,11 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 
 ## v3.9 숨김 Gemini 인식
 
-- 상단 Pro 버튼을 같은 탭에서 8번 누르면 텍스트 인식 안에 **Gemini로 인식하기**가 나타납니다. 새로고침하면 다시 숨깁니다. Basic/Pro 전환만으로 네트워크 요청이나 문서 전송은 하지 않습니다.
+- 웹 배포본에서 상단 Pro 버튼을 같은 탭에서 8번 누르면 텍스트 인식 안에 **Gemini로 인식하기**가 나타납니다. 새로고침하면 다시 숨깁니다. Basic/Pro 전환만으로 네트워크 요청이나 문서 전송은 하지 않습니다.
 - 범위는 현재/선택/모든 페이지. 실행 버튼은 전송 확인창을 열며, 서버 연결 상태 확인에는 문서가 포함되지 않습니다. **민감정보 없는 문서임을 확인합니다**는 매 실행마다 새로 체크해야 합니다. 확인 대기 중 문서·보정·언어가 바뀌면 다시 확인해야 합니다.
 - 동의한 페이지의 렌더 JPEG만 Cloudflare를 거쳐 Google로 전송합니다. 파일명과 원본 PDF 전체는 보내지 않으며, 기존 텍스트가 있는 페이지는 보내지 않습니다. 앱 서버는 이미지·인식 결과를 저장하거나 로그에 기록하지 않습니다. Google의 데이터 처리 조건은 사용자의 API 프로젝트에 적용되는 약관을 따릅니다.
 - 인식 결과는 검토 후 기존 **확인한 결과를 PDF에 포함**으로 반영합니다. Gemini의 줄 좌표는 모델 추정값이며 정밀한 단어 위치를 보장하지 않습니다. 엔진 확신도 숫자를 만들어 표시하지 않습니다. 취소·실패·출력 잘림·비정상 좌표에서는 기존 결과를 유지합니다.
-- 인터넷 없는 standalone에서는 기본 Tesseract를 사용합니다. standalone의 Gemini는 명시적 동의 후 운영 API에 연결하며 API 키는 HTML에 포함되지 않습니다.
+- 단독 실행본에서는 Tesseract만 사용합니다. Pro 버튼을 반복해서 눌러도 Gemini 기능이 나타나지 않으며, 단독 실행본을 HTTP로 열어도 이 기능은 포함되지 않습니다.
 
 ### Cloudflare 설정
 
@@ -135,10 +135,11 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 3. `npm install`, `npm run deploy`. Git 자동 배포도 `npx wrangler deploy`를 사용합니다. Wrangler 빌드는 HTML 생성 후 공개용 디렉터리에 HTML 하나만 복사합니다.
 4. 키가 없으면 상태 API는 `available:false`를 반환하며 문서 전송 버튼은 비활성화됩니다.
 
-숨김 클릭은 접근 인증이 아닙니다. 공개 API이며 서버가 명시적 동의 값·입력 크기·출처를 검사하고 Cloudflare Rate Limiting으로 같은 데이터센터에서 분당 15개 요청을 제한합니다. 이는 전 세계의 정확한 일일/금액 상한이 아니며 Google 프로젝트 쿼터는 별도로 적용됩니다. standalone 지원을 위해 null Origin을 허용합니다. 제한 도달 시 자동 재시도하지 않습니다.
+숨김 클릭은 접근 인증이 아닙니다. 공개 API이며 서버가 명시적 동의 값·입력 크기·출처를 검사하고 Cloudflare Rate Limiting으로 같은 데이터센터에서 분당 15개 요청을 제한합니다. 이는 전 세계의 정확한 일일/금액 상한이 아니며 Google 프로젝트 쿼터는 별도로 적용됩니다. 서버는 이전 배포본과의 호환성 때문에 null Origin도 허용하지만 새 단독 실행본에는 API 연결이 포함되지 않습니다. 제한 도달 시 자동 재시도하지 않습니다.
 
 ### 추가 검증
 
+- `node --test tests/standalone-local.test.cjs`: 단독 실행본의 클라우드 진입점·연결 모듈 제외, 내장 로컬 엔진 보존, 스크립트 구문을 검사합니다.
 - `node --test tests/gemini-worker.test.cjs`: 동의 누락·잘못된 이미지·출처·크기·비밀키·429·잘린 결과 검사. Google 호출은 모의 응답을 사용합니다.
 - `node tests/create-ocr-ui.cjs` → `/tests/fixtures/ocr-ui-check.html`: 합성 PDF로 숨김 8회·매회 동의·업로드 차단·로컬 결과 재사용·취소·검색 PDF를 검사합니다.
 - `node tests/create-tools-browser.cjs`: HTTP 요청이 차단된 상태에서 실제 한글/영어 OCR, 진행률, 원본 픽셀 보존 및 PDF 검색 추출을 검사합니다.
