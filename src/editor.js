@@ -1223,6 +1223,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(the
 
 /* ── 단축키 ── */
 document.addEventListener('keydown', e => {
+  if(document.querySelector('dialog[open]'))return;
   if(document.body.classList.contains('is-busy')){ if(e.key==='Escape' && !$('busyCancel').hidden) $('busyCancel').click(); e.preventDefault(); return; }
   if($('proCompare')?.open) return;
   if($('modal').classList.contains('open') && e.key === 'Escape'){ $('modal').classList.remove('open'); return; }

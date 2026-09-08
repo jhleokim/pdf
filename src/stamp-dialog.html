@@ -1,0 +1,16 @@
+<dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
+ <header><div><h2 id="stampEditorTitle">도장 만들기</h2><p>종이 배경을 지우고, 필요한 획을 남기세요.</p></div><button class="btn icon quiet" id="stampEditorClose" aria-label="도장 편집 닫기">×</button></header>
+ <div class="stamp-editor-body">
+  <div class="stamp-canvas-wrap"><canvas id="stampCanvas" aria-label="도장 편집 이미지"></canvas></div>
+  <div class="stamp-editor-controls">
+   <label class="pro-field" for="stampStrength"><span>배경 제거 <output id="stampStrengthValue">35</output></span><input id="stampStrength" type="range" min="0" max="100" value="35"><small>0은 원본 · 높일수록 배경을 더 지웁니다</small></label>
+   <label class="pro-field" for="stampColor"><span>잉크 색상</span><select id="stampColor"><option value="original">원래 색상</option><option value="red">인주색</option><option value="black">검정</option></select></label>
+   <label class="pro-field" for="stampTool"><span>이미지에서 드래그</span><select id="stampTool"><option value="crop">영역 자르기</option><option value="erase">남은 배경 지우기</option><option value="restore">원본 획 복원</option></select></label>
+   <label class="pro-field" for="stampBrush"><span>브러시 크기</span><input id="stampBrush" type="range" min="3" max="90" value="24"></label>
+   <div class="stamp-actions"><button class="btn" id="stampTrim">여백 자동 정리</button><button class="btn" id="stampRotate">90° 회전</button><button class="btn" id="stampUndo">되돌리기</button><button class="btn" id="stampResetImage">원본부터 다시</button></div>
+   <button class="btn" id="stampShowSource" aria-pressed="false">원본 비교</button>
+   <p class="pro-hint">자르기 전에 도장 영역을 넉넉하게 잡으세요. 배경·색상을 다시 조절하면 수동으로 지우거나 복원한 내역이 초기화됩니다.</p>
+  </div>
+ </div>
+ <footer><p id="stampEditorStatus" role="status"></p><button class="btn primary" id="stampUse">이 도장 사용</button></footer>
+</dialog>

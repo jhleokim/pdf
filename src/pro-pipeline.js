@@ -47,6 +47,9 @@
       await PDFProDocument.applyDocument(doc,options,{...callbacks,onProgress:n=>onProgress?.(.8+n*.2,'페이지 설정을 적용하는 중…')});
       result={doc,report};
     }
+    check(signal);
+    result.report.ocr=globalThis.PDFOCR?await PDFOCR.apply(result.doc,options.ocr,callbacks):{pages:0,words:0};
+    result.report.stamps=globalThis.PDFStamp?await PDFStamp.apply(result.doc,options.stamps,callbacks):0;
     check(signal);result.report.deskew=deskew;return result;
   }
   globalThis.PDFProPipeline={apply,rasterize};
