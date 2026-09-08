@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+const libraries=['sourceMappingURL=pdf-lib.min.js.map','pdfjs-dist/build/pdf"]','pdfjs-dist/build/pdf.worker'].map(marker=>scripts.find(s=>s.includes(marker)));
+const assets=html.match(/<!-- ocr-assets:start -->([\s\S]*?)<!-- ocr-assets:end -->/)[1];
+const modules=['pro-engine','pro-document','pro-stamp','pro-ocr','pro-deskew','pro-pipeline'].map(n=>fs.readFileSync(path.join(root,'src',n+'.js'),'utf8'));
+const testCode=fs.readFileSync(path.join(__dirname,'tools-browser.js'),'utf8');
+fs.mkdirSync(path.join(__dirname,'fixtures'),{recursive:true});
+fs.writeFileSync(path.join(__dirname,'fixtures/tools-check.html'),`<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:;worker-src blob:;connect-src blob: data:;img-src data: blob:;style-src 'unsafe-inline'"><title>Stamp and OCR verification</title><style>body{font:14px system-ui;background:#eee;margin:24px}canvas{max-width:360px;border:1px solid #ccc}pre{white-space:pre-wrap}a{display:block;margin:10px}</style><h1>Stamp and OCR verification</h1><pre id="status">Starting</pre><pre id="result"></pre><div id="artifacts"></div>${assets}${[...libraries,...modules,testCode].map(s=>'<script>'+s+'</script>').join('')}`);
+console.log('Generated tools-check.html; CSP blocks all HTTP requests including OCR assets.');

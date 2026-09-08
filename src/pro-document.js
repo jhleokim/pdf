@@ -127,5 +127,5 @@
       if(i%5===0) await new Promise(resolve=>setTimeout(resolve,0));
     }
   }
-  globalThis.PDFProDocument={applyDocument,geometry,visibleBox,displayToPdf};
+  globalThis.PDFProDocument={applyDocument,geometry,visibleBox,displayToPdf,unit};
 })();

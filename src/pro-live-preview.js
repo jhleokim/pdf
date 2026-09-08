@@ -3,9 +3,10 @@
 let proPreviewOpen=true, liveTimer, liveController=null, liveSequence=0;
 let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false;
 let originalHover=false, originalPinned=false;
+let liveOutputSize=null;
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
 function liveKey(){
-  return JSON.stringify([proFingerprint(),livePage()?.uid,proControlIds.map(id=>{
+  return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
     const el=$(id);return el.type==='checkbox'?el.checked:el.value;
   }),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
 }
@@ -75,7 +76,7 @@ async function updateLivePreview(seq){
     const edited=await buildEditedDocument([p]);check();
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
     const doc=await PDFLib.PDFDocument.load(before);check();
-    const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset});check();
+    const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
     const report=result.report,deskew=report.deskew;
     const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
     if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
@@ -88,6 +89,8 @@ async function updateLivePreview(seq){
       canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);
     }
     const old=liveDocs;liveDocs=loaded;loaded=[];
+    const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
+    liveOutputSize={width:outputViewport.width*(outputPage.userUnit||1),height:outputViewport.height*(outputPage.userUnit||1)};
     await Promise.allSettled(old.map(d=>d.destroy()));check();
     $('comparePageLabel').textContent=`${offset+1} / ${pages.length}페이지`;
     $('compareState').textContent='미리보기 업데이트 완료';
@@ -95,7 +98,7 @@ async function updateLivePreview(seq){
     let note='원본 보기에 마우스를 올려 비교하세요. 터치·키보드에서는 눌러 전환합니다.';
     if((options.blackWhite||options.grayscale)&&report.changed===0)note=report.imageCount===0?'이 페이지에는 보정할 이미지가 없습니다. 텍스트와 벡터 색상은 유지됩니다.':'변환 가능한 이미지가 없어 원본을 유지했습니다. '+report.notes.join(' ');
     else if(report.skipped)note=`이미지 ${report.changed}개 반영 · ${report.skipped}개 원본 유지. `+report.notes.join(' ');
-    if(options.rasterize)note='페이지 전체 압축 결과입니다. 저장본은 텍스트 검색·복사와 링크·양식을 지원하지 않습니다.';
+    if(options.rasterize)note=report.ocr?.pages?'이미지 압축 후 확인한 OCR을 추가했습니다. 원래 링크·양식은 유지되지 않습니다.':'페이지 전체 압축 결과입니다. 저장본은 텍스트 검색·복사와 링크·양식을 지원하지 않습니다.';
     $('compareApplied').textContent=describeProSettings(options,report,deskew,offset);
     $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
   }catch(e){
@@ -126,6 +129,7 @@ for(const [a,b] of [['compareBeforeScroll','compareAfterScroll'],['compareAfterS
 const basicPreviewToggle=$('btnPreview').onclick;
 $('btnPreview').onclick=()=>proMode==='pro'?setLivePreviewOpen(!proPreviewOpen):basicPreviewToggle();
 document.addEventListener('keydown',e=>{
+  if(document.querySelector('dialog[open]'))return;
   if(e.key==='Escape'&&proMode==='pro'&&proPreviewOpen&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))setLivePreviewOpen(false);
 });
 new ResizeObserver(()=>{if(typeof proReady!=='undefined'&&proReady)syncLivePreview();}).observe($('compareStage'));
