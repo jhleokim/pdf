@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "wrangler": "4.129.1"
+  },
+  "name": "pdf-studio",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.cjs",
+    "deploy": "wrangler deploy"
+  }
+}

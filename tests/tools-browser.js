@@ -8,10 +8,10 @@
     status.textContent='Create synthetic scan';
     const c=document.createElement('canvas');c.width=1400;c.height=1800;const ctx=c.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#202124';ctx.font='42px "Malgun Gothic",sans-serif';
     ['PDF STUDIO OCR TEST','문서의 모습은 그대로 유지합니다.','검색과 복사를 할 수 있는 문서입니다.','계약 금액 123,450원','This page contains searchable text.'].forEach((t,i)=>ctx.fillText(t,100,220+i*150));
-    engine=await PDFOCR.session('kor+eng',new AbortController().signal,m=>{status.textContent=JSON.stringify(m);});
-    const result=await engine.recognize(c);await engine.close();engine=null;
+    const started=performance.now(),progressValues=[];engine=await PDFOCR.session('kor+eng',new AbortController().signal,m=>{status.textContent=JSON.stringify(m);if(m.status==='recognizing text')progressValues.push(m.progress);});
+    const result=await engine.recognize(c),elapsedMs=Math.round(performance.now()-started),accelerated=engine.accelerated;await engine.close();engine=null;assert(progressValues.every((v,i)=>i===0||v>=progressValues[i-1]),'OCR progress went backwards');assert(progressValues.at(-1)===1,'OCR progress did not finish');
     assert(result.text.includes('검색과 복사를 할 수 있는 문서입니다.')&&result.text.includes('문서')&&result.text.includes('123,450')&&result.text.includes('PDF STUDIO'),'Real Korean/Latin OCR failed: '+result.text);
-    record('Offline Korean and English OCR',{text:result.text,confidence:result.confidence,words:result.words.length});
+    record('Offline Korean and English OCR',{text:result.text,confidence:result.confidence,words:result.words.length,elapsedMs,accelerated,progressMonotonic:true});
     const doc=await P.PDFDocument.create(),image=await doc.embedPng(c.toDataURL());doc.addPage([595.28,765.36]).drawImage(image,{x:0,y:0,width:595.28,height:765.36});
     const before=await doc.save(),copy=await P.PDFDocument.load(before);await PDFOCR.apply(copy,[{...result,uid:'one'}],{pageIds:['one']});const after=await copy.save();
     const a=await render(before),b=await render(after),ap=a.getContext('2d').getImageData(0,0,a.width,a.height).data,bp=b.getContext('2d').getImageData(0,0,b.width,b.height).data;

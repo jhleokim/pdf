@@ -20,7 +20,7 @@ function readToolOptions(o,strict=false){
 }
 function syncToolsState(){
   if(ocrRunning)return;
-  for(const id of ['ocrSample','ocrRun'])$(id).disabled=!pages.length||!!proAbort;
+  for(const id of ['ocrSample','ocrRun','geminiRun'])$(id).disabled=!pages.length||!!proAbort;
   const state=JSON.stringify([pages.map(p=>p.uid),previewUid,selected().map(p=>p.uid),toolsRevision]);
   if(state!==toolsLastState){if(stampAsset&&$('stampScope').value!=='all')proInvalidate();toolsLastState=state;renderStampMarks();}
   if(ocrRecords.length){
@@ -113,36 +113,51 @@ function moveStamp(e){const g=placementGesture;if(!g||g.id!==e.pointerId)return;
 $('compareAfterScroll').addEventListener('pointermove',moveStamp);
 $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGesture;if(!g||g.id!==e.pointerId)return;moveStamp(e);$('stampAnchor').value='top-left';$('stampX').value=(g.x*25.4/72).toFixed(1);$('stampY').value=(g.y*25.4/72).toFixed(1);g.ghost.remove();placementGesture=null;toolsChanged();});
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
-async function runOCR(sample){
+async function runOCR(sample,provider='tesseract',confirmedList=null,consent=false){
   if(ocrRunning||proAbort||!pages.length)return;
-  const list=toolTargets(sample?'current':$('ocrScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
+  if(provider==='gemini'&&consent!==true){toast('민감정보 없는 문서임을 먼저 확인해 주세요.',true);return;}
+  const list=confirmedList||toolTargets(sample?'current':$('ocrScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let o;try{o=readProOptions();}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
-  const snapshot=proFingerprint(),fresh=[];let engine=null,recognizingPage=0;
-  ocrRunning=true;startProWork('텍스트 인식을 준비하는 중…');
+  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value;let engine=null,recognizingPage=0,position=0,reused=0;
+  const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
+  ocrRunning=true;for(const id of ['ocrSample','ocrRun','geminiRun'])$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':'텍스트 인식을 준비하는 중…');
   try{
     for(let i=0;i<list.length;i++){
-      checkProAbort();const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const doc=await buildEditedDocument([p]);let pdfTask;
+      checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
+      const cached=provider==='tesseract'&&ocrRecords.find(r=>r.uid===p.uid&&r.key===key&&r.source==='tesseract'&&r.language===language&&r.layout===layout&&!r.skipped);
+      if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
+      const doc=await buildEditedDocument([p]);let pdfTask;
       try{
         const baseline=await doc.save(),probe=pdfjsLib.getDocument({data:baseline.slice(),...DOC_OPTS});
         let existing;try{const pdf=await probe.promise;existing=(await(await pdf.getPage(1)).getTextContent()).items.map(t=>t.str||'').join('').trim();}finally{await probe.destroy();}
-        checkProAbort();const key=ocrKey(p,o);
-        if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'기존 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0});continue;}
+        checkProAbort();update(.05);
+        if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'기존 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
         const processed=await PDFProPipeline.apply(doc,o,{signal:proAbort.signal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]});checkProAbort();
         pdfTask=pdfjsLib.getDocument({data:await processed.doc.save(),...DOC_OPTS});const pdf=await pdfTask.promise,page=await pdf.getPage(1),base=page.getViewport({scale:1});
         const scale=Math.min(300/72,3400/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
-          if(!engine)engine=await PDFOCR.session($('ocrLanguage').value,proAbort.signal,m=>{busy(true,m.status==='recognizing text'?`${recognizingPage}쪽 · 글자 읽는 중 ${Math.round(m.progress*100)}%`:`인식 엔진 준비 · ${({'loading tesseract core':'엔진 읽기','initializing tesseract':'엔진 초기화','loading language traineddata':'언어 데이터','initializing api':'언어 준비','checking missed lines':'누락된 글줄 재확인'})[m.status]||m.status} ${Math.round((m.progress||0)*100)}%`);},$('ocrLayout').value);
-          const result=await engine.recognize(canvas);checkProAbort();fresh.push({...result,uid:p.uid,key,page:index+1});
+          update(.12);
+          if(!engine){
+            const onProgress=m=>{
+              if(provider==='gemini'){busy(true,`${recognizingPage}쪽 · Gemini가 글자를 읽는 중…`);return;}
+              if(m.status==='recognizing text'){
+                const n=Math.max(0,Math.min(1,m.progress||0));update(.12+n*.86);
+                busy(true,`${recognizingPage}쪽 · 텍스트 인식 중 ${Math.min(99,Math.round(n*100))}%`);
+              }else busy(true,'텍스트 인식을 준비하는 중…');
+            };
+            engine=provider==='gemini'?await PDFGemini.session(language,proAbort.signal,onProgress,true):await PDFOCR.session(language,proAbort.signal,onProgress,layout);
+          }
+          const result=await engine.recognize(canvas);checkProAbort();fresh.push({...result,source:provider,language,layout,uid:p.uid,key,page:index+1});
         }finally{canvas.width=canvas.height=0;}
       }finally{await pdfTask?.destroy();}
       progress((i+1)/list.length*95);await idle();
     }
     if(snapshot!==proFingerprint())throw new Error('처리 중 문서가 바뀌었습니다. 다시 인식해 주세요.');
     ocrRecords=fresh;ocrAccepted=false;renderOCRResults();toolsChanged();
-    const skipped=fresh.filter(r=>r.skipped).length;$('ocrStatus').textContent=`${fresh.length-skipped}쪽 인식 · 기존 텍스트 ${skipped}쪽 건너뜀. 내용을 확인한 뒤 PDF 포함을 선택하세요.`;
+    const skipped=fresh.filter(r=>r.skipped).length;$('ocrStatus').textContent=`${provider==='gemini'?'Gemini · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀. 내용을 확인한 뒤 PDF 포함을 선택하세요.`;
   }catch(e){toast(e.name==='AbortError'?'텍스트 인식을 취소했습니다.':e.message||'텍스트 인식에 실패했습니다.',e.name!=='AbortError');}
   finally{await engine?.close();ocrRunning=false;finishProWork();}
 }
@@ -151,11 +166,45 @@ function renderOCRResults(){
   ocrRecords.forEach((r,i)=>{const option=document.createElement('option');option.value=i;option.textContent=`${r.page}쪽${r.skipped?' · 기존 텍스트 유지':!r.words.length?' · 인식한 글자 없음':''}`;$('ocrResultPage').append(option);});renderOCRText();
 }
 function renderOCRText(){const r=ocrRecords[Number($('ocrResultPage').value)];if(!r)return;const host=$('ocrText');host.replaceChildren();
-  if(r.skipped)host.textContent=r.text;else for(const word of r.words){const span=document.createElement('span');span.textContent=word.text+(word.separator??' ');if(word.confidence<70){span.className='uncertain';span.title=`엔진 확신도 ${Math.round(word.confidence)}`;}host.append(span);}
-  $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
+  if(r.skipped)host.textContent=r.text;else for(const word of r.words){const span=document.createElement('span');span.textContent=word.text+(word.separator??' ');if(word.uncertain||(Number.isFinite(word.confidence)&&word.confidence<70)){span.className='uncertain';span.title=r.source==='gemini'?'확인이 필요한 글줄':`엔진 확신도 ${Math.round(word.confidence)}`;}host.append(span);}
+  $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
 }
 $('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$('ocrResultPage').onchange=renderOCRText;
 $('ocrAccept').onclick=()=>{ocrAccepted=true;toolsChanged();syncToolsState();};
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
 $('ocrTxt').onclick=()=>toolDownload('\ufeff'+ocrRecords.map(r=>`[${r.page}쪽]\n${r.text}`).join('\n\n'),'인식한 텍스트.txt','text/plain;charset=utf-8');
+let geminiClicks=0,geminiCheck=null,geminiPending=null,geminiReady=false;
+$('modePro').addEventListener('click',()=>{
+  if(++geminiClicks!==8)return;
+  $('geminiTools').hidden=false;$('ocrSection').open=true;
+  $('geminiRun').scrollIntoView({block:'nearest',behavior:'smooth'});
+  toast('Gemini 인식이 표시됩니다.');
+});
+$('geminiRun').onclick=async()=>{
+  if($('geminiTools').hidden||ocrRunning||proAbort)return;
+  const list=toolTargets($('geminiScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
+  let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
+  geminiPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
+  geminiReady=false;$('geminiConsent').checked=false;$('geminiConfirm').disabled=true;
+  $('geminiConfirmScope').textContent=`${list.length}페이지를 인식합니다. 기존 텍스트가 있는 페이지는 전송하지 않습니다.`;
+  $('geminiAvailability').textContent='연결 상태를 확인하는 중…';$('geminiDialog').showModal();
+  const ctrl=new AbortController();geminiCheck?.abort();geminiCheck=ctrl;
+  const timer=setTimeout(()=>ctrl.abort(),10000);
+  try{
+    const status=await PDFGemini.available(ctrl.signal);
+    if(geminiCheck!==ctrl||!$('geminiDialog').open)return;
+    geminiReady=!!status.available;
+    $('geminiAvailability').textContent=geminiReady?'확인 후 인식을 시작할 수 있습니다.':'Gemini 연결이 아직 설정되지 않았습니다. 관리자에게 문의하세요.';
+    $('geminiConfirm').disabled=!geminiReady||!$('geminiConsent').checked;
+  }catch(e){if(geminiCheck===ctrl&&$('geminiDialog').open)$('geminiAvailability').textContent=e.name==='AbortError'?'연결을 확인하지 못했습니다. 잠시 후 다시 시도하세요.':e.message;}
+  finally{clearTimeout(timer);}
+};
+$('geminiConsent').onchange=()=>{$('geminiConfirm').disabled=!geminiReady||!$('geminiConsent').checked;};
+$('geminiDialog').addEventListener('close',()=>{geminiCheck?.abort();geminiCheck=null;geminiPending=null;geminiReady=false;$('geminiConsent').checked=false;$('geminiConfirm').disabled=true;});
+$('geminiConfirm').onclick=()=>{
+  if(!geminiReady||!$('geminiConsent').checked||!geminiPending||!$('geminiDialog').open||ocrRunning||proAbort)return;
+  const pending=geminiPending;let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
+  if(pending.fingerprint!==proFingerprint()||pending.language!==$('ocrLanguage').value||pending.keys.some((key,i)=>key!==ocrKey(pending.list[i],options))){$('geminiDialog').close();toast('문서 또는 설정이 바뀌었습니다. 다시 확인해 주세요.',true);return;}
+  $('geminiDialog').close();void runOCR(false,'gemini',pending.list,true);
+};
 syncToolsState();

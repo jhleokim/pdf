@@ -3,3 +3,8 @@ package-lock.json
 tests/fixtures/
 tests/*.log
 work/
+.deploy/
+.wrangler/
+.dev.vars*
+.env*
+worker-configuration.d.ts
