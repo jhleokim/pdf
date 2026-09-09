@@ -39,6 +39,7 @@ function setProView(view){
   requestAnimationFrame(()=>{const p=pages.find(p=>p.uid===previewUid);if(p)showPreview(p);});
 }
 function setProMode(mode){
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   proMode=mode; document.body.dataset.mode=mode;
   $('modeBasic').setAttribute('aria-pressed',String(mode==='basic'));
   $('modePro').setAttribute('aria-pressed',String(mode==='pro'));

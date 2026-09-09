@@ -1,0 +1,23 @@
+/* Compact document tools share the existing Hana and neutral-gray palette. */
+.annotation-tools{gap:6px;padding:8px 12px;flex-wrap:wrap}
+.annotation-tools .ab-group{gap:3px;flex:none}
+.annotation-tools .ab-tool{width:34px;height:34px;padding:6px;justify-content:center;border-radius:4px;box-shadow:none}
+.annotation-tools .ab-tool .ic{width:19px;height:19px;stroke-width:1.65}
+.annotation-tools .ab-tool.active{background:var(--accent-wash);border-color:var(--line-2);color:var(--accent-ink);box-shadow:inset 0 1px 2px #0000000a}
+.markup-separator{width:1px;height:22px;background:var(--line);margin:0 3px;flex:none}
+.annotation-actions{margin-left:auto;gap:3px}.annotation-actions .btn{width:30px;height:30px;padding:5px}
+.annotation-properties{gap:10px 16px;min-height:46px;align-items:center}.annotation-properties[hidden]{display:none}
+.text-properties label{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2)}
+.text-properties select,.text-properties input[type=number]{border:1px solid var(--line-2);border-radius:4px;color:var(--ink);background:var(--surface);height:28px;padding:3px 6px;font:inherit}
+.text-properties input[type=range]{width:80px;accent-color:var(--accent)}.text-properties #textSizeNumber{width:47px}.text-properties output{min-width:32px;font-variant-numeric:tabular-nums}
+.text-editor{position:fixed;z-index:1200;background:var(--surface);border:1px solid var(--line-2);border-radius:6px;box-shadow:0 3px 10px #0002,0 16px 38px #0003;padding:12px;color:var(--ink)}
+.text-editor[hidden]{display:none}.text-editor-head,.text-editor-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}.text-editor-head strong{font-size:12px;font-weight:600}.text-editor-head .btn{height:26px;width:26px;padding:4px}
+#textInput{display:block;resize:vertical;width:100%;min-height:90px;max-height:220px;margin:9px 0;padding:10px;border:1px solid var(--line-2);border-radius:4px;outline-color:var(--accent);color:var(--ink);background:var(--surface-2);font-size:16px;line-height:1.4}
+.text-editor-foot span{font-size:10px;color:var(--ink-3)}.text-editor-foot .btn{height:30px;font-size:12px}#textError{color:var(--danger);font-size:11px;line-height:1.5;margin-bottom:6px}#textError:empty{display:none}
+#pvOverlay text{user-select:none}#btnBlank,#mbBlank{touch-action:none;cursor:grab}#btnBlank:active,#mbBlank:active{cursor:grabbing}
+.blank-page-ghost{position:fixed;left:0;top:0;width:90px;height:114px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 5px 18px #0003;border-radius:4px;z-index:10000;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--accent-ink);font-size:11px}
+.blank-page-ghost .ic{width:28px;height:28px}.blank-dragging{cursor:grabbing;user-select:none}
+.drop-marker.blank-insertion{width:auto;min-height:140px;border:1.5px dashed var(--accent);border-radius:5px;background:var(--accent-wash);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--accent-ink);font-size:12px}
+.drop-marker.blank-insertion::before,.drop-marker.blank-insertion::after{display:none}.blank-insertion .ic{width:30px;height:30px}
+@media(max-width:880px){.annotation-tools{padding:6px 10px;gap:4px}.annotation-tools .ab-tool{width:34px;height:36px}.annotation-properties{padding:9px 12px}.text-editor{max-height:calc(100dvh - 24px);overflow:auto}}
+@media(prefers-reduced-motion:reduce){.blank-page-ghost,.blank-insertion{transition:none!important;animation:none!important}}

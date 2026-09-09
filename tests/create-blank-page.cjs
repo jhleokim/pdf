@@ -19,12 +19,12 @@ try{
   assert(size.width===1000&&size.height===600,'Cropped rotated physical size');record('Insertion follows selection and preserves rotated crop size with UserUnit');
   selectNone();pages[0].el.classList.add('selected');pages[3].el.classList.add('selected');await insertBlankPage();
   assert(pages.length===5&&selected()[0]===pages[4],'Multiple selection anchor');record('Multiple selection inserts after the last selected page');
-  selectNone();await insertBlankPage();assert(pages.length===6&&selected()[0]===pages[5],'Append');
+  selectNone();await insertBlankPage();assert(pages.length===6&&selected()[0]===pages[0],'Insert at start');
   rotate(selected(),90);await insertBlankPage();
-  result=await buildEditedDocument();size=result.getPage(6).getSize();assert(size.width===650&&size.height===450,'Editor rotation');
+  result=await buildEditedDocument();size=result.getPage(1).getSize();assert(Math.abs(size.width-841.89)<.01&&Math.abs(size.height-595.28)<.01,'Editor rotation');
   const saved=await result.save(),read=await pdfjsLib.getDocument({data:saved.slice(),...DOC_OPTS}).promise;
-  assert(read.numPages===7,'Export count');assert((await(await read.getPage(7)).getTextContent()).items.length===0,'Blank has unexpected text');
-  assert((await(await read.getPage(2)).getTextContent()).items.some(x=>x.str.includes('ORIGINAL PAGE')),'Original content changed');await read.destroy();record('Append, rotation and PDF export preserve blank and original content');
+  assert(read.numPages===7,'Export count');assert((await(await read.getPage(2)).getTextContent()).items.length===0,'Blank has unexpected text');
+  assert((await(await read.getPage(4)).getTextContent()).items.some(x=>x.str.includes('ORIGINAL PAGE')),'Original content changed');await read.destroy();record('Insert at start, rotation and PDF export preserve blank and original content');
   const removePage=selected()[0];remove([removePage]);assert(pages.length===6&&!pages.includes(removePage),'Blank deletion');record('Inserted pages remain editable and deletable');
   if(innerWidth<=880){const r=$('mbBlank').getBoundingClientRect();assert(r.width>=40&&r.height>=44&&r.right<=innerWidth,'Mobile button is clipped');record('Mobile blank action fits beside delete');}
   setProMode('pro');assert(getComputedStyle($('btnBlank')).display==='none','Pro-only visibility');setProMode('basic');
