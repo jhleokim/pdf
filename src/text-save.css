@@ -1,27 +1,3 @@
-/* Editing and file saving share the Hana palette, precise edges and soft depth. */
-.text-editor{display:flex;flex-direction:column;padding:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 7px #0002,0 18px 44px -10px #0004}
-.text-editor[hidden]{display:none}
-.text-editor-head{flex:none;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);cursor:grab;touch-action:none}
-.text-editor-head:active{cursor:grabbing}.text-editor-heading{display:flex;align-items:center;gap:8px;min-width:0}
-.text-editor-heading>.ic{color:var(--accent-ink);width:19px;height:19px}.text-editor-head strong{font-size:13px}.text-editor-heading>span{font-size:11px;color:var(--ink-3)}
-.text-editor-head .btn{width:30px;height:30px}.text-editor-body{padding:14px 16px;overflow:auto;min-height:0;overscroll-behavior:contain}
-.text-input-label{font-size:12px;font-weight:600;color:var(--ink-2)}
-#textInput{margin:7px 0 0;min-height:104px;max-height:200px;resize:vertical;border-color:var(--line-2);background:var(--surface);line-height:1.55;padding:10px 11px;box-shadow:inset 0 1px 2px #00000005}
-#textInput:focus{border-color:var(--accent);outline:2px solid var(--accent-wash);outline-offset:1px}
-#textInput[aria-invalid=true]{border-color:var(--danger)}.text-input-meta{display:flex;justify-content:space-between;gap:8px;margin-top:7px;font-size:10px;color:var(--ink-3);line-height:1.5}
-#textCharCount{white-space:nowrap;font-variant-numeric:tabular-nums}#textError{margin:7px 0 0}
-.text-format-details{margin-top:13px;border-top:1px solid var(--line)}.text-format-details>summary{cursor:pointer;display:flex;align-items:center;gap:7px;padding:12px 0 4px;font-size:12px;font-weight:600;list-style:none}
-.text-format-details>summary::before{content:'›';font-size:17px;line-height:1;transform:rotate(0);transition:transform .15s}.text-format-details[open]>summary::before{transform:rotate(90deg)}
-#textFormatSummary{margin-left:auto;color:var(--ink-3);font-size:10px;font-weight:400}.text-format-details[open] #textFormatSummary{display:none}
-.text-editor .text-properties{display:grid;grid-template-columns:1fr auto;gap:12px 15px;padding:10px 0 0;min-height:0}
-.text-editor .text-properties label{font-size:12px}.text-editor .text-font{grid-column:1;order:0}.text-editor .text-color{grid-column:2;order:1}
-.text-editor .text-size{grid-column:1/-1;order:2;display:grid;grid-template-columns:32px 1fr 52px 14px;gap:8px}
-.text-editor .text-spacing{grid-column:1/-1;order:3;display:grid;grid-template-columns:32px 1fr 44px;gap:8px}
-.text-editor .text-properties input[type=range]{width:100%;min-width:0;height:25px;margin:0}.text-editor .text-properties select{min-width:112px;height:32px}
-.text-editor .text-properties #textSizeNumber{width:52px;height:32px}.text-editor .text-color .swatch{width:30px;height:30px}#textEdit[hidden]{display:none}
-.text-editor-foot{display:block;flex:none;padding:11px 14px 13px;border-top:1px solid var(--line);background:var(--surface)}
-.text-editor-foot p{margin:0 0 10px;font-size:10px;line-height:1.5;color:var(--ink-3)}.text-editor-actions{display:flex;align-items:center;gap:8px}
-.text-editor-actions .text-shortcut{margin-right:auto;font-size:9px;white-space:nowrap}.text-editor-actions .btn{height:36px;padding:0 10px;font-size:12px}.text-editor-actions .btn.primary{min-width:130px}
 .pdf-save-dialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(444px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line-2);border-radius:7px;background:var(--surface);color:var(--ink);box-shadow:var(--sh-3);overflow:auto}
 .pdf-save-dialog::backdrop{background:rgba(20,24,28,.28)}.pdf-save-dialog[open]{animation:save-appear .16s ease-out}
 .pdf-save-head{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 17px;gap:12px;border-bottom:1px solid var(--line)}
@@ -40,10 +16,7 @@
 @keyframes save-preparing{from{transform:translateX(-110%)}to{transform:translateX(390%)}}
 @keyframes save-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:880px){
- .text-editor-head{padding:6px 12px;cursor:default}.text-editor-head .btn{width:40px;height:40px}.text-editor-body{padding:12px 14px}
- #textInput{min-height:90px;max-height:160px}.text-format-details>summary{min-height:42px;padding:3px 0}.text-editor .text-properties select{font-size:16px;height:38px}
- .text-editor .text-properties #textSizeNumber{font-size:16px;height:38px}.text-editor-foot{padding:10px 14px 12px}.text-editor-actions{display:grid;grid-template-columns:1fr 1.7fr}
- .text-editor-actions .text-shortcut{display:none}.text-editor-actions .btn{height:42px}.pdf-save-head{padding:16px}.pdf-save-body{padding:17px}.pdf-save-actions{padding:10px 17px 17px;display:grid;grid-template-columns:1fr 1.4fr}.pdf-save-actions .btn{height:44px;min-width:0}
+ .pdf-save-head{padding:16px}.pdf-save-body{padding:17px}.pdf-save-actions{padding:10px 17px 17px;display:grid;grid-template-columns:1fr 1.4fr}.pdf-save-actions .btn{height:44px;min-width:0}
  .pdf-filename input{font-size:16px;height:44px}.pdf-save-dialog{width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 }
-@media(prefers-reduced-motion:reduce){.pdf-save-dialog[open],.pdf-save-result::after{animation:none!important}.text-format-details>summary::before{transition:none}.pdf-save-result[data-phase=preparing]::after{width:100%;opacity:.35}}
+@media(prefers-reduced-motion:reduce){.pdf-save-dialog[open],.pdf-save-result::after{animation:none!important}.pdf-save-result[data-phase=preparing]::after{width:100%;opacity:.35}}

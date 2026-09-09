@@ -1,7 +1,7 @@
 {
   "googleFontsCommit": "baa2e5561af8a4873b058859dcfe158bdd033942",
   "fontkit": "1.1.1",
-  "format": "Unmodified upstream TTF files, losslessly zlib-compressed. Font subsets are embedded only when exporting text.",
+  "format": "Unmodified upstream TTF files, losslessly zlib-compressed. Each used family is embedded once in full when exporting text to avoid missing glyphs in fontkit subsets.",
   "files": {
     "fontkit.umd.min.js": {
       "bytes": 758440,

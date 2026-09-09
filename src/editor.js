@@ -349,6 +349,7 @@ async function showPreview(p){
   const probe = page.getViewport({ scale: 1, rotation: rot });
   const pad = isMobile() ? 20 : 36;
   pvFitScale = Math.max(0.05, Math.min((box.width - pad) / probe.width, (box.height - pad) / probe.height));
+  if(document.body.classList.contains('editing-focus')&&!isMobile())pvFitScale=Math.max(.05,Math.min(box.width-pad,760)/probe.width);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let cssScale = Math.min(pvFitScale * pvZoom, 8, Math.sqrt(16000000/(probe.width*probe.height))/dpr);
   const vp = page.getViewport({ scale: cssScale * dpr, rotation: rot });
@@ -369,6 +370,7 @@ async function showPreview(p){
   pvScale = cssScale;                         // pt → CSS px
   layoutOverlay(c.width, c.height);
   renderAnnots();
+  if(typeof renderHighlightLayer==='function')await renderHighlightLayer(page,page.getViewport({scale:c.clientWidth/probe.width,rotation:rot}),my);
 }
 function setZoom(z){
   pvZoom = clamp(z, PV_ZOOM_MIN, PV_ZOOM_MAX);
@@ -377,6 +379,7 @@ function setZoom(z){
   if(p) showPreview(p);
 }
 function clearPreview(){
+  if(typeof clearHighlightLayer==='function')clearHighlightLayer();
   if(typeof finishTextEdit==='function')finishTextEdit(false);
   pvRenderTask?.cancel();pvRenderTask=null;$('pvCanvas').width=$('pvCanvas').height=0;
   previewUid = null; pvToken++; pvZoom = 1; selAnno = null;
@@ -441,6 +444,7 @@ function fixAspect(a, w, h){
 }
 
 function annoToSVG(a, w, h){
+  if(a.shape==='highlight'&&a.quads)return highlightToSVG(a,w,h);
   if(a.shape==='text')return PDFMarkupText.svg(a,w,h);
   const x = a.nx*w, y = a.ny*h, bw = a.nw*w, bh = a.nh*h;
   let el;
@@ -484,8 +488,8 @@ function renderAnnots(){
   const ov = $('pvOverlay'); ov.innerHTML = '';
   const c = $('pvCanvas'), w = c.width, h = c.height;
   const list = curAnnots();
-  list.forEach(a => ov.appendChild(annoToSVG(a, w, h)));
-  if(selAnno){
+  list.forEach(a => {const el=annoToSVG(a,w,h);if(typeof textEditing!=='undefined'&&textEditing?.a===a)el.style.visibility='hidden';ov.appendChild(el);});
+  if(selAnno&&annoStyle.tool==='none'&&!(typeof textEditing!=='undefined'&&textEditing)){
     const a = list.find(x => x.id === selAnno);
     if(a){
       const x = a.nx*w, y = a.ny*h, bw = a.nw*w, bh = a.nh*h;
@@ -546,7 +550,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     curAnnots().push(a); selAnno = a.id;
     drag = { mode:'create', a, sx: pt.x, sy: pt.y };
   }
-  if(drag){ try{ $('pvOverlay').setPointerCapture(e.pointerId); }catch(_){} e.preventDefault(); }
+  if(drag){if(drag.mode!=='create')drag.snapshot=structuredClone(drag.a);try{ $('pvOverlay').setPointerCapture(e.pointerId); }catch(_){} e.preventDefault();}
 });
 $('pvOverlay').addEventListener('pointermove', e => {
   if(!drag || pinch) return;
@@ -582,12 +586,20 @@ function endDrag(){
       selAnno = null;
     }
     if(a.shape === 'image'){ pendingStamp = null; renderInfo(); }
-    setTool('none');
+    if(a.shape!=='highlight')setTool('none');
+    else selAnno=null;
   }
   drag = null; renderAnnots(); syncCounts();
 }
 $('pvOverlay').addEventListener('pointerup', endDrag);
-$('pvOverlay').addEventListener('pointercancel', endDrag);
+function cancelAnnotationDrag(){
+  if(!drag)return;
+  if(drag.mode==='create'){const list=curAnnots(),i=list.indexOf(drag.a);if(i>=0)list.splice(i,1);selAnno=null;}
+  else if(drag.snapshot)Object.assign(drag.a,drag.snapshot);
+  drag=null;renderAnnots();syncCounts();
+}
+$('pvOverlay').addEventListener('pointercancel',cancelAnnotationDrag);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){e.preventDefault();e.stopImmediatePropagation();cancelAnnotationDrag();}},true);
 
 /* ── 사진 붙이기 ── */
 function openStampPicker(){ $('stampInput').click(); }
@@ -907,8 +919,7 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
     if(W < 1 || H < 1) continue;
     if(a.shape==='text'){await PDFMarkupText.bake(outDoc,pg,a,vp,R,imgCache);continue;}
     if(a.shape==='highlight'){
-      const color=hexToRgb(a.fill||'#ffe082');
-      pg.drawRectangle({x:X,y:Y,width:W,height:H,color:rgb(color.r,color.g,color.b),opacity:a.opacity,borderWidth:0,blendMode:PDFLib.BlendMode.Multiply});continue;
+      bakeHighlight(pg,a,vp);continue;
     }
 
     if(a.shape === 'image'){
@@ -1096,7 +1107,7 @@ function syncAnnotationControls(){
   const a=curAnnots().find(x=>x.id===selAnno);
   const shape=annoStyle.tool==='none'?a?.shape:annoStyle.tool;
   const imageSelected=shape==='image';
-  $('annoProperties').hidden=!shape||imageSelected||shape==='text';
+  $('annoProperties').hidden=!shape||imageSelected||shape==='text'||shape==='highlight';
   $('annoStrokeGroup').hidden=shape==='highlight';
   $('annoNoFill').hidden=shape==='highlight';
   $('annoImageHint').hidden=!imageSelected;
@@ -1112,22 +1123,26 @@ function syncAnnotationControls(){
   document.querySelectorAll('.ab-dbtn').forEach(b=>b.classList.toggle('active',b.dataset.dash===annoStyle.dash));
   document.querySelectorAll('.ab-tool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===annoStyle.tool)));
   if(typeof syncTextControls==='function')syncTextControls();
+  $('markupIdle').hidden=!!shape;
+  $('markupContext').dataset.kind=shape||'none';
+  if(typeof syncHighlightControls==='function')syncHighlightControls();
 }
 /* 강조 툴바 */
 function setTool(t){
   if(typeof finishTextEdit==='function'&&t!=='none'&&!finishTextEdit(true))return;
   annoStyle.tool = t;
-  if(t==='highlight'){annoStyle.fill||='#ffe082';annoStyle.opacity=.35;}
+  if(t==='highlight'&&typeof highlightStyle!=='undefined'){annoStyle.fill=highlightStyle.color;annoStyle.opacity=highlightStyle.opacity;}
   if(t!=='none')selAnno=null;
   if(t !== 'image') pendingStamp = null;
   document.querySelectorAll('.ab-tool').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
   $('pvOverlay').classList.toggle('draw', t !== 'none');
   renderAnnots();
 }
-document.querySelectorAll('.ab-tool').forEach(b => b.onclick = () => {
+document.querySelectorAll('.ab-tool').forEach(b => b.onclick = async () => {
   const t = b.dataset.tool;
   if(t === 'image'){ setTool('image'); openStampPicker(); return; }
   setTool(t);
+  if((t==='text'||t==='highlight')&&annoStyle.tool===t&&typeof setEditingFocus==='function'&&!isMobile())await setEditingFocus(true);
 });
 document.querySelectorAll('.ab-dbtn').forEach(b => b.onclick = () => {
   annoStyle.dash = b.dataset.dash;

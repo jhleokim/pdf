@@ -1,17 +1,3 @@
-<section id="textEditor" class="text-editor" role="dialog" aria-labelledby="textEditorTitle" aria-describedby="textEditorHelp" hidden>
-  <header class="text-editor-head" id="textEditorGrip">
-    <div class="text-editor-heading"><svg class="ic"><use href="#i-text"/></svg><strong id="textEditorTitle">텍스트 추가</strong><span id="textEditorPage"></span></div>
-    <button class="btn quiet icon" id="textCancelClose" title="입력 취소" aria-label="텍스트 입력 닫기"><svg class="ic"><use href="#i-x"/></svg></button>
-  </header>
-  <div class="text-editor-body">
-    <label class="text-input-label" for="textInput">내용</label>
-    <textarea id="textInput" rows="4" maxlength="2000" placeholder="페이지에 넣을 내용을 입력하세요" aria-label="추가할 텍스트" aria-describedby="textError textPreviewState" spellcheck="false"></textarea>
-    <div class="text-input-meta"><span id="textPreviewState" role="status" aria-live="polite">텍스트를 입력하세요</span><span id="textCharCount">0 / 2,000</span></div>
-    <p id="textError" role="alert"></p>
-    <details id="textFormatDetails" class="text-format-details" open><summary>글꼴 및 크기<span id="textFormatSummary"></span></summary><div id="textEditorFormat"></div></details>
-  </div>
-  <footer class="text-editor-foot">
-    <p id="textEditorHelp">PDF 파일은 상단의 ‘PDF로 저장’에서 내려받으세요.</p>
-    <div class="text-editor-actions"><span class="text-shortcut">Ctrl / ⌘ + Enter</span><button class="btn" id="textCancel">취소</button><button class="btn primary" id="textApply" disabled><svg class="ic"><use href="#i-check"/></svg>페이지에 적용</button></div>
-  </footer>
-</section>
+<div id="textEditor" class="text-editor" hidden>
+  <textarea id="textInput" rows="1" maxlength="2000" placeholder="텍스트 입력" aria-label="추가할 텍스트" aria-describedby="textError" spellcheck="false"></textarea>
+</div>

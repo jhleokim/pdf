@@ -50,7 +50,9 @@ const PDFMarkupText=(()=>{
   }
   async function bake(doc,page,a,vp,rotation,cache){
     const key='text-font:'+a.font;
-    if(!cache.has(key)){const f=await load(a.font);doc.registerFontkit(fontkit);cache.set(key,await doc.embedFont(f.bytes,{subset:true}));}
+    // These Korean TTFs lose glyphs with fontkit's subset path.
+    // Embed each used family once, retaining its original glyph tables.
+    if(!cache.has(key)){const f=await load(a.font);doc.registerFontkit(fontkit);cache.set(key,await doc.embedFont(f.bytes,{subset:false}));}
     const font=cache.get(key),sx=a.nw*vp.width/a.textLayout.width,sy=a.nh*vp.height/a.textLayout.height;
     const c=hexToRgb(a.color);
     // Use a text matrix so rotation, CropBox and non-square resized boxes agree with the preview.
