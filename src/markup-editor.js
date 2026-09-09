@@ -6,11 +6,13 @@ function syncTextControls(){
   const a=textSelection(),active=annoStyle.tool==='text'||!!a;
   $('annoTextProperties').hidden=!active;
   for(const key of ['font','fontSize','lineGap','color'])if(a)textStyle[key]=a[key];
-  $('textFont').value=textStyle.font;$('textSize').value=textStyle.fontSize;$('textSizeNumber').value=textStyle.fontSize;
+  $('textFont').value=textStyle.font;$('textSize').value=textStyle.fontSize;
+  if(document.activeElement!==$('textSizeNumber'))$('textSizeNumber').value=textStyle.fontSize;
   $('textLineGap').value=textStyle.lineGap;$('textLineGapVal').textContent=Math.round(textStyle.lineGap*100)+'%';$('textColor').value=textStyle.color;
   $('textEdit').disabled=!a;
   $('annoToolHint').textContent=annoStyle.tool==='text'?'페이지에서 글자를 넣을 위치를 클릭하세요.':annoStyle.tool==='highlight'?'드래그하여 강조할 영역을 표시하세요.':a?'텍스트를 더블클릭하면 내용을 수정할 수 있습니다.':'';
   $('annoToolHint').hidden=!$('annoToolHint').textContent;
+  if(typeof syncTextEditorUI==='function')syncTextEditorUI();
 }
 async function relayoutText(a){
   const {font}=await PDFMarkupText.load(a.font);
@@ -21,6 +23,7 @@ async function relayoutText(a){
   a.nx=clamp(a.nx,0,Math.max(0,1-a.nw));a.ny=clamp(a.ny,0,Math.max(0,1-a.nh));
 }
 function positionTextEditor(){
+  if(typeof positionTextEditorPanel==='function')return positionTextEditorPanel();
   if(!textEditing)return;
   const c=$('pvCanvas'),r=c.getBoundingClientRect(),panel=$('textEditor'),a=textEditing.a;
   const width=Math.min(340,innerWidth-24);panel.style.width=width+'px';
@@ -42,7 +45,9 @@ async function openTextEditor(point,existing){
     if(!existing){await relayoutText(a);(page.annots||=[]).push(a);}
     textEditing={page,a,snapshot,revision:0};selAnno=a.id;setTool('none');
     $('textEditor').hidden=false;$('textInput').value=a.text;$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
-    $('textError').textContent='';$('textApply').disabled=false;renderAnnots();positionTextEditor();$('textInput').focus();
+    $('textError').textContent='';$('textApply').disabled=false;
+    if(typeof openTextEditorUI==='function')openTextEditorUI();
+    renderAnnots();positionTextEditor();$('textInput').focus({preventScroll:true});
   }catch(e){toast(e.message||'텍스트 도구를 준비하지 못했습니다.',true);}finally{textOpening=false;}
 }
 function finishTextEdit(apply){
@@ -50,22 +55,26 @@ function finishTextEdit(apply){
   const {page,a,snapshot}=textEditing;
   if(apply&&textEditPending)return false;
   if(apply&&$('textError').textContent){$('textInput').focus();return false;}
-  if(!apply&&snapshot)Object.assign(a,snapshot);
+  if(apply&&typeof textComposing!=='undefined'&&textComposing)return false;
+  if(snapshot&&(!apply||!a.text.trim()))Object.assign(a,snapshot);
   else if(!apply||!a.text.trim()){const i=page.annots.indexOf(a);if(i>=0)page.annots.splice(i,1);if(selAnno===a.id)selAnno=null;}
   textChangeRevision++;textEditPending=false;pendingTextChanges.delete(a);
-  textEditing=null;$('textEditor').hidden=true;$('textApply').disabled=false;renderAnnots();syncCounts();return true;
+  textEditing=null;
+  if(typeof closeTextEditorUI==='function')closeTextEditorUI();
+  $('textEditor').hidden=true;$('textApply').disabled=false;renderAnnots();syncCounts();return true;
 }
 let textChangeRevision=0;
 async function applyTextChange(change){
   const a=textSelection();for(const key of ['font','fontSize','lineGap','color'])if(key in change)textStyle[key]=change[key];if(!a){syncTextControls();return;}
   const revision=++textChangeRevision,next={...(pendingTextChanges.get(a)||a),...change};pendingTextChanges.set(a,next);textEditPending=true;$('textApply').disabled=true;
+  if(typeof syncTextEditorUI==='function')syncTextEditorUI();
   try{
     await relayoutText(next);if(revision!==textChangeRevision||!curAnnots().includes(a))return;
     Object.assign(a,next);$('textError').textContent='';
     if(textEditing)$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
     renderAnnots();syncCounts();
   }catch(e){if(revision===textChangeRevision){if(textEditing)$('textError').textContent=e.message;else toast(e.message,true);}}
-  finally{if(revision===textChangeRevision){textEditPending=false;$('textApply').disabled=false;}}
+  finally{if(revision===textChangeRevision){textEditPending=false;$('textApply').disabled=false;if(typeof syncTextEditorUI==='function')syncTextEditorUI();}}
 }
 function queueTextChange(change){textUpdate=applyTextChange(change);return textUpdate;}
 $('textInput').addEventListener('input',()=>queueTextChange({text:$('textInput').value}));
@@ -74,7 +83,7 @@ $('textEdit').onclick=()=>{const a=textSelection();if(a)openTextEditor(null,a);}
 $('textInput').addEventListener('keydown',e=>{
   if(e.isComposing)return;
   if(e.key==='Escape'){e.preventDefault();finishTextEdit(false);}
-  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();finishTextEdit(true);}
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(typeof applyTextEditor==='function')void applyTextEditor();else finishTextEdit(true);}
 });
 $('textFont').onchange=e=>queueTextChange({font:e.target.value});
 for(const id of ['textSize','textSizeNumber'])$(id).oninput=e=>queueTextChange({fontSize:clamp(Number(e.target.value)||16,8,96)});

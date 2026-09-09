@@ -322,8 +322,13 @@ function setPvTitle(p){
 
 async function showPreview(p){
   if(!p) return;
-  if(p.uid!==previewUid){if(typeof textUpdate!=='undefined')await textUpdate;if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;selAnno=null;}
   const my=++pvToken;pvRenderTask?.cancel();pvRenderTask=null;
+  if(p.uid!==previewUid){
+    if(typeof textUpdate!=='undefined')await textUpdate;
+    if(my!==pvToken)return;
+    if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+    selAnno=null;
+  }
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
   setPvTitle(p);
@@ -946,8 +951,10 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
   }
 }
 
-async function buildEditedDocument(list = pages){
+async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
+  signal?.throwIfAborted();
   if(typeof textUpdate!=='undefined')await textUpdate;
+  signal?.throwIfAborted();
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))throw new Error('텍스트 입력을 먼저 완료해 주세요.');
   const first = list.length && docs.get(list[0].docId);
   const complete = first && list.length === first.count && list.every((p,i)=>p.docId===list[0].docId && p.srcIndex===i);
@@ -958,6 +965,7 @@ async function buildEditedDocument(list = pages){
     const need = new Map();
     for(const p of list){ if(!need.has(p.docId)) need.set(p.docId,[]); need.get(p.docId).push(p.srcIndex); }
     for(const [docId,indices] of need){
+      signal?.throwIfAborted();
       const src = await PDFDocument.load(docs.get(docId).libBytes);
       copied.set(docId,await out.copyPages(src,indices));
       await idle();
@@ -965,13 +973,16 @@ async function buildEditedDocument(list = pages){
   }
   const cursor = new Map();
   for(let n=0;n<list.length;n++){
+    signal?.throwIfAborted();
     const p=list[n], i=cursor.get(p.docId)||0;
     cursor.set(p.docId,i+1);
     const pg=complete ? out.getPage(n) : copied.get(p.docId)[i];
     if(p.rotation) pg.setRotation(degrees((pg.getRotation().angle+p.rotation)%360));
     if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache);
     if(!complete) out.addPage(pg);
+    if(onProgress){onProgress(n+1,list.length);await idle();}
   }
+  signal?.throwIfAborted();
   return out;
 }
 
@@ -987,22 +998,7 @@ async function save(){
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   if(!pages.length || document.body.classList.contains('is-busy')) return;
   if(document.body.dataset.mode==='pro' && typeof proPrimaryAction==='function') return proPrimaryAction();
-  $('btnSave').disabled = true; $('mbSave').disabled = true;
-  busy(true, 'PDF를 만드는 중…'); progress(12);
-  await idle();
-  try{
-    const out = await buildEditedDocument();
-    progress(88);
-    const bytes = await out.save({ useObjectStreams:true, updateFieldAppearances:false });
-    const stamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    downloadPdf(bytes,`편집본_${stamp}.pdf`);
-    toast(`${pages.length}페이지 PDF를 저장했습니다`);
-  }catch(e){
-    console.error(e);
-    toast('PDF 생성에 실패했습니다 — 콘솔 로그를 확인하세요', true);
-  }finally{
-    busy(false); progress(0); syncCounts();
-  }
+  return openBasicSaveDialog();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1305,6 +1301,7 @@ document.addEventListener('keydown', e => {
   if($('proCompare')?.open) return;
   if($('modal').classList.contains('open') && e.key === 'Escape'){ $('modal').classList.remove('open'); return; }
   if($('sheet').classList.contains('open') && e.key === 'Escape'){ $('sheet').classList.remove('open'); return; }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); if(!e.isComposing)void save(); return; }
   if(e.target.matches('input,textarea,select')) return;
   if(e.key === 'Escape' && annoStyle.tool !== 'none'){ setTool('none'); return; }
   if(e.key === 'Delete' || e.key === 'Backspace'){
@@ -1312,7 +1309,6 @@ document.addEventListener('keydown', e => {
     if(selected().length){ e.preventDefault(); remove(selected()); }
   }
   if((e.ctrlKey || e.metaKey) && e.key === 'a' && pages.length && !selAnno){ e.preventDefault(); selectAll(); }
-  if((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); save(); }
 });
 
 /* ── 기동 ── */

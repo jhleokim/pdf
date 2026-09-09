@@ -1,0 +1,12 @@
+<dialog id="basicSaveDialog" class="pdf-save-dialog" aria-labelledby="basicSaveTitle" aria-describedby="basicSaveSummary">
+  <header class="pdf-save-head"><div class="pdf-save-heading"><span class="pdf-save-mark"><svg class="ic"><use href="#i-file"/></svg></span><div><h2 id="basicSaveTitle">PDF 저장</h2><p id="basicSaveSummary"></p></div></div><button class="btn quiet icon" id="basicSaveClose" aria-label="저장 창 닫기"><svg class="ic"><use href="#i-x"/></svg></button></header>
+  <div class="pdf-save-body">
+    <label class="pdf-filename-label" for="basicSaveFilename">파일 이름</label>
+    <div class="pdf-filename"><input id="basicSaveFilename" type="text" maxlength="100" autocomplete="off" spellcheck="false" aria-describedby="basicFilenameError"><span>.pdf</span></div>
+    <p id="basicFilenameError" class="pdf-save-error" role="alert"></p>
+    <div class="pdf-save-result" id="basicSaveResult" data-phase="preparing"><svg class="ic"><use id="basicSaveStateIcon" href="#i-file"/></svg><div><strong id="basicSaveStatus" role="status" aria-live="polite">PDF 준비 중…</strong><p id="basicSaveDetail">모든 페이지와 편집 내용을 포함합니다.</p></div></div>
+    <p id="basicSaveError" class="pdf-save-error" role="alert"></p>
+    <p class="pdf-save-note">브라우저의 다운로드 설정에 따라 저장됩니다.</p>
+  </div>
+  <footer class="pdf-save-actions"><button class="btn" id="basicSaveBack">계속 편집</button><button class="btn primary" id="basicSaveDownload" disabled><svg class="ic"><use href="#i-save"/></svg><span id="basicSaveDownloadLabel">준비 중…</span></button></footer>
+</dialog>
