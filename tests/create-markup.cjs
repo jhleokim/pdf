@@ -1,0 +1,6 @@
+const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');
+const standalone=process.argv.includes('--standalone'),name=standalone?'markup-standalone':'markup';
+const html=fs.readFileSync(path.join(root,standalone?'dist/PDF-Studio-Standalone-v'+fs.readFileSync(path.join(root,'VERSION'),'utf8').trim()+'.html':'index.html'),'utf8').replace('<head>','<head><meta http-equiv="Content-Security-Policy" content="connect-src blob: data:">'),code=fs.readFileSync(path.join(__dirname,'markup-browser.js'),'utf8');
+fs.mkdirSync(path.join(__dirname,'fixtures'),{recursive:true});
+fs.writeFileSync(path.join(__dirname,'fixtures',name+'-check.html'),html.replace('</body>','<output id="markupChecks" style="position:fixed;left:8px;bottom:4px;z-index:99999;background:white;color:black;white-space:pre-wrap;font:12px monospace">Running</output><script>'+code+'</script></body>'));
+fs.writeFileSync(path.join(__dirname,'fixtures',name+'-mobile.html'),'<!doctype html><meta charset="utf-8"><title>Markup mobile check</title><iframe src="'+name+'-check.html" style="width:390px;height:844px;border:0"></iframe><output id="mobileChecks" style="white-space:pre-wrap"></output><script>window.addEventListener("message",e=>{if(e.origin===location.origin&&e.data.markupReport)document.getElementById("mobileChecks").textContent=e.data.markupReport})</script>');

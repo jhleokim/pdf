@@ -1,0 +1,53 @@
+(async()=>{
+ const out=$('markupChecks'),checks=[],assert=(v,m)=>{if(!v)throw Error(m)},record=m=>{checks.push(m);out.textContent=checks.join('\n')},wait=ms=>new Promise(r=>setTimeout(r,ms));
+ try{
+  setProMode('basic');await insertBlankPage();const first=pages[0];await insertBlankPage();selectNone();await insertBlankPage();
+  assert(pages[1]===first&&selected()[0]===pages[0],'Unselected insert must be first');
+  const before=pages[2];await insertBlankPage({beforeUid:before.uid});assert(pages[3]===before&&selected()[0]===pages[2],'Explicit insertion position');record('Blank click and explicit drop positions');
+  if(innerWidth<=880)setMobileView('preview');await showPreview(pages[2]);
+  await openTextEditor({x:.12,y:.16});assert(textEditing&&!$('textEditor').hidden,'Text input did not open');
+  await queueTextChange({text:'검토 완료\nTotal 123,450원',fontSize:24});assert(finishTextEdit(true),'Text confirmation');
+  let text=textSelection();assert(text&&text.textLayout.lines.length===2&&$('pvOverlay').querySelectorAll('text').length===2,'Text preview');record('Embedded Korean font and multiline live preview');
+  await openTextEditor(null,text);await queueTextChange({text:'취소할 내용'});finishTextEdit(false);assert(text.text==='검토 완료\nTotal 123,450원','Cancel changed saved text');
+  await openTextEditor(null,text);await queueTextChange({text:'이모지 😀'});assert($('textError').textContent&&!finishTextEdit(true),'Missing glyph accepted');finishTextEdit(false);record('Cancel and unsupported glyphs preserve prior content');
+  const pending=queueTextChange({font:'myeongjo'});const next=queueTextChange({fontSize:28});await Promise.all([pending,next]);
+  assert(text.font==='myeongjo'&&text.fontSize===28&&text.text.includes('123,450'),'Concurrent font and size changes');record('Font and size controls preserve concurrent changes');
+  await openTextEditor(null,text);await queueTextChange({text:'자동 줄바꿈 ABCDEFGHIJKLMNOPQRSTUVWXYZ 문서 검토 '.repeat(6)});
+  assert(text.textLayout.lines.length>2&&text.textLayout.width<=text.maxWidth+.1&&text.nx+text.nw<=1.001,'Automatic wrapping leaves the page');finishTextEdit(false);
+  await openTextEditor(null,text);await queueTextChange({text:'잘못된 문자 😀'});setProMode('pro');assert(proMode==='basic'&&!$('textEditor').hidden,'Mode switch discarded invalid draft');finishTextEdit(false);
+  record('Long text wraps inside the page; invalid drafts stay available to correct');
+  const doc=await buildEditedDocument(),bytes=await doc.save(),pdf=await pdfjsLib.getDocument({data:bytes.slice(),...DOC_OPTS}).promise;
+  const content=await(await pdf.getPage(3)).getTextContent();assert(content.items.some(i=>i.str.includes('검토 완료'))&&content.items.some(i=>i.str.includes('123,450원')),'Export lost searchable Korean text');await pdf.destroy();
+  const resources=doc.getPage(2).node.Resources(),fonts=doc.context.lookup(resources.get(PDFLib.PDFName.of('Font')));
+  assert(fonts&&fonts.keys().length>0,'PDF has no font resource');record('PDF exports real searchable Korean and English text');
+  const target=pages[2];selectNone();target.el.classList.add('selected');await showPreview(target);
+  setTool('highlight');const ov=$('pvOverlay'),r=$('pvCanvas').getBoundingClientRect();
+  const event=(type,x,y)=>ov.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:44,pointerType:'mouse',button:0,clientX:r.left+r.width*x,clientY:r.top+r.height*y}));
+  event('pointerdown',.1,.15);event('pointermove',.65,.25);event('pointerup',.65,.25);
+  const mark=curAnnots().find(a=>a.shape==='highlight');assert(mark&&mark.lineWidth===0&&mark.fill&&mark.opacity===.35,'Highlight geometry/style');assert($('annoStrokeGroup').hidden,'Highlight shows border controls');
+  const marked=await buildEditedDocument(),gs=marked.context.lookup(marked.getPage(2).node.Resources().get(PDFLib.PDFName.of('ExtGState')));
+  assert(gs&&gs.values().some(ref=>marked.context.lookup(ref).get(PDFLib.PDFName.of('BM'))?.toString()==='/Multiply'),'PDF highlight not Multiply');record('Highlight is a translucent fill with Multiply blending');
+  for(const rotation of [0,90,180,270]){
+   const source=await PDFDocument.create(),pg=source.addPage([400,600]);pg.setCropBox(20,30,300,500);pg.setRotation(degrees(rotation));pg.node.set(PDFLib.PDFName.of('UserUnit'),PDFLib.PDFNumber.of(2));
+   await loadFiles([new File([await source.save()],'Geometry.pdf',{type:'application/pdf'})]);await showPreview(pages.at(-1));await openTextEditor({x:.15,y:.2});await queueTextChange({text:'한글 ABC 123',font:'gothic',fontSize:20});finishTextEdit(true);
+   const output=await buildEditedDocument([pages.at(-1)]),proxy=await pdfjsLib.getDocument({data:await output.save(),...DOC_OPTS}).promise;
+   const p=await proxy.getPage(1),items=(await p.getTextContent()).items;assert(items.some(i=>i.str.includes('한글 ABC 123')),'Rotated text extraction '+rotation);
+   const cv=document.createElement('canvas'),vp=p.getViewport({scale:1});cv.width=vp.width;cv.height=vp.height;await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+   const pixels=cv.getContext('2d').getImageData(Math.floor(vp.width*.13),Math.floor(vp.height*.18),Math.floor(vp.width*.55),Math.floor(vp.height*.12)).data;
+   let dark=0;for(let i=0;i<pixels.length;i+=4)if(pixels[i]<150&&pixels[i+1]<150&&pixels[i+2]<150)dark++;assert(dark>30,'Rotated text misplaced '+rotation);await proxy.destroy();
+  }record('Text remains visible and searchable at every rotation, CropBox and UserUnit');
+  if(innerWidth<=880)setMobileView('board');$('boardWrap').scrollTop=0;await wait(250);
+  const button=$(innerWidth<=880?'mbBlank':'btnBlank'),buttonRect=button.getBoundingClientRect(),boardRect=$('boardWrap').getBoundingClientRect(),count=pages.length;
+  const pointer=(type,x,y,target=document)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:72,pointerType:innerWidth<=880?'touch':'mouse',isPrimary:true,button:0,clientX:x,clientY:y}));
+  const start=()=>pointer('pointerdown',buttonRect.left+buttonRect.width/2,buttonRect.top+buttonRect.height/2,button);
+  start();pointer('pointermove',boardRect.left+22,boardRect.top+35);assert(marker.parentNode===board&&document.querySelector('.blank-page-ghost'),'Drag insertion feedback missing');pointer('pointercancel',0,0);
+  assert(pages.length===count&&!marker.parentNode&&!document.querySelector('.blank-page-ghost'),'Canceled drag inserted a page');
+  start();pointer('pointermove',boardRect.left+22,boardRect.top+35);pointer('pointermove',-20,-20);pointer('pointerup',-20,-20);assert(pages.length===count,'Outside drop inserted a page');
+  start();pointer('pointermove',boardRect.left+22,boardRect.top+35);const anchorUid=marker.nextElementSibling?.dataset.uid||null;pointer('pointerup',boardRect.left+22,boardRect.top+35);
+  for(let i=0;i<100&&(pages.length===count||document.body.classList.contains('is-busy'));i++)await wait(50);
+  const inserted=selected()[0],at=pages.indexOf(inserted);assert(pages.length===count+1&&(!anchorUid||pages[at+1]?.uid===anchorUid),'Pointer drop used a different insertion point');
+  record('Pointer drag inserts at the shown gap; cancel and outside drop preserve pages');
+  const network=performance.getEntriesByType('resource').filter(e=>/^https?:/.test(e.name)&&new URL(e.name).origin!==location.origin);assert(network.length===0,'Editor requested external assets');record('Fonts and editing run without external network requests');
+  out.textContent='PASS · '+checks.length+' markup checks\n'+checks.join('\n');
+ }catch(e){out.textContent='FAIL · '+e.stack;console.error(e)}finally{if(parent!==window)parent.postMessage({markupReport:out.textContent},location.origin)}
+})();

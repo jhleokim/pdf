@@ -322,6 +322,7 @@ function setPvTitle(p){
 
 async function showPreview(p){
   if(!p) return;
+  if(p.uid!==previewUid){if(typeof textUpdate!=='undefined')await textUpdate;if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;selAnno=null;}
   const my=++pvToken;pvRenderTask?.cancel();pvRenderTask=null;
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
@@ -371,6 +372,7 @@ function setZoom(z){
   if(p) showPreview(p);
 }
 function clearPreview(){
+  if(typeof finishTextEdit==='function')finishTextEdit(false);
   pvRenderTask?.cancel();pvRenderTask=null;$('pvCanvas').width=$('pvCanvas').height=0;
   previewUid = null; pvToken++; pvZoom = 1; selAnno = null;
   $('pvStage').hidden = true; $('pvPlaceholder').hidden = false;
@@ -434,6 +436,7 @@ function fixAspect(a, w, h){
 }
 
 function annoToSVG(a, w, h){
+  if(a.shape==='text')return PDFMarkupText.svg(a,w,h);
   const x = a.nx*w, y = a.ny*h, bw = a.nw*w, bh = a.nh*h;
   let el;
   if(a.shape === 'image'){
@@ -469,6 +472,7 @@ function annoToSVG(a, w, h){
   el.setAttribute('stroke-width', sw);
   if(dash) el.setAttribute('stroke-dasharray', dash);
   el.setAttribute('class','anno'); el.dataset.uid = a.id;
+  if(a.shape==='highlight'){el.setAttribute('stroke','none');el.style.mixBlendMode='multiply';}
   return el;
 }
 function renderAnnots(){
@@ -484,7 +488,7 @@ function renderAnnots(){
       box.setAttribute('x', Math.min(x,x+bw)); box.setAttribute('y', Math.min(y,y+bh));
       box.setAttribute('width', Math.abs(bw)); box.setAttribute('height', Math.abs(bh));
       box.setAttribute('class','selbox'); ov.appendChild(box);
-      const hs = Math.max(7, 9 * (c.width / (c.clientWidth || c.width)));
+      const hs = (isMobile()?6:4) * (c.width / (c.clientWidth || c.width));
       [[x,y,'nw'],[x+bw,y,'ne'],[x+bw,y+bh,'se'],[x,y+bh,'sw']].forEach(([hx,hy,pos]) => {
         const hd = document.createElementNS(SVGNS,'rect');
         hd.setAttribute('x', hx-hs); hd.setAttribute('y', hy-hs);
@@ -506,17 +510,20 @@ function stagePx(e){
 }
 $('pvOverlay').addEventListener('pointerdown', e => {
   if($('pvStage').hidden || pinch) return;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const c = $('pvCanvas'), w = c.width, h = c.height;
   const pt = stagePx(e);
   const handle = e.target.dataset && e.target.dataset.h;
+  if(annoStyle.tool==='text'){e.preventDefault();openTextEditor({x:pt.x/w,y:pt.y/h});return;}
+  const hit=e.target.closest('.anno');
 
   if(annoStyle.tool === 'none'){
     if(handle && selAnno){
       drag = { mode:'resize', a: curAnnots().find(x => x.id === selAnno), pos: handle };
-    }else if(e.target.classList && e.target.classList.contains('anno')){
-      selAnno = e.target.dataset.uid;
+    }else if(hit){
+      selAnno = hit.dataset.uid;
       const a = curAnnots().find(x => x.id === selAnno);
-      if(a.shape !== 'image'){ Object.assign(annoStyle,{stroke:a.stroke,fill:a.fill,lineWidth:a.lineWidth,dash:a.dash,opacity:a.opacity}); }
+      if(a.shape !== 'image'&&a.shape!=='text'){ Object.assign(annoStyle,{stroke:a.stroke==='none'?annoStyle.stroke:a.stroke,fill:a.fill,lineWidth:a.lineWidth||2,dash:a.dash,opacity:a.opacity}); }
       drag = { mode:'move', a, ox: pt.x - a.nx*w, oy: pt.y - a.ny*h };
       renderAnnots();
     }else{ selAnno = null; renderAnnots(); }
@@ -530,6 +537,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     const a = { id:'a'+(++annoUidSeq), shape: annoStyle.tool, nx: pt.x/w, ny: pt.y/h, nw:0, nh:0,
       stroke: annoStyle.stroke, fill: annoStyle.fill, lineWidth: annoStyle.lineWidth,
       dash: annoStyle.dash, opacity: annoStyle.opacity };
+    if(a.shape==='highlight'){a.stroke='none';a.lineWidth=0;a.fill||='#ffe082';}
     curAnnots().push(a); selAnno = a.id;
     drag = { mode:'create', a, sx: pt.x, sy: pt.y };
   }
@@ -610,9 +618,15 @@ $('stampInput').onchange = async e => {
 /* ════════════════════════════════════════════════════════════
    편집
    ════════════════════════════════════════════════════════════ */
-async function insertBlankPage(){
+async function insertBlankPage(options={}){
   if(document.body.classList.contains('is-busy')) return;
-  const selection=selected(),anchor=selection.at(-1)||pages.at(-1);
+  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(document.body.classList.contains('is-busy')||(typeof finishTextEdit==='function'&&!finishTextEdit(true)))return;
+  const selection=selected(),explicit=Object.hasOwn(options,'beforeUid');
+  const at=explicit?(options.beforeUid?pages.findIndex(p=>p.uid===options.beforeUid):pages.length):(selection.length?pages.indexOf(selection.at(-1))+1:0);
+  if(at<0)return;
+  const anchor=pages[Math.max(0,at-1)];
+  const positions=typeof captureBoardPositions==='function'?captureBoardPositions():null;
   busy(true,'빈 페이지를 추가하는 중…');
   let pdf;
   try{
@@ -628,11 +642,11 @@ async function insertBlankPage(){
     pdf=await pdfjsLib.getDocument({data:libBytes.slice(),...DOC_OPTS}).promise;
     const canvas=await renderThumb(pdf,1),docId='d'+(++docSeq);
     const page={uid:'p'+(++uidSeq),docId,srcIndex:0,rotation:0,canvas};
-    const at=anchor?pages.indexOf(anchor)+1:pages.length;
     docs.set(docId,{name:'빈 페이지',libBytes,pdfjsDoc:pdf,kind:'blank',color:SWATCH[(docSeq-1)%SWATCH.length],count:1});
     pdf=null;
     pages.splice(at,0,page);render();
     page.el.classList.add('selected');lastClicked=at;syncCounts();
+    if(positions)animateBoardFrom(positions,page.uid);
     await showPreview(page);
     page.el.scrollIntoView({block:'nearest',inline:'nearest'});
     toast(`${at+1}번에 빈 페이지를 추가했습니다`);
@@ -805,7 +819,13 @@ function autoScroll(y){
   if(y < r.top + EDGE) dy = -Math.ceil((r.top + EDGE - y) / 4);
   else if(y > r.bottom - EDGE) dy = Math.ceil((y - (r.bottom - EDGE)) / 4);
   cancelAnimationFrame(scrollRaf);
-  if(dy) scrollRaf = requestAnimationFrame(() => { wrap.scrollTop += dy; if(tdrag && tdrag.active) autoScroll(tdrag.y); });
+  if(dy) scrollRaf = requestAnimationFrame(() => {
+    wrap.scrollTop += dy;
+    if(tdrag && tdrag.active) autoScroll(tdrag.y);
+    else if(typeof blankPointer!=='undefined'&&blankPointer?.active&&marker.parentNode===board){
+      updateBlankMarker(blankPointer.clientX,blankPointer.clientY);autoScroll(blankPointer.clientY);
+    }
+  });
 }
 function endTouchDrag(){
   if(!tdrag) return;
@@ -880,6 +900,11 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
     const xs = cs.map(c => c[0]), ys = cs.map(c => c[1]);
     const X = Math.min(...xs), Y = Math.min(...ys), W = Math.max(...xs)-X, H = Math.max(...ys)-Y;
     if(W < 1 || H < 1) continue;
+    if(a.shape==='text'){await PDFMarkupText.bake(outDoc,pg,a,vp,R,imgCache);continue;}
+    if(a.shape==='highlight'){
+      const color=hexToRgb(a.fill||'#ffe082');
+      pg.drawRectangle({x:X,y:Y,width:W,height:H,color:rgb(color.r,color.g,color.b),opacity:a.opacity,borderWidth:0,blendMode:PDFLib.BlendMode.Multiply});continue;
+    }
 
     if(a.shape === 'image'){
       const st = stamps.get(a.stamp); if(!st) continue;
@@ -922,6 +947,8 @@ async function bakeAnnots(outDoc, pg, p, imgCache){
 }
 
 async function buildEditedDocument(list = pages){
+  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))throw new Error('텍스트 입력을 먼저 완료해 주세요.');
   const first = list.length && docs.get(list[0].docId);
   const complete = first && list.length === first.count && list.every((p,i)=>p.docId===list[0].docId && p.srcIndex===i);
   // Keep catalog-level forms/bookmarks when the complete source remains intact.
@@ -956,6 +983,8 @@ function downloadPdf(bytes,name){
 }
 
 async function save(){
+  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   if(!pages.length || document.body.classList.contains('is-busy')) return;
   if(document.body.dataset.mode==='pro' && typeof proPrimaryAction==='function') return proPrimaryAction();
   $('btnSave').disabled = true; $('mbSave').disabled = true;
@@ -994,7 +1023,7 @@ const toggleAll = () => selected().length === pages.length ? selectNone() : sele
 $('btnAll').onclick = $('mbAll').onclick = toggleAll;
 $('mbNone').onclick = selectNone;
 $('btnDel').onclick = $('mbDel').onclick = () => remove(selected());
-$('btnBlank').onclick = $('mbBlank').onclick = insertBlankPage;
+$('btnBlank').onclick = $('mbBlank').onclick = () => {if(typeof blankDragClickBlocked!=='function'||!blankDragClickBlocked())insertBlankPage();};
 $('btnRotL').onclick = $('mbRotL').onclick = () => rotate(selected(), -90);
 $('btnRotR').onclick = $('mbRotR').onclick = () => rotate(selected(), 90);
 $('btnSave').onclick = $('mbSave').onclick = save;
@@ -1069,8 +1098,11 @@ $('sheetScrim').onclick = () => $('sheet').classList.remove('open');
 
 function syncAnnotationControls(){
   const a=curAnnots().find(x=>x.id===selAnno);
-  const imageSelected=a?.shape==='image'||annoStyle.tool==='image';
-  $('annoProperties').hidden=imageSelected;
+  const shape=annoStyle.tool==='none'?a?.shape:annoStyle.tool;
+  const imageSelected=shape==='image';
+  $('annoProperties').hidden=!shape||imageSelected||shape==='text';
+  $('annoStrokeGroup').hidden=shape==='highlight';
+  $('annoNoFill').hidden=shape==='highlight';
   $('annoImageHint').hidden=!imageSelected;
   $('annoStroke').value=annoStyle.stroke;
   if(annoStyle.fill) $('annoFill').value=annoStyle.fill;
@@ -1083,10 +1115,14 @@ function syncAnnotationControls(){
   $('annoOpacityVal').textContent=Math.round(annoStyle.opacity*100)+'%';
   document.querySelectorAll('.ab-dbtn').forEach(b=>b.classList.toggle('active',b.dataset.dash===annoStyle.dash));
   document.querySelectorAll('.ab-tool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===annoStyle.tool)));
+  if(typeof syncTextControls==='function')syncTextControls();
 }
 /* 강조 툴바 */
 function setTool(t){
+  if(typeof finishTextEdit==='function'&&t!=='none'&&!finishTextEdit(true))return;
   annoStyle.tool = t;
+  if(t==='highlight'){annoStyle.fill||='#ffe082';annoStyle.opacity=.35;}
+  if(t!=='none')selAnno=null;
   if(t !== 'image') pendingStamp = null;
   document.querySelectorAll('.ab-tool').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
   $('pvOverlay').classList.toggle('draw', t !== 'none');
@@ -1125,20 +1161,22 @@ function applyStyleToSelected(){
   syncAnnotationControls();
   if(!selAnno) return;
   const a = curAnnots().find(x => x.id === selAnno); if(!a) return;
-  if(a.shape === 'image') return;
-  a.stroke = annoStyle.stroke; a.fill = annoStyle.fill; a.lineWidth = annoStyle.lineWidth;
+  if(a.shape === 'image'||a.shape==='text') return;
+  a.stroke = a.shape==='highlight'?'none':annoStyle.stroke; a.fill = annoStyle.fill; a.lineWidth = a.shape==='highlight'?0:annoStyle.lineWidth;
   a.dash = annoStyle.dash; a.opacity = annoStyle.opacity;
   renderAnnots();
 }
 $('annoDel').onclick = () => {
   if(!selAnno) return;
+  if(typeof textEditing!=='undefined'&&textEditing){const id=selAnno;finishTextEdit(false);selAnno=id;}
   const arr = curAnnots(); const i = arr.findIndex(x => x.id === selAnno);
   if(i >= 0) arr.splice(i, 1);
   selAnno = null; renderAnnots(); syncCounts();
 };
 $('annoClear').onclick = () => {
   const arr = curAnnots(); if(!arr.length) return;
-  if(!confirm('이 페이지의 강조를 모두 지울까요?')) return;
+  if(!confirm('이 페이지의 마크업을 모두 지울까요?')) return;
+  if(typeof finishTextEdit==='function')finishTextEdit(false);
   arr.length = 0; selAnno = null; renderAnnots(); syncCounts();
 };
 
