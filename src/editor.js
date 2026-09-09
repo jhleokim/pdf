@@ -610,6 +610,37 @@ $('stampInput').onchange = async e => {
 /* ════════════════════════════════════════════════════════════
    편집
    ════════════════════════════════════════════════════════════ */
+async function insertBlankPage(){
+  if(document.body.classList.contains('is-busy')) return;
+  const selection=selected(),anchor=selection.at(-1)||pages.at(-1);
+  busy(true,'빈 페이지를 추가하는 중…');
+  let pdf;
+  try{
+    let width=595.28,height=841.89;
+    if(anchor){
+      const source=await docs.get(anchor.docId).pdfjsDoc.getPage(anchor.srcIndex+1);
+      const [x1,y1,x2,y2]=source.view,unit=source.userUnit||1;
+      width=(x2-x1)*unit;height=(y2-y1)*unit;
+      if((source.rotate+anchor.rotation)%180!==0)[width,height]=[height,width];
+    }
+    const blank=await PDFDocument.create();blank.addPage([width,height]);
+    const libBytes=await blank.save({useObjectStreams:true});
+    pdf=await pdfjsLib.getDocument({data:libBytes.slice(),...DOC_OPTS}).promise;
+    const canvas=await renderThumb(pdf,1),docId='d'+(++docSeq);
+    const page={uid:'p'+(++uidSeq),docId,srcIndex:0,rotation:0,canvas};
+    const at=anchor?pages.indexOf(anchor)+1:pages.length;
+    docs.set(docId,{name:'빈 페이지',libBytes,pdfjsDoc:pdf,kind:'blank',color:SWATCH[(docSeq-1)%SWATCH.length],count:1});
+    pdf=null;
+    pages.splice(at,0,page);render();
+    page.el.classList.add('selected');lastClicked=at;syncCounts();
+    await showPreview(page);
+    page.el.scrollIntoView({block:'nearest',inline:'nearest'});
+    toast(`${at+1}번에 빈 페이지를 추가했습니다`);
+  }catch(e){
+    if(pdf)await pdf.destroy().catch(()=>{});
+    toast('빈 페이지를 추가하지 못했습니다. 다시 시도해 주세요.',true);
+  }finally{busy(false);}
+}
 function remove(list){
   if(!list.length) return;
   const set = new Set(list.map(p => p.uid));
@@ -963,6 +994,7 @@ const toggleAll = () => selected().length === pages.length ? selectNone() : sele
 $('btnAll').onclick = $('mbAll').onclick = toggleAll;
 $('mbNone').onclick = selectNone;
 $('btnDel').onclick = $('mbDel').onclick = () => remove(selected());
+$('btnBlank').onclick = $('mbBlank').onclick = insertBlankPage;
 $('btnRotL').onclick = $('mbRotL').onclick = () => rotate(selected(), -90);
 $('btnRotR').onclick = $('mbRotR').onclick = () => rotate(selected(), 90);
 $('btnSave').onclick = $('mbSave').onclick = save;

@@ -1,6 +1,7 @@
 /* v4 workspace refinements; the existing Hana/charcoal palette is unchanged. */
 .topbar{row-gap:9px;padding-top:calc(12px + var(--safe-t));padding-bottom:10px}
 .tools{padding-top:9px}
+body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 .pro-add-files{display:none}
 .pro-panel-head{padding:14px 16px 12px}
 .pro-panel-head h2{font-size:17px}

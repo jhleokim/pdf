@@ -914,6 +914,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 /* v4 workspace refinements; the existing Hana/charcoal palette is unchanged. */
 .topbar{row-gap:9px;padding-top:calc(12px + var(--safe-t));padding-bottom:10px}
 .tools{padding-top:9px}
+body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 .pro-add-files{display:none}
 .pro-panel-head{padding:14px 16px 12px}
 .pro-panel-head h2{font-size:17px}
@@ -1041,6 +1042,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
       <button class="btn" id="btnAll" disabled><svg class="ic"><use href="#i-selectall"/></svg>전체 선택</button>
       <button class="btn icon" id="btnRotL" disabled title="왼쪽으로 90° 회전"><svg class="ic"><use href="#i-rot-l"/></svg></button>
       <button class="btn icon" id="btnRotR" disabled title="오른쪽으로 90° 회전"><svg class="ic"><use href="#i-rot-r"/></svg></button>
+      <button class="btn" id="btnBlank" title="선택 페이지 뒤에 빈 페이지 추가 · 선택이 없으면 맨 뒤에 추가"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>빈 페이지</button>
       <button class="btn danger icon" id="btnDel" disabled title="선택 페이지 삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
     </div>
 
@@ -1340,6 +1342,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
     <button class="ab-btn accent" id="mbImg"><svg class="ic"><use href="#i-photo"/></svg>사진</button>
     <button class="ab-btn" id="mbRotL" disabled><svg class="ic"><use href="#i-rot-l"/></svg>왼쪽</button>
     <button class="ab-btn" id="mbRotR" disabled><svg class="ic"><use href="#i-rot-r"/></svg>오른쪽</button>
+    <button class="ab-btn" id="mbBlank" title="빈 페이지 추가"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>빈 페이지</button>
     <button class="ab-btn warn" id="mbDel" disabled><svg class="ic"><use href="#i-trash"/></svg>삭제</button>
     <button class="ab-btn solid" id="mbSave" disabled><svg class="ic"><use href="#i-save"/></svg>저장</button>
   </div>
@@ -2056,6 +2059,37 @@ $('stampInput').onchange = async e => {
 /* ════════════════════════════════════════════════════════════
    편집
    ════════════════════════════════════════════════════════════ */
+async function insertBlankPage(){
+  if(document.body.classList.contains('is-busy')) return;
+  const selection=selected(),anchor=selection.at(-1)||pages.at(-1);
+  busy(true,'빈 페이지를 추가하는 중…');
+  let pdf;
+  try{
+    let width=595.28,height=841.89;
+    if(anchor){
+      const source=await docs.get(anchor.docId).pdfjsDoc.getPage(anchor.srcIndex+1);
+      const [x1,y1,x2,y2]=source.view,unit=source.userUnit||1;
+      width=(x2-x1)*unit;height=(y2-y1)*unit;
+      if((source.rotate+anchor.rotation)%180!==0)[width,height]=[height,width];
+    }
+    const blank=await PDFDocument.create();blank.addPage([width,height]);
+    const libBytes=await blank.save({useObjectStreams:true});
+    pdf=await pdfjsLib.getDocument({data:libBytes.slice(),...DOC_OPTS}).promise;
+    const canvas=await renderThumb(pdf,1),docId='d'+(++docSeq);
+    const page={uid:'p'+(++uidSeq),docId,srcIndex:0,rotation:0,canvas};
+    const at=anchor?pages.indexOf(anchor)+1:pages.length;
+    docs.set(docId,{name:'빈 페이지',libBytes,pdfjsDoc:pdf,kind:'blank',color:SWATCH[(docSeq-1)%SWATCH.length],count:1});
+    pdf=null;
+    pages.splice(at,0,page);render();
+    page.el.classList.add('selected');lastClicked=at;syncCounts();
+    await showPreview(page);
+    page.el.scrollIntoView({block:'nearest',inline:'nearest'});
+    toast(`${at+1}번에 빈 페이지를 추가했습니다`);
+  }catch(e){
+    if(pdf)await pdf.destroy().catch(()=>{});
+    toast('빈 페이지를 추가하지 못했습니다. 다시 시도해 주세요.',true);
+  }finally{busy(false);}
+}
 function remove(list){
   if(!list.length) return;
   const set = new Set(list.map(p => p.uid));
@@ -2409,6 +2443,7 @@ const toggleAll = () => selected().length === pages.length ? selectNone() : sele
 $('btnAll').onclick = $('mbAll').onclick = toggleAll;
 $('mbNone').onclick = selectNone;
 $('btnDel').onclick = $('mbDel').onclick = () => remove(selected());
+$('btnBlank').onclick = $('mbBlank').onclick = insertBlankPage;
 $('btnRotL').onclick = $('mbRotL').onclick = () => rotate(selected(), -90);
 $('btnRotR').onclick = $('mbRotR').onclick = () => rotate(selected(), 90);
 $('btnSave').onclick = $('mbSave').onclick = save;
