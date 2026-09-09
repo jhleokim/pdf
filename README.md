@@ -90,8 +90,10 @@ node --test tests/*.test.cjs
 | **페이지 편집** | 여러 PDF를 합쳐서 순서 변경 · 회전 · 삭제 |
 | **빈 페이지** | Basic의 삭제 왼쪽 종이+ 버튼 클릭: 마지막 선택 페이지 뒤, 선택이 없으면 맨 앞 · 버튼을 페이지 사이로 끌어 삽입 · 삽입 위치와 페이지 이동 애니메이션 · 인접 페이지 크기·방향 유지, 새 문서는 A4 |
 | **사진 삽입** | JPG·PNG·WEBP·GIF 등을 새 페이지로 추가하거나, 페이지 위에 직접 붙이기 |
-| **영역 강조** | 형광펜 · 사각형 · 타원 · 수정 구름 · 이미지 · 선택 도구별 속성 표시 · 선은 불투명, 채움만 농도 조절 |
-| **텍스트 추가** | T 선택 후 페이지 위치 클릭 → 입력 패널에서 내용·나눔고딕/명조·8–96pt 크기·행간·색상 설정 → 페이지에 적용 · 실시간 미리보기 · 취소하면 이전 내용 복원 · 더블클릭 수정 · 한글/영문을 검색 가능한 PDF 글자로 저장 |
+| **형광펜** | 원본 PDF의 문장을 드래그하면 선택한 글자를 줄별로 강조 · 스캔본은 영역 강조 · 4색과 농도 유지 · 연속 사용 · 마지막 강조 취소 |
+| **영역 표시** | 사각형 · 타원 · 수정 구름 · 이미지 · 선택 도구별 속성 표시 · 선은 불투명, 채움만 농도 조절 |
+| **텍스트 추가** | T 선택 후 문서 위에서 직접 입력 · 도구줄에서 나눔고딕/명조·8–96pt·색상 조절 · 크기/행간 슬라이더 펼치기 · 적용/취소 · 더블클릭 수정 · 한글/영문을 검색 가능한 PDF 글자로 저장 |
+| **편집 화면** | PC에서 텍스트/형광펜 도구를 선택하면 작은 페이지 목록과 넓은 편집 영역으로 전환 · 오른쪽 위 화면 버튼으로 원래 목록 크기 복귀 |
 | **PDF 저장** | Basic에서 파일 이름 지정 · 전체 페이지 수와 실제 결과 용량 확인 · 준비된 PDF 다운로드 · 실패 시 다시 준비, 닫으면 편집 계속 |
 | **모바일 지원** | 페이지/미리보기 전환, 길게 눌러 순서 변경, 핀치 확대, 하단 액션바 |
 | **화면 테마** | 밝게(기본) · 어둡게 · 시스템 설정 |
@@ -110,6 +112,8 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 | `Ctrl` / `⌘` + `A` | 전체 선택 |
 | `Ctrl` / `⌘` + `S` | PDF로 저장 |
 | `Ctrl` / `⌘` + `Enter` | 입력 중인 텍스트를 페이지에 적용 |
+| `V` / `T` / `H` | 선택 / 텍스트 / 형광펜 (입력창 밖에서) |
+| `Ctrl` / `⌘` + `Z` | 형광펜 도구에서 마지막 강조 취소 |
 | `Ctrl` / `⌘` + 휠 | 보드 열 수 조절 / 미리보기 확대·축소 |
 | `Del` | 선택 항목 삭제 |
 | `Esc` | 그리기 도구 해제 |
@@ -122,11 +126,13 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 - [pdf-lib](https://pdf-lib.js.org/) 1.17.1 — Hopding, MIT License
 - Foxit 표준폰트 / Liberation 폰트
 - [@pdf-lib/fontkit](https://github.com/Hopding/fontkit) 1.1.1 — Andrew Dillon / Devon Govett, MIT
-- [나눔고딕·나눔명조](https://github.com/google/fonts) — NHN Corporation, SIL Open Font License 1.1. 원본 TTF를 무손실 압축해 HTML에 포함하고, 텍스트 도구 첫 사용 시 기기 안에서만 읽습니다. PDF에는 사용한 글자만 포함합니다.
+- [나눔고딕·나눔명조](https://github.com/google/fonts) — NHN Corporation, SIL Open Font License 1.1. 원본 TTF를 무손실 압축해 HTML에 포함하고, 텍스트 도구 첫 사용 시 기기 안에서만 읽습니다. 일부 글자가 사라지는 fontkit 서브셋 문제를 피하기 위해 사용한 글꼴 전체를 PDF마다 한 번 포함합니다. 텍스트를 추가한 PDF는 글꼴 데이터만큼 용량이 증가하며, 검색뿐 아니라 실제 글자 렌더도 검증합니다.
 
 텍스트·형광펜 및 드래그 삽입 검증: `node tests/create-markup.cjs` → `/tests/fixtures/markup-check.html`, `/tests/fixtures/markup-mobile.html`. 실제 글꼴 렌더, 한글 검색 추출, 회전·CropBox·UserUnit 좌표, 형광펜 Multiply 합성, 편집 취소와 드래그를 검사합니다. `npm run build:standalone` 후 `node tests/create-markup.cjs --standalone`으로 단독 실행본 검사도 생성합니다. 검사에서는 외부 HTTP 연결을 차단합니다.
 
 텍스트·저장 UI 검증: `node tests/create-text-save.cjs` → `/tests/fixtures/text-save.html`, `/tests/fixtures/text-save-mobile.html`. 한글 조합 입력, 글꼴·크기 수정 및 취소, 입력 오류, 모바일 패널 배치, 파일 이름, 저장 취소·재시도·즉시 재열기, 실제 PDF의 한글 검색과 텍스트 입력 중 Ctrl+S를 검사합니다. 단독 실행본은 `node tests/create-text-save.cjs --standalone`으로 검사하며 외부 HTTP 연결을 차단합니다.
+
+직접 편집 검증: `node tests/create-direct-edit.cjs` → `/tests/fixtures/direct-edit-check.html`, `/tests/fixtures/direct-edit-check-mobile.html`. 부분 문장·여러 줄 강조, 색상·농도 유지, 스캔본 영역 강조, 취소와 마지막 강조 되돌리기, 문서 위 입력, 회전·CropBox·UserUnit 좌표, 저장 PDF의 실제 한글/영문 글리프를 독립적으로 만든 기준 PDF와 비교합니다. `--standalone`으로 단독 실행본 검사도 생성합니다. 선택할 수 없는 원본 텍스트와 새로 입력한 텍스트 위에는 영역 강조를 사용하세요.
 
 텍스트의 **페이지에 적용**은 편집 중인 문서에 내용을 확정합니다. 파일로 보관하려면 **PDF로 저장**을 누르세요. 입력 중 Ctrl+S를 눌러도 유효한 초안을 적용한 뒤 저장 창을 엽니다. 저장 창은 전체 편집본을 먼저 준비하고, **PDF 다운로드**를 누를 때 브라우저에 파일을 전달합니다. 다운로드 시작 후에도 같은 결과를 다시 받을 수 있으며, 창을 닫으면 준비한 결과의 메모리를 해제합니다.
 

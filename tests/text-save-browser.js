@@ -6,19 +6,19 @@
  try{
   setProMode('basic');await insertBlankPage();await insertBlankPage();await showPreview(pages[0]);if(innerWidth<=880){setMobileView('preview');await showPreview(pages[0]);}
   await openTextEditor({x:.12,y:.18});
-  assert($('textEditor').contains($('textFont'))&&$('textApply').disabled,'Empty draft/form controls');
+  assert($('pvStage').contains($('textInput'))&&$('annoBar').contains($('textFont'))&&$('textApply').disabled,'Inline draft/toolbar controls');
   $('textInput').dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));$('textInput').value='회의 자료\n검토 완료';await queueTextChange({text:$('textInput').value});
   assert($('textApply').disabled&&!finishTextEdit(true),'Composition committed before completion');
   $('textInput').dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));await textUpdate;
-  assert(!$('textApply').disabled&&$('textCharCount').textContent.startsWith('11'),'Composition completion/character count');
+  assert(!$('textApply').disabled&&$('textInput').value==='회의 자료\n검토 완료','Composition completion');
   await applyTextEditor();const text=textSelection();assert(text?.text.includes('검토 완료')&&$('textEditor').hidden&&$('textPropertiesHome').contains($('textFont')),'Applying draft lost text/controls');record('Korean composition, explicit application and format controls');
   await openTextEditor(null,text);$('textSizeNumber').focus();$('textSizeNumber').value='';$('textSizeNumber').dispatchEvent(new Event('input'));assert($('textSizeNumber').value===''&&text.fontSize===16,'Number input overwrote partial typing');
   $('textSizeNumber').value='24';$('textSizeNumber').dispatchEvent(new Event('input'));await textUpdate;assert(text.fontSize===24,'Numeric font size');
   await queueTextChange({text:'취소할 내용',font:'myeongjo'});finishTextEdit(false);assert(text.text==='회의 자료\n검토 완료'&&text.fontSize===16&&text.font==='gothic','Cancel lost the prior text or formatting');record('Font size can be typed naturally; cancel restores text and style');
   await openTextEditor(null,text);await queueTextChange({text:'검토 😀'});assert($('textApply').disabled&&$('textInput').getAttribute('aria-invalid')==='true','Invalid text can be applied');finishTextEdit(false);
   await openTextEditor(null,text);await wait(60);positionTextEditor();const panel=$('textEditor').getBoundingClientRect(),button=$('textApply').getBoundingClientRect(),page=$('pvCanvas').getBoundingClientRect();
-  assert(panel.left>=0&&panel.right<=innerWidth+1&&button.bottom<=innerHeight+1,'Text panel/action clipped');if(innerWidth>1180)assert(panel.right<page.left,'Inspector covers the page');
-  $('textInput').style.height='200px';$('textFormatDetails').open=true;await wait(80);assert($('textApply').getBoundingClientRect().bottom<=innerHeight+1,'Resized text input hides the apply action');$('textInput').style.height='';finishTextEdit(false);record('Validation stays visible; resized inspector and apply action fit the viewport');
+  assert(Math.abs(panel.left-(page.left+text.nx*page.width-3))<2&&button.bottom<=innerHeight+1,'Inline text is detached from page or apply action clipped');
+  $('textFormatDetails').open=true;await wait(80);assert($('textApply').getBoundingClientRect().bottom<=innerHeight+1,'Format controls hide the apply action');finishTextEdit(false);record('Text stays at its page position; formatting and apply remain in the toolbar');
   await save();let state=basicSaveState;assert($('basicSaveDialog').open&&state.phase==='ready'&&downloads.length===0,'Save must prepare without automatically downloading');
   $('basicSaveFilename').value='문서 검토.pdf';$('basicSaveFilename').dispatchEvent(new Event('input'));downloadBasicSave();downloadBasicSave();
   assert(downloads.length===2&&downloads[0].name==='문서 검토.pdf'&&downloads[0].bytes===downloads[1].bytes,'Named/repeated download changed bytes or extension');

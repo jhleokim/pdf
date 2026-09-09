@@ -5,12 +5,13 @@ function textSelection(){return curAnnots().find(a=>a.id===selAnno&&a.shape==='t
 function syncTextControls(){
   const a=textSelection(),active=annoStyle.tool==='text'||!!a;
   $('annoTextProperties').hidden=!active;
+  $('textPropertiesHome').hidden=!active;
   for(const key of ['font','fontSize','lineGap','color'])if(a)textStyle[key]=a[key];
   $('textFont').value=textStyle.font;$('textSize').value=textStyle.fontSize;
   if(document.activeElement!==$('textSizeNumber'))$('textSizeNumber').value=textStyle.fontSize;
   $('textLineGap').value=textStyle.lineGap;$('textLineGapVal').textContent=Math.round(textStyle.lineGap*100)+'%';$('textColor').value=textStyle.color;
   $('textEdit').disabled=!a;
-  $('annoToolHint').textContent=annoStyle.tool==='text'?'페이지에서 글자를 넣을 위치를 클릭하세요.':annoStyle.tool==='highlight'?'드래그하여 강조할 영역을 표시하세요.':a?'텍스트를 더블클릭하면 내용을 수정할 수 있습니다.':'';
+  $('annoToolHint').textContent='';
   $('annoToolHint').hidden=!$('annoToolHint').textContent;
   if(typeof syncTextEditorUI==='function')syncTextEditorUI();
 }
@@ -24,11 +25,6 @@ async function relayoutText(a){
 }
 function positionTextEditor(){
   if(typeof positionTextEditorPanel==='function')return positionTextEditorPanel();
-  if(!textEditing)return;
-  const c=$('pvCanvas'),r=c.getBoundingClientRect(),panel=$('textEditor'),a=textEditing.a;
-  const width=Math.min(340,innerWidth-24);panel.style.width=width+'px';
-  panel.style.left=clamp(r.left+a.nx*r.width,12,innerWidth-width-12)+'px';
-  panel.style.top=clamp(r.top+a.ny*r.height+24,12,Math.max(12,innerHeight-panel.offsetHeight-16))+'px';
 }
 async function openTextEditor(point,existing){
   if(textOpening||document.body.classList.contains('is-busy'))return;
@@ -40,7 +36,10 @@ async function openTextEditor(point,existing){
     const vp=source.getViewport({scale:1,rotation:(source.rotate+page.rotation)%360}),unit=source.userUnit||1;
     await PDFMarkupText.load(existing?.font||textStyle.font);
     if(previewUid!==page.uid)return;
+    if(typeof prepareInlineTextView==='function')await prepareInlineTextView(page,existing?.fontSize||textStyle.fontSize,vp.width*unit);
+    if(previewUid!==page.uid)return;
     const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
+    if(!existing&&isMobile())a.maxWidth=Math.min(a.maxWidth,Math.max(textStyle.fontSize*2,($('pvBody').clientWidth-40)*a.pageWidth/$('pvCanvas').clientWidth));
     const snapshot=existing?structuredClone(a):null;
     if(!existing){await relayoutText(a);(page.annots||=[]).push(a);}
     textEditing={page,a,snapshot,revision:0};selAnno=a.id;setTool('none');
