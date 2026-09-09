@@ -1126,7 +1126,7 @@ function setTool(t){
   if(t !== 'image') pendingStamp = null;
   document.querySelectorAll('.ab-tool').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
   $('pvOverlay').classList.toggle('draw', t !== 'none');
-  syncAnnotationControls();
+  renderAnnots();
 }
 document.querySelectorAll('.ab-tool').forEach(b => b.onclick = () => {
   const t = b.dataset.tool;
