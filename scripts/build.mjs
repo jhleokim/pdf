@@ -30,12 +30,13 @@ const appStart = '<script id="editor-code">';
 const a = html.indexOf(appStart), b = html.indexOf('</script>', a);
 if (a < 0 || b < 0) throw new Error('Missing editor-code block');
 html = html.slice(0, a + appStart.length) + '\n' + read('src/editor.js') + '\n' + html.slice(b);
-block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/pro-workspace.css')}\n${read('src/markup.css')}\n</style>`, '</head>');
+block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/pro-workspace.css')}\n${read('src/markup.css')}\n${read('src/text-save.css')}\n</style>`, '</head>');
 const toolbarStart=html.indexOf('<div class="anno-bar" id="annoBar"'),toolbarEnd=html.indexOf('<div class="pv-body"',toolbarStart);
 if(toolbarStart<0||toolbarEnd<0)throw new Error('Missing markup toolbar');
 html=html.slice(0,toolbarStart)+read('src/markup-toolbar.html')+'\n'+html.slice(toolbarEnd);
 block('markup-icons',read('src/markup-icons.html'),'</body>');
 block('text-editor',read('src/text-editor.html'),'</body>');
+block('save-dialog',read('src/save-dialog.html'),'</body>');
 const markupManifest=JSON.parse(read('vendor/markup/manifest.json'));
 for(const [file,expected] of Object.entries(markupManifest.files)){
  const data=readFileSync(resolve(root,'vendor/markup',file));if(data.length!==expected.bytes||createHash('sha256').update(data).digest('hex')!==expected.sha256)throw new Error('Markup asset integrity mismatch: '+file);
@@ -56,7 +57,7 @@ block('ocr-assets',Object.entries(assets).map(([id,file])=>`<script type="applic
 block('ocr-licenses','<details hidden><summary>OCR licenses</summary><pre>'+['LICENSE-tesseract.js','LICENSE-tesseract.js-core','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt','NOTICE.txt'].map(f=>read('vendor/ocr/'+f).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('\n')+'</pre></details>','</body>');
 html=html.replace(/<!-- pro-runtime:start -->[\s\S]*?<!-- pro-runtime:end -->\s*/, '');
 block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','pro-tools-ui.js','pro-gemini-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')).map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
-block('markup-runtime',['markup-text.js','markup-editor.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
+block('markup-runtime',['markup-text.js','markup-editor.js','text-editor-ui.js','save-ui.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')
   .replace('<h1>PDF 페이지 편집기</h1>', '<h1>PDF Studio</h1>')
   .replace('OFFLINE · 로컬 처리', '내 기기에서 안전하게')

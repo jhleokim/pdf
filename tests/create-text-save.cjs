@@ -1,0 +1,8 @@
+const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');
+const offline=process.argv.includes('--standalone'),name=offline?'text-save-standalone':'text-save';
+const input=offline?'dist/PDF-Studio-Standalone-v'+fs.readFileSync(path.join(root,'VERSION'),'utf8').trim()+'.html':'index.html';
+const html=fs.readFileSync(path.join(root,input),'utf8').replace('<head>','<head><meta http-equiv="Content-Security-Policy" content="connect-src blob: data:">');
+const code=fs.readFileSync(path.join(__dirname,'text-save-browser.js'),'utf8');
+fs.mkdirSync(path.join(__dirname,'fixtures'),{recursive:true});
+fs.writeFileSync(path.join(__dirname,'fixtures',name+'.html'),html.replace('</body>','<output id="textSaveChecks" style="position:fixed;left:8px;bottom:4px;z-index:99999;background:white;color:black;white-space:pre-wrap;font:11px monospace">Running</output><script>'+code+'</script></body>'));
+fs.writeFileSync(path.join(__dirname,'fixtures',name+'-mobile.html'),'<!doctype html><meta charset="utf-8"><title>Text and save mobile checks</title><iframe src="'+name+'.html" style="width:390px;height:844px;border:0" title="390px mobile"></iframe><output id="mobileChecks" style="white-space:pre-wrap"></output><script>window.addEventListener("message",e=>{if(e.origin===location.origin&&e.data.textSaveReport)document.getElementById("mobileChecks").textContent=e.data.textSaveReport})</script>');
