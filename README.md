@@ -141,16 +141,19 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 ### Cloudflare 설정
 
 1. Workers & Pages → **pdf** → Settings → Variables and Secrets에서 **Secret** 유형으로 **GEMINI_API_KEY**를 추가하고 배포합니다. GitHub나 HTML에 키를 넣지 않습니다.
-2. 기본 모델은 `GEMINI_MODEL=gemini-3.8-flash`입니다. 모델 변경은 wrangler 설정과 해당 API 프로젝트의 지원 모델을 함께 확인합니다.
+2. 기본 모델은 `GEMINI_MODEL=gemini-3.8-flash`입니다. 반복되는 503 오류에는 마지막 시도에서만 `GEMINI_FALLBACK_MODEL=gemini-3.7-flash`를 사용합니다. 예비 모델 변수를 비우면 같은 모델로만 재시도합니다. 모델 변경은 wrangler 설정과 해당 API 프로젝트의 지원 모델을 함께 확인합니다.
 3. `npm install`, `npm run deploy`. Git 자동 배포도 `npx wrangler deploy`를 사용합니다. Wrangler 빌드는 HTML 생성 후 공개용 디렉터리에 HTML 하나만 복사합니다.
-4. 키가 없으면 상태 API는 `available:false`를 반환하며 문서 전송 버튼은 비활성화됩니다.
+4. 키가 없으면 상태 API는 `available:false`를 반환하며 문서 전송 버튼은 비활성화됩니다. 이 상태 확인은 키 등록 여부만 검사하며, Google의 키 인증·모델 가용성·쿼터까지 확인하지 않습니다.
+5. `placement.region=gcp:us-east4`로 API Worker 실행 위치를 지정합니다. Google이 일부 Cloudflare 접속 지역을 지원하지 않는 오류에 대응하기 위한 설정이며, 위치 보장을 의미하지는 않습니다. 정적 HTML은 방문자 가까이에서 제공합니다.
 
-숨김 클릭은 접근 인증이 아닙니다. 공개 API이며 서버가 명시적 동의 값·입력 크기·출처를 검사하고 Cloudflare Rate Limiting으로 같은 데이터센터에서 분당 15개 요청을 제한합니다. 이는 전 세계의 정확한 일일/금액 상한이 아니며 Google 프로젝트 쿼터는 별도로 적용됩니다. 서버는 이전 배포본과의 호환성 때문에 null Origin도 허용하지만 새 단독 실행본에는 API 연결이 포함되지 않습니다. 제한 도달 시 자동 재시도하지 않습니다.
+숨김 클릭은 접근 인증이 아닙니다. 공개 API이며 서버가 명시적 동의 값·입력 크기·출처를 검사하고 Cloudflare Rate Limiting으로 같은 데이터센터에서 분당 15개 Google 호출을 제한합니다. 재시도도 각각 이 제한에 포함합니다. 이는 전 세계의 정확한 일일/금액 상한이 아니며 Google 프로젝트 쿼터는 별도로 적용됩니다. 서버는 이전 배포본과의 호환성 때문에 null Origin도 허용하지만 새 단독 실행본에는 API 연결이 포함되지 않습니다.
+
+Google의 일시적 HTTP 오류(408/500/502/503/504)는 약 1초·2초 간격으로 최대 두 번 재시도하며 전체 80초 제한과 사용자 취소를 공유합니다. 키·권한·요청 오류와 사용 한도(429)는 재시도하거나 다른 모델로 전환하지 않습니다. 서버가 더 긴 대기 시간을 요청하면 조기 재시도하지 않습니다. 오류 응답은 키, 접근 제한, 모델, 지역, 사용 한도, 서버 장애를 구분하며 Google 원문 응답·키·문서 내용은 노출하지 않습니다.
 
 ### 추가 검증
 
 - `node tests/create-workspace.cjs` → `/tests/fixtures/workspace-check.html`, `/tests/fixtures/workspace-mobile.html`: 확대 캐시, 설정 상태, 저장 버튼·단축키, 빠른 페이지 전환, 모바일 조작 공간, 문서 초기화를 검사합니다.
 - `node --test tests/standalone-local.test.cjs`: 단독 실행본의 클라우드 모듈 제외, 내장 로컬 엔진 보존, 스크립트 구문과 웹 빌드 재현성을 검사합니다.
-- `node --test tests/gemini-worker.test.cjs`: 동의 누락·잘못된 이미지·출처·크기·비밀키·429·잘린 결과 검사. Google 호출은 모의 응답을 사용합니다.
+- `node --test tests/gemini-worker.test.cjs`: 동의 누락·잘못된 이미지·출처·크기·비밀키·429·잘린 결과, 오류 분류, 일시 장애 후 복구, 예비 모델, 재시도 횟수·호출 제한·취소·서버 대기 시간 검사. Google 호출은 모의 응답을 사용합니다.
 - `node tests/create-ocr-ui.cjs` → `/tests/fixtures/ocr-ui-check.html`: 합성 PDF로 숨김 8회·매회 동의·업로드 차단·로컬 결과 재사용·취소·검색 PDF를 검사합니다.
 - `node tests/create-tools-browser.cjs`: HTTP 요청이 차단된 상태에서 실제 한글/영어 OCR, 진행률, 원본 픽셀 보존 및 PDF 검색 추출을 검사합니다.
