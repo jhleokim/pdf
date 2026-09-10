@@ -49,8 +49,10 @@ function positionTextEditorPanel(){
   input.style.fontFamily=PDFMarkupText.families[a.font].family;
   input.style.fontSize=(a.fontSize*sy)+'px';input.style.lineHeight=(a.textLayout.step*sy)+'px';
   input.style.color=a.color;input.style.caretColor=a.color;
-  // Match the PDF's synthetic weight and slant using the same embedded face.
-  input.style.webkitTextStroke=a.bold?(a.fontSize*sy*PDFMarkupText.boldStroke)+'px '+a.color:'0px';
+  // Native input text must use font weight: fractional outlines can be invisible
+  // while the textarea is focused even though its computed stroke is nonzero.
+  input.style.fontWeight=a.bold?'700':'400';
+  input.style.webkitTextStroke='0px';
   input.style.fontStyle=a.italic?'italic':'normal';
   input.style.textDecorationLine=a.strike?'line-through':'none';
   input.style.textDecorationThickness=(a.fontSize*sy*PDFMarkupText.strikeWidth)+'px';

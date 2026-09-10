@@ -70,6 +70,14 @@ function finishTextEdit(apply){
 let textChangeRevision=0;
 async function applyTextChange(change){
   const a=textSelection();for(const key of ['font','fontSize','lineGap','color','bold','italic','strike'])if(key in change)textStyle[key]=change[key];if(!a){syncTextControls();return;}
+  if(Object.keys(change).every(key=>['bold','italic','strike','color'].includes(key))){
+    // Paint-only controls take effect in this event, including during IME input.
+    // Preserve an in-flight text/font layout and its promise so Apply still waits
+    // for the latest typed content, without letting it overwrite the new style.
+    const waiting=textUpdate,pending=pendingTextChanges.get(a);
+    Object.assign(a,change);if(pending)Object.assign(pending,change);
+    renderAnnots();syncCounts();return waiting;
+  }
   const revision=++textChangeRevision,next={...(pendingTextChanges.get(a)||a),...change};pendingTextChanges.set(a,next);textEditPending=true;$('textApply').disabled=true;
   syncTextControls();
   try{
