@@ -1,14 +1,18 @@
-const textStyle={font:'gothic',fontSize:16,lineGap:1.3,color:'#222222'};
+const textStyle={font:'gothic',fontSize:16,lineGap:1.3,color:'#222222',bold:false,italic:false,strike:false};
 let textEditing=null,textOpening=false,textEditPending=false,textUpdate=Promise.resolve();
 const pendingTextChanges=new WeakMap();
 function textSelection(){return curAnnots().find(a=>a.id===selAnno&&a.shape==='text');}
+function currentTextStyle(){const a=textSelection();return a?(pendingTextChanges.get(a)||a):textStyle;}
 function syncTextControls(){
   const a=textSelection(),active=annoStyle.tool==='text'||!!a;
   $('annoTextProperties').hidden=!active;
   $('textPropertiesHome').hidden=!active;
-  for(const key of ['font','fontSize','lineGap','color'])if(a)textStyle[key]=a[key];
+  const current=currentTextStyle();
+  for(const key of ['font','fontSize','lineGap','color'])textStyle[key]=current[key];
+  for(const [id,key] of [['textBold','bold'],['textItalic','italic'],['textStrike','strike']]){textStyle[key]=!!current[key];$(id).setAttribute('aria-pressed',String(textStyle[key]));}
   $('textFont').value=textStyle.font;$('textSize').value=textStyle.fontSize;
   if(document.activeElement!==$('textSizeNumber'))$('textSizeNumber').value=textStyle.fontSize;
+  $('textSizeDown').disabled=textStyle.fontSize<=8;$('textSizeUp').disabled=textStyle.fontSize>=96;
   $('textLineGap').value=textStyle.lineGap;$('textLineGapVal').textContent=Math.round(textStyle.lineGap*100)+'%';$('textColor').value=textStyle.color;
   $('textEdit').disabled=!a;
   $('annoToolHint').textContent='';
@@ -40,8 +44,9 @@ async function openTextEditor(point,existing){
     if(previewUid!==page.uid)return;
     const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
     if(!existing&&isMobile())a.maxWidth=Math.min(a.maxWidth,Math.max(textStyle.fontSize*2,($('pvBody').clientWidth-40)*a.pageWidth/$('pvCanvas').clientWidth));
-    const snapshot=existing?structuredClone(a):null;
-    if(!existing){await relayoutText(a);(page.annots||=[]).push(a);}
+    const snapshot=existing?{bold:false,italic:false,strike:false,...structuredClone(a)}:null;
+    // Restore natural font proportions when reopening text from older versions.
+    await relayoutText(a);if(!existing)(page.annots||=[]).push(a);
     textEditing={page,a,snapshot,revision:0};selAnno=a.id;setTool('none');
     $('textEditor').hidden=false;$('textInput').value=a.text;$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
     $('textError').textContent='';$('textApply').disabled=false;
@@ -64,16 +69,16 @@ function finishTextEdit(apply){
 }
 let textChangeRevision=0;
 async function applyTextChange(change){
-  const a=textSelection();for(const key of ['font','fontSize','lineGap','color'])if(key in change)textStyle[key]=change[key];if(!a){syncTextControls();return;}
+  const a=textSelection();for(const key of ['font','fontSize','lineGap','color','bold','italic','strike'])if(key in change)textStyle[key]=change[key];if(!a){syncTextControls();return;}
   const revision=++textChangeRevision,next={...(pendingTextChanges.get(a)||a),...change};pendingTextChanges.set(a,next);textEditPending=true;$('textApply').disabled=true;
-  if(typeof syncTextEditorUI==='function')syncTextEditorUI();
+  syncTextControls();
   try{
     await relayoutText(next);if(revision!==textChangeRevision||!curAnnots().includes(a))return;
     Object.assign(a,next);$('textError').textContent='';
     if(textEditing)$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
     renderAnnots();syncCounts();
   }catch(e){if(revision===textChangeRevision){if(textEditing)$('textError').textContent=e.message;else toast(e.message,true);}}
-  finally{if(revision===textChangeRevision){textEditPending=false;$('textApply').disabled=false;if(typeof syncTextEditorUI==='function')syncTextEditorUI();}}
+  finally{if(revision===textChangeRevision){pendingTextChanges.delete(a);textEditPending=false;$('textApply').disabled=false;syncTextControls();}}
 }
 function queueTextChange(change){textUpdate=applyTextChange(change);return textUpdate;}
 $('textInput').addEventListener('input',()=>queueTextChange({text:$('textInput').value}));
@@ -88,7 +93,7 @@ $('textFont').onchange=e=>queueTextChange({font:e.target.value});
 for(const id of ['textSize','textSizeNumber'])$(id).oninput=e=>queueTextChange({fontSize:clamp(Number(e.target.value)||16,8,96)});
 $('textLineGap').oninput=e=>queueTextChange({lineGap:clamp(Number(e.target.value)||1.3,1,2)});
 $('textColor').oninput=e=>queueTextChange({color:e.target.value});
-$('pvOverlay').addEventListener('dblclick',e=>{const uid=e.target.closest('.anno')?.dataset.uid,a=curAnnots().find(x=>x.id===uid&&x.shape==='text');if(a){e.preventDefault();openTextEditor(null,a);}});
+$('pvOverlay').addEventListener('dblclick',e=>{const uid=e.target.closest('.anno')?.dataset.uid,a=curAnnots().find(x=>x.id===uid&&x.shape==='text');if(a&&annoStyle.tool==='none'){e.preventDefault();e.stopPropagation();openTextEditor(null,a);}});
 window.addEventListener('resize',positionTextEditor);$('pvBody').addEventListener('scroll',positionTextEditor);
 
 /* A draggable page action uses the same board insertion point as page reordering. */

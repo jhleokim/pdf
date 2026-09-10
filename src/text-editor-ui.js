@@ -49,6 +49,11 @@ function positionTextEditorPanel(){
   input.style.fontFamily=PDFMarkupText.families[a.font].family;
   input.style.fontSize=(a.fontSize*sy)+'px';input.style.lineHeight=(a.textLayout.step*sy)+'px';
   input.style.color=a.color;input.style.caretColor=a.color;
+  // Match the PDF's synthetic weight and slant using the same embedded face.
+  input.style.webkitTextStroke=a.bold?(a.fontSize*sy*PDFMarkupText.boldStroke)+'px '+a.color:'0px';
+  input.style.fontStyle=a.italic?'italic':'normal';
+  input.style.textDecorationLine=a.strike?'line-through':'none';
+  input.style.textDecorationThickness=(a.fontSize*sy*PDFMarkupText.strikeWidth)+'px';
   input.style.width=(width/(sx/sy))+'px';input.style.transform='scaleX('+(sx/sy)+')';
   input.style.height='0px';input.style.height=Math.max(input.scrollHeight,a.nh*c.clientHeight,a.fontSize*sy*1.3)+'px';
   box.style.height=(parseFloat(input.style.height)+6)+'px';
@@ -73,6 +78,14 @@ $('textSizeNumber').oninput=e=>{
 };
 $('textSizeNumber').onchange=e=>{const n=clamp(Number(e.target.value)||textStyle.fontSize,8,96);e.target.value=n;void queueTextChange({fontSize:n});};
 $('textSizeNumber').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();e.currentTarget.blur();}};
+for(const [id,delta] of [['textSizeDown',-.5],['textSizeUp',.5]]){
+  $(id).onpointerdown=e=>e.preventDefault();
+  $(id).onclick=()=>{const n=Math.round(clamp(currentTextStyle().fontSize+delta,8,96)*100)/100;$('textSizeNumber').value=n;void queueTextChange({fontSize:n});};
+}
+for(const [id,key] of [['textBold','bold'],['textItalic','italic'],['textStrike','strike']]){
+  $(id).onpointerdown=e=>e.preventDefault();
+  $(id).onclick=()=>void queueTextChange({[key]:!currentTextStyle()[key]});
+}
 window.visualViewport?.addEventListener('resize',revealInlineText);
 new ResizeObserver(positionTextEditor).observe($('pvCanvas').parentElement);
 document.addEventListener('pointerdown',e=>{
