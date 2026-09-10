@@ -14,6 +14,7 @@ $('pvExpand').title='편집 화면 크게';
 $('pvExpand').onclick=()=>{if(isMobile()){const page=pages.find(p=>p.uid===previewUid);if(page)preview(page);}else void setEditingFocus(!document.body.classList.contains('editing-focus'));};
 function syncTextEditorUI(){
   if(!$('textEditorActions'))return;
+  if(typeof syncHistoryControls==='function')syncHistoryControls();
   const editing=!!textEditing;
   $('textEditorActions').hidden=!editing;$('textEdit').hidden=editing;
   $('textSizeValue').textContent=textStyle.fontSize+' pt';

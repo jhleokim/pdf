@@ -115,6 +115,9 @@ async function loadFiles(fileList){
   const files = all.filter(f => isPdf(f) || isImage(f));
   if(!files.length){ toast('PDF 또는 이미지 파일만 추가할 수 있습니다', true); return; }
   if(files.length < all.length) toast(`지원하지 않는 파일 ${all.length - files.length}개는 건너뜁니다`, true);
+  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
 
   busy(true, '문서를 읽는 중…');
   await idle();
@@ -152,6 +155,7 @@ async function loadFiles(fileList){
   busy(false); progress(0);
   render();
   if(pages.length && !previewUid) showPreview(pages[0]);
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'파일 추가');
 }
 
 async function renderThumb(pdf, pageNo){
@@ -532,6 +536,7 @@ function stagePx(e){
 }
 $('pvOverlay').addEventListener('pointerdown', e => {
   if($('pvStage').hidden || pinch) return;
+  if(typeof textEditPending!=='undefined'&&textEditPending)return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const c = $('pvCanvas'), w = c.width, h = c.height;
   const pt = stagePx(e);
@@ -542,6 +547,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     else{e.preventDefault();openTextEditor({x:pt.x/w,y:pt.y/h});return;}
   }
 
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   if(annoStyle.tool === 'none'){
     if(handle && selAnno){
       const a=curAnnots().find(x=>x.id===selAnno);if(!a||a.shape==='text')return;
@@ -567,7 +573,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     curAnnots().push(a); selAnno = a.id;
     drag = { mode:'create', a, sx: pt.x, sy: pt.y };
   }
-  if(drag){if(drag.mode!=='create')drag.snapshot=structuredClone(drag.a);if(drag.a.shape!=='text')try{ $('pvOverlay').setPointerCapture(e.pointerId); }catch(_){} e.preventDefault();}
+  if(drag){drag.history=history;if(drag.mode!=='create')drag.snapshot=structuredClone(drag.a);if(drag.a.shape!=='text')try{ $('pvOverlay').setPointerCapture(e.pointerId); }catch(_){} e.preventDefault();}
 });
 $('pvOverlay').addEventListener('pointermove', e => {
   if(!drag || pinch) return;
@@ -597,6 +603,7 @@ $('pvOverlay').addEventListener('pointermove', e => {
   renderAnnots();
 });
 function endDrag(){
+  const history=drag?.history,label=drag?.mode==='create'?'마크업 추가':drag?.mode==='move'?'마크업 이동':'마크업 크기';
   if(drag && drag.mode === 'create'){
     const a = drag.a;
     const c = $('pvCanvas'), w = c.width, h = c.height;
@@ -612,6 +619,7 @@ function endDrag(){
     else selAnno=null;
   }
   drag = null; renderAnnots(); syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,label);
 }
 $('pvOverlay').addEventListener('pointerup', endDrag);
 function cancelAnnotationDrag(){
@@ -668,6 +676,7 @@ async function insertBlankPage(options={}){
   if(at<0)return;
   const anchor=pages[Math.max(0,at-1)];
   const positions=typeof captureBoardPositions==='function'?captureBoardPositions():null;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   busy(true,'빈 페이지를 추가하는 중…');
   let pdf;
   try{
@@ -690,6 +699,7 @@ async function insertBlankPage(options={}){
     if(positions)animateBoardFrom(positions,page.uid);
     await showPreview(page);
     page.el.scrollIntoView({block:'nearest',inline:'nearest'});
+    if(typeof commitEditHistory==='function')commitEditHistory(history,'빈 페이지 추가');
     toast(`${at+1}번에 빈 페이지를 추가했습니다`);
   }catch(e){
     if(pdf)await pdf.destroy().catch(()=>{});
@@ -698,6 +708,9 @@ async function insertBlankPage(options={}){
 }
 function remove(list){
   if(!list.length) return;
+  if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>remove(list)))return;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   const set = new Set(list.map(p => p.uid));
   const hit = set.has(previewUid);
   pages = pages.filter(p => !set.has(p.uid));
@@ -705,9 +718,13 @@ function remove(list){
   if(hit) clearPreview();
   render();
   toast(`${list.length}개 페이지를 삭제했습니다`);
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 삭제');
 }
 function rotate(list, deg){
   if(!list.length) return;
+  if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>rotate(list,deg)))return;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   list.forEach(p => p.rotation = ((p.rotation + deg) % 360 + 360) % 360);
   const keep = new Set(list.map(p => p.uid));
   render();
@@ -715,13 +732,17 @@ function rotate(list, deg){
   const shown = pages.find(p => p.uid === previewUid);
   if(shown && keep.has(shown.uid)) showPreview(shown);
   syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 회전');
 }
 
 /* ── 순서 변경 공통 커밋 ── */
 function commitMove(uids, anchorUid, positions=captureBoardPositions()){
+  if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>commitMove(uids,anchorUid)))return;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const set = new Set(uids);
   const block = pages.filter(p => set.has(p.uid));
   if(!block.length) return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   const rest = pages.filter(p => !set.has(p.uid));
   let at = anchorUid ? rest.findIndex(p => p.uid === anchorUid) : rest.length;
   if(at < 0) at = rest.length;
@@ -732,6 +753,7 @@ function commitMove(uids, anchorUid, positions=captureBoardPositions()){
   block.forEach(p => { const el = pages.find(x => x.uid === p.uid)?.el; if(el) el.classList.add('selected'); });
   animateBoardFrom(positions);
   syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 순서');
 }
 
 /* ── 데스크톱: HTML5 드래그 ── */
@@ -1100,6 +1122,7 @@ $('btnRotR').onclick = $('mbRotR').onclick = () => rotate(selected(), 90);
 $('btnSave').onclick = $('mbSave').onclick = save;
 $('btnReset').onclick = () => {
   if(!confirm('불러온 문서와 편집 내용을 모두 지웁니다. 계속할까요?')) return;
+  if(typeof clearEditHistory==='function')clearEditHistory();
   stamps.forEach(s => URL.revokeObjectURL(s.url)); stamps.clear();
   clearPreview();
   for(const d of docs.values())void d.pdfjsDoc?.destroy().catch(()=>{});
@@ -1193,6 +1216,7 @@ function syncAnnotationControls(){
 }
 /* 강조 툴바 */
 function setTool(t){
+  if(typeof textEditPending!=='undefined'&&textEditPending&&!textEditing){void textUpdate.then(()=>setTool(t));return;}
   if(typeof finishTextEdit==='function'&&t!=='none'&&!finishTextEdit(true))return;
   annoStyle.tool = t;
   if(t==='highlight'&&typeof highlightStyle!=='undefined'){annoStyle.fill=highlightStyle.color;annoStyle.opacity=highlightStyle.opacity;}
@@ -1237,22 +1261,28 @@ function applyStyleToSelected(){
   if(!selAnno) return;
   const a = curAnnots().find(x => x.id === selAnno); if(!a) return;
   if(a.shape === 'image'||a.shape==='text') return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   a.stroke = a.shape==='highlight'?'none':annoStyle.stroke; a.fill = annoStyle.fill; a.lineWidth = a.shape==='highlight'?0:annoStyle.lineWidth;
   a.dash = annoStyle.dash; a.opacity = annoStyle.opacity;
   renderAnnots();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'마크업 서식',document.activeElement?.matches('input')?a.id+':'+document.activeElement.id:null);
 }
 $('annoDel').onclick = () => {
   if(!selAnno) return;
   if(typeof textEditing!=='undefined'&&textEditing){const id=selAnno;finishTextEdit(false);selAnno=id;}
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   const arr = curAnnots(); const i = arr.findIndex(x => x.id === selAnno);
   if(i >= 0) arr.splice(i, 1);
   selAnno = null; renderAnnots(); syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'마크업 삭제');
 };
 $('annoClear').onclick = () => {
   const arr = curAnnots(); if(!arr.length) return;
   if(!confirm('이 페이지의 마크업을 모두 지울까요?')) return;
   if(typeof finishTextEdit==='function')finishTextEdit(false);
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   arr.length = 0; selAnno = null; renderAnnots(); syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 마크업 삭제');
 };
 
 /* ════════════════════════════════════════════════════════════

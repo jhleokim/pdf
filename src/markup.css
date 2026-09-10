@@ -13,6 +13,7 @@
 .markup-menu{position:relative}.markup-menu>summary{display:grid;place-items:center;width:28px;height:30px;list-style:none;cursor:pointer;font-size:17px;letter-spacing:1px}
 .markup-menu>div{position:absolute;right:0;top:35px;z-index:30;width:185px;padding:4px;border:1px solid var(--line-2);border-radius:4px;background:var(--surface);box-shadow:0 6px 18px #0002}
 .markup-menu>div .btn{width:100%;font-size:11px;justify-content:flex-start}
+.markup-menu>div .history-action{justify-content:space-between}.history-action small{font-size:9px;color:var(--ink-3)}
 .markup-context{position:relative;display:flex;align-items:center;min-height:48px;padding:0 11px;background:var(--surface)}
 .markup-context [hidden],.inline-text-actions[hidden],#textEdit[hidden]{display:none!important}
 .markup-context .annotation-properties{padding:6px 0;border:0;background:none;box-shadow:none;min-height:48px;gap:8px 12px}

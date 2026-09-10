@@ -43,11 +43,13 @@ function syncHighlightControls(){
   highlightLayer.hidden=!active||!textMode||!!textEditing;
 }
 function setHighlightStyle(change){
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   Object.assign(highlightStyle,change);
   annoStyle.fill=highlightStyle.color;annoStyle.opacity=highlightStyle.opacity;
   const a=curAnnots().find(x=>x.id===selAnno);
   if(a?.shape==='highlight'){a.fill=highlightStyle.color;a.opacity=highlightStyle.opacity;}
   renderAnnots();syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'형광펜 서식',change.opacity!==undefined?a?.id+':highlight-opacity':null);
 }
 $('highlightTextMode').onclick=()=>{highlightMode='text';syncHighlightControls();};
 $('highlightAreaMode').onclick=()=>{highlightMode='area';syncHighlightControls();};
@@ -55,12 +57,11 @@ for(const b of document.querySelectorAll('[data-highlight-color]'))b.onclick=()=
 $('highlightOpacity').oninput=e=>setHighlightStyle({opacity:Number(e.target.value)/100});
 function undoLastHighlight(){
   const list=curAnnots(),index=list.findLastIndex(a=>a.shape==='highlight');if(index<0)return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   if(selAnno===list[index].id)selAnno=null;list.splice(index,1);renderAnnots();syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'마지막 강조 삭제');
 }
 $('highlightUndo').onclick=undoLastHighlight;
-document.addEventListener('keydown',e=>{
-  if(annoStyle.tool==='highlight'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!e.target.closest('input,textarea,select')&&!document.querySelector('dialog[open]')&&!document.body.classList.contains('is-busy')){e.preventDefault();undoLastHighlight();}
-});
 function highlightFromRects(rectangles){
   const page=$('pvCanvas').getBoundingClientRect(),rects=[];
   for(const r of rectangles){
@@ -92,7 +93,9 @@ function applySelectedHighlight(){
     if(!part.collapsed)rects.push(...part.getClientRects());
   }
   const a=highlightFromRects(rects);if(!a)return;
+  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   curAnnots().push(a);selAnno=null;selection.removeAllRanges();renderAnnots();syncCounts();
+  if(typeof commitEditHistory==='function')commitEditHistory(history,'형광펜 추가');
 }
 highlightLayer.addEventListener('pointerdown',e=>{if(e.button===0)highlightPointer={id:e.pointerId,uid:previewUid};});
 document.addEventListener('pointerup',e=>{

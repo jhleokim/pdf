@@ -14,7 +14,7 @@
     </div>
     <div class="annotation-actions">
       <button class="btn quiet icon" id="annoDel" disabled title="선택한 마크업 삭제" aria-label="선택한 마크업 삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
-      <details class="markup-menu"><summary aria-label="편집 메뉴" title="편집 메뉴">···</summary><div><button class="btn quiet" id="annoClear" disabled>페이지 마크업 모두 삭제</button></div></details>
+      <details class="markup-menu"><summary aria-label="편집 메뉴" title="편집 메뉴">···</summary><div><button class="btn quiet history-action" id="editUndo" aria-label="되돌리기" aria-keyshortcuts="Control+Z Meta+Z" disabled><span>되돌리기</span><small>Ctrl+Z</small></button><button class="btn quiet history-action" id="editRedo" aria-label="다시 실행" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y" disabled><span>다시 실행</span><small>Ctrl+Shift+Z</small></button><button class="btn quiet" id="annoClear" disabled>페이지 마크업 모두 삭제</button></div></details>
     </div>
   </div>
   <div class="markup-context" id="markupContext">
@@ -24,7 +24,7 @@
       <button data-highlight-color="#f4d35e" style="--swatch:#f4d35e" aria-label="노란색" aria-pressed="true"></button><button data-highlight-color="#9bd4ae" style="--swatch:#9bd4ae" aria-label="초록색" aria-pressed="false"></button><button data-highlight-color="#a7c9ed" style="--swatch:#a7c9ed" aria-label="파란색" aria-pressed="false"></button><button data-highlight-color="#f0b6c6" style="--swatch:#f0b6c6" aria-label="분홍색" aria-pressed="false"></button>
     </div>
     <label class="highlight-strength" title="형광펜 농도"><input id="highlightOpacity" type="range" min="15" max="65" step="5" value="35" aria-label="형광펜 농도"><output id="highlightOpacityValue">35%</output></label>
-    <button class="btn quiet icon highlight-undo" id="highlightUndo" title="마지막 강조 취소 · Ctrl / ⌘ + Z" aria-label="마지막 강조 취소" disabled><svg class="ic"><use href="#i-markup-undo"/></svg></button>
+    <button class="btn quiet icon highlight-undo" id="highlightUndo" title="마지막 강조 취소" aria-label="마지막 강조 취소" disabled><svg class="ic"><use href="#i-markup-undo"/></svg></button>
   </div>
   <div id="annoProperties" class="annotation-properties" hidden>
     <div class="annotation-property-group" id="annoStrokeGroup" role="group" aria-label="테두리 설정">

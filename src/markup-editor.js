@@ -32,6 +32,7 @@ function positionTextEditor(){
 }
 async function openTextEditor(point,existing){
   if(textOpening||document.body.classList.contains('is-busy'))return;
+  if(textEditPending){await textUpdate;if(textOpening||document.body.classList.contains('is-busy'))return;}
   if(!finishTextEdit(true))return;
   const page=pages.find(p=>p.uid===previewUid);if(!page)return;
   textOpening=true;
@@ -45,17 +46,21 @@ async function openTextEditor(point,existing){
     const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
     if(!existing&&isMobile())a.maxWidth=Math.min(a.maxWidth,Math.max(textStyle.fontSize*2,($('pvBody').clientWidth-40)*a.pageWidth/$('pvCanvas').clientWidth));
     const snapshot=existing?{bold:false,italic:false,strike:false,...structuredClone(a)}:null;
+    if(typeof flushTextHistory==='function')flushTextHistory();
+    const history=typeof captureEditHistory==='function'?captureEditHistory():null;
     // Restore natural font proportions when reopening text from older versions.
     await relayoutText(a);if(!existing)(page.annots||=[]).push(a);
     textEditing={page,a,snapshot,revision:0};selAnno=a.id;setTool('none');
     $('textEditor').hidden=false;$('textInput').value=a.text;$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
     $('textError').textContent='';$('textApply').disabled=false;
+    if(typeof startTextHistory==='function')startTextHistory(textEditing,history);
     if(typeof openTextEditorUI==='function')openTextEditorUI();
     renderAnnots();positionTextEditor();$('textInput').focus({preventScroll:true});
   }catch(e){toast(e.message||'텍스트 도구를 준비하지 못했습니다.',true);}finally{textOpening=false;}
 }
 function finishTextEdit(apply){
   if(!textEditing)return true;
+  const session=textEditing;
   const {page,a,snapshot}=textEditing;
   if(apply&&textEditPending)return false;
   if(apply&&$('textError').textContent){$('textInput').focus();return false;}
@@ -65,7 +70,9 @@ function finishTextEdit(apply){
   textChangeRevision++;textEditPending=false;pendingTextChanges.delete(a);
   textEditing=null;
   if(typeof closeTextEditorUI==='function')closeTextEditorUI();
-  $('textEditor').hidden=true;$('textApply').disabled=false;renderAnnots();syncCounts();return true;
+  $('textEditor').hidden=true;$('textApply').disabled=false;renderAnnots();syncCounts();
+  if(typeof finishTextHistory==='function')finishTextHistory(session,apply);
+  return true;
 }
 let textChangeRevision=0;
 async function applyTextChange(change){
@@ -88,8 +95,13 @@ async function applyTextChange(change){
   }catch(e){if(revision===textChangeRevision){if(textEditing)$('textError').textContent=e.message;else toast(e.message,true);}}
   finally{if(revision===textChangeRevision){pendingTextChanges.delete(a);textEditPending=false;$('textApply').disabled=false;syncTextControls();}}
 }
-function queueTextChange(change){textUpdate=applyTextChange(change);return textUpdate;}
-$('textInput').addEventListener('input',()=>queueTextChange({text:$('textInput').value}));
+function queueTextChange(change,options={}){
+  if(typeof recordTextHistory==='function')recordTextHistory(change,options);
+  textUpdate=applyTextChange(change);const update=textUpdate;
+  void update.then(()=>{if(update===textUpdate&&typeof flushTextHistory==='function')flushTextHistory();});
+  return update;
+}
+$('textInput').addEventListener('input',e=>queueTextChange({text:$('textInput').value},{inputType:e.inputType}));
 $('textApply').onclick=()=>finishTextEdit(true);$('textCancel').onclick=()=>finishTextEdit(false);
 $('textEdit').onclick=()=>{const a=textSelection();if(a)openTextEditor(null,a);};
 $('textInput').addEventListener('keydown',e=>{
