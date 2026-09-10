@@ -2,6 +2,8 @@
 const PDFMarkupText=(()=>{
   const families={gothic:{name:'나눔고딕',family:'PDFStudioGothic',asset:'markup-font-gothic'},myeongjo:{name:'나눔명조',family:'PDFStudioMyeongjo',asset:'markup-font-myeongjo'}};
   const fonts=new Map();let boot;
+  // Synthetic emphasis keeps both embedded Korean families available offline.
+  const boldStroke=.035,strikeWidth=.05,italicSlope=Math.tan(14*Math.PI/180);
   function data(id){return b64bytes(document.getElementById(id).textContent.trim());}
   async function load(id='gothic'){
     if(!families[id])throw Error('지원하지 않는 글꼴입니다.');
@@ -43,9 +45,12 @@ const PDFMarkupText=(()=>{
     const sx=a.nw*w/a.textLayout.width,sy=a.nh*h/a.textLayout.height;
     a.textLayout.lines.forEach((line,i)=>{
       if(!line)return;
-      const t=document.createElementNS(SVGNS,'text');
-      for(const [k,v] of Object.entries({x:a.nx*w,y:a.ny*h+(a.textLayout.ascent+i*a.textLayout.step)*sy,fill:a.color,'font-family':families[a.font].family,'font-size':a.fontSize*sy,'textLength':a.textLayout.widths[i]*sx,'lengthAdjust':'spacingAndGlyphs','xml:space':'preserve'}))t.setAttribute(k,v);
+      const t=document.createElementNS(SVGNS,'text'),x=a.nx*w,y=a.ny*h+(a.textLayout.ascent+i*a.textLayout.step)*sy;
+      for(const [k,v] of Object.entries({x,y,fill:a.color,'font-family':families[a.font].family,'font-size':a.fontSize*sy,'textLength':a.textLayout.widths[i]*sx,'lengthAdjust':'spacingAndGlyphs','xml:space':'preserve'}))t.setAttribute(k,v);
+      if(a.bold){t.setAttribute('stroke',a.color);t.setAttribute('stroke-width',a.fontSize*sy*boldStroke);t.setAttribute('stroke-linejoin','round');}
+      if(a.italic)t.setAttribute('transform',`matrix(1 0 ${-italicSlope} 1 ${italicSlope*y} 0)`);
       t.textContent=line;g.appendChild(t);
+      if(a.strike){const strike=document.createElementNS(SVGNS,'line'),at=y-a.fontSize*.3*sy;for(const [k,v] of Object.entries({x1:x,y1:at,x2:x+a.textLayout.widths[i]*sx,y2:at,stroke:a.color,'stroke-width':a.fontSize*sy*strikeWidth}))strike.setAttribute(k,v);g.appendChild(strike);}
     });return g;
   }
   async function bake(doc,page,a,vp,rotation,cache){
@@ -55,15 +60,26 @@ const PDFMarkupText=(()=>{
     if(!cache.has(key)){const f=await load(a.font);doc.registerFontkit(fontkit);cache.set(key,await doc.embedFont(f.bytes,{subset:false}));}
     const font=cache.get(key),sx=a.nw*vp.width/a.textLayout.width,sy=a.nh*vp.height/a.textLayout.height;
     const c=hexToRgb(a.color);
-    // Use a text matrix so rotation, CropBox and non-square resized boxes agree with the preview.
+    // Transform the slant in text space before rotating into the source PDF.
     const r=rotation*Math.PI/180,cos=Math.cos(r),sin=Math.sin(r),P=PDFLib;
     const name=page.node.newFontDictionary('Text',font.ref);
-    const ops=[P.pushGraphicsState(),P.beginText(),P.setFillingColor(rgb(c.r,c.g,c.b)),P.setFontAndSize(name,a.fontSize)];
+    const color=rgb(c.r,c.g,c.b),slant=a.italic?italicSlope:0;
+    const ops=[P.pushGraphicsState(),P.setStrokingColor(color),P.setLineWidth(a.fontSize*sy*boldStroke),P.setLineJoin(P.LineJoinStyle.Round),P.beginText(),P.setFillingColor(color),P.setFontAndSize(name,a.fontSize),P.setTextRenderingMode(a.bold?P.TextRenderingMode.FillAndOutline:P.TextRenderingMode.Fill)];
     a.textLayout.lines.forEach((line,i)=>{
       if(!line)return;
       const [x,y]=vp.convertToPdfPoint(a.nx*vp.width,a.ny*vp.height+(a.textLayout.ascent+i*a.textLayout.step)*sy);
-      ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(font.encodeText(line)));
-    });ops.push(P.endText(),P.popGraphicsState());page.pushOperators(...ops);
+      ops.push(P.setTextMatrix(sx*cos,sx*sin,sy*(slant*cos-sin),sy*(slant*sin+cos),x,y),P.showText(font.encodeText(line)));
+    });ops.push(P.endText());
+    if(a.strike){
+      ops.push(P.setLineWidth(a.fontSize*sy*strikeWidth));
+      a.textLayout.lines.forEach((line,i)=>{
+        if(!line)return;
+        const x=a.nx*vp.width,y=a.ny*vp.height+(a.textLayout.ascent+i*a.textLayout.step-a.fontSize*.3)*sy;
+        const from=vp.convertToPdfPoint(x,y),to=vp.convertToPdfPoint(x+a.textLayout.widths[i]*sx,y);
+        ops.push(P.moveTo(...from),P.lineTo(...to),P.stroke());
+      });
+    }
+    ops.push(P.popGraphicsState());page.pushOperators(...ops);
   }
-  return {families,load,clean,layout,svg,bake};
+  return {families,load,clean,layout,svg,bake,boldStroke,strikeWidth};
 })();

@@ -484,11 +484,21 @@ function annoToSVG(a, w, h){
   if(a.shape==='highlight'){el.setAttribute('stroke','none');el.style.mixBlendMode='multiply';}
   return el;
 }
+const textSVGCache=new WeakMap();
 function renderAnnots(){
-  const ov = $('pvOverlay'); ov.innerHTML = '';
+  const ov = $('pvOverlay'),nodes=[];
   const c = $('pvCanvas'), w = c.width, h = c.height;
   const list = curAnnots();
-  list.forEach(a => {const el=annoToSVG(a,w,h);if(typeof textEditing!=='undefined'&&textEditing?.a===a)el.style.visibility='hidden';ov.appendChild(el);});
+  list.forEach(a => {
+    let el;
+    if(a.shape==='text'){
+      const signature=JSON.stringify([w,h,a]),cached=textSVGCache.get(a);
+      if(cached?.signature===signature)el=cached.el;
+      else{el=annoToSVG(a,w,h);textSVGCache.set(a,{signature,el});}
+    }else el=annoToSVG(a,w,h);
+    el.style.visibility=typeof textEditing!=='undefined'&&textEditing?.a===a?'hidden':'';
+    nodes.push(el);
+  });
   if(selAnno&&annoStyle.tool==='none'&&!(typeof textEditing!=='undefined'&&textEditing)){
     const a = list.find(x => x.id === selAnno);
     if(a){
@@ -496,16 +506,19 @@ function renderAnnots(){
       const box = document.createElementNS(SVGNS,'rect');
       box.setAttribute('x', Math.min(x,x+bw)); box.setAttribute('y', Math.min(y,y+bh));
       box.setAttribute('width', Math.abs(bw)); box.setAttribute('height', Math.abs(bh));
-      box.setAttribute('class','selbox'); ov.appendChild(box);
+      box.setAttribute('class','selbox'); nodes.push(box);
       const hs = (isMobile()?6:4) * (c.width / (c.clientWidth || c.width));
-      [[x,y,'nw'],[x+bw,y,'ne'],[x+bw,y+bh,'se'],[x,y+bh,'sw']].forEach(([hx,hy,pos]) => {
+      if(a.shape!=='text')[[x,y,'nw'],[x+bw,y,'ne'],[x+bw,y+bh,'se'],[x,y+bh,'sw']].forEach(([hx,hy,pos]) => {
         const hd = document.createElementNS(SVGNS,'rect');
         hd.setAttribute('x', hx-hs); hd.setAttribute('y', hy-hs);
         hd.setAttribute('width', hs*2); hd.setAttribute('height', hs*2);
-        hd.setAttribute('class','handle'); hd.dataset.h = pos; ov.appendChild(hd);
+        hd.setAttribute('class','handle'); hd.dataset.h = pos; nodes.push(hd);
       });
     }
   }
+  // Keep unchanged text attached between clicks so native double-click targets survive.
+  const keep=new Set(nodes);for(const el of [...ov.children])if(!keep.has(el))el.remove();
+  nodes.forEach((el,i)=>{if(ov.children[i]!==el)ov.insertBefore(el,ov.children[i]||null);});
   $('annoDel').disabled = !selAnno;
   $('annoClear').disabled = list.length === 0;
   syncAnnotationControls();
@@ -523,17 +536,21 @@ $('pvOverlay').addEventListener('pointerdown', e => {
   const c = $('pvCanvas'), w = c.width, h = c.height;
   const pt = stagePx(e);
   const handle = e.target.dataset && e.target.dataset.h;
-  if(annoStyle.tool==='text'){e.preventDefault();openTextEditor({x:pt.x/w,y:pt.y/h});return;}
   const hit=e.target.closest('.anno');
+  if(annoStyle.tool==='text'){
+    if(hit&&curAnnots().some(a=>a.id===hit.dataset.uid&&a.shape==='text'))setTool('none');
+    else{e.preventDefault();openTextEditor({x:pt.x/w,y:pt.y/h});return;}
+  }
 
   if(annoStyle.tool === 'none'){
     if(handle && selAnno){
-      drag = { mode:'resize', a: curAnnots().find(x => x.id === selAnno), pos: handle };
+      const a=curAnnots().find(x=>x.id===selAnno);if(!a||a.shape==='text')return;
+      drag = { mode:'resize', a, pos: handle };
     }else if(hit){
       selAnno = hit.dataset.uid;
       const a = curAnnots().find(x => x.id === selAnno);
       if(a.shape !== 'image'&&a.shape!=='text'){ Object.assign(annoStyle,{stroke:a.stroke==='none'?annoStyle.stroke:a.stroke,fill:a.fill,lineWidth:a.lineWidth||2,dash:a.dash,opacity:a.opacity}); }
-      drag = { mode:'move', a, ox: pt.x - a.nx*w, oy: pt.y - a.ny*h };
+      drag = { mode:'move', a, ox: pt.x - a.nx*w, oy: pt.y - a.ny*h, startX:pt.x,startY:pt.y,moving:false };
       renderAnnots();
     }else{ selAnno = null; renderAnnots(); }
   }else if(annoStyle.tool === 'image'){
@@ -550,7 +567,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
     curAnnots().push(a); selAnno = a.id;
     drag = { mode:'create', a, sx: pt.x, sy: pt.y };
   }
-  if(drag){if(drag.mode!=='create')drag.snapshot=structuredClone(drag.a);try{ $('pvOverlay').setPointerCapture(e.pointerId); }catch(_){} e.preventDefault();}
+  if(drag){if(drag.mode!=='create')drag.snapshot=structuredClone(drag.a);if(drag.a.shape!=='text')try{ $('pvOverlay').setPointerCapture(e.pointerId); }catch(_){} e.preventDefault();}
 });
 $('pvOverlay').addEventListener('pointermove', e => {
   if(!drag || pinch) return;
@@ -561,8 +578,13 @@ $('pvOverlay').addEventListener('pointermove', e => {
     a.nw = Math.abs(pt.x - drag.sx)/w; a.nh = Math.abs(pt.y - drag.sy)/h;
     if(a.shape === 'image') fixAspect(a, w, h);
   }else if(drag.mode === 'move'){
+    if(a.shape==='text'&&!drag.moving){
+      if(Math.hypot(pt.x-drag.startX,pt.y-drag.startY)<3*w/(c.clientWidth||w))return;
+      drag.moving=true;try{$('pvOverlay').setPointerCapture(e.pointerId);}catch(_){}
+    }
     a.nx = (pt.x - drag.ox)/w; a.ny = (pt.y - drag.oy)/h;
   }else if(drag.mode === 'resize'){
+    if(a.shape==='text')return;
     let x1 = a.nx*w, y1 = a.ny*h, x2 = x1 + a.nw*w, y2 = y1 + a.nh*h;
     if(drag.pos.includes('w')) x1 = pt.x;
     if(drag.pos.includes('e')) x2 = pt.x;
@@ -599,6 +621,8 @@ function cancelAnnotationDrag(){
   drag=null;renderAnnots();syncCounts();
 }
 $('pvOverlay').addEventListener('pointercancel',cancelAnnotationDrag);
+window.addEventListener('pointerup',()=>{if(drag?.a.shape==='text')cancelAnnotationDrag();});
+window.addEventListener('blur',cancelAnnotationDrag);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){e.preventDefault();e.stopImmediatePropagation();cancelAnnotationDrag();}},true);
 
 /* ── 사진 붙이기 ── */
