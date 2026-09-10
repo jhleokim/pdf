@@ -69,7 +69,8 @@
 .highlight-colors button[aria-pressed=true]{box-shadow:0 0 0 1.5px var(--ink-2)}.highlight-colors button[aria-pressed=true]::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#253332}
 .highlight-strength{display:flex;align-items:center;gap:6px;margin-left:4px;font-size:10px;color:var(--ink-3);min-width:48px}.highlight-strength input{width:64px;min-width:26px;accent-color:var(--accent)}.highlight-strength output{min-width:27px;text-align:right}
 .highlight-undo{height:30px;width:28px;padding:5px;border:0;box-shadow:none;margin-left:4px}.highlight-undo .ic{width:16px;height:16px}
-.document-text-layer{position:absolute;inset:0;z-index:3;overflow:hidden;line-height:1;text-align:left;transform-origin:0 0;text-size-adjust:none;user-select:text}
+/* PDF.js measures unspaced glyphs; UI tracking must not shorten selection ranges. */
+.document-text-layer{position:absolute;inset:0;z-index:3;overflow:hidden;line-height:1;text-align:left;letter-spacing:0;word-spacing:0;transform-origin:0 0;text-size-adjust:none;user-select:text}
 .document-text-layer[hidden]{display:none}
 .document-text-layer :is(span,br){position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text;user-select:text}
 .document-text-layer span.markedContent{height:0;top:0}
