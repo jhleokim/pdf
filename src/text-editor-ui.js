@@ -37,6 +37,7 @@ function openTextEditorUI(){
 }
 function closeTextEditorUI(){
   textComposing=false;$('textFormatDetails').open=false;
+  $('textInputMirror').hidden=true;$('textInput').classList.remove('mixed-bold');
   $('textEditorActions').hidden=true;$('textEdit').hidden=false;$('textError').textContent='';
 }
 function positionTextEditorPanel(){
@@ -60,6 +61,36 @@ function positionTextEditorPanel(){
   input.style.width=(width/(sx/sy))+'px';input.style.transform='scaleX('+(sx/sy)+')';
   input.style.height='0px';input.style.height=Math.max(input.scrollHeight,a.nh*c.clientHeight,a.fontSize*sy*1.3)+'px';
   box.style.height=(parseFloat(input.style.height)+6)+'px';
+  syncTextInputMirror();
+}
+function syncTextInputMirror(){
+  if(!textEditing)return;
+  const input=$('textInput'),mirror=$('textInputMirror'),current=currentTextStyle();
+  const source=current.text===input.value?current:{...current,text:input.value,...PDFMarkupText.remapBold(current,input.value)};
+  const mixed=!source.bold&&!!source.boldRanges?.length;
+  mirror.hidden=!mixed;input.classList.toggle('mixed-bold',mixed);input.style.color=mixed?'transparent':current.color;
+  if(!mixed)return;
+  for(const key of ['fontFamily','fontSize','lineHeight','fontStyle','textDecorationLine','textDecorationThickness','width','height','transform'])mirror.style[key]=input.style[key];
+  mirror.style.color=current.color;mirror.style.fontWeight='400';
+  const signature=JSON.stringify([input.value,source.boldRanges]);
+  if(mirror.dataset.signature!==signature){
+    const fragment=document.createDocumentFragment();
+    for(const run of PDFMarkupText.textRuns(source,input.value)){const span=document.createElement('span');span.textContent=run.text;span.style.fontWeight=run.bold?'700':'400';fragment.appendChild(span);}
+    mirror.replaceChildren(fragment);mirror.dataset.signature=signature;
+  }
+  mirror.scrollTop=input.scrollTop;mirror.scrollLeft=input.scrollLeft;
+}
+function syncTextBoldControl(){
+  if(!textEditing)return;
+  const input=$('textInput'),a=currentTextStyle(),mask=PDFMarkupText.boldMask(a,input.value);
+  const start=textComposing?0:input.selectionStart,end=textComposing?input.value.length:input.selectionEnd;
+  const picked=start===end?mask:mask.slice(start,end);
+  $('textBold').setAttribute('aria-pressed',String(picked.length?picked.every(Boolean):!!a.bold));
+}
+function toggleTextBold(){
+  const a=textSelection();if(!a){void queueTextChange({bold:!textStyle.bold});return;}
+  const current=currentTextStyle(),input=$('textInput'),selection=textEditing&&!textComposing;
+  void queueTextChange(PDFMarkupText.toggleBold(current,selection?input.selectionStart:0,selection?input.selectionEnd:current.text.length));
 }
 function revealInlineText(){
   if(!textEditing)return;positionTextEditor();
@@ -87,8 +118,17 @@ for(const [id,delta] of [['textSizeDown',-.5],['textSizeUp',.5]]){
 }
 for(const [id,key] of [['textBold','bold'],['textItalic','italic'],['textStrike','strike']]){
   $(id).onpointerdown=e=>e.preventDefault();
-  $(id).onclick=()=>void queueTextChange({[key]:!currentTextStyle()[key]});
+  $(id).onclick=()=>key==='bold'?toggleTextBold():void queueTextChange({[key]:!currentTextStyle()[key]});
 }
+$('textInput').addEventListener('scroll',syncTextInputMirror);
+$('textInput').addEventListener('select',syncTextBoldControl);
+document.addEventListener('selectionchange',()=>{if(document.activeElement===$('textInput'))syncTextBoldControl();});
+document.addEventListener('keydown',e=>{
+  if(!textEditing||!(e.ctrlKey||e.metaKey)||e.altKey||e.key.toLowerCase()!=='b'||e.isComposing||textComposing||document.querySelector('dialog[open]'))return;
+  const field=e.target.closest('input,textarea,select,[contenteditable="true"]');
+  if(field&&field!==$('textInput')&&!$('annoTextProperties').contains(field))return;
+  e.preventDefault();e.stopImmediatePropagation();toggleTextBold();
+},true);
 window.visualViewport?.addEventListener('resize',revealInlineText);
 new ResizeObserver(positionTextEditor).observe($('pvCanvas').parentElement);
 document.addEventListener('pointerdown',e=>{

@@ -1,4 +1,4 @@
-const textStyle={font:'gothic',fontSize:16,lineGap:1.3,color:'#222222',bold:false,italic:false,strike:false};
+const textStyle={font:'gothic',fontSize:14,lineGap:1.3,color:'#222222',bold:false,italic:false,strike:false};
 let textEditing=null,textOpening=false,textEditPending=false,textUpdate=Promise.resolve();
 const pendingTextChanges=new WeakMap();
 function textSelection(){return curAnnots().find(a=>a.id===selAnno&&a.shape==='text');}
@@ -18,10 +18,11 @@ function syncTextControls(){
   $('annoToolHint').textContent='';
   $('annoToolHint').hidden=!$('annoToolHint').textContent;
   if(typeof syncTextEditorUI==='function')syncTextEditorUI();
+  if(typeof syncTextBoldControl==='function')syncTextBoldControl();
 }
 async function relayoutText(a){
   const {font}=await PDFMarkupText.load(a.font);
-  a.text=PDFMarkupText.clean(a.text);
+  PDFMarkupText.cleanBold(a);a.text=PDFMarkupText.clean(a.text);
   const layout=PDFMarkupText.layout(font,a.text,a.fontSize,a.lineGap,a.maxWidth||a.pageWidth-16);
   if(layout.height>a.pageHeight-16)throw Error('텍스트가 페이지보다 깁니다. 글씨 크기를 줄이거나 텍스트 상자를 나누어 주세요.');
   a.textLayout=layout;a.nw=layout.width/a.pageWidth;a.nh=layout.height/a.pageHeight;
@@ -43,9 +44,9 @@ async function openTextEditor(point,existing){
     if(previewUid!==page.uid)return;
     if(typeof prepareInlineTextView==='function')await prepareInlineTextView(page,existing?.fontSize||textStyle.fontSize,vp.width*unit);
     if(previewUid!==page.uid)return;
-    const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
+    const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',boldRanges:[],nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
     if(!existing&&isMobile())a.maxWidth=Math.min(a.maxWidth,Math.max(textStyle.fontSize*2,($('pvBody').clientWidth-40)*a.pageWidth/$('pvCanvas').clientWidth));
-    const snapshot=existing?{bold:false,italic:false,strike:false,...structuredClone(a)}:null;
+    const snapshot=existing?{bold:false,boldRanges:[],italic:false,strike:false,...structuredClone(a)}:null;
     if(typeof flushTextHistory==='function')flushTextHistory();
     const history=typeof captureEditHistory==='function'?captureEditHistory():null;
     // Restore natural font proportions when reopening text from older versions.
@@ -77,7 +78,7 @@ function finishTextEdit(apply){
 let textChangeRevision=0;
 async function applyTextChange(change){
   const a=textSelection();for(const key of ['font','fontSize','lineGap','color','bold','italic','strike'])if(key in change)textStyle[key]=change[key];if(!a){syncTextControls();return;}
-  if(Object.keys(change).every(key=>['bold','italic','strike','color'].includes(key))){
+  if(Object.keys(change).every(key=>['bold','boldRanges','italic','strike','color'].includes(key))){
     // Paint-only controls take effect in this event, including during IME input.
     // Preserve an in-flight text/font layout and its promise so Apply still waits
     // for the latest typed content, without letting it overwrite the new style.
@@ -96,12 +97,17 @@ async function applyTextChange(change){
   finally{if(revision===textChangeRevision){pendingTextChanges.delete(a);textEditPending=false;$('textApply').disabled=false;syncTextControls();}}
 }
 function queueTextChange(change,options={}){
+  const a=textSelection(),current=a&&(pendingTextChanges.get(a)||a);
+  if(current&&'text' in change&&!('boldRanges' in change)&&!('bold' in change))change={...change,...PDFMarkupText.remapBold(current,change.text,options.edit)};
+  else if('bold' in change&&!('boldRanges' in change))change={...change,boldRanges:[]};
   if(typeof recordTextHistory==='function')recordTextHistory(change,options);
   textUpdate=applyTextChange(change);const update=textUpdate;
   void update.then(()=>{if(update===textUpdate&&typeof flushTextHistory==='function')flushTextHistory();});
   return update;
 }
-$('textInput').addEventListener('input',e=>queueTextChange({text:$('textInput').value},{inputType:e.inputType}));
+let textInputEdit=null;
+$('textInput').addEventListener('beforeinput',()=>{const input=$('textInput');textInputEdit={text:input.value,start:input.selectionStart,end:input.selectionEnd};});
+$('textInput').addEventListener('input',e=>{const edit=textInputEdit;textInputEdit=null;queueTextChange({text:$('textInput').value},{inputType:e.inputType,edit});});
 $('textApply').onclick=()=>finishTextEdit(true);$('textCancel').onclick=()=>finishTextEdit(false);
 $('textEdit').onclick=()=>{const a=textSelection();if(a)openTextEditor(null,a);};
 $('textInput').addEventListener('keydown',e=>{
@@ -110,7 +116,7 @@ $('textInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(typeof applyTextEditor==='function')void applyTextEditor();else finishTextEdit(true);}
 });
 $('textFont').onchange=e=>queueTextChange({font:e.target.value});
-for(const id of ['textSize','textSizeNumber'])$(id).oninput=e=>queueTextChange({fontSize:clamp(Number(e.target.value)||16,8,96)});
+for(const id of ['textSize','textSizeNumber'])$(id).oninput=e=>queueTextChange({fontSize:clamp(Number(e.target.value)||14,8,96)});
 $('textLineGap').oninput=e=>queueTextChange({lineGap:clamp(Number(e.target.value)||1.3,1,2)});
 $('textColor').oninput=e=>queueTextChange({color:e.target.value});
 $('pvOverlay').addEventListener('dblclick',e=>{const uid=e.target.closest('.anno')?.dataset.uid,a=curAnnots().find(x=>x.id===uid&&x.shape==='text');if(a&&annoStyle.tool==='none'){e.preventDefault();e.stopPropagation();openTextEditor(null,a);}});

@@ -47,9 +47,9 @@
   $('proOptimize').checked=false;setProMode('pro');for(let i=0;i<400&&$('proCompare').getAttribute('aria-busy')==='true';i++)await wait(30);assert(!$('proCompare').hasAttribute('data-error')&&ink($('compareAfter'))>30,'Pro preview lost styled text');setProMode('basic');record('Styled text appears in Basic and Pro whole-page previews');
   await showPreview(target);selAnno=a.id;await openTextEditor(null,a);await queueTextChange({font:'myeongjo',fontSize:22.5});await applyTextEditor();const saved=await raster(target);assert(saved.content.includes('검토')&&a.bold&&a.italic&&a.strike&&a.fontSize===22.5,'Font/size change lost styles');record('Changing font family and size preserves emphasis and searchable export');
   await openTextEditor(null,a);const originalLayout=a.textLayout;await queueTextChange({bold:false});$('textInput').focus();$('textInput').setSelectionRange(1,3);const hadFocus=document.activeElement===$('textInput'),value=$('textInput').value;
-  $('textBold').click();assert(a.bold&&getComputedStyle($('textInput')).fontWeight==='700'&&a.textLayout===originalLayout&&!textEditPending,'Bold waits for layout instead of painting immediately');
+  $('textBold').click();assert(!a.bold&&a.boldRanges?.[0]?.start===1&&a.boldRanges[0].end===3&&!$('textInputMirror').hidden&&a.textLayout===originalLayout&&!textEditPending,'Selected bold waits for layout instead of painting immediately');
   assert($('textInput').value===value&&$('textInput').selectionStart===1&&$('textInput').selectionEnd===3&&(!hadFocus||document.activeElement===$('textInput')),'Bold changed the draft, selection or focus');
-  $('textBold').click();assert(!a.bold&&getComputedStyle($('textInput')).fontWeight==='400','Bold off is not immediate');finishTextEdit(false);record('Bold paints on/off in the click event without moving the caret or recalculating layout');
+  $('textBold').click();assert(!a.bold&&!a.boldRanges.length&&$('textInputMirror').hidden&&getComputedStyle($('textInput')).fontWeight==='400','Bold off is not immediate');finishTextEdit(false);record('Selected bold paints on/off in the click event without moving the caret or recalculating layout');
   const relayout=relayoutText;let release;
   try{
    await openTextEditor(null,a);let gate=new Promise(r=>release=r);relayoutText=async next=>{await gate;return relayout(next)};
