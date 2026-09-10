@@ -93,23 +93,45 @@ window.addEventListener('resize',positionTextEditor);$('pvBody').addEventListene
 
 /* A draggable page action uses the same board insertion point as page reordering. */
 let blankPointer=null,blankClickUntil=0;
+const boardMotion=new Map();
 function blankDragClickBlocked(){return Date.now()<blankClickUntil;}
 function captureBoardPositions(){return new Map(pages.filter(p=>p.el).map(p=>[p.uid,p.el.getBoundingClientRect()]));}
 function animateBoardFrom(before,addedUid){
+  // Snapshot the visible positions first, then cancel old motion before measuring
+  // the new layout. Retargeting from transformed bounds compounds the offset.
+  for(const animation of boardMotion.values())animation.cancel();boardMotion.clear();
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  for(const p of pages){
-    const old=before.get(p.uid),r=p.el.getBoundingClientRect();
-    if(old){const dx=old.left-r.left,dy=old.top-r.top;if(Math.abs(dx)+Math.abs(dy)>1)p.el.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],{duration:180,easing:'ease-out'});}
-    else if(p.uid===addedUid)p.el.animate([{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'scale(1)'}],{duration:220,easing:'ease-out'});
+  const bounds=pages.map(p=>[p,p.el.getBoundingClientRect()]);
+  for(const [p,r] of bounds){
+    const old=before.get(p.uid);let frames;
+    if(old){const dx=old.left-r.left,dy=old.top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)frames=[{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}];}
+    else if(p.uid===addedUid)frames=[{opacity:0,transform:'scale(.97)'},{opacity:1,transform:'scale(1)'}];
+    if(!frames)continue;
+    const el=p.el,animation=el.animate(frames,{duration:180,easing:'cubic-bezier(.2,.7,.2,1)'});
+    boardMotion.set(el,animation);
+    animation.onfinish=()=>{if(boardMotion.get(el)===animation)boardMotion.delete(el);};
   }
+}
+function boardCardRect(el){
+  const r=el.getBoundingClientRect();
+  if(!boardMotion.has(el))return r;
+  const t=new DOMMatrixReadOnly(getComputedStyle(el).transform);
+  return {left:r.left-t.m41,top:r.top-t.m42,bottom:r.bottom-t.m42,right:r.right-t.m41,width:r.width,height:r.height};
+}
+function placeBoardMarker(after){
+  if(marker.parentNode===board&&marker.nextElementSibling===(after||null))return;
+  const before=captureBoardPositions();after?board.insertBefore(marker,after):board.appendChild(marker);animateBoardFrom(before);
+}
+function removeBoardMarker(){
+  if(!marker.parentNode)return;
+  const before=captureBoardPositions();marker.remove();animateBoardFrom(before);
 }
 function updateBlankMarker(x,y){
   const wrap=$('boardWrap'),r=wrap.getBoundingClientRect();
-  if(wrap.hidden||x<r.left||x>r.right||y<r.top||y>r.bottom){marker.remove();cancelAnimationFrame(scrollRaf);return;}
+  if(wrap.hidden||x<r.left||x>r.right||y<r.top||y>r.bottom){removeBoardMarker();cancelAnimationFrame(scrollRaf);return;}
+  if(marker.parentNode===board){const m=marker.getBoundingClientRect();if(x>=m.left&&x<=m.right&&y>=m.top&&y<=m.bottom)return;}
   const after=cardAfter(x,y);
-  if(marker.parentNode===board&&marker.nextElementSibling===after)return;
-  const before=captureBoardPositions();
-  after?board.insertBefore(marker,after):board.appendChild(marker);animateBoardFrom(before);
+  placeBoardMarker(after);
 }
 function startBlankDrag(e){
   if(e.button!==0||e.isPrimary===false||document.body.classList.contains('is-busy'))return;
@@ -138,7 +160,7 @@ function endBlankDrag(commit){
   const d=blankPointer;if(!d)return;
   const active=d.active,beforeUid=marker.nextElementSibling?.dataset.uid||null,inside=marker.parentNode===board;
   blankPointer=null;cancelAnimationFrame(scrollRaf);
-  if(active){blankClickUntil=Date.now()+500;d.ghost?.remove();marker.remove();marker.classList.remove('blank-insertion');marker.innerHTML='';document.body.classList.remove('blank-dragging');}
+  if(active){blankClickUntil=Date.now()+500;d.ghost?.remove();removeBoardMarker();marker.classList.remove('blank-insertion');marker.innerHTML='';document.body.classList.remove('blank-dragging');}
   try{d.button.releasePointerCapture(d.id);}catch(_){}
   if(active&&commit&&inside)insertBlankPage({beforeUid});
 }

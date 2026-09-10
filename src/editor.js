@@ -694,7 +694,7 @@ function rotate(list, deg){
 }
 
 /* ── 순서 변경 공통 커밋 ── */
-function commitMove(uids, anchorUid){
+function commitMove(uids, anchorUid, positions=captureBoardPositions()){
   const set = new Set(uids);
   const block = pages.filter(p => set.has(p.uid));
   if(!block.length) return;
@@ -706,6 +706,7 @@ function commitMove(uids, anchorUid){
   lastClicked = null;
   render();
   block.forEach(p => { const el = pages.find(x => x.uid === p.uid)?.el; if(el) el.classList.add('selected'); });
+  animateBoardFrom(positions);
   syncCounts();
 }
 
@@ -725,14 +726,17 @@ board.addEventListener('dragstart', e => {
   e.dataTransfer.setData('text/plain', uid);
 });
 board.addEventListener('dragend', () => {
-  dragUids = []; marker.remove();
+  dragUids = []; removeBoardMarker();
   board.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
 });
 board.addEventListener('dragover', e => {
   if(!dragUids.length) return;
   e.preventDefault(); e.dataTransfer.dropEffect = 'move';
   const after = cardAfter(e.clientX, e.clientY);
-  after ? board.insertBefore(marker, after) : board.appendChild(marker);
+  placeBoardMarker(after);
+});
+document.addEventListener('dragover',e=>{
+  if(dragUids.length&&!board.contains(e.target))removeBoardMarker();
 });
 board.addEventListener('drop', e => {
   if(!dragUids.length) return;
@@ -740,16 +744,16 @@ board.addEventListener('drop', e => {
   const set = new Set(dragUids);
   let anchorUid = null, sib = marker.nextElementSibling;
   while(sib){ if(!set.has(sib.dataset.uid)){ anchorUid = sib.dataset.uid; break; } sib = sib.nextElementSibling; }
-  marker.remove();
+  const positions=captureBoardPositions();marker.remove();
   const uids = dragUids; dragUids = [];
-  commitMove(uids, anchorUid);
+  commitMove(uids, anchorUid, positions);
 });
 function cardAfter(x, y){
-  const cards = [...board.querySelectorAll('.page:not(.dragging)')];
+  const cards = [...board.querySelectorAll('.page:not(.dragging):not(.ghosting)')];
   return cards.find(c => {
-    const r = c.getBoundingClientRect();
+    const r = boardCardRect(c);
     return y < r.bottom && x < r.left + r.width / 2;
-  }) || cards.find(c => y < c.getBoundingClientRect().top);
+  }) || cards.find(c => y < boardCardRect(c).top);
 }
 
 /* ── 모바일: 길게 눌러 드래그 ── */
@@ -768,7 +772,7 @@ board.addEventListener('pointerdown', e => {
 function cancelHold(){ if(tdrag){ clearTimeout(tdrag.timer); if(!tdrag.active) tdrag = null; } }
 
 function startTouchDrag(){
-  if(!tdrag) return;
+  if(!tdrag||tdrag.active) return;
   const uid = tdrag.card.dataset.uid;
   const sel = selected();
   tdrag.uids = (sel.length > 1 && sel.some(p => p.uid === uid))
@@ -812,7 +816,7 @@ document.addEventListener('pointermove', e => {
   }
   moveGhost(e.clientX, e.clientY);
   placeMarker(e.clientX, e.clientY);
-  autoScroll(e.clientY);
+  if(marker.parentNode===board)autoScroll(e.clientY);
 }, { passive:true });
 
 document.addEventListener('touchmove', e => {        // 드래그 중 스크롤 억제
@@ -820,14 +824,9 @@ document.addEventListener('touchmove', e => {        // 드래그 중 스크롤 
 }, { passive:false });
 
 function placeMarker(x, y){
-  const el = document.elementFromPoint(x, y);
-  const card = el && el.closest ? el.closest('.page') : null;
-  if(card && !card.classList.contains('ghosting')){
-    const r = card.getBoundingClientRect();
-    (x < r.left + r.width/2) ? board.insertBefore(marker, card) : board.insertBefore(marker, card.nextSibling);
-  }else if(!marker.parentNode){
-    board.appendChild(marker);
-  }
+  const wrap=$('boardWrap'),r=wrap.getBoundingClientRect();
+  if(wrap.hidden||x<r.left||x>r.right||y<r.top||y>r.bottom){removeBoardMarker();cancelAnimationFrame(scrollRaf);return;}
+  placeBoardMarker(cardAfter(x,y));
 }
 let scrollRaf = 0;
 function autoScroll(y){
@@ -838,13 +837,13 @@ function autoScroll(y){
   cancelAnimationFrame(scrollRaf);
   if(dy) scrollRaf = requestAnimationFrame(() => {
     wrap.scrollTop += dy;
-    if(tdrag && tdrag.active) autoScroll(tdrag.y);
+    if(tdrag && tdrag.active){placeMarker(tdrag.x,tdrag.y);if(marker.parentNode===board)autoScroll(tdrag.y);}
     else if(typeof blankPointer!=='undefined'&&blankPointer?.active&&marker.parentNode===board){
       updateBlankMarker(blankPointer.clientX,blankPointer.clientY);autoScroll(blankPointer.clientY);
     }
   });
 }
-function endTouchDrag(){
+function endTouchDrag(commit=true){
   if(!tdrag) return;
   clearTimeout(tdrag.timer);
   if(!tdrag.active){ tdrag = null; return; }
@@ -857,12 +856,15 @@ function endTouchDrag(){
   let anchorUid = null, sib = marker.nextElementSibling;
   while(sib){ if(!set.has(sib.dataset.uid)){ anchorUid = sib.dataset.uid; break; } sib = sib.nextElementSibling; }
   const inBoard = marker.parentNode === board;
-  marker.remove();
+  const positions=captureBoardPositions();
+  if(commit&&inBoard)marker.remove();else removeBoardMarker();
   const uids = tdrag.uids; tdrag = null;
-  if(inBoard){ buzz(10); commitMove(uids, anchorUid); }
+  if(commit&&inBoard){ buzz(10); commitMove(uids, anchorUid, positions); }
 }
 document.addEventListener('pointerup', e => { if(tdrag && e.pointerId === tdrag.id) endTouchDrag(); });
-document.addEventListener('pointercancel', e => { if(tdrag && e.pointerId === tdrag.id) endTouchDrag(); });
+document.addEventListener('pointercancel', e => { if(tdrag && e.pointerId === tdrag.id) endTouchDrag(false); });
+document.addEventListener('keydown',e=>{if(e.key==='Escape')endTouchDrag(false);});
+window.addEventListener('blur',()=>endTouchDrag(false));
 
 /* ── 파일 드롭 ── */
 ['dragenter','dragover'].forEach(ev => document.addEventListener(ev, e => {
