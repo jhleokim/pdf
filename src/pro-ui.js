@@ -38,8 +38,22 @@ function setProView(view){
   measureActionBar();
   requestAnimationFrame(()=>{const p=pages.find(p=>p.uid===previewUid);if(p)showPreview(p);});
 }
+let proModeRequest=0;
 function setProMode(mode){
-  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  const request=++proModeRequest;
+  if(typeof textEditPending!=='undefined'&&textEditPending){
+    // A mode click must finish the newest layout, even if another keystroke or
+    // formatting change supersedes the promise while it is being awaited.
+    return (async()=>{
+      do{await textUpdate;}while(request===proModeRequest&&textEditPending);
+      if(request!==proModeRequest)return false;
+      return applyProMode(mode);
+    })();
+  }
+  return applyProMode(mode);
+}
+function applyProMode(mode){
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return false;
   proMode=mode; document.body.dataset.mode=mode;
   $('modeBasic').setAttribute('aria-pressed',String(mode==='basic'));
   $('modePro').setAttribute('aria-pressed',String(mode==='pro'));
@@ -51,6 +65,7 @@ function setProMode(mode){
   try{localStorage.setItem('pdfed-mode',mode);}catch(_){}
   if(mode==='basic'){syncPreviewVisible();$('btnPreview').title='미리보기 표시 / 숨기기';}
   syncProState();
+  return true;
 }
 function proNumberInput(id,min,max,integer=false){
   const el=$(id), n=Number(el.value);
@@ -183,9 +198,9 @@ async function createProResult(){
   let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
   proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
   try{
+    const edited=await buildEditedDocument();checkProAbort();
     const fingerprint=proFingerprint();
     const original=PDFProResult.unchangedSource(pages,docs);
-    const edited=await buildEditedDocument();checkProAbort();
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
     // Reload the baseline so new marks cannot reuse cached, already-saved
     // content streams created while baking the user's Basic annotations.
@@ -214,7 +229,11 @@ async function createProResult(){
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
   }finally{finishProWork();}
 }
-$('modeBasic').onclick=()=>setProMode('basic');$('modePro').onclick=()=>{if(proMode!=='pro')setProMode('pro');};
+$('modeBasic').onclick=()=>setProMode('basic');
+$('modePro').onclick=()=>{
+  if(proMode!=='pro')return setProMode('pro');
+  proModeRequest++; // Staying in Pro cancels a pending Basic request without resetting its view.
+};
 $('proWorkspace').onclick=()=>{setProView('workspace');document.querySelector('main').scrollTop=0;};$('proSettings').onclick=()=>{document.querySelector('main').scrollTop=0;setProView('settings');if(!proPreviewOpen)$('proPanel').scrollIntoView({behavior:'smooth',block:'start'});};
 $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();};

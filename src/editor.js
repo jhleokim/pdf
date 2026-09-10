@@ -276,12 +276,16 @@ function makeCard(p, idx){
         <button class="icon-btn del" data-act="del" title="삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
       </span>
     </div>`;
-  const c = p.canvas.cloneNode(true);
-  c.getContext('2d').drawImage(p.canvas, 0, 0);
-  c.style.transform = `rotate(${p.rotation}deg)`;
-  if(p.rotation % 180){ c.style.maxWidth = '75%'; c.style.maxHeight = '133%'; }
-  el.querySelector('.sheet').appendChild(c);
+  // Keep the imported raster immutable; rotate a display copy and layer the
+  // current markup over it in the same fitted page coordinates in both modes.
+  const thumb=document.createElement('div');thumb.className='page-thumbnail';
+  const c=document.createElement('canvas'),swap=p.rotation%180;
+  c.width=swap?p.canvas.height:p.canvas.width;c.height=swap?p.canvas.width:p.canvas.height;
+  const ctx=c.getContext('2d');ctx.translate(c.width/2,c.height/2);ctx.rotate(p.rotation*Math.PI/180);ctx.drawImage(p.canvas,-p.canvas.width/2,-p.canvas.height/2);
+  const overlay=document.createElementNS(SVGNS,'svg');overlay.setAttribute('class','thumbnail-markup');overlay.setAttribute('viewBox',`0 0 ${c.width} ${c.height}`);overlay.setAttribute('aria-hidden','true');
+  thumb.append(c,overlay);el.querySelector('.sheet').appendChild(thumb);
   p.el = el;
+  syncPageThumbnail(p);
   if(p.uid === previewUid) el.classList.add('previewing');
 
   el.querySelector('[data-act="rot"]').onclick = e => { e.stopPropagation(); rotate([p], 90); };
@@ -289,6 +293,16 @@ function makeCard(p, idx){
   el.ondblclick = () => { if(isMobile()) setMobileView('preview'); else preview(p); };
   el.onclick = e => select(pages.indexOf(p), e);
   return el;
+}
+
+const thumbnailSignatures=new WeakMap();
+function syncPageThumbnail(p){
+  const overlay=p?.el?.querySelector('.thumbnail-markup');if(!overlay)return;
+  const annotations=p.annots||[],signature=JSON.stringify(annotations);
+  if(thumbnailSignatures.get(overlay)===signature)return;
+  const c=p.el.querySelector('.page-thumbnail canvas');
+  overlay.replaceChildren(...annotations.map(a=>annoToSVG(a,c.width,c.height)));
+  thumbnailSignatures.set(overlay,signature);
 }
 
 /* ── 선택 ── */
@@ -526,6 +540,7 @@ function renderAnnots(){
   $('annoDel').disabled = !selAnno;
   $('annoClear').disabled = list.length === 0;
   syncAnnotationControls();
+  syncPageThumbnail(pages.find(p=>p.uid===previewUid));
 }
 
 /* ── 오버레이 포인터: 그리기 / 선택 / 이동 / 리사이즈 ── */

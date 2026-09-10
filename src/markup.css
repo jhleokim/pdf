@@ -1,5 +1,8 @@
 /* Document tools: one quiet toolbar and one stable context row. */
 .anno-bar{position:relative;flex:none;border-bottom:1px solid var(--line);background:var(--surface);container-type:inline-size}
+.page-thumbnail{position:absolute;inset:0;pointer-events:none;isolation:isolate}
+.sheet .page-thumbnail canvas,.thumbnail-markup{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:100%;max-height:100%;background:transparent;object-fit:contain}
+.thumbnail-markup{letter-spacing:0;word-spacing:0;overflow:hidden}
 .annotation-tools{display:flex;align-items:center;flex-wrap:nowrap;gap:5px;padding:6px 10px;min-height:46px;border-bottom:1px solid var(--line);overflow:visible}
 .annotation-tools .ab-group{display:flex;gap:2px;flex:none;padding:0;border:0;background:none;box-shadow:none}
 .annotation-tools .ab-tool{display:flex;align-items:center;justify-content:center;gap:5px;width:30px;height:32px;min-width:0;padding:5px;border:1px solid transparent;border-radius:3px;background:transparent;color:var(--ink-2);box-shadow:none}
