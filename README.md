@@ -141,6 +141,8 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 
 텍스트의 **페이지에 적용**은 편집 중인 문서에 내용을 확정합니다. 파일로 보관하려면 **PDF로 저장**을 누르세요. 입력 중 Ctrl+S를 눌러도 유효한 초안을 적용한 뒤 저장 창을 엽니다. 저장 창은 전체 편집본을 먼저 준비하고, **PDF 다운로드**를 누를 때 브라우저에 파일을 전달합니다. 다운로드 시작 후에도 같은 결과를 다시 받을 수 있으며, 창을 닫으면 준비한 결과의 메모리를 해제합니다.
 
+강조 끝 위치 검증: `node tests/create-highlight-geometry.cjs` → `/tests/fixtures/highlight-geometry.html`, `/tests/fixtures/highlight-geometry-mobile.html`. UI 자간이 PDF 선택 영역에 영향을 주지 않도록 분리하고, 실제 DOM 글꼴 폭을 PDF 원래 폭에 맞춥니다. 긴 한글·숫자·영문 문장, 여러 줄·부분·역방향 선택, 세 가지 확대율, 회전·CropBox·UserUnit 및 저장 PDF의 강조 픽셀을 독립 PDF 좌표와 비교합니다. `--standalone`으로 단독 실행본도 검사합니다.
+
 ## 디자인 노트
 
 - Light를 기본으로 사용합니다. 하나 그린 계열 강조색, 중립 회색 작업 영역, 4–8px 모서리와 얕은 그림자로 문서와 조작 영역을 구분합니다.

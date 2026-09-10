@@ -9,6 +9,29 @@ function clearHighlightLayer(){
   const selection=getSelection();if(selection?.anchorNode&&highlightLayer.contains(selection.anchorNode))selection.removeAllRanges();
   highlightLayer.replaceChildren();highlightLayer.hidden=true;
 }
+function alignHighlightTextWidths(textDivs,properties,viewport){
+  // Canvas text measurement and DOM fallback-font layout can differ at fractional
+  // zoom/DPI. Measure every run once in the DOM, then match its original PDF width.
+  const canvas=$('pvCanvas'),sx=canvas.clientWidth/viewport.width,sy=canvas.clientHeight/viewport.height;
+  // PDF.js rounds layer dimensions independently of the raster canvas. Keep the
+  // logical page exact and fit both axes, including rotated mobile previews.
+  highlightLayer.style.width=viewport.rawDims.pageWidth*viewport.scale+'px';
+  highlightLayer.style.height=viewport.rawDims.pageHeight*viewport.scale+'px';
+  const rotation={0:'',90:'rotate(90deg) translateY(-100%)',180:'rotate(180deg) translate(-100%,-100%)',270:'rotate(270deg) translateX(-100%)'}[viewport.rotation];
+  highlightLayer.style.transform='scale('+sx+','+sy+') '+rotation;
+  const runs=textDivs.map(div=>({div,properties:properties.get(div),transform:div.style.transform})).filter(run=>run.properties?.canvasWidth>0&&run.div.textContent);
+  if(!runs.length)return;
+  const hidden=highlightLayer.hidden,visibility=highlightLayer.style.visibility;
+  try{
+    highlightLayer.style.visibility='hidden';highlightLayer.hidden=false;
+    for(const run of runs)run.div.style.transform='none';
+    const widths=runs.map(({div})=>{const r=div.getBoundingClientRect();return viewport.rotation%180?r.height:r.width;});
+    runs.forEach((run,i)=>{
+      const width=widths[i],scale=run.properties.canvasWidth*viewport.scale*(viewport.rotation%180?sy:sx)/width;
+      run.div.style.transform=width>0&&Number.isFinite(scale)?(run.properties.angle?'rotate('+run.properties.angle+'deg) ':'')+'scaleX('+scale+')':run.transform;
+    });
+  }finally{highlightLayer.hidden=hidden;highlightLayer.style.visibility=visibility;}
+}
 async function renderHighlightLayer(page,viewport,token){
   clearHighlightLayer();
   try{
@@ -18,9 +41,11 @@ async function renderHighlightLayer(page,viewport,token){
     highlightHasText=content.items.some(item=>item.str?.trim());
     if(highlightHasText){
       highlightLayer.style.setProperty('--scale-factor',viewport.scale);
-      const task=pdfjsLib.renderTextLayer({textContentSource:content,container:highlightLayer,viewport,isOffscreenCanvasSupported:false});
+      const textDivs=[],textDivProperties=new WeakMap();
+      const task=pdfjsLib.renderTextLayer({textContentSource:content,container:highlightLayer,viewport,textDivs,textDivProperties,isOffscreenCanvasSupported:false});
       highlightLayerTask=task;await task.promise;
       if(token!==pvToken)return;
+      alignHighlightTextWidths(textDivs,textDivProperties,viewport);
       if(highlightLayerTask===task)highlightLayerTask=null;
       if(!highlightLayer.querySelector('span'))highlightHasText=false;
     }
