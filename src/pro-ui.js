@@ -193,7 +193,7 @@ function proSummary(report,textCheck){
   if(report.notes?.length)lines.push(...report.notes);
   return lines.join('\n');
 }
-async function createProResult(){
+async function createProResult({reveal=true}={}){
   if(!pages.length||document.body.classList.contains('is-busy'))return;
   let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
   proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
@@ -223,7 +223,8 @@ async function createProResult(){
     const outputReport=result.retained?{...report,rasterized:false,changed:0,skipped:report.imageCount,settings:'추가 압축으로 더 줄지 않아 변경 전 파일 유지',notes:['추가 압축본이 더 작지 않아 가장 작은 변경 전 파일을 유지했습니다.']}:report;
     $('proReport').textContent=proSummary(outputReport,textCheck);$('proResult').hidden=false;
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
-    $('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
+    if(reveal)$('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
+    return proResult;
   }catch(e){
     if(e.name==='AbortError')toast('작업을 취소했습니다. 편집 중인 문서는 유지됩니다.');
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}

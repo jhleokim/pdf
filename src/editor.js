@@ -238,7 +238,7 @@ function syncCounts(){
   measureActionBar();
 
   ['btnRotL','btnRotR','btnDel','mbRotL','mbRotR','mbDel'].forEach(id => $(id).disabled = n === 0);
-  ['btnAll','btnSave','btnReset','mbSave'].forEach(id => $(id).disabled = !any);
+  ['btnAll','btnSave','btnReset','mbSave','btnPrint','mbPrint'].forEach(id => $(id).disabled = !any);
   const all = any && n === pages.length;
   $('btnAll').lastChild.textContent = all ? '전체 해제' : '전체 선택';
   $('mbAll').textContent = all ? '전체 해제' : '전체';
@@ -1137,6 +1137,7 @@ $('btnRotR').onclick = $('mbRotR').onclick = () => rotate(selected(), 90);
 $('btnSave').onclick = $('mbSave').onclick = save;
 $('btnReset').onclick = () => {
   if(!confirm('불러온 문서와 편집 내용을 모두 지웁니다. 계속할까요?')) return;
+  if(typeof releasePrintJob==='function')releasePrintJob();
   if(typeof clearEditHistory==='function')clearEditHistory();
   stamps.forEach(s => URL.revokeObjectURL(s.url)); stamps.clear();
   clearPreview();

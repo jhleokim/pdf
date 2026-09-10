@@ -37,6 +37,9 @@ html=html.slice(0,toolbarStart)+read('src/markup-toolbar.html')+'\n'+html.slice(
 block('markup-icons',read('src/markup-icons.html'),'</body>');
 block('text-editor',read('src/text-editor.html'),'</body>');
 block('save-dialog',read('src/save-dialog.html'),'</body>');
+block('print-dialog',read('src/print-dialog.html'),'</body>');
+block('print-button','<button class="btn icon" id="btnPrint" title="인쇄 (Ctrl+P)" aria-label="현재 문서 인쇄" disabled><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg></button>','<button class="btn primary" id="btnSave"');
+block('mobile-print-button','<button class="ab-btn" id="mbPrint" title="인쇄" aria-label="현재 문서 인쇄" disabled><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg></button>','<button class="ab-btn solid" id="mbSave"');
 const markupManifest=JSON.parse(read('vendor/markup/manifest.json'));
 for(const [file,expected] of Object.entries(markupManifest.files)){
  const data=readFileSync(resolve(root,'vendor/markup',file));if(data.length!==expected.bytes||createHash('sha256').update(data).digest('hex')!==expected.sha256)throw new Error('Markup asset integrity mismatch: '+file);
@@ -57,7 +60,7 @@ block('ocr-assets',Object.entries(assets).map(([id,file])=>`<script type="applic
 block('ocr-licenses','<details hidden><summary>OCR licenses</summary><pre>'+['LICENSE-tesseract.js','LICENSE-tesseract.js-core','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt','NOTICE.txt'].map(f=>read('vendor/ocr/'+f).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('\n')+'</pre></details>','</body>');
 html=html.replace(/<!-- pro-runtime:start -->[\s\S]*?<!-- pro-runtime:end -->\s*/, '');
 block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','pro-tools-ui.js','pro-gemini-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')).map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
-block('markup-runtime',['markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
+block('markup-runtime',['markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js','print-ui.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')
   .replace('<h1>PDF 페이지 편집기</h1>', '<h1>PDF Studio</h1>')
   .replace('OFFLINE · 로컬 처리', '내 기기에서 안전하게')
