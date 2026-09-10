@@ -48,6 +48,10 @@
 #textInput{display:block;margin:0;padding:0;min-height:0;max-height:none;border:0;border-radius:0;outline:0;resize:none;overflow:hidden;box-sizing:content-box;background:transparent;color:#222;font-kerning:normal;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;transform-origin:top left;box-shadow:none}
 #textInput::placeholder{color:#737777;opacity:.8}#textInput::selection{background:#a9dcd6;color:#222}
 #textInput[aria-invalid=true]{outline:1px solid var(--danger)}
+#textInput,#textInputMirror{letter-spacing:0;word-spacing:0;tab-size:4}
+#textInput.mixed-bold,#textInput.mixed-bold::selection{color:transparent}
+#textInputMirror{position:absolute;left:3px;top:3px;pointer-events:none;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;transform-origin:top left;font-kerning:normal;text-align:left;box-sizing:content-box}
+#textInputMirror[hidden]{display:none}
 .pv-body{display:flex;align-items:flex-start;justify-content:flex-start}.pv-body::after{display:none}.pv-stage{margin:auto;flex:none}
 @media(min-width:881px){
  body[data-mode=basic].editing-focus main{display:flex!important;flex-direction:row!important}

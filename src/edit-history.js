@@ -16,7 +16,7 @@ class EditHistoryStack{
 }
 const editHistory=new EditHistoryStack(),historyAnnotationCache=new WeakMap(),historyDocuments=new Set();
 let historyApplying=false,historyQueue=Promise.resolve(),historyDraft=null,historyTextFormat=null;
-const textHistoryFields=['text','font','fontSize','lineGap','color','bold','italic','strike','nx','ny'];
+const textHistoryFields=['text','font','fontSize','lineGap','color','bold','boldRanges','italic','strike','nx','ny'];
 function captureEditHistory(){
   if(historyApplying)return null;
   const rows=pages.map(page=>{
@@ -42,6 +42,7 @@ function deferHistoryEdit(action){if(textEditPending){void textUpdate.then(actio
 function textHistoryState(a,change={}){
   const values={};for(const key of textHistoryFields)values[key]=key in change?change[key]:a[key];
   for(const key of ['bold','italic','strike'])values[key]=!!values[key];
+  values.boldRanges=structuredClone(values.boldRanges||[]);
   values.text=String(values.text||'');
   const input=$('textInput');return {values,start:input.selectionStart,end:input.selectionEnd,direction:input.selectionDirection,signature:JSON.stringify(values)};
 }
@@ -58,7 +59,8 @@ function recordTextHistory(change,options={}){
   if(options.history===false||historyApplying)return;
   if(historyDraft?.session===textEditing){
     const draft=historyDraft,before=draft.current,after=textHistoryState(before.values,change);
-    const keys=Object.keys(change),typing=keys.length===1&&keys[0]==='text';
+    const keys=Object.keys(change),typing=keys.includes('text')&&keys.every(key=>['text','bold','boldRanges'].includes(key));
+    if(!typing){const input=$('textInput');before.start=input.selectionStart;before.end=input.selectionEnd;before.direction=input.selectionDirection;}
     let key=typing?'typing:'+(options.inputType||'input'):keys.length===1&&['fontSize','lineGap'].includes(keys[0])?'format:'+keys[0]:null;
     if(typing&&/paste|drop|linebreak|paragraph/i.test(options.inputType||''))key=null;
     if(draft.compositionBefore){

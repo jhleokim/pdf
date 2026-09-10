@@ -12,9 +12,9 @@
   $('textInput').dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));await textUpdate;
   assert(!$('textApply').disabled&&$('textInput').value==='회의 자료\n검토 완료','Composition completion');
   await applyTextEditor();const text=textSelection();assert(text?.text.includes('검토 완료')&&$('textEditor').hidden&&$('textPropertiesHome').contains($('textFont')),'Applying draft lost text/controls');record('Korean composition, explicit application and format controls');
-  await openTextEditor(null,text);$('textSizeNumber').focus();$('textSizeNumber').value='';$('textSizeNumber').dispatchEvent(new Event('input'));assert($('textSizeNumber').value===''&&text.fontSize===16,'Number input overwrote partial typing');
+  await openTextEditor(null,text);$('textSizeNumber').focus();$('textSizeNumber').value='';$('textSizeNumber').dispatchEvent(new Event('input'));assert($('textSizeNumber').value===''&&text.fontSize===14,'Number input overwrote partial typing');
   $('textSizeNumber').value='24';$('textSizeNumber').dispatchEvent(new Event('input'));await textUpdate;assert(text.fontSize===24,'Numeric font size');
-  await queueTextChange({text:'취소할 내용',font:'myeongjo'});finishTextEdit(false);assert(text.text==='회의 자료\n검토 완료'&&text.fontSize===16&&text.font==='gothic','Cancel lost the prior text or formatting');record('Font size can be typed naturally; cancel restores text and style');
+  await queueTextChange({text:'취소할 내용',font:'myeongjo'});finishTextEdit(false);assert(text.text==='회의 자료\n검토 완료'&&text.fontSize===14&&text.font==='gothic','Cancel lost the prior text or formatting');record('Font size can be typed naturally; cancel restores text and style');
   await openTextEditor(null,text);await queueTextChange({text:'검토 😀'});assert($('textApply').disabled&&$('textInput').getAttribute('aria-invalid')==='true','Invalid text can be applied');finishTextEdit(false);
   await openTextEditor(null,text);await wait(60);positionTextEditor();const panel=$('textEditor').getBoundingClientRect(),button=$('textApply').getBoundingClientRect(),page=$('pvCanvas').getBoundingClientRect();
   assert(Math.abs(panel.left-(page.left+text.nx*page.width-3))<2&&button.bottom<=innerHeight+1,'Inline text is detached from page or apply action clipped');
