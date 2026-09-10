@@ -80,7 +80,7 @@ document.addEventListener('pointerdown',e=>{
   for(const menu of document.querySelectorAll('.markup-menu[open]'))if(!menu.contains(e.target))menu.open=false;
 });
 document.addEventListener('keydown',e=>{
-  if(e.isComposing||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,textarea,select,dialog')||document.querySelector('dialog[open]')||document.body.classList.contains('is-busy')||!previewUid||proMode!=='basic')return;
+  if(e.isComposing||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,textarea,select,dialog')||document.querySelector('dialog[open]')||$('modal').classList.contains('open')||document.body.classList.contains('is-busy')||!previewUid||proMode!=='basic')return;
   const tool={v:'none',t:'text',h:'highlight'}[e.key.toLowerCase()];
   if(tool){e.preventDefault();setTool(tool);if(tool!=='none'&&!isMobile())void setEditingFocus(true);}
 });
