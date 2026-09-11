@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const MAX_IMAGE=8*1024*1024,MAX_RESPONSE=2*1024*1024;
+  let retryUntil=0;
+  const cooldown=()=>Math.max(0,Math.ceil((retryUntil-Date.now())/1000));
   function endpoint(){
     if(!/^https?:$/.test(location.protocol))throw new Error('Gemini 인식은 웹 버전에서 사용할 수 있습니다.');
     return new URL('/api/ocr/gemini',location.href).href;
@@ -63,12 +65,13 @@
       signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return;}reader.readAsDataURL(blob);
     });
   }
-  async function available(signal){return responseJSON(await fetch(endpoint(),{method:'GET',signal,credentials:'omit',cache:'no-store'}),signal);}
+  async function available(signal){const wait=cooldown();if(wait)return {available:true,retryAfter:wait};return responseJSON(await fetch(endpoint(),{method:'GET',signal,credentials:'omit',cache:'no-store'}),signal);}
   async function session(language,signal,onProgress,consent){
     if(consent!==true)throw new Error('민감정보 없는 문서임을 먼저 확인해 주세요.');
     signal.throwIfAborted();const url=endpoint();let closed=false,active=null;
     return {close:async()=>{closed=true;active?.abort();},async recognize(canvas){
       signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
+      const wait=cooldown();if(wait)throw failure('Gemini 호출 한도에 도달했습니다. '+wait+'초 뒤 다시 시도하세요. 한도가 초기화되지 않았다면 더 기다려야 합니다.','GEMINI_QUOTA',429,wait);
       if(active)throw new Error('이전 페이지 인식이 끝난 뒤 다시 시도하세요.');
       const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(),90000),abort=()=>timeout.abort();active=timeout;
       signal.addEventListener('abort',abort,{once:true});
@@ -89,6 +92,7 @@
         return {text:words.map(w=>w.text).join('\n'),words,confidence:null,source:'gemini',model:data.model};
       }catch(e){
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
+        if(e.status===429)retryUntil=Date.now()+Math.max(1,e.retryAfter||60)*1000;
         if(timeout.signal.aborted)throw failure('Gemini 응답 시간이 초과됐습니다. 완료한 페이지는 유지되므로 다시 눌러 이어서 인식하세요.','GEMINI_TIMEOUT',504);
         throw e;
       }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);active=null;}

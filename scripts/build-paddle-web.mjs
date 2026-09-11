@@ -49,11 +49,13 @@ export async function buildPaddleWeb(){
   mkdirSync(output,{recursive:true});
   const ort=resolve(root,'node_modules/onnxruntime-web/dist/ort.webgpu.min.mjs');
   const transformers=resolve(root,'node_modules/@huggingface/transformers/dist/transformers.web.js');
-  const result=await build({entryPoints:[resolve(root,'src/paddle/web-entry.mjs')],bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',minify:true,legalComments:'inline',metafile:true,
+  const result=await build({entryPoints:[resolve(root,'src/paddle/worker-entry.mjs')],bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',minify:true,legalComments:'inline',metafile:true,
     plugins:[{name:'browser-only-ocr',setup(b){b.onResolve({filter:/^onnxruntime-(?:web\/webgpu|common)$/},()=>({path:ort}));b.onResolve({filter:/^@huggingface\/transformers$/},()=>({path:transformers}));}}]});
   if(Object.keys(result.metafile.inputs).some(p=>/onnxruntime-node|\.node$/.test(p)))throw Error('Native runtime must not be shipped to browsers');
   if(Object.values(result.metafile.outputs).flatMap(o=>o.imports).some(i=>i.external))throw Error('Unexpected external Paddle runtime import');
-  const code=result.outputFiles[0].contents,filename='runtime-'+sha(code).slice(0,16)+'.mjs';writeFileSync(resolve(output,filename),code);
+  const workerCode=result.outputFiles[0].contents,workerFile='worker-'+sha(workerCode).slice(0,16)+'.mjs';writeFileSync(resolve(output,workerFile),workerCode);
+  const client=await build({entryPoints:[resolve(root,'src/paddle/web-entry.mjs')],bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',minify:true,define:{PADDLE_WORKER_FILE:JSON.stringify('./'+workerFile)}});
+  const code=client.outputFiles[0].contents,filename='runtime-'+sha(code).slice(0,16)+'.mjs';writeFileSync(resolve(output,filename),code);
   for(const name of ['ort-wasm-simd-threaded.asyncify.mjs','ort-wasm-simd-threaded.asyncify.wasm']){const destination=resolve(output,'ort-1.29.0',name);mkdirSync(dirname(destination),{recursive:true});copyFileSync(resolve(root,'node_modules/onnxruntime-web/dist',name),destination);}
   for(const a of manifest.assets)for(const p of a.chunks){const destination=resolve(output,'models',REVISION,p.file);mkdirSync(dirname(destination),{recursive:true});copyFileSync(resolve(modelDir,p.file),destination);}
   copyFileSync(resolve(modelDir,'assets.json'),resolve(output,'models',REVISION,'assets.json'));
