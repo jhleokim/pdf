@@ -1,0 +1,6 @@
+{
+  "name": "pdf-studio-ppocr-v5-trial",
+  "private": true,
+  "scripts": {"prepare:models":"node prepare.mjs", "build":"node build.mjs", "build:standalone":"node build-standalone.mjs", "test":"node --test engine.test.cjs"},
+  "dependencies": {"@techstark/opencv-js":"4.12.0-release.1", "yaml":"2.8.1"}
+}

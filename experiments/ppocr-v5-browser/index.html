@@ -1,0 +1,10 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>PP-OCRv5 한국어 · 로컬 검증</title>
+<style>body{font:15px system-ui;margin:28px;background:#f4f5f5;color:#202124}button,input,select{font:inherit;padding:8px;margin:4px}button{cursor:pointer}canvas{max-width:100%;border:1px solid #aaa}main{display:grid;grid-template-columns:1fr 1fr;gap:20px}pre{white-space:pre-wrap;font-size:13px}#status{padding:14px;background:white}progress{width:100%}</style>
+<h1>PP-OCRv5 한국어 · 로컬 검증</h1><p>시험판 · GPU 없이 WebAssembly 실행 · 문서 외부 전송 없음 · 운영 PDF Studio와 별도</p>
+<label>검증 PDF·이미지<input id="files" type="file" multiple accept="image/*,.pdf,application/pdf"></label>
+<label>탐지 긴 변<select id="size"><option>960</option><option selected>1536</option><option>1920</option></select></label>
+<button id="run">선택 이미지 인식</button><button id="cancel" disabled>취소</button><button id="save" disabled>검증 결과 JSON 저장</button>
+<p id="status" role="status">이미지를 선택하세요.</p><progress id="progress" max="100" value="0"></progress>
+<table><thead><tr><th>페이지</th><th>초</th><th>검출</th><th>인식</th><th>문자 수</th></tr></thead><tbody id="metrics"></tbody></table>
+<label>결과 페이지<select id="page"></select></label><main><canvas id="preview"></canvas><pre id="text"></pre></main>
+<script src="pdfjs.js"></script><script src="ui.js"></script></html>
