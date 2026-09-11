@@ -94,9 +94,8 @@ function validLines(input){
 const schema={type:'OBJECT',properties:{lines:{type:'ARRAY',items:{type:'OBJECT',properties:{text:{type:'STRING'},box:{type:'ARRAY',items:{type:'NUMBER'},minItems:4,maxItems:4},uncertain:{type:'BOOLEAN'}},required:['text','box','uncertain']}}},required:['lines']};
 /** @param {string} model */
 function generationConfig(model){
-  // Google recommends default sampling for Gemini 3; temperature=0 can cause repetition.
-  // Only tune thinking on models whose supported levels are documented; keep other models compatible.
-  return {...(/^gemini-3(?:\.|-)/.test(model)?{}:{temperature:0}),...(['gemini-3.8-flash','gemini-3.7-flash'].includes(model)?{thinkingConfig:{thinkingLevel:'low'}}:{}),maxOutputTokens:16384,responseMimeType:'application/json',responseSchema:schema};
+  // Preserve the established OCR sampling settings; validate model tuning with live requests first.
+  return {temperature:0,maxOutputTokens:16384,responseMimeType:'application/json',responseSchema:schema};
 }
 /** @param {unknown} input */
 function resultLines(input){

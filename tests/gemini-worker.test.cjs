@@ -115,21 +115,21 @@ test('unknown API paths return JSON; static files use asset binding',async()=>{
   assert.equal(await(await worker.fetch(new Request('https://pdf.hanatrust.workers.dev/'),{ASSETS:{fetch:async()=>new Response('PDF Studio')}})).text(),'PDF Studio');
 });
 
-test('Gemini 3 uses supported low-latency settings without forcing zero temperature',async()=>{
-  for(const [model,thinking,temperature] of [['gemini-3.8-flash','low',undefined],['gemini-3.7-flash','low',undefined],['gemini-3.1-pro-preview',undefined,undefined],['gemini-2.5-flash',undefined,0]]){
+test('configured Gemini models retain the previously working generation settings',async()=>{
+  for(const model of ['gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-pro-preview','gemini-2.5-flash']){
     let config;
     const worker=(await mod).createWorker(async(url,init)=>{config=JSON.parse(init.body).generationConfig;return response();});
     assert.equal((await worker.fetch(request(),{...env,GEMINI_MODEL:model})).status,200);
-    assert.equal(config.thinkingConfig?.thinkingLevel,thinking,model);assert.equal(config.temperature,temperature,model);
+    assert.equal(config.thinkingConfig,undefined,model);assert.equal(config.temperature,0,model);
     assert.equal(config.maxOutputTokens,16384);assert.equal(config.responseMimeType,'application/json');
   }
 });
 
-test('fallback rebuilds model-specific settings and never switches on a credential error',async()=>{
+test('fallback keeps compatible generation settings and never switches on a credential error',async()=>{
   const sent=[];
   const worker=(await mod).createWorker(async(url,init)=>{sent.push(JSON.parse(init.body).generationConfig);return sent.length<3?new Response('',{status:503}):response();},async()=>{});
   const r=await worker.fetch(request(),{...env,GEMINI_FALLBACK_MODEL:'gemini-2.5-flash'});
-  assert.equal(r.status,200);assert.equal(sent[0].thinkingConfig.thinkingLevel,'low');
+  assert.equal(r.status,200);assert.equal(sent[0].thinkingConfig,undefined);assert.equal(sent[0].temperature,0);assert.deepEqual(sent[2],sent[0]);
   assert.equal(sent[2].thinkingConfig,undefined);assert.equal(sent[2].temperature,0);
   let calls=0;
   const invalid=(await mod).createWorker(async()=>{calls++;return Response.json({error:{details:[{reason:'API_KEY_INVALID'}]}},{status:503});},async()=>assert.fail('credential failure must not retry'));
