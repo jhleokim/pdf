@@ -7,7 +7,7 @@ export async function createWorkerSession(url,signal,onProgress,{WorkerImpl=glob
   const clear=()=>{clearTimeout(deadline);clearTimeout(idle);deadline=idle=null;};
   const terminate=error=>{if(closed)return;closed=true;clear();signal?.removeEventListener('abort',abort);worker.terminate();const task=pending;pending=null;task?.reject(error);};
   const abort=()=>terminate(signal.reason||new DOMException('취소했습니다.','AbortError'));
-  const timeout=phase=>terminate(Object.assign(new Error(phase+' 시간이 초과되어 작업을 종료했습니다. 이 기기에서는 Tesseract를 이용해 주세요. 다운로드한 모델은 재사용됩니다.'),{code:'PADDLE_TIMEOUT'}));
+  const timeout=phase=>terminate(Object.assign(new Error(phase+' 시간이 초과되어 작업을 종료했습니다. 현재 브라우저 실험판은 글자가 많은 문서에서 완료되지 않을 수 있습니다. Tesseract 또는 활성화한 Google Vision을 이용해 주세요. 다운로드한 모델은 재사용됩니다.'),{code:'PADDLE_TIMEOUT'}));
   const heartbeat=()=>{clearTimeout(idle);idle=setTimeout(()=>timeout('Paddle 응답 대기'),idleTimeout);};
   worker.onmessage=({data})=>{
     if(closed||!pending||data.id!==pending.id)return;
