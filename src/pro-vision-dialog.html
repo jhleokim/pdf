@@ -1,0 +1,11 @@
+<dialog id="visionDialog" class="gemini-dialog" aria-labelledby="visionTitle">
+  <form method="dialog">
+    <h2 id="visionTitle">Google Vision으로 인식</h2>
+    <p id="visionConfirmScope"></p>
+    <p>선택한 페이지 이미지를 Cloudflare를 거쳐 Google Cloud Vision으로 전송합니다. 인터넷 연결이 필요하며, 프로젝트의 무료 할당량 초과 시 요금이 발생할 수 있습니다.</p>
+    <label class="gemini-consent"><input type="checkbox" id="visionConsent">민감정보 없는 문서이며 Google 전송에 동의합니다</label>
+    <p class="pro-hint">문서 전용 OCR · 최신 모델 채널. 단어 위치를 함께 인식하며 결과는 확인 후 PDF에 포함합니다.</p>
+    <p id="visionAvailability" class="pro-hint" role="status"></p>
+    <div class="stamp-actions"><button class="btn" value="cancel">취소</button><button class="btn primary" id="visionConfirm" type="button" disabled>확인하고 인식</button></div>
+  </form>
+</dialog>

@@ -11,6 +11,8 @@ test('standalone embeds Tesseract and excludes web Paddle bootstrap and Gemini e
   assert.equal(script(offline,'paddle-bootstrap'),undefined,'offline must not start a Paddle runtime download');
   assert.doesNotMatch(offline,/\/ocr\/paddle\/runtime-[a-f0-9]+\.mjs/);
   assert.doesNotMatch(offline,/id="pro-tesseract-assets"|value="paddle-vl15"/);
+  assert.doesNotMatch(offline,/id="(?:vision\w*|pro-vision(?:-ui)?)"|value="vision"|\/api\/ocr\/vision|vision\.googleapis\.com/);
+  assert.match(web,/value="vision">Google Vision/);
   assert.match(web,/value="tesseract" selected/);
   assert.match(web,/value="paddle-vl15"/);
   const assets={'ocr-client':'tesseract.min.js','ocr-core':'tesseract-core-lstm.wasm.js','ocr-core-fast':'tesseract-core-relaxedsimd-lstm.wasm.js','ocr-worker':'worker.min.js','ocr-lang-kor':'lang/kor.traineddata.gz','ocr-lang-eng':'lang/eng.traineddata.gz'};
@@ -29,6 +31,8 @@ test('standalone embeds Tesseract and excludes web Paddle bootstrap and Gemini e
   assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('paddle-vl15')}),'tesseract','standalone cannot select unavailable Paddle');
   assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('tesseract'),PDFPaddleLoad:()=>{}}),'tesseract');
   assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('paddle-vl15'),PDFPaddleLoad:()=>{}}),'paddle-vl15');
+  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('vision'),PDFVision:{}}),'vision');
+  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('vision')}),'tesseract');
   const bootstrap=script(web,'paddle-bootstrap'),manifest=JSON.parse(fs.readFileSync(path.join(root,'vendor/paddle/web-build.json'),'utf8'));
   assert.ok(bootstrap,'web includes its lazy runtime bootstrap');
   const context={};vm.runInNewContext(bootstrap,context);assert.equal(context.PDFPaddleReady,undefined,'no Paddle import before choosing it');assert.equal(typeof context.PDFPaddleLoad,'function');assert.ok(context.PDFTesseractManifest['ocr-client']);

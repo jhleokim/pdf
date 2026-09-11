@@ -3,7 +3,7 @@
 const PADDLE_EXPECTED_MODEL='PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1';
 const PADDLE_MODEL_CACHE_TAG=PADDLE_EXPECTED_MODEL+'/spotting';
 const OCR_LINE_POSITION_NOTE='줄 단위 위치라 단어 선택 영역은 실제 글자와 다를 수 있습니다. 원본 글꼴을 알 수 없어 내장 글꼴의 문자 폭으로 추정합니다.';
-function ocrDefaultProvider(){return globalThis.PDFPaddleLoad&&$('ocrProvider')?.value==='paddle-vl15'?'paddle-vl15':'tesseract';}
+function ocrDefaultProvider(){return globalThis.PDFVision&&$('ocrProvider')?.value==='vision'?'vision':globalThis.PDFPaddleLoad&&$('ocrProvider')?.value==='paddle-vl15'?'paddle-vl15':'tesseract';}
 function ocrValidWord(word){const b=word?.box;return typeof word?.text==='string'&&!!word.text.trim()&&Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1];}
 function ocrCanEmbed(r){return !!r&&!r.skipped&&Array.isArray(r.words)&&r.words.length>0&&r.words.every(ocrValidWord)&&(r.source!=='paddle-vl15'||r.canEmbed===true&&r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>w.text?.trim()));}
@@ -15,6 +15,12 @@ function configureLocalOCR(){
   if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
   $('ocrLanguage').closest('label').hidden=paddle;
   $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;
+  if(ocrDefaultProvider()==='vision'){
+    $('ocrDescription').innerHTML='<strong>Google Cloud Vision</strong><br>문서 전용 OCR로 글자와 단어 위치를 인식합니다.';
+    $('ocrProcessingNote').textContent='Google 서버에서 처리합니다. 실행 전 문서 전송에 동의해야 하며, 프로젝트 사용량에 따라 요금이 발생할 수 있습니다.';
+    $('ocrLayout').closest('label').hidden=true;$('ocrLayout').disabled=true;
+    if(!ocrRecords.length)$('ocrStatus').textContent='최신 모델 채널 · 실행 전에 서버 연결을 확인합니다.';
+  }
 }
 async function startPaddleSession(language,signal,onProgress,layout){
   if(globalThis.PDFPaddleLoad)await waitForOCR(globalThis.PDFPaddleLoad(),signal);
@@ -171,9 +177,10 @@ $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGestur
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
 async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,consent=false,force=false){
   if(ocrRunning||proAbort||!pages.length)return;
-  if(!['tesseract','paddle-vl15','gemini'].includes(provider))return;
+  if(!['tesseract','paddle-vl15','gemini','vision'].includes(provider))return;
+  if(provider==='vision'&&typeof PDFVision==='undefined')return;
   if(provider==='gemini'&&typeof PDFGemini==='undefined')return;
-  if(provider==='gemini'&&consent!==true){toast('민감정보 없는 문서임을 먼저 확인해 주세요.',true);return;}
+  if(['gemini','vision'].includes(provider)&&consent!==true){toast('민감정보 없는 문서임을 먼저 확인해 주세요.',true);return;}
   const list=[...(confirmedList||toolTargets(sample?'current':$('ocrScope').value))];if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let o;try{o=readProOptions();}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
@@ -197,7 +204,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask;
       // Include rendering and cleanup in the deadline, not just the network request.
-      const pageTimer=provider==='tesseract'?null:setTimeout(()=>workController.abort(new Error((provider==='gemini'?'Gemini':'Paddle')+' 페이지 처리 시간이 초과됐습니다. 완료한 결과는 유지됩니다. Tesseract로 다시 시도할 수 있습니다.')),provider==='gemini'?120000:engine?150000:450000);
+      const pageTimer=provider==='tesseract'?null:setTimeout(()=>workController.abort(new Error((provider==='gemini'?'Gemini':provider==='vision'?'Google Vision':'Paddle')+' 페이지 처리 시간이 초과됐습니다. 완료한 결과는 유지됩니다. Tesseract로 다시 시도할 수 있습니다.')),['gemini','vision'].includes(provider)?120000:engine?150000:450000);
       try{
         // Preserve the existing searchable-text skip policy without serializing/reopening the PDF.
         // Shared PDF.js source reads can be cancelled without destroying the document being edited.
@@ -220,9 +227,9 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
               if(m.status==='loading assets'){
                 stage('모델 준비');progress(m.progress*100);busy(true,m.detail||'인식 데이터를 준비하는 중…');return;
               }
-              if(provider==='gemini'){
+              if(provider==='gemini'||provider==='vision'){
                 stage('문서 인식',position>0);
-                const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':'Gemini가 글자를 읽는 중…';
+                const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':(provider==='vision'?'Google Vision':'Gemini')+'이 글자를 읽는 중…';
                 busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
               }
               if(provider==='paddle-vl15'){
@@ -240,7 +247,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
                 busy(true,`${recognizingPage}쪽 글자 인식 · ${position+1}/${list.length}페이지`);
               }else busy(true,'텍스트 인식을 준비하는 중…');
             };
-            engine=provider==='gemini'?await PDFGemini.session(language,recognitionSignal,onProgress,true):provider==='paddle-vl15'?await startPaddleSession(language,recognitionSignal,onProgress,layout):await PDFOCR.session(language,recognitionSignal,onProgress,layout);
+            engine=provider==='vision'?await PDFVision.session(language,recognitionSignal,onProgress,true):provider==='gemini'?await PDFGemini.session(language,recognitionSignal,onProgress,true):provider==='paddle-vl15'?await startPaddleSession(language,recognitionSignal,onProgress,layout):await PDFOCR.session(language,recognitionSignal,onProgress,layout);
           }
           stage('문서 인식',provider==='tesseract');
           const expected=measuredPages?recognizedMs/measuredPages:globalThis.PDFWorkProgress?.previous(timingKey);
@@ -280,9 +287,10 @@ function renderOCRText(){const r=ocrRecords[Number($('ocrResultPage').value)];if
   if(r.skipped||!r.words.length)host.textContent=r.text;else for(const word of r.words){const span=document.createElement('span');span.textContent=word.text+(word.separator??' ');if(word.uncertain||(r.source!=='paddle-vl15'&&Number.isFinite(word.confidence)&&word.confidence<70)){span.className='uncertain';span.title=r.source==='gemini'||r.source==='paddle-vl15'?'확인이 필요한 글줄':`엔진 확신도 ${Math.round(word.confidence)}`;}host.append(span);}
   $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='paddle-vl15'?(ocrCanEmbed(r)?'PaddleOCR-VL-1.5 · '+r.words.length+'개 글줄 · 신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.geometryNote||'줄 위치가 없어 텍스트 저장만 가능합니다. 검색용 PDF에는 포함하지 않습니다.'):r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
   $('ocrConfidenceNote').textContent=r.source==='paddle-vl15'?'신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.source==='gemini'?'밑줄은 확인이 필요한 글줄입니다. '+OCR_LINE_POSITION_NOTE:'밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.';
+  if(r.source==='vision'&&!r.skipped)$('ocrConfidence').textContent=`Google Vision · ${r.words.length}단어 · 단어 위치 포함`+(Number.isFinite(r.confidence)?` · 엔진 확신도 ${Math.round(r.confidence)} / 100`:'');
 }
 $('ocrProvider').onchange=()=>{configureLocalOCR();};
-$('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$('ocrResultPage').onchange=renderOCRText;
+$('ocrSample').onclick=()=>ocrDefaultProvider()==='vision'?requestVisionOCR(true):runOCR(true);$('ocrRun').onclick=()=>ocrDefaultProvider()==='vision'?requestVisionOCR(false):runOCR(false);$('ocrResultPage').onchange=renderOCRText;
 $('ocrAccept').onclick=()=>{if($('ocrAccept').disabled||!ocrRecords.some(ocrCanEmbed))return;ocrAccepted=true;toolsChanged();syncToolsState();};
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
 $('ocrTxt').onclick=()=>toolDownload('\ufeff'+ocrRecords.map(r=>`[${r.page}쪽]\n${r.text}`).join('\n\n'),'인식한 텍스트.txt','text/plain;charset=utf-8');
