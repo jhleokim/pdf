@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');
+const standalone=process.argv.includes('--standalone');
+const version=fs.readFileSync(path.join(root,'VERSION'),'utf8').trim();
+let html=fs.readFileSync(path.join(root,standalone?`dist/PDF-Studio-Standalone-v${version}.html`:'index.html'),'utf8');
+const fixture=fs.readFileSync(path.join(__dirname,'fixtures/ocr-scan.pdf')).toString('base64');
+const code=fs.readFileSync(path.join(__dirname,'gemini-flow-browser.js'),'utf8');
+html=html.replace('<head>','<head><meta http-equiv="Content-Security-Policy" content="connect-src data: blob:">');
+html=html.replace('</body>',`<aside style="position:fixed;left:8px;top:8px;z-index:99999;background:white;color:black;padding:12px;max-width:620px;max-height:85vh;overflow:auto;font:12px system-ui"><b>Gemini OCR flow · synthetic pages only</b><pre id="geminiFlowChecks" style="white-space:pre-wrap">Running</pre></aside><script>const TEST_SCAN='${fixture}',TEST_STANDALONE=${standalone};\n${code}</script></body>`);
+const name=standalone?'gemini-flow-standalone.html':'gemini-flow.html';
+fs.writeFileSync(path.join(__dirname,'fixtures',name),html);
+console.log(`Generated ${name}; real cloud requests are blocked.`);

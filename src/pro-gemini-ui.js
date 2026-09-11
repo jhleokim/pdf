@@ -11,9 +11,9 @@ $('geminiRun').onclick=async()=>{
   if($('geminiTools').hidden||ocrRunning||proAbort)return;
   const list=toolTargets($('geminiScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  geminiPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
+  geminiPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value,force:$('geminiRefresh').checked};
   geminiReady=false;$('geminiConsent').checked=false;$('geminiConfirm').disabled=true;
-  $('geminiConfirmScope').textContent=`${list.length}페이지를 인식합니다. 기존 텍스트가 있는 페이지는 전송하지 않습니다.`;
+  $('geminiConfirmScope').textContent=`${list.length}페이지를 ${geminiPending.force?'새로 인식':'확인하며, 완료한 결과는 재사용'}합니다. 검색 가능한 텍스트가 있는 페이지는 전송하지 않습니다.`;
   $('geminiAvailability').textContent='연결 상태를 확인하는 중…';$('geminiDialog').showModal();
   const ctrl=new AbortController();geminiCheck?.abort();geminiCheck=ctrl;
   const timer=setTimeout(()=>ctrl.abort(),10000);
@@ -32,6 +32,6 @@ $('geminiConfirm').onclick=()=>{
   if(!geminiReady||!$('geminiConsent').checked||!geminiPending||!$('geminiDialog').open||ocrRunning||proAbort)return;
   const pending=geminiPending;let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
   if(pending.fingerprint!==proFingerprint()||pending.language!==$('ocrLanguage').value||pending.keys.some((key,i)=>key!==ocrKey(pending.list[i],options))){$('geminiDialog').close();toast('문서 또는 설정이 바뀌었습니다. 다시 확인해 주세요.',true);return;}
-  $('geminiDialog').close();void runOCR(false,'gemini',pending.list,true);
+  $('geminiDialog').close();$('geminiRefresh').checked=false;void runOCR(false,'gemini',pending.list,true,pending.force);
 };
 syncToolsState();

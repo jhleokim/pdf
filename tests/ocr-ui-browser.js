@@ -32,7 +32,7 @@
     $('ocrAccept').click();await createProResult();assert(proResult,'Gemini PDF export failed');
     const pdf=await pdfjsLib.getDocument({data:proResult.bytes.slice(),...DOC_OPTS}).promise;
     const text=(await(await pdf.getPage(1)).getTextContent()).items.map(x=>x.str).join('');await pdf.destroy();assert(text.includes('123,450'),'Gemini PDF not searchable');record('Explicit consent uploads one page; accepted result exports searchable text');
-    const previous=ocrRecords;hold=true;await $('geminiRun').onclick();$('geminiConsent').checked=true;$('geminiConsent').dispatchEvent(new Event('change'));$('geminiConfirm').click();
+    const previous=ocrRecords;hold=true;$('geminiRefresh').checked=true;await $('geminiRun').onclick();$('geminiConsent').checked=true;$('geminiConsent').dispatchEvent(new Event('change'));$('geminiConfirm').click();
     for(let i=0;i<200&&posts<2;i++)await wait(50);assert(posts===2,'Pending request not reached');$('busyCancel').click();await ready();hold=false;
     assert(ocrRecords===previous&&!proAbort,'Cancellation lost accepted results or locked UI');record('Cancellation aborts request and preserves previous results');
     available=false;await $('geminiRun').onclick();$('geminiConsent').checked=true;$('geminiConsent').dispatchEvent(new Event('change'));assert($('geminiConfirm').disabled,'Missing server secret permits upload');$('geminiDialog').close();await wait(50);record('Missing API key blocks upload with a clear message');

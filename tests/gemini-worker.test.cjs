@@ -114,3 +114,107 @@ test('unknown API paths return JSON; static files use asset binding',async()=>{
   assert.equal((await worker.fetch(new Request('https://pdf.hanatrust.workers.dev/api/unknown'),env)).status,404);
   assert.equal(await(await worker.fetch(new Request('https://pdf.hanatrust.workers.dev/'),{ASSETS:{fetch:async()=>new Response('PDF Studio')}})).text(),'PDF Studio');
 });
+
+test('Gemini 3 uses supported low-latency settings without forcing zero temperature',async()=>{
+  for(const [model,thinking,temperature] of [['gemini-3.8-flash','low',undefined],['gemini-3.7-flash','low',undefined],['gemini-3.1-pro-preview',undefined,undefined],['gemini-2.5-flash',undefined,0]]){
+    let config;
+    const worker=(await mod).createWorker(async(url,init)=>{config=JSON.parse(init.body).generationConfig;return response();});
+    assert.equal((await worker.fetch(request(),{...env,GEMINI_MODEL:model})).status,200);
+    assert.equal(config.thinkingConfig?.thinkingLevel,thinking,model);assert.equal(config.temperature,temperature,model);
+    assert.equal(config.maxOutputTokens,16384);assert.equal(config.responseMimeType,'application/json');
+  }
+});
+
+test('fallback rebuilds model-specific settings and never switches on a credential error',async()=>{
+  const sent=[];
+  const worker=(await mod).createWorker(async(url,init)=>{sent.push(JSON.parse(init.body).generationConfig);return sent.length<3?new Response('',{status:503}):response();},async()=>{});
+  const r=await worker.fetch(request(),{...env,GEMINI_FALLBACK_MODEL:'gemini-2.5-flash'});
+  assert.equal(r.status,200);assert.equal(sent[0].thinkingConfig.thinkingLevel,'low');
+  assert.equal(sent[2].thinkingConfig,undefined);assert.equal(sent[2].temperature,0);
+  let calls=0;
+  const invalid=(await mod).createWorker(async()=>{calls++;return Response.json({error:{details:[{reason:'API_KEY_INVALID'}]}},{status:503});},async()=>assert.fail('credential failure must not retry'));
+  assert.equal((await(await invalid.fetch(request(),env)).json()).code,'GEMINI_KEY_INVALID');assert.equal(calls,1);
+});
+
+test('structured output ignores thought parts and joins split JSON without reordering columns',async()=>{
+  const lines=[{text:'왼쪽 열 위',box:[100,100,130,300],uncertain:false},{text:'왼쪽 열 아래',box:[400,100,430,300],uncertain:true},{text:'오른쪽 열 위',box:[100,600,130,900],uncertain:false}],encoded=JSON.stringify({lines});
+  const worker=(await mod).createWorker(async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{thought:true,text:'private reasoning, not JSON'},{text:encoded.slice(0,23)},{thoughtSignature:'private signature'},{text:encoded.slice(23)}]}}]}));
+  const r=await worker.fetch(request(),env);assert.equal(r.status,200);assert.deepEqual((await r.json()).lines,lines);
+  const blank=(await mod).createWorker(async()=>response({lines:[]}));
+  assert.deepEqual((await(await blank.fetch(request(),env)).json()).lines,[]);
+});
+
+test('blocked, incomplete and truncated results give distinct errors and no partial lines',async()=>{
+  const cases=[
+    [{promptFeedback:{blockReason:'SAFETY'}},422,'GEMINI_CONTENT_BLOCKED'],
+    [{candidates:[{finishReason:'SPII'}]},422,'GEMINI_CONTENT_BLOCKED'],
+    [{candidates:[{finishReason:'RECITATION'}]},422,'GEMINI_RECITATION'],
+    [{candidates:[{finishReason:'MAX_TOKENS',content:{parts:[{text:JSON.stringify(output)}]}}]},502,'GEMINI_RESULT_TRUNCATED'],
+    [{candidates:[{finishReason:'OTHER'}]},502,'GEMINI_RESULT_INCOMPLETE'],
+    [{candidates:[{finishReason:'STOP',content:{parts:[{thought:true,text:JSON.stringify(output)}]}}]},502,'GEMINI_RESULT_INVALID'],
+    [{candidates:[]},502,'GEMINI_RESULT_INCOMPLETE']
+  ];
+  for(const [value,status,code] of cases){
+    let calls=0;const worker=(await mod).createWorker(async()=>{calls++;return Response.json(value);});
+    const r=await worker.fetch(request(),env),data=await r.json();
+    assert.equal(r.status,status);assert.equal(data.code,code);assert.equal(data.lines,undefined);assert.equal(calls,1);
+  }
+});
+
+test('provider cooldown uses the longest Retry-After or RetryInfo delay without automatic quota retry',async()=>{
+  for(const [header,delay,seconds] of [['120','40.2s',120],['2','15.2s',16],[null,'0.1s',1],['invalid','invalid',60]]){
+    let calls=0;
+    const worker=(await mod).createWorker(async()=>{calls++;return Response.json({error:{details:[{'@type':'type.googleapis.com/google.rpc.RetryInfo',retryDelay:delay}]}},{status:429,headers:header?{'Retry-After':header}:{}});});
+    const r=await worker.fetch(request(),env),data=await r.json();
+    assert.equal(r.status,429);assert.equal(data.retryAfter,seconds);assert.equal(r.headers.get('retry-after'),String(seconds));assert.equal(calls,1);
+  }
+  const worker=(await mod).createWorker(async()=>{throw Error('unexpected upstream');});
+  const r=await worker.fetch(request(),{...env,OCR_RATE_LIMIT:{limit:async()=>({success:false})}}),data=await r.json();
+  assert.equal(data.code,'GEMINI_RATE_LIMIT');assert.equal(data.retryAfter,60);
+});
+
+test('long provider RetryInfo cooldown prevents availability retry and reaches the client',async()=>{
+  let calls=0;
+  const worker=(await mod).createWorker(async()=>{calls++;return Response.json({error:{details:[{'@type':'type.googleapis.com/google.rpc.RetryInfo',retryDelay:'30s'}]}},{status:503});},async()=>assert.fail('must not retry before cooldown'));
+  const r=await worker.fetch(request(),env),data=await r.json();
+  assert.equal(r.status,502);assert.equal(data.code,'GEMINI_UPSTREAM_503');assert.equal(data.retryAfter,30);assert.equal(r.headers.get('retry-after'),'30');assert.equal(calls,1);
+});
+
+test('slow availability failures stop before a retry with no useful deadline remaining',async()=>{
+  let now=0,calls=0,limits=0;
+  const worker=(await mod).createWorker(async()=>{calls++;now=78000;return new Response('',{status:503});},async()=>assert.fail('must not spend the remaining deadline waiting'),()=>now);
+  const r=await worker.fetch(request(),{...env,OCR_RATE_LIMIT:{limit:async()=>{limits++;return {success:true};}}});
+  assert.equal(r.status,502);assert.equal(calls,1);assert.equal(limits,1);
+});
+
+test('cancelling after response headers cancels a pending body read and never returns OCR output',async()=>{
+  for(const upstreamStatus of [200,503]){
+    let began,cancelled=0,calls=0;
+    const reading=new Promise(resolve=>{began=resolve;});
+    const stream=new ReadableStream({pull(){began();return new Promise(()=>{});},cancel(){cancelled++;}},{highWaterMark:0});
+    const ctrl=new AbortController(),worker=(await mod).createWorker(async()=>{calls++;return new Response(stream,{status:upstreamStatus});});
+    const pending=worker.fetch(new Request(request(),{signal:ctrl.signal}),env);
+    await reading;ctrl.abort();
+    const r=await pending,data=await r.json();
+    assert.equal(r.status,504);assert.equal(data.code,'GEMINI_CANCELLED');assert.equal(data.lines,undefined);assert.equal(cancelled,1);assert.equal(calls,1);
+  }
+});
+
+test('the shared timeout also terminates a stalled response body after headers',async(t)=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  let began,cancelled=0;
+  const reading=new Promise(resolve=>{began=resolve;});
+  const stream=new ReadableStream({pull(){began();return new Promise(()=>{});},cancel(){cancelled++;}},{highWaterMark:0});
+  const worker=(await mod).createWorker(async()=>new Response(stream)),pending=worker.fetch(request(),env);
+  await reading;t.mock.timers.tick(80000);
+  const r=await pending,data=await r.json();
+  assert.equal(r.status,504);assert.equal(data.code,'GEMINI_TIMEOUT');assert.equal(data.lines,undefined);assert.equal(cancelled,1);
+});
+
+test('invalid and oversized successful provider responses are upstream failures, not invalid user requests',async()=>{
+  for(const [value,code] of [['<html>private provider response</html>','GEMINI_RESULT_INVALID'],['x'.repeat(2*1024*1024+1),'GEMINI_RESULT_TOO_LARGE']]){
+    const worker=(await mod).createWorker(async()=>new Response(value));
+    const r=await worker.fetch(request(),env),data=await r.json();
+    assert.equal(r.status,502);assert.equal(data.code,code);assert.equal(data.lines,undefined);assert.ok(JSON.stringify(data).length<300);
+  }
+});
