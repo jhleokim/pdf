@@ -16,6 +16,8 @@ export async function createPaddleSession({signal,onProgress,assetLoader,configu
   if(adapter.limits.maxStorageBufferBindingSize<512*1024*1024)throw Error('이 장치의 WebGPU 메모리 한도가 Paddle 모델 실행에 부족합니다.');
   if(typeof assetLoader!=='function'||typeof configureORT!=='function')throw Error('Paddle 모델 로더를 준비하지 못했습니다. 페이지를 새로 열어 주세요.');
   await configureORT(ort,signal,onProgress);
+  // Use the same high-performance adapter that passed preflight.
+  ort.env.webgpu.adapter=adapter;
   const assetSource=assetLoader;
   const emit=(status,detail,progress=0)=>onProgress?.({status,detail,progress});
   const check=()=>{signal?.throwIfAborted();if(closed)throw new DOMException('취소했습니다.','AbortError');};
@@ -30,7 +32,9 @@ export async function createPaddleSession({signal,onProgress,assetLoader,configu
       const options={executionProviders:['webgpu'],graphOptimizationLevel:'all'};
       if(key==='embedding')options.externalData=[{path:'embedding.onnx.data',data:await load('onnx/embedding.onnx.data')}];
       if(key==='decoder')options.preferredOutputLocation=Object.fromEntries(Array.from({length:18},(_,i)=>['key','value'].map(kind=>['present.'+i+'.'+kind,'gpu-buffer'])).flat());
-      sessions[key]=await ort.InferenceSession.create(await load('onnx/'+file),options);
+      const modelBytes=await load('onnx/'+file);
+      emit('preparing engine',label+' WebGPU 초기화 중');
+      sessions[key]=await ort.InferenceSession.create(modelBytes,options);
       check();
     }
     check();emit('preparing engine','토크나이저 준비');

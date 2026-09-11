@@ -20,8 +20,8 @@ $('geminiRun').onclick=async()=>{
   try{
     const status=await PDFGemini.available(ctrl.signal);
     if(geminiCheck!==ctrl||!$('geminiDialog').open)return;
-    geminiReady=!!status.available;
-    $('geminiAvailability').textContent=geminiReady?'확인 후 인식을 시작할 수 있습니다.':'Gemini 연결이 아직 설정되지 않았습니다. 관리자에게 문의하세요.';
+    geminiReady=!!status.available&&!status.retryAfter;
+    $('geminiAvailability').textContent=status.retryAfter?'Gemini 호출 한도에 도달했습니다. '+status.retryAfter+'초 뒤 이 창을 다시 열어 주세요. 한도 초기화까지 더 기다려야 할 수 있습니다.':geminiReady?'확인 후 인식을 시작할 수 있습니다.':'Gemini 연결이 아직 설정되지 않았습니다. 관리자에게 문의하세요.';
     $('geminiConfirm').disabled=!geminiReady||!$('geminiConsent').checked;
   }catch(e){if(geminiCheck===ctrl&&$('geminiDialog').open)$('geminiAvailability').textContent=e.name==='AbortError'?'연결을 확인하지 못했습니다. 잠시 후 다시 시도하세요.':e.message;}
   finally{clearTimeout(timer);}

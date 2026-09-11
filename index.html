@@ -906,6 +906,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 #busy .box{min-width:min(420px,90vw);gap:12px;padding:22px 24px;box-sizing:border-box}#busyText{flex:1;min-width:140px}#busyCancel{margin-left:0}
 .busy-metrics{flex:0 0 100%;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1.6}.busy-stat{display:flex;justify-content:space-between;gap:12px}.busy-stat strong{color:var(--ink);font-size:13px}
 #busyProgress{display:block;width:100%;height:6px;margin:10px 0 8px;appearance:none;border:0;border-radius:2px;overflow:hidden;background:var(--line)}#busyProgress::-webkit-progress-bar{background:var(--line)}#busyProgress::-webkit-progress-value{background:var(--brand,#008579)}#busyProgress::-moz-progress-bar{background:var(--brand,#008579)}
+#ocrStatus.ocr-error{padding:10px 12px;border:1px solid #b65b52;border-radius:4px;color:var(--text);background:color-mix(in srgb,#b65b52 9%,var(--panel));line-height:1.65}
 .stamp-drop{position:relative;display:flex;align-items:center;gap:10px;padding:16px 12px;border:1px dashed var(--line-2);border-radius:5px;cursor:pointer;background:var(--surface-2)}
 .stamp-drop span{display:grid;gap:6px;font-size:13px;font-weight:600}.stamp-drop small{font-size:11px;font-weight:400;color:var(--ink-3)}
 .stamp-drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.stamp-drop:focus-within,.stamp-drop.over{outline:2px solid var(--action);outline-offset:2px}
@@ -4100,7 +4101,7 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
 <div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button><div class="busy-metrics" id="busyMetrics" aria-live="off"><div class="busy-stat"><strong id="busyPercent">전체 작업 0%</strong><span id="busyElapsed">0분 00초 경과</span></div><progress id="busyProgress" max="100" value="0" aria-label="작업 진행률"></progress><div id="busyRemaining">남은 시간 계산 중</div></div></div></div>
 <!-- work-progress-ui:end -->
 <!-- paddle-bootstrap:start -->
-<script id="paddle-bootstrap">globalThis.PDFTesseractManifest={"ocr-client":{"bytes":62961,"sha256":"000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e","file":"tesseract.min.js","url":"/ocr/tesseract/7.0.0/000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e-tesseract.min.js"},"ocr-core":{"bytes":3896484,"sha256":"eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680","file":"tesseract-core-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680-tesseract-core-lstm.wasm.js"},"ocr-core-fast":{"bytes":3905767,"sha256":"861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3","file":"tesseract-core-relaxedsimd-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3-tesseract-core-relaxedsimd-lstm.wasm.js"},"ocr-worker":{"bytes":111307,"sha256":"576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d","file":"worker.min.js","url":"/ocr/tesseract/7.0.0/576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d-worker.min.js"},"ocr-lang-kor":{"bytes":1572336,"sha256":"78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126","file":"lang/kor.traineddata.gz","url":"/ocr/tesseract/7.0.0/78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126-kor.traineddata.gz"},"ocr-lang-eng":{"bytes":2952873,"sha256":"45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91","file":"lang/eng.traineddata.gz","url":"/ocr/tesseract/7.0.0/45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91-eng.traineddata.gz"}};globalThis.PDFPaddleLoad=()=>globalThis.PDFPaddleReady??=(import("/ocr/paddle/runtime-ac8954536940eb64.mjs").catch(error=>{globalThis.PDFPaddleReady=null;throw error;}));</script>
+<script id="paddle-bootstrap">globalThis.PDFTesseractManifest={"ocr-client":{"bytes":62961,"sha256":"000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e","file":"tesseract.min.js","url":"/ocr/tesseract/7.0.0/000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e-tesseract.min.js"},"ocr-core":{"bytes":3896484,"sha256":"eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680","file":"tesseract-core-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680-tesseract-core-lstm.wasm.js"},"ocr-core-fast":{"bytes":3905767,"sha256":"861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3","file":"tesseract-core-relaxedsimd-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3-tesseract-core-relaxedsimd-lstm.wasm.js"},"ocr-worker":{"bytes":111307,"sha256":"576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d","file":"worker.min.js","url":"/ocr/tesseract/7.0.0/576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d-worker.min.js"},"ocr-lang-kor":{"bytes":1572336,"sha256":"78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126","file":"lang/kor.traineddata.gz","url":"/ocr/tesseract/7.0.0/78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126-kor.traineddata.gz"},"ocr-lang-eng":{"bytes":2952873,"sha256":"45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91","file":"lang/eng.traineddata.gz","url":"/ocr/tesseract/7.0.0/45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91-eng.traineddata.gz"}};globalThis.PDFPaddleLoad=()=>globalThis.PDFPaddleReady??=(import("/ocr/paddle/runtime-34f62179597d62cf.mjs").catch(error=>{globalThis.PDFPaddleReady=null;throw error;}));</script>
 <!-- paddle-bootstrap:end -->
 <!-- pro-runtime:start -->
 <script id="work-progress">
@@ -4960,6 +4961,8 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
 (() => {
   'use strict';
   const MAX_IMAGE=8*1024*1024,MAX_RESPONSE=2*1024*1024;
+  let retryUntil=0;
+  const cooldown=()=>Math.max(0,Math.ceil((retryUntil-Date.now())/1000));
   function endpoint(){
     if(!/^https?:$/.test(location.protocol))throw new Error('Gemini 인식은 웹 버전에서 사용할 수 있습니다.');
     return new URL('/api/ocr/gemini',location.href).href;
@@ -5021,12 +5024,13 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
       signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return;}reader.readAsDataURL(blob);
     });
   }
-  async function available(signal){return responseJSON(await fetch(endpoint(),{method:'GET',signal,credentials:'omit',cache:'no-store'}),signal);}
+  async function available(signal){const wait=cooldown();if(wait)return {available:true,retryAfter:wait};return responseJSON(await fetch(endpoint(),{method:'GET',signal,credentials:'omit',cache:'no-store'}),signal);}
   async function session(language,signal,onProgress,consent){
     if(consent!==true)throw new Error('민감정보 없는 문서임을 먼저 확인해 주세요.');
     signal.throwIfAborted();const url=endpoint();let closed=false,active=null;
     return {close:async()=>{closed=true;active?.abort();},async recognize(canvas){
       signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
+      const wait=cooldown();if(wait)throw failure('Gemini 호출 한도에 도달했습니다. '+wait+'초 뒤 다시 시도하세요. 한도가 초기화되지 않았다면 더 기다려야 합니다.','GEMINI_QUOTA',429,wait);
       if(active)throw new Error('이전 페이지 인식이 끝난 뒤 다시 시도하세요.');
       const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(),90000),abort=()=>timeout.abort();active=timeout;
       signal.addEventListener('abort',abort,{once:true});
@@ -5047,6 +5051,7 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
         return {text:words.map(w=>w.text).join('\n'),words,confidence:null,source:'gemini',model:data.model};
       }catch(e){
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
+        if(e.status===429)retryUntil=Date.now()+Math.max(1,e.retryAfter||60)*1000;
         if(timeout.signal.aborted)throw failure('Gemini 응답 시간이 초과됐습니다. 완료한 페이지는 유지되므로 다시 눌러 이어서 인식하세요.','GEMINI_TIMEOUT',504);
         throw e;
       }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);active=null;}
@@ -5604,7 +5609,7 @@ function resetProOptions(){
   for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}
   refreshProControls();proInvalidate();syncProState();scheduleLivePreview();toast('Pro 설정을 초기화했습니다');
 }
-function checkProAbort(){if(proAbort?.signal.aborted)throw new DOMException('취소했습니다.','AbortError');}
+function checkProAbort(){proAbort?.signal.throwIfAborted();}
 function startProWork(label){
   cancelLivePreview();
   proAbort=new AbortController();$('busyCancel').hidden=false;$('busyCancel').disabled=false;
@@ -5751,7 +5756,7 @@ function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='p
 function configureLocalOCR(){
   const paddle=ocrDefaultProvider()==='paddle-vl15';
   $('ocrDescription').innerHTML='<strong>'+(paddle?'PaddleOCR-VL-1.5':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
-  $('ocrProcessingNote').textContent=paddle?'PC의 WebGPU 환경이 필요합니다. 첫 사용에는 모델 약 900MB를 다운로드하며, 문서는 기기에서 처리합니다.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
+  $('ocrProcessingNote').textContent=paddle?'PC의 WebGPU 환경이 필요합니다. 첫 사용에는 모델 약 900MB를 다운로드합니다. 페이지 인식은 최대 2분이며, 응답이 멈추면 자동 종료합니다. 빠른 인식은 Tesseract를 이용하세요.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
   if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
   $('ocrLanguage').closest('label').hidden=paddle;
   $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;
@@ -5917,7 +5922,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   const list=[...(confirmedList||toolTargets(sample?'current':$('ocrScope').value))];if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let o;try{o=readProOptions();}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
-  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='';
+  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='',failed=false;
   const unchanged=()=>{const current=readProOptions();return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
   const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
   if(force)for(const p of list)ocrCheckpoints.delete(provider+':'+p.uid);
@@ -5927,6 +5932,8 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   const stage=(name,known=true)=>{if(workStage!==name){workStage=name;globalThis.PDFWorkProgress?.phase(name,known);}};
   ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':provider==='paddle-vl15'?'PaddleOCR-VL-1.5 모델을 준비하는 중…':'텍스트 인식을 준비하는 중…');
   stage('문서 준비');
+  const workController=proAbort,workSignal=workController.signal;
+  $('ocrStatus').classList.remove('ocr-error');
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
@@ -5934,6 +5941,8 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask;
+      // Include rendering and cleanup in the deadline, not just the network request.
+      const pageTimer=provider==='tesseract'?null:setTimeout(()=>workController.abort(new Error((provider==='gemini'?'Gemini':'Paddle')+' 페이지 처리 시간이 초과됐습니다. 완료한 결과는 유지됩니다. Tesseract로 다시 시도할 수 있습니다.')),provider==='gemini'?120000:engine?150000:450000);
       try{
         // Preserve the existing searchable-text skip policy without serializing/reopening the PDF.
         // Shared PDF.js source reads can be cancelled without destroying the document being edited.
@@ -5942,9 +5951,9 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         checkProAbort();update(.05);
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
-        const doc=await buildEditedDocument([p],{signal:proAbort.signal});checkProAbort();
-        const processed=await PDFProPipeline.apply(doc,o,{signal:proAbort.signal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]});checkProAbort();
-        pdfTask=pdfjsLib.getDocument({data:await processed.doc.save(),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,proAbort.signal),page=await waitForOCR(pdf.getPage(1),proAbort.signal),base=page.getViewport({scale:1});
+        const doc=await waitForOCR(buildEditedDocument([p],{signal:workSignal}),workSignal);checkProAbort();
+        const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]}),workSignal);checkProAbort();
+        pdfTask=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),workSignal),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,workSignal),page=await waitForOCR(pdf.getPage(1),workSignal),base=page.getViewport({scale:1});
         const scale=Math.min(300/72,3400/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
@@ -5962,6 +5971,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
                 busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
               }
               if(provider==='paddle-vl15'){
+                if(m.status==='preparing engine')stage('WebGPU 준비',false);
                 const label=m.status==='recognizing text'?'Paddle 텍스트 인식 중':'Paddle 모델 준비 중';
                 const detail=m.detail?' · '+String(m.detail):'';
                 busy(true,recognizingPage+'쪽 · '+label+detail+' ('+(position+1)+'/'+list.length+')');
@@ -5981,12 +5991,12 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
           const expected=measuredPages?recognizedMs/measuredPages:globalThis.PDFWorkProgress?.previous(timingKey);
           if(provider!=='tesseract'&&expected){globalThis.PDFWorkProgress?.estimate(expected*(list.length-position));globalThis.PDFWorkProgress?.plan(position/list.length*95,(position+1)/list.length*95,expected);}
           const recognizedAt=performance.now();
-          const result=await engine.recognize(canvas);checkProAbort();
+          const result=await waitForOCR(engine.recognize(canvas),workSignal);checkProAbort();
           recognizedMs+=performance.now()-recognizedAt;measuredPages++;
           globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
           const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
-      }finally{await pdfTask?.destroy();}
+      }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});}
       progress((i+1)/list.length*95);await idle();
     }
     if(!unchanged())throw new Error('처리 중 문서 또는 설정이 바뀌었습니다. 다시 인식해 주세요.');
@@ -5996,13 +6006,15 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
     const skipped=fresh.filter(r=>r.skipped).length;
     status=`${provider==='gemini'?'Gemini · ':provider==='paddle-vl15'?'PaddleOCR-VL-1.5 · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀.${outdated?' 설정이 바뀐 이전 결과 '+outdated+'쪽은 제외했습니다.':''}${ocrRecords.some(ocrCanEmbed)?' 내용을 확인한 뒤 PDF 포함을 선택하세요.':fresh.some(ocrHasText)?' 텍스트는 저장할 수 있지만 검색용 PDF에 포함할 위치 정보가 없습니다.':' 기존 검색 텍스트를 유지합니다.'}`;
   }catch(e){
+    if(workSignal.aborted)e=workSignal.reason;
+    failed=e.name!=='AbortError';
     const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':e.message||'텍스트 인식에 실패했습니다.';
     let resumable=false;try{resumable=unchanged();}catch(_){}
     status=message+(resumable&&completed+reused?` 완료한 ${completed+reused}쪽은 이 탭에서 보관합니다. 다시 인식하면 완료한 페이지를 재사용합니다.`:'')+(ocrRecords.length?' 이전 인식 결과는 유지됩니다.':'');
     if(e.retryAfter)status+=` 약 ${Math.ceil(e.retryAfter)}초 뒤 다시 시도하세요.`;
     toast(message,e.name!=='AbortError');
   }finally{
-    try{await engine?.close();}finally{ocrRunning=false;finishProWork();if(status)$('ocrStatus').textContent=status;}
+    try{if(engine)await waitForOCR(engine.close(),AbortSignal.timeout(2000)).catch(()=>{});}finally{ocrRunning=false;finishProWork();if(status)$('ocrStatus').textContent=status;$('ocrStatus').classList.toggle('ocr-error',failed);if(failed){$('ocrSection').open=true;$('ocrStatus').scrollIntoView({block:'nearest',behavior:'smooth'});}}
   }
 }
 function renderOCRResults(){
@@ -6044,8 +6056,8 @@ $('geminiRun').onclick=async()=>{
   try{
     const status=await PDFGemini.available(ctrl.signal);
     if(geminiCheck!==ctrl||!$('geminiDialog').open)return;
-    geminiReady=!!status.available;
-    $('geminiAvailability').textContent=geminiReady?'확인 후 인식을 시작할 수 있습니다.':'Gemini 연결이 아직 설정되지 않았습니다. 관리자에게 문의하세요.';
+    geminiReady=!!status.available&&!status.retryAfter;
+    $('geminiAvailability').textContent=status.retryAfter?'Gemini 호출 한도에 도달했습니다. '+status.retryAfter+'초 뒤 이 창을 다시 열어 주세요. 한도 초기화까지 더 기다려야 할 수 있습니다.':geminiReady?'확인 후 인식을 시작할 수 있습니다.':'Gemini 연결이 아직 설정되지 않았습니다. 관리자에게 문의하세요.';
     $('geminiConfirm').disabled=!geminiReady||!$('geminiConsent').checked;
   }catch(e){if(geminiCheck===ctrl&&$('geminiDialog').open)$('geminiAvailability').textContent=e.name==='AbortError'?'연결을 확인하지 못했습니다. 잠시 후 다시 시도하세요.':e.message;}
   finally{clearTimeout(timer);}

@@ -10,7 +10,7 @@ function harness(options={}){
     readAsDataURL(blob){reader=this;if(options.holdRead)return;this.result='data:image/jpeg;base64,'+(blob.base64||'/9j/AA==');queueMicrotask(()=>this.onload?.());}
     abort(){this.aborted=true;this.onabort?.();}
   }
-  const context={URL,AbortController,DOMException,Uint8Array,TextDecoder,Date,FileReader:Reader,
+  const context={URL,AbortController,DOMException,Uint8Array,TextDecoder,Date:options.Date||Date,FileReader:Reader,
     location:{protocol:options.protocol||'https:',href:options.protocol==='file:'?'file:///test/PDF-Studio.html':'https://pdf.example.test/studio'},
     setTimeout:(callback,ms)=>{const id=++timerId;timers.set(id,{callback,ms});return id;},clearTimeout:id=>timers.delete(id),
     fetch:async(url,init)=>{calls.push({url,init});return options.fetch?options.fetch(url,init):success();}};
@@ -77,6 +77,14 @@ test('server error code and retry delay reach the caller without another upload'
     await assert.rejects(engine.recognize(h.canvas),error=>error.message==='Try later'&&error.code==='GEMINI_RATE_LIMIT'&&error.status===429&&error.retryAfter===item.expected);
     assert.equal(h.calls.length,1);
   }
+});
+test('quota cooldown blocks repeat uploads and allows a later manual retry',async()=>{
+ let time=100000;class Clock extends Date{static now(){return time;}}
+ const h=harness({Date:Clock,fetch:async()=>h.calls.length===1?Response.json({error:'quota',code:'GEMINI_QUOTA',retryAfter:30},{status:429}):success()}),{engine}=await session(h);
+ await assert.rejects(engine.recognize(h.canvas),e=>e.code==='GEMINI_QUOTA');
+ const available=await h.api.available(new AbortController().signal);assert.equal(available.retryAfter,30);
+ await assert.rejects(engine.recognize(h.canvas),e=>e.code==='GEMINI_QUOTA');assert.equal(h.calls.length,1);assert.equal(h.qualities.length,1);
+ time+=31000;assert.equal((await engine.recognize(h.canvas)).text,line.text);assert.equal(h.calls.length,2);
 });
 
 test('malformed lines reject the whole result instead of silently dropping text',async()=>{

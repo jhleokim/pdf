@@ -122,7 +122,7 @@ function resetProOptions(){
   for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}
   refreshProControls();proInvalidate();syncProState();scheduleLivePreview();toast('Pro 설정을 초기화했습니다');
 }
-function checkProAbort(){if(proAbort?.signal.aborted)throw new DOMException('취소했습니다.','AbortError');}
+function checkProAbort(){proAbort?.signal.throwIfAborted();}
 function startProWork(label){
   cancelLivePreview();
   proAbort=new AbortController();$('busyCancel').hidden=false;$('busyCancel').disabled=false;
