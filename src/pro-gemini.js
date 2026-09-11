@@ -1,15 +1,15 @@
 /* Optional online OCR. Only explicitly confirmed pages are sent; no persistent cache. */
-(() => {
-  'use strict';
+'use strict';
+function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='gemini',normalize=null){
   const MAX_IMAGE=8*1024*1024,MAX_RESPONSE=2*1024*1024;
   let retryUntil=0;
   const cooldown=()=>Math.max(0,Math.ceil((retryUntil-Date.now())/1000));
   function endpoint(){
     if(!/^https?:$/.test(location.protocol))throw new Error('Gemini 인식은 웹 버전에서 사용할 수 있습니다.');
-    return new URL('/api/ocr/gemini',location.href).href;
+    return new URL(path,location.href).href;
   }
   function failure(message,code,status,retryAfter){
-    const error=new Error(message);error.code=code;error.status=status;
+    const error=new Error(message.replaceAll('Gemini',label));error.code=provider==='vision'?code?.replace(/^GEMINI_/,'VISION_'):code;error.status=status;
     if(Number.isFinite(retryAfter)&&retryAfter>0)error.retryAfter=Math.ceil(retryAfter);
     return error;
   }
@@ -81,6 +81,7 @@
         const response=await fetch(url,{method:'POST',signal:timeout.signal,credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'})});
         onProgress?.({status:'reading result'});const data=await responseJSON(response,timeout.signal);
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
+        if(normalize)return normalize(data);
         if(!Array.isArray(data.lines)||data.lines.length>1500)throw failure('Gemini 결과 형식이 올바르지 않습니다.','GEMINI_RESULT_INVALID');
         let chars=0;
         const words=data.lines.map(line=>{
@@ -89,7 +90,7 @@
           const [t,l,b,r]=line.box;if(r<=l||b<=t)throw failure('Gemini 줄 위치를 확인하지 못했습니다.','GEMINI_RESULT_INVALID');
           return {text:line.text.trim(),box:[l/1000,t/1000,r/1000,b/1000],separator:'\n',confidence:null,uncertain:line.uncertain};
         });
-        return {text:words.map(w=>w.text).join('\n'),words,confidence:null,source:'gemini',model:data.model};
+        return {text:words.map(w=>w.text).join('\n'),words,confidence:null,source:provider,model:data.model};
       }catch(e){
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
         if(e.status===429)retryUntil=Date.now()+Math.max(1,e.retryAfter||60)*1000;
@@ -98,5 +99,6 @@
       }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);active=null;}
     }};
   }
-  globalThis.PDFGemini={available,session};
-})();
+  return {available,session};
+}
+globalThis.PDFGemini=createCloudOCRClient();

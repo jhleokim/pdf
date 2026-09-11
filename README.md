@@ -69,6 +69,20 @@ Tesseract를 기본으로 제공하고 인식 모델 드롭다운에서 PaddleOC
 설정을 바꾸면 **선택한 페이지**에 자동 반영됩니다. 전체 페이지 목록은 함께 유지되므로, 목록에서 다른 페이지를 선택하거나 정리하면서 결과를 확인할 수 있습니다. 미리보기는 열고 닫을 수 있고, 이전/다음 페이지로 이동할 수 있습니다. 우측 하단 **원본 보기**에 마우스를 올리면 Pro 적용 전 편집본을 보여주며, 터치·키보드에서는 버튼으로 전환합니다. 지원되지 않는 이미지는 원본 유지 사유를 표시합니다. 전체 문서에 설정을 적용하여 저장하려면 **결과 만들기**를 누릅니다. 상단 저장과 Ctrl/⌘+S는 Basic에서 편집본 저장, Pro에서 결과 만들기를 실행합니다. 원본 파일이나 편집 중인 문서를 덮어쓰지 않습니다. 결과 생성 후 편집이나 설정을 바꾸면 이전 결과는 닫힙니다.
 
 ## v3.8 도장·서명과 텍스트 인식
+### Google Cloud Vision OCR (웹 전용)
+
+Pro → 텍스트 인식 → 인식 모델에서 `Google Vision · 클라우드`를 선택합니다. 기본 Tesseract와 Paddle은 기기 내 처리이며, Vision은 전송 동의 후에만 서버를 호출합니다. standalone에는 Vision 옵션·클라이언트·동의 화면을 넣지 않습니다.
+
+Cloud Vision OCR 엔진은 오픈소스 모델이 아닙니다. 공개 Apache 2.0 코드는 [클라이언트 라이브러리](https://github.com/googleapis/google-cloud-node/tree/main/packages/google-cloud-vision)입니다. 여기서는 SDK 대신 [REST v1 `images:annotate`](https://docs.cloud.google.com/vision/docs/reference/rest/v1/images/annotate)를 사용합니다. 문서용 `DOCUMENT_TEXT_DETECTION`, 모델 채널 `builtin/latest`를 명시합니다. [공식 모델 옵션](https://docs.cloud.google.com/vision/docs/reference/rest/v1/Feature)은 `builtin/stable`, `builtin/latest`, OCR용 `builtin/weekly`를 지원합니다. `latest`는 Google이 갱신하는 별칭이며 다운로드 가능한 고정 모델 버전이 아닙니다.
+
+설정 방법:
+
+1. Google Cloud 프로젝트에서 Cloud Vision API와 결제를 설정합니다. [공식 요금](https://cloud.google.com/vision/pricing)은 무료 할당량 이후 종량제이며, Google Cloud의 별도 할당량 제한을 확인합니다. 앱의 분당 요청 제한은 월별 요금 상한이 아닙니다.
+2. 해당 프로젝트의 API 키를 Cloud Vision API 용도로 제한하고, Cloudflare Worker `pdf`의 **Secret** `GOOGLE_VISION_API_KEY`로 저장합니다. Gemini 키는 자동 재사용하지 않습니다. 키를 저장소나 HTML에 넣지 않습니다.
+3. 새로고침하고 Vision을 선택해 한 페이지를 시험합니다. 서버 키가 없으면 동의해도 실행 버튼을 활성화하지 않습니다. 연결 확인은 설정 존재 여부만 확인하며, 실제 인증·할당량은 인식 요청 시 검증됩니다.
+
+서버는 한 번에 한 페이지를 전송하며 원본 이미지 URI·Cloud Storage 저장은 사용하지 않습니다. 문서와 결과를 앱 로그나 저장소에 저장하지 않습니다. 응답은 단어별 위치와 확신도로 변환하고, 일부 오류나 잘못된 좌표를 성공 결과로 취급하지 않습니다. 요청은 45초, 클라이언트는 90초, 전처리 포함 페이지 처리는 2분으로 제한합니다. Vision 인증이 연결되기 전 자동 테스트는 응답 구조·보안·오류 경로만 검증하며 실인식 품질을 입증하지 않습니다.
+
 
 ### 도장·서명 (STAMP)
 

@@ -1,4 +1,5 @@
 // Documents and OCR responses are never persisted or written to application logs.
+import {createVisionWorker} from './vision.mjs';
 const PATH='/api/ocr/gemini',MAX_BODY=8*1024*1024+4096,MAX_RESPONSE=2*1024*1024,REQUEST_TIMEOUT=80000;
 class RequestError extends Error {
   /**
@@ -13,7 +14,7 @@ class RequestError extends Error {
 const json=(data,status=200,headers={})=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 /** @param {Request | Response} request @param {number} max @param {AbortSignal} [signal] @returns {Promise<unknown>} */
 async function readJSON(request,max,signal){
-  signal?.throwIfAborted();
+  if(signal?.aborted){await request.body?.cancel().catch(()=>{});signal.throwIfAborted();}
   if(Number(request.headers.get('content-length'))>max){await request.body?.cancel();throw new RequestError(413,'처리할 데이터가 너무 큽니다.');}
   if(!request.body)throw new RequestError(400,'요청 내용이 없습니다.');
   const reader=request.body.getReader(),chunks=[];let size=0;
@@ -109,10 +110,10 @@ function resultLines(input){
   let parsed;try{parsed=JSON.parse(text);}catch(_){throw new RequestError(502,'Gemini 인식 결과를 읽지 못했습니다.','GEMINI_RESULT_INVALID');}
   return validLines(parsed);
 }
-export function createWorker(upstreamFetch=fetch,wait=retryDelay,now=Date.now){return {
+export function createWorker(upstreamFetch=fetch,wait=retryDelay,now=Date.now){const vision=createVisionWorker(upstreamFetch,{readJSON,json,RequestError,validInput});return {
   /** @param {Request} request @param {Env} env */
   async fetch(request,env){
-  const url=new URL(request.url);if(url.pathname!==PATH){if(url.pathname.startsWith('/api/'))return json({error:'없는 API 경로입니다.'},404);return env.ASSETS.fetch(request);}
+  const url=new URL(request.url);if(url.pathname==='/api/ocr/vision')return vision.fetch(request,env);if(url.pathname!==PATH){if(url.pathname.startsWith('/api/'))return json({error:'없는 API 경로입니다.'},404);return env.ASSETS.fetch(request);}
   const origin=request.headers.get('origin');
   // Retain null Origin for older clients; current standalone builds exclude cloud OCR.
   const allowed=!origin||origin===url.origin||origin==='null';
