@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "results": [
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "output_format": "plain",
+      "image_sha256": "3e72f4b4a309c9b6ae0c9f2690f96178b02fa942be4aa74cdaaf71bf9a1d63f1",
+      "cer_collapsed_whitespace": {
+        "reference_characters": 330,
+        "prediction_characters": 330,
+        "edit_distance": 1,
+        "cer": 0.0030303030303030303,
+        "accuracy_clamped": 0.996969696969697
+      },
+      "cer_without_whitespace": {
+        "reference_characters": 269,
+        "prediction_characters": 269,
+        "edit_distance": 1,
+        "cer": 0.0037174721189591076,
+        "accuracy_clamped": 0.9962825278810409
+      },
+      "key_fields_matched": 6,
+      "key_fields_total": 6,
+      "key_fields": [
+        {
+          "name": "document_id",
+          "text": "TEST-2026-0911-A",
+          "kind": "identifier",
+          "exact_match": true
+        },
+        {
+          "name": "date",
+          "text": "2026-09-11",
+          "kind": "date",
+          "exact_match": true
+        },
+        {
+          "name": "time",
+          "text": "09:05",
+          "kind": "time",
+          "exact_match": true
+        },
+        {
+          "name": "amount",
+          "text": "123,450원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "percentage",
+          "text": "12.5%",
+          "kind": "number",
+          "exact_match": true
+        },
+        {
+          "name": "leading_zero",
+          "text": "007개",
+          "kind": "number",
+          "exact_match": true
+        }
+      ],
+      "reading_order": {
+        "reference_lines": 13,
+        "exactly_matched_lines": 12,
+        "missing_or_nonexact_lines": [
+          9
+        ],
+        "inversions": 0,
+        "comparable_pairs": 66,
+        "inversion_rate": 0.0,
+        "all_lines_exact_and_in_order": false,
+        "note": "Order is checked only among complete exactly matched lines; read alongside line coverage and CER."
+      },
+      "elapsed_ms": 34457.90000000596
+    },
+    {
+      "id": "02-expense-receipt",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "output_format": "plain",
+      "image_sha256": "88521e497e05b2347be89887842c153a2d0b9ceb2a8daec2d1c733c7de13d304",
+      "cer_collapsed_whitespace": {
+        "reference_characters": 216,
+        "prediction_characters": 216,
+        "edit_distance": 0,
+        "cer": 0.0,
+        "accuracy_clamped": 1.0
+      },
+      "cer_without_whitespace": {
+        "reference_characters": 173,
+        "prediction_characters": 173,
+        "edit_distance": 0,
+        "cer": 0.0,
+        "accuracy_clamped": 1.0
+      },
+      "key_fields_matched": 7,
+      "key_fields_total": 7,
+      "key_fields": [
+        {
+          "name": "date_time",
+          "text": "2026-09-11 14:35",
+          "kind": "datetime",
+          "exact_match": true
+        },
+        {
+          "name": "approval",
+          "text": "00010203",
+          "kind": "identifier",
+          "exact_match": true
+        },
+        {
+          "name": "toll",
+          "text": "12,300원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "parking",
+          "text": "4,500원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "total",
+          "text": "16,800원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "supply",
+          "text": "15,273원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "vat",
+          "text": "1,527원",
+          "kind": "money",
+          "exact_match": true
+        }
+      ],
+      "reading_order": {
+        "reference_lines": 14,
+        "exactly_matched_lines": 14,
+        "missing_or_nonexact_lines": [],
+        "inversions": 0,
+        "comparable_pairs": 91,
+        "inversion_rate": 0.0,
+        "all_lines_exact_and_in_order": true,
+        "note": "Order is checked only among complete exactly matched lines; read alongside line coverage and CER."
+      },
+      "elapsed_ms": 25905.29999999702
+    },
+    {
+      "id": "03-two-columns-table",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "output_format": "plain",
+      "image_sha256": "66ae9cd4f08d868983b060800e2d1d0d3cea434612e5df9aa46687ad666a5c13",
+      "cer_collapsed_whitespace": {
+        "reference_characters": 332,
+        "prediction_characters": 305,
+        "edit_distance": 70,
+        "cer": 0.21084337349397592,
+        "accuracy_clamped": 0.7891566265060241
+      },
+      "cer_without_whitespace": {
+        "reference_characters": 257,
+        "prediction_characters": 235,
+        "edit_distance": 57,
+        "cer": 0.22178988326848248,
+        "accuracy_clamped": 0.7782101167315175
+      },
+      "key_fields_matched": 5,
+      "key_fields_total": 5,
+      "key_fields": [
+        {
+          "name": "date",
+          "text": "2026-09-11",
+          "kind": "date",
+          "exact_match": true
+        },
+        {
+          "name": "document_id",
+          "text": "TEST-03",
+          "kind": "identifier",
+          "exact_match": true
+        },
+        {
+          "name": "paper",
+          "text": "9,600원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "folder",
+          "text": "7,200원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "total",
+          "text": "16,800원",
+          "kind": "money",
+          "exact_match": true
+        }
+      ],
+      "reading_order": {
+        "reference_lines": 17,
+        "exactly_matched_lines": 10,
+        "missing_or_nonexact_lines": [
+          2,
+          9,
+          11,
+          12,
+          13,
+          14,
+          16
+        ],
+        "inversions": 0,
+        "comparable_pairs": 45,
+        "inversion_rate": 0.0,
+        "all_lines_exact_and_in_order": false,
+        "note": "Order is checked only among complete exactly matched lines; read alongside line coverage and CER."
+      },
+      "elapsed_ms": 30257.29999999702
+    }
+  ],
+  "scope": "Three clean synthetic images. No claim of real-world accuracy, engine viability, or benchmark ranking."
+}

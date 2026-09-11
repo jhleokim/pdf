@@ -1,0 +1,1268 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "purpose": "Same-image Tesseract and PaddleOCR-VL-1.5 browser comparison; not a representative accuracy benchmark.",
+  "provenance": "Rendering approach reused from tests/create-tools-fixtures.py: Pillow RGB image + Windows Malgun font.",
+  "generator": {
+    "file": "../generate_fixtures.py",
+    "python": "3.14.7",
+    "pillow": "12.3.0",
+    "font_sha256": "7a183cf1c6c56b9609fcc16eda8b5229fbc11758a21e669ec00343239b02192f",
+    "bold_font_sha256": "e8cbc0b2afcc14fb45dfb6086d5102c0b23a96e7b6e708f3122acde1b86c9082"
+  },
+  "comparison": {
+    "normalization": "NFC; remove BOM/zero-width-space; normalize line endings; collapse whitespace. Preserve case, punctuation, separators, decimal points, signs and leading zeroes.",
+    "metrics": [
+      "CER with collapsed whitespace",
+      "CER ignoring whitespace",
+      "exact numeric/date/identifier fields",
+      "reading-order inversions among exactly matched lines"
+    ],
+    "notes": "Use identical PNG bytes and record any runtime resize. Markdown stripping must be explicitly selected. Do not use spelling correction or number repair."
+  },
+  "documents": [
+    {
+      "id": "01-mixed-paragraph",
+      "description": "짧은 한글·영문 혼합 본문과 숫자/기호",
+      "image": "01-mixed-paragraph.png",
+      "sha256": "3e72f4b4a309c9b6ae0c9f2690f96178b02fa942be4aa74cdaaf71bf9a1d63f1",
+      "bytes": 109650,
+      "width": 1400,
+      "height": 1800,
+      "mode": "RGB",
+      "format": "PNG",
+      "reading_order_rule": "제목부터 본문, 바닥 문구까지 위에서 아래로 읽는다.",
+      "expected_text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 l과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "expected_lines": [
+        "PDF Studio 문서 인식 시험",
+        "가상 문서 · Synthetic document",
+        "한글과 English를 함께 읽습니다.",
+        "자동 인식 결과의 숫자를 비교합니다.",
+        "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+        "문서번호: TEST-2026-0911-A",
+        "작성일: 2026-09-11 / 검토 시간: 09:05",
+        "계약 금액은 123,450원입니다.",
+        "비율은 12.5%이며 수량은 007개입니다.",
+        "대문자 O와 숫자 0, 소문자 l과 숫자 1.",
+        "Project status: Ready for review.",
+        "Contact: demo@example.test",
+        "TEST ONLY · 실제 업무 문서가 아닙니다."
+      ],
+      "blocks": [
+        {
+          "id": "heading",
+          "type": "heading",
+          "reading_order": 0,
+          "bbox_xyxy_px": [
+            90,
+            100,
+            732,
+            222
+          ],
+          "lines": [
+            {
+              "text": "PDF Studio 문서 인식 시험",
+              "cells": [
+                {
+                  "text": "PDF Studio 문서 인식 시험",
+                  "bbox_xyxy_px": [
+                    90,
+                    100,
+                    732,
+                    149
+                  ],
+                  "font_size_px": 52,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "가상 문서 · Synthetic document",
+              "cells": [
+                {
+                  "text": "가상 문서 · Synthetic document",
+                  "bbox_xyxy_px": [
+                    90,
+                    185,
+                    578,
+                    222
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "body",
+          "type": "paragraph",
+          "reading_order": 1,
+          "bbox_xyxy_px": [
+            90,
+            340,
+            948,
+            1318
+          ],
+          "lines": [
+            {
+              "text": "한글과 English를 함께 읽습니다.",
+              "cells": [
+                {
+                  "text": "한글과 English를 함께 읽습니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    340,
+                    697,
+                    386
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "자동 인식 결과의 숫자를 비교합니다.",
+              "cells": [
+                {
+                  "text": "자동 인식 결과의 숫자를 비교합니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    444,
+                    789,
+                    485
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+              "cells": [
+                {
+                  "text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    548,
+                    948,
+                    590
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "문서번호: TEST-2026-0911-A",
+              "cells": [
+                {
+                  "text": "문서번호: TEST-2026-0911-A",
+                  "bbox_xyxy_px": [
+                    90,
+                    652,
+                    634,
+                    692
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+              "cells": [
+                {
+                  "text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+                  "bbox_xyxy_px": [
+                    90,
+                    756,
+                    813,
+                    797
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "계약 금액은 123,450원입니다.",
+              "cells": [
+                {
+                  "text": "계약 금액은 123,450원입니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    860,
+                    654,
+                    901
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "비율은 12.5%이며 수량은 007개입니다.",
+              "cells": [
+                {
+                  "text": "비율은 12.5%이며 수량은 007개입니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    964,
+                    830,
+                    1004
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "대문자 O와 숫자 0, 소문자 l과 숫자 1.",
+              "cells": [
+                {
+                  "text": "대문자 O와 숫자 0, 소문자 l과 숫자 1.",
+                  "bbox_xyxy_px": [
+                    90,
+                    1068,
+                    805,
+                    1109
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "Project status: Ready for review.",
+              "cells": [
+                {
+                  "text": "Project status: Ready for review.",
+                  "bbox_xyxy_px": [
+                    90,
+                    1172,
+                    697,
+                    1214
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "Contact: demo@example.test",
+              "cells": [
+                {
+                  "text": "Contact: demo@example.test",
+                  "bbox_xyxy_px": [
+                    90,
+                    1276,
+                    645,
+                    1318
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "footer",
+          "type": "footer",
+          "reading_order": 2,
+          "bbox_xyxy_px": [
+            90,
+            1620,
+            709,
+            1652
+          ],
+          "lines": [
+            {
+              "text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+              "cells": [
+                {
+                  "text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    1620,
+                    709,
+                    1652
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "key_fields": [
+        {
+          "name": "document_id",
+          "text": "TEST-2026-0911-A",
+          "kind": "identifier"
+        },
+        {
+          "name": "date",
+          "text": "2026-09-11",
+          "kind": "date"
+        },
+        {
+          "name": "time",
+          "text": "09:05",
+          "kind": "time"
+        },
+        {
+          "name": "amount",
+          "text": "123,450원",
+          "kind": "money"
+        },
+        {
+          "name": "percentage",
+          "text": "12.5%",
+          "kind": "number"
+        },
+        {
+          "name": "leading_zero",
+          "text": "007개",
+          "kind": "number"
+        }
+      ]
+    },
+    {
+      "id": "02-expense-receipt",
+      "description": "가상 경비 영수증의 금액·날짜·승인번호",
+      "image": "02-expense-receipt.png",
+      "sha256": "88521e497e05b2347be89887842c153a2d0b9ceb2a8daec2d1c733c7de13d304",
+      "bytes": 89138,
+      "width": 1400,
+      "height": 1800,
+      "mode": "RGB",
+      "format": "PNG",
+      "reading_order_rule": "제목/거래 정보 순서 후 항목표를 각 행 왼쪽→오른쪽, 위→아래로 읽고 바닥 문구를 읽는다.",
+      "expected_text": "경비 사용 영수증\nSYNTHETIC RECEIPT\n가상 상호: 한빛 테스트 주차장\n거래일시: 2026-09-11 14:35\n승인번호: 00010203\n결제수단: 법인카드 (가상)\n항목\t금액\n통행료\t12,300원\n주차료\t4,500원\n합계\t16,800원\n공급가액\t15,273원\n부가세\t1,527원\n처리 상태: 정산 검토 중 / Pending\nTEST ONLY · 실제 결제 내역이 아닙니다.",
+      "expected_lines": [
+        "경비 사용 영수증",
+        "SYNTHETIC RECEIPT",
+        "가상 상호: 한빛 테스트 주차장",
+        "거래일시: 2026-09-11 14:35",
+        "승인번호: 00010203",
+        "결제수단: 법인카드 (가상)",
+        "항목\t금액",
+        "통행료\t12,300원",
+        "주차료\t4,500원",
+        "합계\t16,800원",
+        "공급가액\t15,273원",
+        "부가세\t1,527원",
+        "처리 상태: 정산 검토 중 / Pending",
+        "TEST ONLY · 실제 결제 내역이 아닙니다."
+      ],
+      "blocks": [
+        {
+          "id": "heading",
+          "type": "heading",
+          "reading_order": 0,
+          "bbox_xyxy_px": [
+            90,
+            95,
+            522,
+            211
+          ],
+          "lines": [
+            {
+              "text": "경비 사용 영수증",
+              "cells": [
+                {
+                  "text": "경비 사용 영수증",
+                  "bbox_xyxy_px": [
+                    90,
+                    95,
+                    522,
+                    149
+                  ],
+                  "font_size_px": 56,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "SYNTHETIC RECEIPT",
+              "cells": [
+                {
+                  "text": "SYNTHETIC RECEIPT",
+                  "bbox_xyxy_px": [
+                    90,
+                    185,
+                    420,
+                    211
+                  ],
+                  "font_size_px": 36,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "transaction",
+          "type": "paragraph",
+          "reading_order": 1,
+          "bbox_xyxy_px": [
+            90,
+            320,
+            663,
+            626
+          ],
+          "lines": [
+            {
+              "text": "가상 상호: 한빛 테스트 주차장",
+              "cells": [
+                {
+                  "text": "가상 상호: 한빛 테스트 주차장",
+                  "bbox_xyxy_px": [
+                    90,
+                    320,
+                    663,
+                    360
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "거래일시: 2026-09-11 14:35",
+              "cells": [
+                {
+                  "text": "거래일시: 2026-09-11 14:35",
+                  "bbox_xyxy_px": [
+                    90,
+                    408,
+                    616,
+                    448
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "승인번호: 00010203",
+              "cells": [
+                {
+                  "text": "승인번호: 00010203",
+                  "bbox_xyxy_px": [
+                    90,
+                    496,
+                    466,
+                    535
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "결제수단: 법인카드 (가상)",
+              "cells": [
+                {
+                  "text": "결제수단: 법인카드 (가상)",
+                  "bbox_xyxy_px": [
+                    90,
+                    584,
+                    575,
+                    626
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "amounts",
+          "type": "table",
+          "reading_order": 2,
+          "bbox_xyxy_px": [
+            100,
+            740,
+            1093,
+            1331
+          ],
+          "lines": [
+            {
+              "text": "항목\t금액",
+              "cells": [
+                {
+                  "text": "항목",
+                  "bbox_xyxy_px": [
+                    100,
+                    740,
+                    184,
+                    780
+                  ],
+                  "font_size_px": 42,
+                  "bold": true
+                },
+                {
+                  "text": "금액",
+                  "bbox_xyxy_px": [
+                    920,
+                    740,
+                    1004,
+                    780
+                  ],
+                  "font_size_px": 42,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "통행료\t12,300원",
+              "cells": [
+                {
+                  "text": "통행료",
+                  "bbox_xyxy_px": [
+                    100,
+                    850,
+                    226,
+                    889
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                },
+                {
+                  "text": "12,300원",
+                  "bbox_xyxy_px": [
+                    920,
+                    850,
+                    1086,
+                    891
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "주차료\t4,500원",
+              "cells": [
+                {
+                  "text": "주차료",
+                  "bbox_xyxy_px": [
+                    100,
+                    960,
+                    226,
+                    1000
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                },
+                {
+                  "text": "4,500원",
+                  "bbox_xyxy_px": [
+                    920,
+                    960,
+                    1063,
+                    1001
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "합계\t16,800원",
+              "cells": [
+                {
+                  "text": "합계",
+                  "bbox_xyxy_px": [
+                    100,
+                    1070,
+                    184,
+                    1110
+                  ],
+                  "font_size_px": 42,
+                  "bold": true
+                },
+                {
+                  "text": "16,800원",
+                  "bbox_xyxy_px": [
+                    920,
+                    1070,
+                    1093,
+                    1111
+                  ],
+                  "font_size_px": 42,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "공급가액\t15,273원",
+              "cells": [
+                {
+                  "text": "공급가액",
+                  "bbox_xyxy_px": [
+                    100,
+                    1180,
+                    268,
+                    1220
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                },
+                {
+                  "text": "15,273원",
+                  "bbox_xyxy_px": [
+                    920,
+                    1180,
+                    1086,
+                    1221
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "부가세\t1,527원",
+              "cells": [
+                {
+                  "text": "부가세",
+                  "bbox_xyxy_px": [
+                    100,
+                    1290,
+                    226,
+                    1330
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                },
+                {
+                  "text": "1,527원",
+                  "bbox_xyxy_px": [
+                    920,
+                    1290,
+                    1063,
+                    1331
+                  ],
+                  "font_size_px": 42,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "footer",
+          "type": "footer",
+          "reading_order": 3,
+          "bbox_xyxy_px": [
+            90,
+            1480,
+            709,
+            1652
+          ],
+          "lines": [
+            {
+              "text": "처리 상태: 정산 검토 중 / Pending",
+              "cells": [
+                {
+                  "text": "처리 상태: 정산 검토 중 / Pending",
+                  "bbox_xyxy_px": [
+                    90,
+                    1480,
+                    674,
+                    1521
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "TEST ONLY · 실제 결제 내역이 아닙니다.",
+              "cells": [
+                {
+                  "text": "TEST ONLY · 실제 결제 내역이 아닙니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    1620,
+                    709,
+                    1652
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "key_fields": [
+        {
+          "name": "date_time",
+          "text": "2026-09-11 14:35",
+          "kind": "datetime"
+        },
+        {
+          "name": "approval",
+          "text": "00010203",
+          "kind": "identifier"
+        },
+        {
+          "name": "toll",
+          "text": "12,300원",
+          "kind": "money"
+        },
+        {
+          "name": "parking",
+          "text": "4,500원",
+          "kind": "money"
+        },
+        {
+          "name": "total",
+          "text": "16,800원",
+          "kind": "money"
+        },
+        {
+          "name": "supply",
+          "text": "15,273원",
+          "kind": "money"
+        },
+        {
+          "name": "vat",
+          "text": "1,527원",
+          "kind": "money"
+        }
+      ]
+    },
+    {
+      "id": "03-two-columns-table",
+      "description": "두 열 읽기 순서와 짧은 표의 행/열 관계",
+      "image": "03-two-columns-table.png",
+      "sha256": "66ae9cd4f08d868983b060800e2d1d0d3cea434612e5df9aa46687ad666a5c13",
+      "bytes": 98212,
+      "width": 1400,
+      "height": 1800,
+      "mode": "RGB",
+      "format": "PNG",
+      "reading_order_rule": "제목→왼쪽 열 전체→오른쪽 열 전체→표 제목→표 머리글→각 표 행 왼쪽부터 오른쪽→바닥 문구. 두 열을 줄마다 번갈아 읽지 않는다.",
+      "expected_text": "출장 자료 / 확인표\n가상 문서 · Layout and table test\n왼쪽 열 / 작성 안내\n1. 문서 제목을 확인합니다.\n2. 한글과 English를 읽습니다.\n3. 날짜는 2026-09-11입니다.\n오른쪽 열 / 검토 사항\nA. 금액 12,300원을 확인합니다.\nB. 문서번호 TEST-03을 비교합니다.\nC. O와 0, I와 1을 구분합니다.\n구매 내역 / Purchase list\n품목\t수량\t금액\n복사용지 A4\t2\t9,600원\n파일철 (Blue)\t3\t7,200원\n합계\t5\t16,800원\n가상 표입니다. 서명이나 개인정보는 없습니다.\nTEST ONLY · End of document",
+      "expected_lines": [
+        "출장 자료 / 확인표",
+        "가상 문서 · Layout and table test",
+        "왼쪽 열 / 작성 안내",
+        "1. 문서 제목을 확인합니다.",
+        "2. 한글과 English를 읽습니다.",
+        "3. 날짜는 2026-09-11입니다.",
+        "오른쪽 열 / 검토 사항",
+        "A. 금액 12,300원을 확인합니다.",
+        "B. 문서번호 TEST-03을 비교합니다.",
+        "C. O와 0, I와 1을 구분합니다.",
+        "구매 내역 / Purchase list",
+        "품목\t수량\t금액",
+        "복사용지 A4\t2\t9,600원",
+        "파일철 (Blue)\t3\t7,200원",
+        "합계\t5\t16,800원",
+        "가상 표입니다. 서명이나 개인정보는 없습니다.",
+        "TEST ONLY · End of document"
+      ],
+      "blocks": [
+        {
+          "id": "heading",
+          "type": "heading",
+          "reading_order": 0,
+          "bbox_xyxy_px": [
+            90,
+            95,
+            599,
+            217
+          ],
+          "lines": [
+            {
+              "text": "출장 자료 / 확인표",
+              "cells": [
+                {
+                  "text": "출장 자료 / 확인표",
+                  "bbox_xyxy_px": [
+                    90,
+                    95,
+                    549,
+                    148
+                  ],
+                  "font_size_px": 54,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "가상 문서 · Layout and table test",
+              "cells": [
+                {
+                  "text": "가상 문서 · Layout and table test",
+                  "bbox_xyxy_px": [
+                    90,
+                    180,
+                    599,
+                    217
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "left-column",
+          "type": "column",
+          "reading_order": 1,
+          "bbox_xyxy_px": [
+            90,
+            330,
+            540,
+            638
+          ],
+          "lines": [
+            {
+              "text": "왼쪽 열 / 작성 안내",
+              "cells": [
+                {
+                  "text": "왼쪽 열 / 작성 안내",
+                  "bbox_xyxy_px": [
+                    90,
+                    330,
+                    391,
+                    363
+                  ],
+                  "font_size_px": 34,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "1. 문서 제목을 확인합니다.",
+              "cells": [
+                {
+                  "text": "1. 문서 제목을 확인합니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    422,
+                    499,
+                    454
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "2. 한글과 English를 읽습니다.",
+              "cells": [
+                {
+                  "text": "2. 한글과 English를 읽습니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    514,
+                    540,
+                    551
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "3. 날짜는 2026-09-11입니다.",
+              "cells": [
+                {
+                  "text": "3. 날짜는 2026-09-11입니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    606,
+                    531,
+                    638
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "right-column",
+          "type": "column",
+          "reading_order": 2,
+          "bbox_xyxy_px": [
+            740,
+            330,
+            1274,
+            639
+          ],
+          "lines": [
+            {
+              "text": "오른쪽 열 / 검토 사항",
+              "cells": [
+                {
+                  "text": "오른쪽 열 / 검토 사항",
+                  "bbox_xyxy_px": [
+                    740,
+                    330,
+                    1075,
+                    363
+                  ],
+                  "font_size_px": 34,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "A. 금액 12,300원을 확인합니다.",
+              "cells": [
+                {
+                  "text": "A. 금액 12,300원을 확인합니다.",
+                  "bbox_xyxy_px": [
+                    740,
+                    422,
+                    1220,
+                    455
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "B. 문서번호 TEST-03을 비교합니다.",
+              "cells": [
+                {
+                  "text": "B. 문서번호 TEST-03을 비교합니다.",
+                  "bbox_xyxy_px": [
+                    740,
+                    514,
+                    1274,
+                    546
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "C. O와 0, I와 1을 구분합니다.",
+              "cells": [
+                {
+                  "text": "C. O와 0, I와 1을 구분합니다.",
+                  "bbox_xyxy_px": [
+                    740,
+                    606,
+                    1188,
+                    639
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "table-heading",
+          "type": "heading",
+          "reading_order": 3,
+          "bbox_xyxy_px": [
+            90,
+            805,
+            574,
+            845
+          ],
+          "lines": [
+            {
+              "text": "구매 내역 / Purchase list",
+              "cells": [
+                {
+                  "text": "구매 내역 / Purchase list",
+                  "bbox_xyxy_px": [
+                    90,
+                    805,
+                    574,
+                    845
+                  ],
+                  "font_size_px": 42,
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "purchase-table",
+          "type": "table",
+          "reading_order": 4,
+          "bbox_xyxy_px": [
+            115,
+            945,
+            1158,
+            1357
+          ],
+          "lines": [
+            {
+              "text": "품목\t수량\t금액",
+              "cells": [
+                {
+                  "text": "품목",
+                  "bbox_xyxy_px": [
+                    115,
+                    945,
+                    191,
+                    981
+                  ],
+                  "font_size_px": 38,
+                  "bold": true
+                },
+                {
+                  "text": "수량",
+                  "bbox_xyxy_px": [
+                    820,
+                    945,
+                    896,
+                    981
+                  ],
+                  "font_size_px": 38,
+                  "bold": true
+                },
+                {
+                  "text": "금액",
+                  "bbox_xyxy_px": [
+                    1000,
+                    945,
+                    1076,
+                    981
+                  ],
+                  "font_size_px": 38,
+                  "bold": true
+                }
+              ]
+            },
+            {
+              "text": "복사용지 A4\t2\t9,600원",
+              "cells": [
+                {
+                  "text": "복사용지 A4",
+                  "bbox_xyxy_px": [
+                    115,
+                    1070,
+                    326,
+                    1105
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                },
+                {
+                  "text": "2",
+                  "bbox_xyxy_px": [
+                    820,
+                    1070,
+                    841,
+                    1098
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                },
+                {
+                  "text": "9,600원",
+                  "bbox_xyxy_px": [
+                    1000,
+                    1070,
+                    1130,
+                    1107
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "파일철 (Blue)\t3\t7,200원",
+              "cells": [
+                {
+                  "text": "파일철 (Blue)",
+                  "bbox_xyxy_px": [
+                    115,
+                    1195,
+                    339,
+                    1233
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                },
+                {
+                  "text": "3",
+                  "bbox_xyxy_px": [
+                    820,
+                    1195,
+                    841,
+                    1223
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                },
+                {
+                  "text": "7,200원",
+                  "bbox_xyxy_px": [
+                    1000,
+                    1195,
+                    1130,
+                    1232
+                  ],
+                  "font_size_px": 38,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "합계\t5\t16,800원",
+              "cells": [
+                {
+                  "text": "합계",
+                  "bbox_xyxy_px": [
+                    115,
+                    1320,
+                    191,
+                    1356
+                  ],
+                  "font_size_px": 38,
+                  "bold": true
+                },
+                {
+                  "text": "5",
+                  "bbox_xyxy_px": [
+                    820,
+                    1320,
+                    842,
+                    1348
+                  ],
+                  "font_size_px": 38,
+                  "bold": true
+                },
+                {
+                  "text": "16,800원",
+                  "bbox_xyxy_px": [
+                    1000,
+                    1320,
+                    1158,
+                    1357
+                  ],
+                  "font_size_px": 38,
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "footer",
+          "type": "footer",
+          "reading_order": 5,
+          "bbox_xyxy_px": [
+            90,
+            1520,
+            798,
+            1646
+          ],
+          "lines": [
+            {
+              "text": "가상 표입니다. 서명이나 개인정보는 없습니다.",
+              "cells": [
+                {
+                  "text": "가상 표입니다. 서명이나 개인정보는 없습니다.",
+                  "bbox_xyxy_px": [
+                    90,
+                    1520,
+                    798,
+                    1552
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            },
+            {
+              "text": "TEST ONLY · End of document",
+              "cells": [
+                {
+                  "text": "TEST ONLY · End of document",
+                  "bbox_xyxy_px": [
+                    90,
+                    1620,
+                    561,
+                    1646
+                  ],
+                  "font_size_px": 34,
+                  "bold": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "key_fields": [
+        {
+          "name": "date",
+          "text": "2026-09-11",
+          "kind": "date"
+        },
+        {
+          "name": "document_id",
+          "text": "TEST-03",
+          "kind": "identifier"
+        },
+        {
+          "name": "paper",
+          "text": "9,600원",
+          "kind": "money"
+        },
+        {
+          "name": "folder",
+          "text": "7,200원",
+          "kind": "money"
+        },
+        {
+          "name": "total",
+          "text": "16,800원",
+          "kind": "money"
+        }
+      ],
+      "expected_table": {
+        "block_id": "purchase-table",
+        "cells_by_row": [
+          [
+            "품목",
+            "수량",
+            "금액"
+          ],
+          [
+            "복사용지 A4",
+            "2",
+            "9,600원"
+          ],
+          [
+            "파일철 (Blue)",
+            "3",
+            "7,200원"
+          ],
+          [
+            "합계",
+            "5",
+            "16,800원"
+          ]
+        ]
+      }
+    }
+  ]
+}

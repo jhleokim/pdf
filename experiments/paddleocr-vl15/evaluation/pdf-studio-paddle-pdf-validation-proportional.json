@@ -1,0 +1,1007 @@
+{
+  "scope": "Read-only inspection of the actual PDF Studio OCR download; one synthetic page.",
+  "inputs": {
+    "truth": "C:\\Users\\LEO\\Documents\\Codex\\2026-09-06\\github-plugin-github-openai-curated-remote\\work\\pdf-pro-v38\\experiments\\paddleocr-vl15\\fixtures\\truth.json",
+    "truth_sha256": "f1de137c41991b807b372cec3f32351992f74e6d9ef9ecd11b26af609edd7f4e",
+    "document": "01-mixed-paragraph",
+    "fixture": "C:\\Users\\LEO\\Documents\\Codex\\2026-09-06\\github-plugin-github-openai-curated-remote\\work\\pdf-pro-v38\\experiments\\paddleocr-vl15\\fixtures\\01-mixed-paragraph.png",
+    "fixture_sha256": "3e72f4b4a309c9b6ae0c9f2690f96178b02fa942be4aa74cdaaf71bf9a1d63f1",
+    "poppler": "C:/Users/LEO/.cache/codex-runtimes/codex-primary-runtime/dependencies/native/poppler/Library/bin/pdftoppm.exe"
+  },
+  "actual_app_flow": {
+    "file": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\pdf-studio-browser-flow-proportional.json",
+    "sha256": "ff5f5b5bf165506f456e942ba9768b2d154ce685bc6b853cb106e744da7a47e4",
+    "model": "PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1",
+    "elapsed_ms": 41911.10000000894,
+    "generated_tokens": 344,
+    "preprocess": {
+      "width": 868,
+      "height": 1120,
+      "maxPixels": 1003520
+    },
+    "events": [
+      {
+        "name": "observer-ready",
+        "at": "2026-09-11T12:13:45.871Z"
+      },
+      {
+        "name": "session-start",
+        "at": "2026-09-11T12:13:46.999Z"
+      },
+      {
+        "name": "session-ready",
+        "at": "2026-09-11T12:13:50.865Z"
+      },
+      {
+        "name": "recognize-start",
+        "at": "2026-09-11T12:13:50.865Z",
+        "width": 2480,
+        "height": 3188
+      },
+      {
+        "name": "recognize-complete",
+        "at": "2026-09-11T12:14:32.777Z"
+      },
+      {
+        "name": "session-closed",
+        "at": "2026-09-11T12:14:32.800Z"
+      }
+    ]
+  },
+  "result": {
+    "file": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\pdf-studio-paddle-result-proportional.pdf",
+    "bytes": 94632,
+    "sha256": "e67fd584840ef4b6e82bee8023fc8f194448fac2d86211c3e20fdc55319a8f14",
+    "page_count": 1,
+    "encrypted": false,
+    "pages": [
+      {
+        "width_pt": 595.0,
+        "height_pt": 765.0,
+        "mediabox": [
+          0.0,
+          0.0,
+          595.0,
+          765.0
+        ],
+        "cropbox": [
+          0.0,
+          0.0,
+          595.0,
+          765.0
+        ],
+        "rotation": 0,
+        "text": "PDF Studio 문서 인식 시험 \n가상 문서 · Synthetic document \n한글과 English를 함께 읽습니다. \n자동 인식 결과의 숫자를 비교합니다. \n공백, 쉼표, 괄호와 기호를 그대로 확인합니다. \n문서번호: TEST-2026-0911-A \n작성일: 2026-09-11 / 검토 시간: 09:05 \n계약 금액은 123,450원입니다. \n비율은 12.5%이며 수량은 007개입니다. \n대문자 O와 숫자 0, 소문자 1과 숫자 1. \nProject status: Ready for review. \nContact: demo@example.test \nTEST ONLY · 실제 업무 문서가 아닙니다. ",
+        "text_rendering_modes": [
+          3
+        ],
+        "text_show_operation_modes": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "images": [
+          {
+            "name": "/Image-7098480789",
+            "width": 1400,
+            "height": 1800,
+            "filter": "/FlateDecode",
+            "colorspace": "/DeviceRGB",
+            "bits_per_component": 8,
+            "encoded_sha256": "7099f17c566b395561531380e1b39a51ed2503926080ab77a68ac548ca54186c",
+            "decoded_stream_sha256": "8d6ac0b78c2ad7d0f7aca55605a78bb2568ca765c744073acf97d482af02f147",
+            "encoded_bytes": 91391
+          }
+        ],
+        "content_operation_count": 41
+      }
+    ],
+    "render": {
+      "png": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\pdf-studio-paddle-pdf-validation-proportional-result-render.png",
+      "stderr": ""
+    }
+  },
+  "pdfplumber": [
+    {
+      "width_pt": 595,
+      "height_pt": 765,
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "character_count": 331,
+      "out_of_page_character_indices": [],
+      "lines": [
+        {
+          "text": "PDF Studio 문서 인식 시험",
+          "box_pt": [
+            36.295,
+            41.04989999999998,
+            309.99499999999995,
+            66.29489999999998
+          ],
+          "characters": 15
+        },
+        {
+          "text": "가상 문서 · Synthetic document",
+          "box_pt": [
+            36.295,
+            76.16340000000002,
+            247.51999999999998,
+            97.58339999999998
+          ],
+          "characters": 22
+        },
+        {
+          "text": "한글과 English를 함께 읽습니다.",
+          "box_pt": [
+            36.89,
+            140.53050000000007,
+            296.30999999999995,
+            167.30550000000005
+          ],
+          "characters": 18
+        },
+        {
+          "text": "자동 인식 결과의 숫자를 비교합니다.",
+          "box_pt": [
+            36.89,
+            184.8546,
+            335.57999999999987,
+            209.33460000000002
+          ],
+          "characters": 16
+        },
+        {
+          "text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+          "box_pt": [
+            36.89,
+            227.70989999999995,
+            403.4100000000001,
+            252.95489999999995
+          ],
+          "characters": 21
+        },
+        {
+          "text": "문서번호: TEST-2026-0911-A",
+          "box_pt": [
+            36.295,
+            272.06460000000004,
+            270.72499999999997,
+            296.54460000000006
+          ],
+          "characters": 21
+        },
+        {
+          "text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+          "box_pt": [
+            36.295,
+            316.44989999999996,
+            344.505,
+            341.69489999999996
+          ],
+          "characters": 25
+        },
+        {
+          "text": "계약 금액은 123,450원입니다.",
+          "box_pt": [
+            36.89,
+            360.81989999999996,
+            277.86499999999995,
+            386.06489999999997
+          ],
+          "characters": 17
+        },
+        {
+          "text": "비율은 12.5%이며 수량은 007개입니다.",
+          "box_pt": [
+            36.89,
+            404.4249,
+            351.64499999999987,
+            429.6699
+          ],
+          "characters": 21
+        },
+        {
+          "text": "대문자 O와 숫자 0, 소문자 1과 숫자 1.",
+          "box_pt": [
+            36.89,
+            449.5752,
+            341.5299999999999,
+            475.5852
+          ],
+          "characters": 18
+        },
+        {
+          "text": "Project status: Ready for review.",
+          "box_pt": [
+            36.89,
+            493.9452,
+            295.12,
+            519.9552
+          ],
+          "characters": 29
+        },
+        {
+          "text": "Contact: demo@example.test",
+          "box_pt": [
+            36.295,
+            537.5502,
+            275.485,
+            563.5602
+          ],
+          "characters": 25
+        },
+        {
+          "text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+          "box_pt": [
+            36.295,
+            686.6487,
+            301.07,
+            708.8337
+          ],
+          "characters": 21
+        }
+      ],
+      "images": [
+        {
+          "box_pt": [
+            0.0,
+            0.0,
+            595.0,
+            765.0
+          ],
+          "source_size": [
+            1400,
+            1800
+          ]
+        }
+      ]
+    }
+  ],
+  "text_checks": {
+    "pypdf": {
+      "text": "PDF Studio 문서 인식 시험 \n가상 문서 · Synthetic document \n한글과 English를 함께 읽습니다. \n자동 인식 결과의 숫자를 비교합니다. \n공백, 쉼표, 괄호와 기호를 그대로 확인합니다. \n문서번호: TEST-2026-0911-A \n작성일: 2026-09-11 / 검토 시간: 09:05 \n계약 금액은 123,450원입니다. \n비율은 12.5%이며 수량은 007개입니다. \n대문자 O와 숫자 0, 소문자 1과 숫자 1. \nProject status: Ready for review. \nContact: demo@example.test \nTEST ONLY · 실제 업무 문서가 아닙니다. ",
+      "normalized_length": 330,
+      "matches_saved_ocr_text": true,
+      "character_edits_vs_saved_ocr": 0,
+      "character_edits_vs_truth": 1,
+      "cer_vs_truth": 0.0030303030303030303,
+      "key_fields": [
+        {
+          "name": "document_id",
+          "expected": "TEST-2026-0911-A",
+          "found": true
+        },
+        {
+          "name": "date",
+          "expected": "2026-09-11",
+          "found": true
+        },
+        {
+          "name": "time",
+          "expected": "09:05",
+          "found": true
+        },
+        {
+          "name": "amount",
+          "expected": "123,450원",
+          "found": true
+        },
+        {
+          "name": "percentage",
+          "expected": "12.5%",
+          "found": true
+        },
+        {
+          "name": "leading_zero",
+          "expected": "007개",
+          "found": true
+        }
+      ]
+    },
+    "pdfplumber": {
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "normalized_length": 330,
+      "matches_saved_ocr_text": true,
+      "character_edits_vs_saved_ocr": 0,
+      "character_edits_vs_truth": 1,
+      "cer_vs_truth": 0.0030303030303030303,
+      "key_fields": [
+        {
+          "name": "document_id",
+          "expected": "TEST-2026-0911-A",
+          "found": true
+        },
+        {
+          "name": "date",
+          "expected": "2026-09-11",
+          "found": true
+        },
+        {
+          "name": "time",
+          "expected": "09:05",
+          "found": true
+        },
+        {
+          "name": "amount",
+          "expected": "123,450원",
+          "found": true
+        },
+        {
+          "name": "percentage",
+          "expected": "12.5%",
+          "found": true
+        },
+        {
+          "name": "leading_zero",
+          "expected": "007개",
+          "found": true
+        }
+      ]
+    }
+  },
+  "all_page1_text_show_operations_invisible": true,
+  "coordinate_checks": {
+    "reference": "Saved Spotting line boxes; PDF text bounds reflect font metrics, not detected ink.",
+    "expected_lines": 13,
+    "extracted_lines": 13,
+    "matched_lines": 13,
+    "unmatched_ocr_lines": [],
+    "unmatched_pdf_lines": [],
+    "iou": {
+      "mean": 0.9607843137254903,
+      "median": 0.9607843137254904,
+      "min": 0.960784313725485,
+      "max": 0.9607843137254938
+    },
+    "center_error_pt": {
+      "mean": 0.49783846153846045,
+      "median": 0.5048999999999847,
+      "min": 0.4284000000000038,
+      "max": 0.5355000000000472
+    },
+    "per_line": [
+      {
+        "ocr_line_index": 0,
+        "pdf_line_index": 0,
+        "ocr_text": "PDF Studio 문서 인식 시험",
+        "pdf_text": "PDF Studio 문서 인식 시험",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.061,
+          0.053,
+          0.521,
+          0.086
+        ],
+        "pdf_box_normalized": [
+          0.061000000000000006,
+          0.05365999999999997,
+          0.5209999999999999,
+          0.08665999999999997
+        ],
+        "iou": 0.9607843137254911,
+        "center_offset_pt": [
+          -3.302913498259841e-14,
+          0.5048999999999847
+        ],
+        "center_error_pt": 0.5048999999999847
+      },
+      {
+        "ocr_line_index": 1,
+        "pdf_line_index": 1,
+        "ocr_text": "가상 문서 · Synthetic document",
+        "pdf_text": "가상 문서 · Synthetic document",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.061,
+          0.099,
+          0.416,
+          0.127
+        ],
+        "pdf_box_normalized": [
+          0.061000000000000006,
+          0.09956000000000004,
+          0.416,
+          0.12755999999999998
+        ],
+        "iou": 0.9607843137254897,
+        "center_offset_pt": [
+          0.0,
+          0.4284000000000038
+        ],
+        "center_error_pt": 0.4284000000000038
+      },
+      {
+        "ocr_line_index": 2,
+        "pdf_line_index": 2,
+        "ocr_text": "한글과 English를 함께 읽습니다.",
+        "pdf_text": "한글과 English를 함께 읽습니다.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.183,
+          0.498,
+          0.218
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.18370000000000009,
+          0.4979999999999999,
+          0.21870000000000006
+        ],
+        "iou": 0.960784313725486,
+        "center_offset_pt": [
+          -6.605826996519681e-14,
+          0.5355000000000472
+        ],
+        "center_error_pt": 0.5355000000000472
+      },
+      {
+        "ocr_line_index": 3,
+        "pdf_line_index": 3,
+        "ocr_text": "자동 인식 결과의 숫자를 비교합니다.",
+        "pdf_text": "자동 인식 결과의 숫자를 비교합니다.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.241,
+          0.564,
+          0.273
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.24164,
+          0.5639999999999998,
+          0.27364000000000005
+        ],
+        "iou": 0.9607843137254886,
+        "center_offset_pt": [
+          0.0,
+          0.4896000000000225
+        ],
+        "center_error_pt": 0.4896000000000225
+      },
+      {
+        "ocr_line_index": 4,
+        "pdf_line_index": 4,
+        "ocr_text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+        "pdf_text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.297,
+          0.678,
+          0.33
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.2976599999999999,
+          0.6780000000000002,
+          0.33065999999999995
+        ],
+        "iou": 0.9607843137254938,
+        "center_offset_pt": [
+          6.605826996519681e-14,
+          0.5048999999999528
+        ],
+        "center_error_pt": 0.5048999999999528
+      },
+      {
+        "ocr_line_index": 5,
+        "pdf_line_index": 5,
+        "ocr_text": "문서번호: TEST-2026-0911-A",
+        "pdf_text": "문서번호: TEST-2026-0911-A",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.061,
+          0.355,
+          0.455,
+          0.387
+        ],
+        "pdf_box_normalized": [
+          0.061000000000000006,
+          0.35564000000000007,
+          0.45499999999999996,
+          0.3876400000000001
+        ],
+        "iou": 0.960784313725485,
+        "center_offset_pt": [
+          0.0,
+          0.489600000000065
+        ],
+        "center_error_pt": 0.489600000000065
+      },
+      {
+        "ocr_line_index": 6,
+        "pdf_line_index": 6,
+        "ocr_text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+        "pdf_text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.061,
+          0.413,
+          0.579,
+          0.446
+        ],
+        "pdf_box_normalized": [
+          0.061000000000000006,
+          0.4136599999999999,
+          0.579,
+          0.44665999999999995
+        ],
+        "iou": 0.9607843137254938,
+        "center_offset_pt": [
+          3.302913498259841e-14,
+          0.5048999999999528
+        ],
+        "center_error_pt": 0.5048999999999528
+      },
+      {
+        "ocr_line_index": 7,
+        "pdf_line_index": 7,
+        "ocr_text": "계약 금액은 123,450원입니다.",
+        "pdf_text": "계약 금액은 123,450원입니다.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.471,
+          0.467,
+          0.504
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.47165999999999997,
+          0.4669999999999999,
+          0.50466
+        ],
+        "iou": 0.9607843137254904,
+        "center_offset_pt": [
+          -3.302913498259841e-14,
+          0.5048999999999954
+        ],
+        "center_error_pt": 0.5048999999999954
+      },
+      {
+        "ocr_line_index": 8,
+        "pdf_line_index": 8,
+        "ocr_text": "비율은 12.5%이며 수량은 007개입니다.",
+        "pdf_text": "비율은 12.5%이며 수량은 007개입니다.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.528,
+          0.591,
+          0.561
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.52866,
+          0.5909999999999997,
+          0.5616599999999999
+        ],
+        "iou": 0.9607843137254934,
+        "center_offset_pt": [
+          -6.605826996519681e-14,
+          0.5048999999999954
+        ],
+        "center_error_pt": 0.5048999999999954
+      },
+      {
+        "ocr_line_index": 9,
+        "pdf_line_index": 9,
+        "ocr_text": "대문자 O와 숫자 0, 소문자 1과 숫자 1.",
+        "pdf_text": "대문자 O와 숫자 0, 소문자 1과 숫자 1.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.587,
+          0.574,
+          0.621
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.58768,
+          0.5739999999999998,
+          0.62168
+        ],
+        "iou": 0.9607843137254887,
+        "center_offset_pt": [
+          0.0,
+          0.5202000000000107
+        ],
+        "center_error_pt": 0.5202000000000107
+      },
+      {
+        "ocr_line_index": 10,
+        "pdf_line_index": 10,
+        "ocr_text": "Project status: Ready for review.",
+        "pdf_text": "Project status: Ready for review.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.062,
+          0.645,
+          0.496,
+          0.679
+        ],
+        "pdf_box_normalized": [
+          0.062,
+          0.64568,
+          0.496,
+          0.67968
+        ],
+        "iou": 0.9607843137254928,
+        "center_offset_pt": [
+          0.0,
+          0.5201999999999257
+        ],
+        "center_error_pt": 0.5201999999999257
+      },
+      {
+        "ocr_line_index": 11,
+        "pdf_line_index": 11,
+        "ocr_text": "Contact: demo@example.test",
+        "pdf_text": "Contact: demo@example.test",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.061,
+          0.702,
+          0.463,
+          0.736
+        ],
+        "pdf_box_normalized": [
+          0.061000000000000006,
+          0.70268,
+          0.463,
+          0.73668
+        ],
+        "iou": 0.9607843137254894,
+        "center_offset_pt": [
+          0.0,
+          0.5202000000000107
+        ],
+        "center_error_pt": 0.5202000000000107
+      },
+      {
+        "ocr_line_index": 12,
+        "pdf_line_index": 12,
+        "ocr_text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+        "pdf_text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+        "text_equal": true,
+        "ocr_box_normalized": [
+          0.061,
+          0.897,
+          0.506,
+          0.926
+        ],
+        "pdf_box_normalized": [
+          0.061000000000000006,
+          0.8975799999999999,
+          0.506,
+          0.9265800000000001
+        ],
+        "iou": 0.9607843137254922,
+        "center_offset_pt": [
+          3.302913498259841e-14,
+          0.4437000000000191
+        ],
+        "center_error_pt": 0.4437000000000191
+      }
+    ]
+  },
+  "field_selection_alignment": {
+    "reference": "Known fixture font getlength(prefix) advances. PDF coordinates mapped to original 1400px width. Glyph side bearings are not measured.",
+    "fonts": {
+      "regular": {
+        "available": true,
+        "file": "C:\\WINDOWS\\Fonts\\malgun.ttf",
+        "sha256": "7a183cf1c6c56b9609fcc16eda8b5229fbc11758a21e669ec00343239b02192f"
+      },
+      "bold": {
+        "available": true,
+        "file": "C:\\WINDOWS\\Fonts\\malgunbd.ttf",
+        "sha256": "e8cbc0b2afcc14fb45dfb6086d5102c0b23a96e7b6e708f3122acde1b86c9082"
+      }
+    },
+    "finding": "Measured substring edge offsets; whole-line alignment alone does not certify individual search-highlight accuracy.",
+    "absolute_edge_error_px": {
+      "mean": 8.504557285620562,
+      "median": 8.39227595691051,
+      "min": 0.12886775154731822,
+      "max": 18.315367214598098
+    },
+    "fields": [
+      {
+        "field": "document_id",
+        "text": "TEST-2026-0911-A",
+        "measured": true,
+        "reference_x_px": [
+          282.0,
+          634.0
+        ],
+        "pdf_selection_x_px": [
+          266.6376153729763,
+          637.0
+        ],
+        "edge_error_px": [
+          -15.362384627023687,
+          3.0
+        ]
+      },
+      {
+        "field": "date",
+        "text": "2026-09-11",
+        "measured": true,
+        "reference_x_px": [
+          240.0,
+          458.0
+        ],
+        "pdf_selection_x_px": [
+          228.3646390916464,
+          462.53592862935926
+        ],
+        "edge_error_px": [
+          -11.63536090835359,
+          4.535928629359262
+        ]
+      },
+      {
+        "field": "time",
+        "text": "09:05",
+        "measured": true,
+        "reference_x_px": [
+          712.0,
+          813.0
+        ],
+        "pdf_selection_x_px": [
+          696.0350364963504,
+          810.5999999999999
+        ],
+        "edge_error_px": [
+          -15.964963503649642,
+          -2.400000000000091
+        ]
+      },
+      {
+        "field": "amount",
+        "text": "123,450원",
+        "measured": true,
+        "reference_x_px": [
+          330.0,
+          519.0
+        ],
+        "pdf_selection_x_px": [
+          311.6846327854019,
+          520.2800935002263
+        ],
+        "edge_error_px": [
+          -18.315367214598098,
+          1.2800935002262577
+        ]
+      },
+      {
+        "field": "percentage",
+        "text": "12.5%",
+        "measured": true,
+        "reference_x_px": [
+          231.0,
+          344.0
+        ],
+        "pdf_selection_x_px": [
+          218.35283062113223,
+          354.61610130644044
+        ],
+        "edge_error_px": [
+          -12.647169378867773,
+          10.616101306440441
+        ]
+      },
+      {
+        "field": "leading_zero",
+        "text": "007개",
+        "measured": true,
+        "reference_x_px": [
+          584.0,
+          695.0
+        ],
+        "pdf_selection_x_px": [
+          577.8315493926194,
+          694.8711322484527
+        ],
+        "edge_error_px": [
+          -6.168450607380578,
+          -0.12886775154731822
+        ]
+      }
+    ]
+  },
+  "baseline_comparison": {
+    "original": {
+      "file": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\pdf-studio-paddle-unaccepted.pdf",
+      "bytes": 92343,
+      "sha256": "ccca1aa49dbc13192716ac0dd6b3d304af4667d1d86f2ea8c08756cf6d0e55c7",
+      "page_count": 1,
+      "encrypted": false,
+      "pages": [
+        {
+          "width_pt": 595.0,
+          "height_pt": 765.0,
+          "mediabox": [
+            0.0,
+            0.0,
+            595.0,
+            765.0
+          ],
+          "cropbox": [
+            0.0,
+            0.0,
+            595.0,
+            765.0
+          ],
+          "rotation": 0,
+          "text": "",
+          "text_rendering_modes": [],
+          "text_show_operation_modes": [],
+          "images": [
+            {
+              "name": "/Image-7098480789",
+              "width": 1400,
+              "height": 1800,
+              "filter": "/FlateDecode",
+              "colorspace": "/DeviceRGB",
+              "bits_per_component": 8,
+              "encoded_sha256": "7099f17c566b395561531380e1b39a51ed2503926080ab77a68ac548ca54186c",
+              "decoded_stream_sha256": "8d6ac0b78c2ad7d0f7aca55605a78bb2568ca765c744073acf97d482af02f147",
+              "encoded_bytes": 91391
+            }
+          ],
+          "content_operation_count": 7
+        }
+      ],
+      "render": {
+        "png": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\pdf-studio-paddle-pdf-validation-proportional-original-render.png",
+        "stderr": ""
+      }
+    },
+    "same_page_count": true,
+    "same_page_geometry": true,
+    "same_image_resources": true,
+    "render_same_dimensions": true,
+    "render_exact_pixel_match": true,
+    "render_different_channel_count": 0,
+    "render_max_channel_difference": 0,
+    "render_mean_absolute_channel_difference": 0.0
+  },
+  "limitations": [
+    "The source fixture was selected by the recorded test procedure; the app flow did not include its file hash.",
+    "Full visual preservation can only be established against the pre-OCR PDF, not the source PNG alone.",
+    "Per-line bounds do not certify per-character search-highlight alignment, especially mixed-width Korean/English.",
+    "This is one synthetic page, not a representative multilingual or production PDF benchmark."
+  ],
+  "before_after_selection_comparison": {
+    "before_report": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\pdf-studio-paddle-pdf-validation.json",
+    "before_report_sha256": "4d47a9f8280dc10824df1bdd1023e7e003160ac2a22b46f19442c97bee8f8ba2",
+    "note": "Observed end-to-end PDFs from separate recognition runs. Box movement may contribute; this does not isolate the writer.",
+    "matched_fields": 6,
+    "fields": [
+      {
+        "field": "document_id",
+        "text": "TEST-2026-0911-A",
+        "before_edge_error_px": [
+          -46.1636363636363,
+          2.9999999999997726
+        ],
+        "after_edge_error_px": [
+          -15.362384627023687,
+          3.0
+        ],
+        "absolute_error_reduction_px": [
+          30.801251736612613,
+          -2.2737367544323206e-13
+        ]
+      },
+      {
+        "field": "date",
+        "text": "2026-09-11",
+        "before_edge_error_px": [
+          -33.73333333333332,
+          -10.000000000000057
+        ],
+        "after_edge_error_px": [
+          -11.63536090835359,
+          4.535928629359262
+        ],
+        "absolute_error_reduction_px": [
+          22.09797242497973,
+          5.464071370640795
+        ]
+      },
+      {
+        "field": "time",
+        "text": "09:05",
+        "before_edge_error_px": [
+          -22.26666666666665,
+          -2.3999999999998636
+        ],
+        "after_edge_error_px": [
+          -15.964963503649642,
+          -2.400000000000091
+        ],
+        "absolute_error_reduction_px": [
+          6.3017031630170095,
+          -2.2737367544323206e-13
+        ]
+      },
+      {
+        "field": "amount",
+        "text": "123,450원",
+        "before_edge_error_px": [
+          -34.30526315789473,
+          15.43157894736828
+        ],
+        "after_edge_error_px": [
+          -18.315367214598098,
+          1.2800935002262577
+        ],
+        "absolute_error_reduction_px": [
+          15.98989594329663,
+          14.151485447142022
+        ]
+      },
+      {
+        "field": "percentage",
+        "text": "12.5%",
+        "before_edge_error_px": [
+          -20.533333333333275,
+          21.050000000000068
+        ],
+        "after_edge_error_px": [
+          -12.647169378867773,
+          10.616101306440441
+        ],
+        "absolute_error_reduction_px": [
+          7.886163954465502,
+          10.433898693559627
+        ]
+      },
+      {
+        "field": "leading_zero",
+        "text": "007개",
+        "before_edge_error_px": [
+          -2.533333333333303,
+          10.13333333333344
+        ],
+        "after_edge_error_px": [
+          -6.168450607380578,
+          -0.12886775154731822
+        ],
+        "absolute_error_reduction_px": [
+          -3.635117274047275,
+          10.004465581786121
+        ]
+      }
+    ],
+    "before_absolute_edge_error_px": {
+      "mean": 18.462539872408254,
+      "median": 17.982456140350777,
+      "min": 2.3999999999998636,
+      "max": 46.1636363636363
+    },
+    "after_absolute_edge_error_px": {
+      "mean": 8.504557285620562,
+      "median": 8.39227595691051,
+      "min": 0.12886775154731822,
+      "max": 18.315367214598098
+    },
+    "mean_absolute_error_reduction_percent": 53.93614668190705,
+    "before_ocr_pdf_sha256": "3e4a9c5c7a6e147a913e79fd81f842729fa003a480b79ebdb3580e8313dfc646",
+    "after_ocr_pdf_sha256": "e67fd584840ef4b6e82bee8023fc8f194448fac2d86211c3e20fdc55319a8f14"
+  }
+}

@@ -1,0 +1,466 @@
+{
+  "events": [
+    {
+      "name": "observer-ready",
+      "at": "2026-09-11T12:01:14.612Z"
+    },
+    {
+      "name": "session-start",
+      "at": "2026-09-11T12:01:42.501Z"
+    },
+    {
+      "name": "session-ready",
+      "at": "2026-09-11T12:01:46.285Z"
+    },
+    {
+      "name": "recognize-start",
+      "at": "2026-09-11T12:01:46.286Z",
+      "width": 2480,
+      "height": 3188
+    },
+    {
+      "name": "recognize-error",
+      "at": "2026-09-11T12:01:58.081Z",
+      "type": "AbortError",
+      "message": "signal is aborted without reason"
+    },
+    {
+      "name": "session-closed",
+      "at": "2026-09-11T12:01:58.099Z"
+    },
+    {
+      "name": "session-start",
+      "at": "2026-09-11T12:02:15.473Z"
+    },
+    {
+      "name": "session-ready",
+      "at": "2026-09-11T12:02:17.938Z"
+    },
+    {
+      "name": "recognize-start",
+      "at": "2026-09-11T12:02:17.938Z",
+      "width": 2480,
+      "height": 3188
+    },
+    {
+      "name": "recognize-complete",
+      "at": "2026-09-11T12:02:55.835Z"
+    },
+    {
+      "name": "session-closed",
+      "at": "2026-09-11T12:02:55.849Z"
+    }
+  ],
+  "runs": [
+    {
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "words": [
+        {
+          "text": "PDF Studio 문서 인식 시험",
+          "box": [
+            0.061,
+            0.053,
+            0.521,
+            0.086
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.054
+            ],
+            [
+              0.52,
+              0.053
+            ],
+            [
+              0.521,
+              0.085
+            ],
+            [
+              0.062,
+              0.086
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "가상 문서 · Synthetic document",
+          "box": [
+            0.061,
+            0.099,
+            0.416,
+            0.128
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.1
+            ],
+            [
+              0.415,
+              0.099
+            ],
+            [
+              0.416,
+              0.127
+            ],
+            [
+              0.062,
+              0.128
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "한글과 English를 함께 읽습니다.",
+          "box": [
+            0.062,
+            0.183,
+            0.498,
+            0.217
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.184
+            ],
+            [
+              0.498,
+              0.183
+            ],
+            [
+              0.498,
+              0.216
+            ],
+            [
+              0.062,
+              0.217
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "자동 인식 결과의 숫자를 비교합니다.",
+          "box": [
+            0.062,
+            0.241,
+            0.564,
+            0.273
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.242
+            ],
+            [
+              0.564,
+              0.241
+            ],
+            [
+              0.564,
+              0.272
+            ],
+            [
+              0.062,
+              0.273
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+          "box": [
+            0.062,
+            0.297,
+            0.678,
+            0.33
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.298
+            ],
+            [
+              0.678,
+              0.297
+            ],
+            [
+              0.678,
+              0.329
+            ],
+            [
+              0.062,
+              0.33
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "문서번호: TEST-2026-0911-A",
+          "box": [
+            0.061,
+            0.355,
+            0.455,
+            0.387
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.356
+            ],
+            [
+              0.454,
+              0.355
+            ],
+            [
+              0.455,
+              0.386
+            ],
+            [
+              0.062,
+              0.387
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+          "box": [
+            0.061,
+            0.413,
+            0.579,
+            0.446
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.414
+            ],
+            [
+              0.578,
+              0.413
+            ],
+            [
+              0.579,
+              0.445
+            ],
+            [
+              0.062,
+              0.446
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "계약 금액은 123,450원입니다.",
+          "box": [
+            0.062,
+            0.471,
+            0.467,
+            0.504
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.472
+            ],
+            [
+              0.467,
+              0.471
+            ],
+            [
+              0.467,
+              0.503
+            ],
+            [
+              0.062,
+              0.504
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "비율은 12.5%이며 수량은 007개입니다.",
+          "box": [
+            0.062,
+            0.528,
+            0.592,
+            0.561
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.529
+            ],
+            [
+              0.591,
+              0.528
+            ],
+            [
+              0.592,
+              0.56
+            ],
+            [
+              0.063,
+              0.561
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "대문자 O와 숫자 0, 소문자 1과 숫자 1.",
+          "box": [
+            0.062,
+            0.587,
+            0.575,
+            0.621
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.588
+            ],
+            [
+              0.574,
+              0.587
+            ],
+            [
+              0.575,
+              0.62
+            ],
+            [
+              0.063,
+              0.621
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "Project status: Ready for review.",
+          "box": [
+            0.062,
+            0.645,
+            0.496,
+            0.679
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.646
+            ],
+            [
+              0.496,
+              0.645
+            ],
+            [
+              0.496,
+              0.678
+            ],
+            [
+              0.062,
+              0.679
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "Contact: demo@example.test",
+          "box": [
+            0.061,
+            0.702,
+            0.464,
+            0.736
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.703
+            ],
+            [
+              0.463,
+              0.702
+            ],
+            [
+              0.464,
+              0.735
+            ],
+            [
+              0.062,
+              0.736
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+          "box": [
+            0.062,
+            0.897,
+            0.506,
+            0.926
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.898
+            ],
+            [
+              0.506,
+              0.897
+            ],
+            [
+              0.506,
+              0.925
+            ],
+            [
+              0.062,
+              0.926
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        }
+      ],
+      "confidence": null,
+      "source": "paddle-vl15",
+      "warnings": [],
+      "rawText": "PDF Studio 문서 인식 시험<|LOC_61|><|LOC_54|><|LOC_520|><|LOC_53|><|LOC_521|><|LOC_85|><|LOC_62|><|LOC_86|>\n가상 문서 · Synthetic document<|LOC_61|><|LOC_100|><|LOC_415|><|LOC_99|><|LOC_416|><|LOC_127|><|LOC_62|><|LOC_128|>\n한글과 English를 함께 읽습니다.<|LOC_62|><|LOC_184|><|LOC_498|><|LOC_183|><|LOC_498|><|LOC_216|><|LOC_62|><|LOC_217|>\n자동 인식 결과의 숫자를 비교합니다.<|LOC_62|><|LOC_242|><|LOC_564|><|LOC_241|><|LOC_564|><|LOC_272|><|LOC_62|><|LOC_273|>\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.<|LOC_62|><|LOC_298|><|LOC_678|><|LOC_297|><|LOC_678|><|LOC_329|><|LOC_62|><|LOC_330|>\n문서번호: TEST-2026-0911-A<|LOC_61|><|LOC_356|><|LOC_454|><|LOC_355|><|LOC_455|><|LOC_386|><|LOC_62|><|LOC_387|>\n작성일: 2026-09-11 / 검토 시간: 09:05<|LOC_61|><|LOC_414|><|LOC_578|><|LOC_413|><|LOC_579|><|LOC_445|><|LOC_62|><|LOC_446|>\n계약 금액은 123,450원입니다.<|LOC_62|><|LOC_472|><|LOC_467|><|LOC_471|><|LOC_467|><|LOC_503|><|LOC_62|><|LOC_504|>\n비율은 12.5%이며 수량은 007개입니다.<|LOC_62|><|LOC_529|><|LOC_591|><|LOC_528|><|LOC_592|><|LOC_560|><|LOC_63|><|LOC_561|>\n대문자 O와 숫자 0, 소문자 1과 숫자 1.<|LOC_62|><|LOC_588|><|LOC_574|><|LOC_587|><|LOC_575|><|LOC_620|><|LOC_63|><|LOC_621|>\nProject status: Ready for review.<|LOC_62|><|LOC_646|><|LOC_496|><|LOC_645|><|LOC_496|><|LOC_678|><|LOC_62|><|LOC_679|>\nContact: demo@example.test<|LOC_61|><|LOC_703|><|LOC_463|><|LOC_702|><|LOC_464|><|LOC_735|><|LOC_62|><|LOC_736|>\nTEST ONLY · 실제 업무 문서가 아닙니다.<|LOC_62|><|LOC_898|><|LOC_506|><|LOC_897|><|LOC_506|><|LOC_925|><|LOC_62|><|LOC_926|>",
+      "model": "PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1",
+      "granularity": "line",
+      "elapsedMs": 37896.29999999702,
+      "generatedTokens": 344,
+      "preprocess": {
+        "width": 868,
+        "height": 1120,
+        "maxPixels": 1003520
+      }
+    }
+  ],
+  "downloads": [
+    {
+      "name": "paddle-unaccepted.pdf",
+      "bytes": 92343
+    },
+    {
+      "name": "paddle-accepted.pdf",
+      "bytes": 94470
+    },
+    {
+      "name": "paddle-unaccepted.pdf",
+      "bytes": 92343
+    }
+  ],
+  "errors": []
+}

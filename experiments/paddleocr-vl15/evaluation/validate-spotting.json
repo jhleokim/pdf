@@ -1,0 +1,528 @@
+{
+  "source_results": "C:\\Users\\LEO\\.codex\\visualizations\\2026\\09\\11\\pdf-studio-paddle-vl15-evaluation\\community-browser-results.json",
+  "source_results_sha256": "59c8174b6b86f6d6d367467e29a76f9b20584c3668022b7aaafdd1652252c6c6",
+  "run_index": 4,
+  "document_id": "01-mixed-paragraph",
+  "image_sha256_matches_truth": true,
+  "image_sha256": "3e72f4b4a309c9b6ae0c9f2690f96178b02fa942be4aa74cdaaf71bf9a1d63f1",
+  "provenance_limit": "Saved run identifies the fixture by id; original browser input bytes were not hashed in that run.",
+  "task": "spotting",
+  "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+  "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+  "elapsed_ms": 38983.59999999404,
+  "timing_scope": "Saved browser page-recognition elapsed_ms excludes previously completed engine initialization/model downloads.",
+  "max_pixels": 1003520,
+  "resized_dimensions": [
+    868,
+    1120
+  ],
+  "generated_tokens": 344,
+  "stop_reason": "eos",
+  "matching": "Descending IoU one-to-one matching; minimum IoU=0.5; no text correction or text-based pairing.",
+  "coordinate_units": "Normalized xyxy projected to original fixture 1400x1800 pixels; IoU compares axis-aligned boxes.",
+  "truth_box_scope": "Pillow textbbox used when drawing the synthetic line, not exact black-ink segmentation or a PDF text baseline.",
+  "truth_lines": 13,
+  "predicted_lines": 13,
+  "matched_lines": 13,
+  "missing_truth_indices": [],
+  "unmatched_prediction_indices": [],
+  "invalid_coordinate_indices": [],
+  "raw_LOC_parser_agrees_with_saved_polygons": true,
+  "exact_text_lines": 12,
+  "reading_order_inversions": 0,
+  "page_character_edits": 1,
+  "reference_characters_after_whitespace_normalization": 330,
+  "page_cer": 0.0030303030303030303,
+  "iou": {
+    "mean": 0.6925630625274751,
+    "median": 0.6848763193940856,
+    "min": 0.6081414145139178,
+    "max": 0.8163049425496992
+  },
+  "center_error_px": {
+    "mean": 3.4074154205481584,
+    "median": 3.220248437620994,
+    "min": 0.806225774829869,
+    "max": 5.371219600798564
+  },
+  "center_error_page_diagonal_percent": {
+    "mean": 0.14942505098510978,
+    "median": 0.14121723581882123,
+    "min": 0.035355339059327986,
+    "max": 0.23554356121697403
+  },
+  "truth_box_coverage": {
+    "mean": 0.9989043358419212,
+    "median": 1.0,
+    "min": 0.9957166392092257,
+    "max": 1.0
+  },
+  "predicted_height_over_truth": {
+    "mean": 1.4363511004578653,
+    "median": 1.4487804878048802,
+    "min": 1.2122448979591836,
+    "max": 1.6312500000000014
+  },
+  "per_line": [
+    {
+      "truth_index": 0,
+      "prediction_index": 0,
+      "expected_text": "PDF Studio 문서 인식 시험",
+      "actual_text": "PDF Studio 문서 인식 시험",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        100,
+        732,
+        149
+      ],
+      "predicted_box_px": [
+        85.39999999999999,
+        95.39999999999999,
+        729.4,
+        154.79999999999998
+      ],
+      "iou": 0.8163049425496992,
+      "center_error_px": 3.6496575181789535,
+      "center_offset_xy_px": [
+        -3.6000000000000227,
+        0.5999999999999943
+      ],
+      "center_error_page_diagonal_percent": 0.16004806970215205,
+      "truth_box_coverage": 0.9959501557632399,
+      "predicted_height_over_truth": 1.2122448979591836,
+      "edge_delta_ltrb_px": [
+        -4.6000000000000085,
+        -4.6000000000000085,
+        -2.6000000000000227,
+        5.799999999999983
+      ]
+    },
+    {
+      "truth_index": 1,
+      "prediction_index": 1,
+      "expected_text": "가상 문서 · Synthetic document",
+      "actual_text": "가상 문서 · Synthetic document",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        185,
+        578,
+        222
+      ],
+      "predicted_box_px": [
+        85.39999999999999,
+        178.20000000000002,
+        582.4,
+        230.4
+      ],
+      "iou": 0.6959766260397636,
+      "center_error_px": 0.806225774829869,
+      "center_offset_xy_px": [
+        -0.10000000000002274,
+        0.8000000000000114
+      ],
+      "center_error_page_diagonal_percent": 0.035355339059327986,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.4108108108108106,
+      "edge_delta_ltrb_px": [
+        -4.6000000000000085,
+        -6.799999999999983,
+        4.399999999999977,
+        8.400000000000006
+      ]
+    },
+    {
+      "truth_index": 2,
+      "prediction_index": 2,
+      "expected_text": "한글과 English를 함께 읽습니다.",
+      "actual_text": "한글과 English를 함께 읽습니다.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        340,
+        697,
+        386
+      ],
+      "predicted_box_px": [
+        86.8,
+        329.4,
+        697.2,
+        392.4
+      ],
+      "iou": 0.7260916599055522,
+      "center_error_px": 2.5806975801128065,
+      "center_offset_xy_px": [
+        -1.5,
+        -2.1000000000000227
+      ],
+      "center_error_page_diagonal_percent": 0.11317107540220908,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.3695652173913044,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -10.600000000000023,
+        0.20000000000004547,
+        6.399999999999977
+      ]
+    },
+    {
+      "truth_index": 3,
+      "prediction_index": 3,
+      "expected_text": "자동 인식 결과의 숫자를 비교합니다.",
+      "actual_text": "자동 인식 결과의 숫자를 비교합니다.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        444,
+        789,
+        485
+      ],
+      "predicted_box_px": [
+        86.8,
+        433.8,
+        789.5999999999999,
+        491.40000000000003
+      ],
+      "iou": 0.7079568630240939,
+      "center_error_px": 2.3021728866442874,
+      "center_offset_xy_px": [
+        -1.3000000000000682,
+        -1.8999999999999773
+      ],
+      "center_error_page_diagonal_percent": 0.10095695960312923,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.4048780487804884,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -10.199999999999989,
+        0.599999999999909,
+        6.400000000000034
+      ]
+    },
+    {
+      "truth_index": 4,
+      "prediction_index": 4,
+      "expected_text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+      "actual_text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        548,
+        948,
+        590
+      ],
+      "predicted_box_px": [
+        86.8,
+        534.6,
+        950.6,
+        594.0
+      ],
+      "iou": 0.7023230686115615,
+      "center_error_px": 4.70956473572669,
+      "center_offset_xy_px": [
+        -0.2999999999999545,
+        -4.7000000000000455
+      ],
+      "center_error_page_diagonal_percent": 0.20652807594573414,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.4142857142857137,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -13.399999999999977,
+        2.6000000000000227,
+        4.0
+      ]
+    },
+    {
+      "truth_index": 5,
+      "prediction_index": 5,
+      "expected_text": "문서번호: TEST-2026-0911-A",
+      "actual_text": "문서번호: TEST-2026-0911-A",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        652,
+        634,
+        692
+      ],
+      "predicted_box_px": [
+        85.39999999999999,
+        639.0,
+        637.0,
+        696.6
+      ],
+      "iou": 0.6848763193940856,
+      "center_error_px": 4.2755116652864364,
+      "center_offset_xy_px": [
+        -0.8000000000000114,
+        -4.2000000000000455
+      ],
+      "center_error_page_diagonal_percent": 0.187493589634011,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.4400000000000006,
+      "edge_delta_ltrb_px": [
+        -4.6000000000000085,
+        -13.0,
+        3.0,
+        4.600000000000023
+      ]
+    },
+    {
+      "truth_index": 6,
+      "prediction_index": 6,
+      "expected_text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+      "actual_text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        756,
+        813,
+        797
+      ],
+      "predicted_box_px": [
+        85.39999999999999,
+        743.4,
+        810.5999999999999,
+        802.8000000000001
+      ],
+      "iou": 0.6842943462092185,
+      "center_error_px": 4.879549159502366,
+      "center_offset_xy_px": [
+        -3.500000000000057,
+        -3.3999999999999773
+      ],
+      "center_error_page_diagonal_percent": 0.2139823860472212,
+      "truth_box_coverage": 0.996680497925311,
+      "predicted_height_over_truth": 1.4487804878048802,
+      "edge_delta_ltrb_px": [
+        -4.6000000000000085,
+        -12.600000000000023,
+        -2.400000000000091,
+        5.800000000000068
+      ]
+    },
+    {
+      "truth_index": 7,
+      "prediction_index": 7,
+      "expected_text": "계약 금액은 123,450원입니다.",
+      "actual_text": "계약 금액은 123,450원입니다.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        860,
+        654,
+        901
+      ],
+      "predicted_box_px": [
+        86.8,
+        847.8,
+        655.2,
+        907.2
+      ],
+      "iou": 0.684892556813738,
+      "center_error_px": 3.1622776601683795,
+      "center_offset_xy_px": [
+        -1.0,
+        -3.0
+      ],
+      "center_error_page_diagonal_percent": 0.1386750490563073,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.4487804878048802,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -12.200000000000045,
+        1.2000000000000455,
+        6.2000000000000455
+      ]
+    },
+    {
+      "truth_index": 8,
+      "prediction_index": 8,
+      "expected_text": "비율은 12.5%이며 수량은 007개입니다.",
+      "actual_text": "비율은 12.5%이며 수량은 007개입니다.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        964,
+        830,
+        1004
+      ],
+      "predicted_box_px": [
+        86.8,
+        950.4000000000001,
+        828.8,
+        1009.8000000000001
+      ],
+      "iou": 0.6697671045355238,
+      "center_error_px": 4.477722635447526,
+      "center_offset_xy_px": [
+        -2.2000000000000455,
+        -3.8999999999998636
+      ],
+      "center_error_page_diagonal_percent": 0.19636112728259286,
+      "truth_box_coverage": 0.9983783783783784,
+      "predicted_height_over_truth": 1.4849999999999994,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -13.599999999999909,
+        -1.2000000000000455,
+        5.800000000000068
+      ]
+    },
+    {
+      "truth_index": 9,
+      "prediction_index": 9,
+      "expected_text": "대문자 O와 숫자 0, 소문자 l과 숫자 1.",
+      "actual_text": "대문자 O와 숫자 0, 소문자 1과 숫자 1.",
+      "exact_text_match": false,
+      "character_edits": 1,
+      "truth_box_px": [
+        90,
+        1068,
+        805,
+        1109
+      ],
+      "predicted_box_px": [
+        86.8,
+        1056.6,
+        804.9999999999999,
+        1117.8
+      ],
+      "iou": 0.6669496908574991,
+      "center_error_px": 2.0615528128090066,
+      "center_offset_xy_px": [
+        -1.6000000000000796,
+        -1.300000000000182
+      ],
+      "center_error_page_diagonal_percent": 0.0904050713349551,
+      "truth_box_coverage": 0.9999999999999999,
+      "predicted_height_over_truth": 1.4926829268292694,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -11.400000000000091,
+        -1.1368683772161603e-13,
+        8.799999999999955
+      ]
+    },
+    {
+      "truth_index": 10,
+      "prediction_index": 10,
+      "expected_text": "Project status: Ready for review.",
+      "actual_text": "Project status: Ready for review.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        1172,
+        697,
+        1214
+      ],
+      "predicted_box_px": [
+        86.8,
+        1161.0,
+        694.4,
+        1222.2
+      ],
+      "iou": 0.6806612910491456,
+      "center_error_px": 3.220248437620994,
+      "center_offset_xy_px": [
+        -2.900000000000034,
+        -1.400000000000091
+      ],
+      "center_error_page_diagonal_percent": 0.14121723581882123,
+      "truth_box_coverage": 0.9957166392092257,
+      "predicted_height_over_truth": 1.4571428571428582,
+      "edge_delta_ltrb_px": [
+        -3.200000000000003,
+        -11.0,
+        -2.6000000000000227,
+        8.200000000000045
+      ]
+    },
+    {
+      "truth_index": 11,
+      "prediction_index": 11,
+      "expected_text": "Contact: demo@example.test",
+      "actual_text": "Contact: demo@example.test",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        1276,
+        645,
+        1318
+      ],
+      "predicted_box_px": [
+        85.39999999999999,
+        1263.6,
+        649.6,
+        1324.8
+      ],
+      "iou": 0.6750839293533785,
+      "center_error_px": 2.800000000000182,
+      "center_offset_xy_px": [
+        0.0,
+        -2.800000000000182
+      ],
+      "center_error_page_diagonal_percent": 0.12278812270299207,
+      "truth_box_coverage": 1.0,
+      "predicted_height_over_truth": 1.4571428571428582,
+      "edge_delta_ltrb_px": [
+        -4.6000000000000085,
+        -12.400000000000091,
+        4.600000000000023,
+        6.7999999999999545
+      ]
+    },
+    {
+      "truth_index": 12,
+      "prediction_index": 12,
+      "expected_text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+      "actual_text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+      "exact_text_match": true,
+      "character_edits": 0,
+      "truth_box_px": [
+        90,
+        1620,
+        709,
+        1652
+      ],
+      "predicted_box_px": [
+        85.39999999999999,
+        1614.6000000000001,
+        708.4,
+        1666.8000000000002
+      ],
+      "iou": 0.6081414145139178,
+      "center_error_px": 5.371219600798564,
+      "center_offset_xy_px": [
+        -2.6000000000000227,
+        4.700000000000273
+      ],
+      "center_error_page_diagonal_percent": 0.23554356121697403,
+      "truth_box_coverage": 0.9990306946688207,
+      "predicted_height_over_truth": 1.6312500000000014,
+      "edge_delta_ltrb_px": [
+        -4.6000000000000085,
+        -5.399999999999864,
+        -0.6000000000000227,
+        14.800000000000182
+      ]
+    }
+  ],
+  "limitations": [
+    "One synthetic page only; not a representative OCR benchmark.",
+    "Line polygons are not per-character bounds or font metrics; searchable-PDF selection alignment needs an export test.",
+    "No performance comparison to other devices, browsers, cold starts or engines follows from this run."
+  ]
+}

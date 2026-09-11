@@ -1,0 +1,252 @@
+{
+  "_id": "69fb118c4d5a3ae999e359ab",
+  "id": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+  "private": false,
+  "tags": [
+    "onnx",
+    "paddleocr_vl",
+    "ocr",
+    "vision-language",
+    "paddleocr",
+    "table-recognition",
+    "nncf",
+    "gptq",
+    "custom_code",
+    "en",
+    "zh",
+    "multilingual",
+    "license:apache-2.0",
+    "region:us"
+  ],
+  "downloads": 634,
+  "likes": 4,
+  "modelId": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+  "author": "onnx-community",
+  "sha": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+  "lastModified": "2026-08-31T20:20:38.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {
+    "architectures": [
+      "PaddleOCRVLForConditionalGeneration"
+    ],
+    "auto_map": {
+      "AutoConfig": "configuration_paddleocr_vl.PaddleOCRVLConfig",
+      "AutoModel": "modeling_paddleocr_vl.PaddleOCRVLForConditionalGeneration",
+      "AutoModelForCausalLM": "modeling_paddleocr_vl.PaddleOCRVLForConditionalGeneration"
+    },
+    "model_type": "paddleocr_vl",
+    "tokenizer_config": {
+      "bos_token": "<s>",
+      "cls_token": "<|begin_of_sentence|>",
+      "eos_token": "</s>",
+      "mask_token": "<mask:1>",
+      "pad_token": "<unk>",
+      "sep_token": "<|end_of_sentence|>",
+      "unk_token": "<unk>",
+      "use_default_system_prompt": false
+    },
+    "chat_template_jinja": "{%- if not add_generation_prompt is defined -%}\n    {%- set add_generation_prompt = true -%}\n{%- endif -%}\n{%- if not cls_token is defined -%}\n    {%- set cls_token = \"<|begin_of_sentence|>\" -%}\n{%- endif -%}\n{%- if not eos_token is defined -%}\n    {%- set eos_token = \"</s>\" -%}\n{%- endif -%}\n{{- cls_token -}}\n{%- for message in messages -%}\n    {%- if message[\"role\"] == \"user\" -%}\n        {{- \"User: \" -}}\n        {%- for content in message[\"content\"] -%}\n            {%- if content[\"type\"] == \"image\" -%}\n                {{ \"<|IMAGE_START|><|IMAGE_PLACEHOLDER|><|IMAGE_END|>\" }}\n            {%- endif -%}\n        {%- endfor -%}\n        {%- for content in message[\"content\"] -%}\n            {%- if content[\"type\"] == \"text\" -%}\n                {{ content[\"text\"] }}\n            {%- endif -%}\n        {%- endfor -%}\n        {{ \"\\n\" -}}\n    {%- elif message[\"role\"] == \"assistant\" -%}\n        {{- \"Assistant:\\n\" -}}\n        {%- for content in message[\"content\"] -%}\n            {%- if content[\"type\"] == \"text\" -%}\n                {{ content[\"text\"] }}\n            {%- endif -%}\n        {%- endfor -%}\n        {{ eos_token -}}\n    {%- elif message[\"role\"] == \"system\" -%}\n        {%- for content in message[\"content\"] -%}\n            {%- if content[\"type\"] == \"text\" -%}\n                {{ content[\"text\"] + \"\\n\" }}\n            {%- endif -%}\n        {%- endfor -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{- \"Assistant:\\n\" -}}\n{%- endif -%}\n"
+  },
+  "cardData": {
+    "language": [
+      "en",
+      "zh",
+      "multilingual"
+    ],
+    "tags": [
+      "ocr",
+      "onnx",
+      "vision-language",
+      "paddleocr",
+      "table-recognition",
+      "nncf",
+      "gptq"
+    ],
+    "license": "apache-2.0"
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "3658b169ed8e2726c33dcc61fb75941c07def093",
+      "size": 1943
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "643e3d0bb96aa23b2245c3b880fe7aff570c2df0",
+      "size": 2226
+    },
+    {
+      "rfilename": "chat_template.jinja",
+      "blobId": "d8b8c271d7a7245d4937098f53aa372cff3dba70",
+      "size": 1474
+    },
+    {
+      "rfilename": "config.json",
+      "blobId": "3f7417e0d9518af9e6f0ea036726699cb7c858f8",
+      "size": 2117
+    },
+    {
+      "rfilename": "configuration_paddleocr_vl.py",
+      "blobId": "a8fd139287293301b287db6dfdaac21d7ad1a236",
+      "size": 8104
+    },
+    {
+      "rfilename": "image_processing_paddleocr_vl.py",
+      "blobId": "f7e28fd3c1971331581f73d573b9c4a2a4ce7a58",
+      "size": 25032
+    },
+    {
+      "rfilename": "onnx/decoder.onnx",
+      "blobId": "e07cbd991fcd9b9810253ed0fdf108504fb43201",
+      "size": 2570860,
+      "lfs": {
+        "sha256": "525105a9a26162793de61cf66a80d5b23b889a56b9e19c65d5ff54963ef4b99f",
+        "size": 2570860,
+        "pointerSize": 132
+      }
+    },
+    {
+      "rfilename": "onnx/decoder.onnx.data",
+      "blobId": "1dc35fc64f233f090a10cda9bab5a390ca37c51a",
+      "size": 1443037184,
+      "lfs": {
+        "sha256": "179214e3b95e0f2cc36c7948a6122e8a654dd1eb42bbc274ef3a18ab9778819d",
+        "size": 1443037184,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "onnx/decoder_int4_kquant.onnx",
+      "blobId": "898244cba81052616fa149e72c554791cdc7bc8d",
+      "size": 195529216,
+      "lfs": {
+        "sha256": "98b307ddeed0a091592dd0f277a6856d1a8e3ab1975bcbfd3138748edc99c54e",
+        "size": 195529216,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/decoder_q4.onnx",
+      "blobId": "d20edf56d9dd2e017211fe495a98144c754a39ac",
+      "size": 233566043,
+      "lfs": {
+        "sha256": "87858a011c3f5ae8b373ec7298fba781dfe3ceb49828a803a197becdee26853c",
+        "size": 233566043,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/decoder_q8.onnx",
+      "blobId": "087cc8663146ec558d888d0a419ea45cc98166fc",
+      "size": 363251637,
+      "lfs": {
+        "sha256": "68239a8340f6974000749876ff277f1a67a02bc4cfc11d64f99312ffc061fd0e",
+        "size": 363251637,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/decoder_quint8.onnx",
+      "blobId": "4d49bf691b5e90fa4d169c64f92bba940e4db262",
+      "size": 363251700,
+      "lfs": {
+        "sha256": "8ef74ebb6b09dc8c377239aeeb65300f6442d47e203d32e689afa3da2abbdfa6",
+        "size": 363251700,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/embedding.onnx",
+      "blobId": "5ae7dda4fd163ed2424c3d80828a9f2d15a6d26a",
+      "size": 1826,
+      "lfs": {
+        "sha256": "91b1babbe9dbc44f2b59f8462cbf27dd1520a88b1b85695e342b05e5b4a50004",
+        "size": 1826,
+        "pointerSize": 129
+      }
+    },
+    {
+      "rfilename": "onnx/embedding.onnx.data",
+      "blobId": "3fd5b50a2f2ec4100d51b8d533bfcc7462587542",
+      "size": 423624704,
+      "lfs": {
+        "sha256": "a2299447a5449d9bc68e4d1d1ab32b214a0e8c06f98244fbc7487342187ae6f3",
+        "size": 423624704,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/vision_encoder.onnx",
+      "blobId": "708c281d83172ed14bd9f2bd89751e9357705e74",
+      "size": 3436154,
+      "lfs": {
+        "sha256": "7d1bc0c04b735244c49790f89327c85e3592424fc696be47226a4b30d4b1aef5",
+        "size": 3436154,
+        "pointerSize": 132
+      }
+    },
+    {
+      "rfilename": "onnx/vision_encoder.onnx.data",
+      "blobId": "ed31405e443d13f37631026e6725080d4f3dd750",
+      "size": 1757216768,
+      "lfs": {
+        "sha256": "84e951cc98ad7500438b817bae51efd07a7dd0e6199aa8acd3edb0935c7e0a3a",
+        "size": 1757216768,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "onnx/vision_encoder_q4.onnx",
+      "blobId": "f6e57511725c0f58f20b85848352b02ebab0771b",
+      "size": 231128624,
+      "lfs": {
+        "sha256": "d737d600be1bd90ec1e3b537ffe1645a6d780de688904ca4301353df6086f46e",
+        "size": 231128624,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/vision_encoder_q8.onnx",
+      "blobId": "783daa4589abf3c85a15555dacef9c354eda6974",
+      "size": 443053392,
+      "lfs": {
+        "sha256": "caf7ea82a44c9e3b5a4093129f3b9e467c4a831c9f0068aa911518cee1eadfb1",
+        "size": 443053392,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "processing_paddleocr_vl.py",
+      "blobId": "73c3faeff201555fc7b52709848e3c669419dbb1",
+      "size": 12253
+    },
+    {
+      "rfilename": "processor_config.json",
+      "blobId": "22dfe8d033a4f23f6369c62e479849aa4a037024",
+      "size": 886
+    },
+    {
+      "rfilename": "tokenizer.json",
+      "blobId": "e42528d5cae447340ed0a3e403001c88fe9b0f17",
+      "size": 11189060,
+      "lfs": {
+        "sha256": "c8a215a59183d0d0781adc33bacd3ce6162716f7fd568fb30234a74d69803a7d",
+        "size": 11189060,
+        "pointerSize": 133
+      }
+    },
+    {
+      "rfilename": "tokenizer_config.json",
+      "blobId": "4d8a7984c12f48876ba24e3f0bd88797bdef4311",
+      "size": 877
+    }
+  ],
+  "spaces": [
+    "bakhil-aissa/PaddleOCR-VL-1.5-ONNX",
+    "umiocr/umiocr"
+  ],
+  "createdAt": "2026-05-06T10:01:48.000Z",
+  "usedStorage": 5470857168
+}

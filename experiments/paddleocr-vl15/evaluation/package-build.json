@@ -1,0 +1,47 @@
+{
+  "outfile": "C:\\Users\\LEO\\Documents\\Codex\\2026-09-06\\github-plugin-github-openai-curated-remote\\work\\pdf-pro-v38\\work\\paddle-vl15-browser\\pdf-studio-paddle-standalone-experiment.html",
+  "htmlBytes": 1242645348,
+  "purpose": "PDF Studio UI with experimental browser-only PaddleOCR-VL-1.5 provider; not a production release",
+  "directFileExecution": "unverified: available browser tool explicitly blocks file://; no alternate navigation used",
+  "verificationScope": "static package inspection only; HTTP development-build browser tests are separate",
+  "engineSourceSHA256": "113f31ac8d395c8a6a320cf880d46e42546031c45575d12987fd086bd5a50ad3",
+  "preprocessSourceSHA256": "e981d10ba00ab8ad3f2caa07125b52ea95a06da51889474eadaea02edc8eecec",
+  "uiBuilderSHA256": "77e33c6954d97957322b5d495fa3d3fd1b363811385090cf57dbfbcfab7884ee",
+  "ui": {
+    "provider": "paddle-vl15",
+    "model_revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+    "cache_tag": "PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1/spotting",
+    "runtime_injected": true,
+    "bytes": 7050425,
+    "source_index_sha256": "c3d6cce8d801c5f54a3af759558b5842fe97c2320da08f1f80e6baae6ac5a5f1",
+    "overrides": [
+      "provider/cache identity",
+      "Paddle progress details without guessed percent",
+      "text and coordinate validation",
+      "PDF embedding coordinate gate",
+      "approximate proportional OCR character metrics",
+      "confidence removal",
+      "PSM/language fields hidden",
+      "legacy Tesseract assets/session removed",
+      "Gemini excluded"
+    ],
+    "source_files_modified": false
+  },
+  "staticAudit": {
+    "externalScriptTags": 0,
+    "externalResourceTags": 0,
+    "importMaps": 0,
+    "legacyOCRRuntime": false,
+    "pdfTextWriterRetained": true,
+    "originalFontNoticesRetained": true,
+    "nativeBundleInputs": 0,
+    "externalBundleImports": 0,
+    "ortSingletons": 1,
+    "qaOnlyBundleInputs": 0,
+    "directEngineFetchRemoved": true,
+    "relativeEngineFallbackRemoved": true,
+    "dynamicGlueImport": "embedded Blob URL only",
+    "modelCache": "decoded Uint8Array preserved for repeated OCR sessions"
+  },
+  "bundleBytes": 473592
+}

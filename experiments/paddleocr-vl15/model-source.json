@@ -1,0 +1,180 @@
+{
+  "_id": "69c66275b6d6fce37ed5ef34",
+  "id": "lbm364dl/PaddleOCR-VL-1.5-ONNX",
+  "private": false,
+  "pipeline_tag": "image-to-text",
+  "library_name": "transformers.js",
+  "tags": [
+    "transformers.js",
+    "onnx",
+    "paddleocr_vl",
+    "image-text-to-text",
+    "ocr",
+    "table-recognition",
+    "vision-language",
+    "quantized",
+    "int4",
+    "image-to-text",
+    "custom_code",
+    "en",
+    "zh",
+    "base_model:PaddlePaddle/PaddleOCR-VL-1.5",
+    "base_model:quantized:PaddlePaddle/PaddleOCR-VL-1.5",
+    "license:apache-2.0",
+    "region:us"
+  ],
+  "downloads": 27,
+  "likes": 5,
+  "modelId": "lbm364dl/PaddleOCR-VL-1.5-ONNX",
+  "author": "lbm364dl",
+  "sha": "213c67b21d0a26d4a5eb364fb20fab55cee2dbff",
+  "lastModified": "2026-03-27T10:57:42.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {
+    "architectures": [
+      "PaddleOCRVLForConditionalGeneration"
+    ],
+    "auto_map": {
+      "AutoConfig": "configuration_paddleocr_vl.PaddleOCRVLConfig",
+      "AutoModel": "modeling_paddleocr_vl.PaddleOCRVLForConditionalGeneration",
+      "AutoModelForCausalLM": "modeling_paddleocr_vl.PaddleOCRVLForConditionalGeneration"
+    },
+    "model_type": "paddleocr_vl",
+    "tokenizer_config": {
+      "bos_token": "<s>",
+      "cls_token": "<|begin_of_sentence|>",
+      "eos_token": "</s>",
+      "mask_token": "<mask:1>",
+      "pad_token": "<unk>",
+      "sep_token": "<|end_of_sentence|>",
+      "unk_token": "<unk>",
+      "use_default_system_prompt": false
+    }
+  },
+  "cardData": {
+    "library_name": "transformers.js",
+    "base_model": "PaddlePaddle/PaddleOCR-VL-1.5",
+    "license": "apache-2.0",
+    "tags": [
+      "onnx",
+      "transformers.js",
+      "ocr",
+      "table-recognition",
+      "vision-language",
+      "quantized",
+      "int4"
+    ],
+    "language": [
+      "en",
+      "zh"
+    ],
+    "pipeline_tag": "image-to-text"
+  },
+  "transformersInfo": {
+    "auto_model": "AutoModelForMultimodalLM",
+    "pipeline_tag": "image-text-to-text",
+    "processor": "AutoProcessor"
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes",
+      "blobId": "52373fe24473b1aa44333d318f578ae6bf04b49b",
+      "size": 1570
+    },
+    {
+      "rfilename": "README.md",
+      "blobId": "7e40e2cd5a8b816acf8e2aa9f4d4f378554b6f19",
+      "size": 2272
+    },
+    {
+      "rfilename": "added_tokens.json",
+      "blobId": "6a2790e1462ecb007f9b92dfb00f594701462889",
+      "size": 25381
+    },
+    {
+      "rfilename": "config.json",
+      "blobId": "bdb91c1b00c4627f224ec743137e22cf5b81a6c5",
+      "size": 2058
+    },
+    {
+      "rfilename": "generation_config.json",
+      "blobId": "33aecbb1f6a7b098c673ff75203795029e998d8e",
+      "size": 132
+    },
+    {
+      "rfilename": "onnx/decoder_model_merged.onnx",
+      "blobId": "77e9e20b4ef179f05ca19d958d32a2202f3f477f",
+      "size": 226684704,
+      "lfs": {
+        "sha256": "30fde44c1dc44ea36d09a7a7bbb76fc99042c1d32c51f00c30c5943d6a1bef99",
+        "size": 226684704,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/embed_tokens.onnx",
+      "blobId": "31aea9d942773c5133bb6afd6301256b92a706f7",
+      "size": 423625114,
+      "lfs": {
+        "sha256": "5f46435a0fdf49f80fdc58b2e4dc825591bd4fb9fb84c079ffd2d5d7ad48813f",
+        "size": 423625114,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "onnx/vision_encoder.onnx",
+      "blobId": "ca620a23b1f4441b46b749c173422a12e4f7e5df",
+      "size": 386709887,
+      "lfs": {
+        "sha256": "4d17095c00c73723e51cac636852dca784f46d76dde2bebd08daf7b85e90518e",
+        "size": 386709887,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "preprocessor_config.json",
+      "blobId": "d873cd63d04d9e6243999759fc30f7752dab3222",
+      "size": 641
+    },
+    {
+      "rfilename": "processor_config.json",
+      "blobId": "033053ac4d8b5de2e47884ce85a6b4939cc58e87",
+      "size": 137
+    },
+    {
+      "rfilename": "special_tokens_map.json",
+      "blobId": "dcd70aaa8c9987899d7593995546d9c0cfc6a1f3",
+      "size": 1151
+    },
+    {
+      "rfilename": "tokenizer.json",
+      "blobId": "e42528d5cae447340ed0a3e403001c88fe9b0f17",
+      "size": 11189060,
+      "lfs": {
+        "sha256": "c8a215a59183d0d0781adc33bacd3ce6162716f7fd568fb30234a74d69803a7d",
+        "size": 11189060,
+        "pointerSize": 133
+      }
+    },
+    {
+      "rfilename": "tokenizer.model",
+      "blobId": "81e33aa7fdb8ef76fceb1a69f1997021f3056770",
+      "size": 1614363,
+      "lfs": {
+        "sha256": "34ef7db83df785924fb83d7b887b6e822a031c56e15cff40aaf9b982988180df",
+        "size": 1614363,
+        "pointerSize": 132
+      }
+    },
+    {
+      "rfilename": "tokenizer_config.json",
+      "blobId": "cd9eb7da01a3209f4fb9b3561e04be022cd87764",
+      "size": 186947
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2026-03-27T10:56:53.000Z",
+  "usedStorage": 1049823128
+}

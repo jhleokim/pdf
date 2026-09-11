@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "results": [
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "tesseract-7-auto",
+      "output_format": "plain",
+      "image_sha256": "3e72f4b4a309c9b6ae0c9f2690f96178b02fa942be4aa74cdaaf71bf9a1d63f1",
+      "cer_collapsed_whitespace": {
+        "reference_characters": 330,
+        "prediction_characters": 331,
+        "edit_distance": 8,
+        "cer": 0.024242424242424242,
+        "accuracy_clamped": 0.9757575757575757
+      },
+      "cer_without_whitespace": {
+        "reference_characters": 269,
+        "prediction_characters": 270,
+        "edit_distance": 8,
+        "cer": 0.02973977695167286,
+        "accuracy_clamped": 0.9702602230483272
+      },
+      "key_fields_matched": 6,
+      "key_fields_total": 6,
+      "key_fields": [
+        {
+          "name": "document_id",
+          "text": "TEST-2026-0911-A",
+          "kind": "identifier",
+          "exact_match": true
+        },
+        {
+          "name": "date",
+          "text": "2026-09-11",
+          "kind": "date",
+          "exact_match": true
+        },
+        {
+          "name": "time",
+          "text": "09:05",
+          "kind": "time",
+          "exact_match": true
+        },
+        {
+          "name": "amount",
+          "text": "123,450원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "percentage",
+          "text": "12.5%",
+          "kind": "number",
+          "exact_match": true
+        },
+        {
+          "name": "leading_zero",
+          "text": "007개",
+          "kind": "number",
+          "exact_match": true
+        }
+      ],
+      "reading_order": {
+        "reference_lines": 13,
+        "exactly_matched_lines": 9,
+        "missing_or_nonexact_lines": [
+          1,
+          2,
+          9,
+          12
+        ],
+        "inversions": 0,
+        "comparable_pairs": 36,
+        "inversion_rate": 0.0,
+        "all_lines_exact_and_in_order": false,
+        "note": "Order is checked only among complete exactly matched lines; read alongside line coverage and CER."
+      },
+      "elapsed_ms": 2167.9,
+      "model_load_ms": 222.7,
+      "resize": "none",
+      "notes": "One actual shared PDFOCR.session. Automatic layout uses the current app selection between real PSM 3 and PSM 6 passes; text is unmodified."
+    },
+    {
+      "id": "02-expense-receipt",
+      "engine": "tesseract-7-auto",
+      "output_format": "plain",
+      "image_sha256": "88521e497e05b2347be89887842c153a2d0b9ceb2a8daec2d1c733c7de13d304",
+      "cer_collapsed_whitespace": {
+        "reference_characters": 216,
+        "prediction_characters": 221,
+        "edit_distance": 30,
+        "cer": 0.1388888888888889,
+        "accuracy_clamped": 0.8611111111111112
+      },
+      "cer_without_whitespace": {
+        "reference_characters": 173,
+        "prediction_characters": 177,
+        "edit_distance": 27,
+        "cer": 0.15606936416184972,
+        "accuracy_clamped": 0.8439306358381503
+      },
+      "key_fields_matched": 7,
+      "key_fields_total": 7,
+      "key_fields": [
+        {
+          "name": "date_time",
+          "text": "2026-09-11 14:35",
+          "kind": "datetime",
+          "exact_match": true
+        },
+        {
+          "name": "approval",
+          "text": "00010203",
+          "kind": "identifier",
+          "exact_match": true
+        },
+        {
+          "name": "toll",
+          "text": "12,300원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "parking",
+          "text": "4,500원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "total",
+          "text": "16,800원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "supply",
+          "text": "15,273원",
+          "kind": "money",
+          "exact_match": true
+        },
+        {
+          "name": "vat",
+          "text": "1,527원",
+          "kind": "money",
+          "exact_match": true
+        }
+      ],
+      "reading_order": {
+        "reference_lines": 14,
+        "exactly_matched_lines": 9,
+        "missing_or_nonexact_lines": [
+          2,
+          4,
+          6,
+          12,
+          13
+        ],
+        "inversions": 0,
+        "comparable_pairs": 36,
+        "inversion_rate": 0.0,
+        "all_lines_exact_and_in_order": false,
+        "note": "Order is checked only among complete exactly matched lines; read alongside line coverage and CER."
+      },
+      "elapsed_ms": 1682.9,
+      "model_load_ms": 0,
+      "resize": "none",
+      "notes": "One actual shared PDFOCR.session. Automatic layout uses the current app selection between real PSM 3 and PSM 6 passes; text is unmodified."
+    },
+    {
+      "id": "03-two-columns-table",
+      "engine": "tesseract-7-auto",
+      "output_format": "plain",
+      "image_sha256": "66ae9cd4f08d868983b060800e2d1d0d3cea434612e5df9aa46687ad666a5c13",
+      "cer_collapsed_whitespace": {
+        "reference_characters": 332,
+        "prediction_characters": 295,
+        "edit_distance": 145,
+        "cer": 0.4367469879518072,
+        "accuracy_clamped": 0.5632530120481928
+      },
+      "cer_without_whitespace": {
+        "reference_characters": 257,
+        "prediction_characters": 228,
+        "edit_distance": 119,
+        "cer": 0.46303501945525294,
+        "accuracy_clamped": 0.5369649805447471
+      },
+      "key_fields_matched": 1,
+      "key_fields_total": 5,
+      "key_fields": [
+        {
+          "name": "date",
+          "text": "2026-09-11",
+          "kind": "date",
+          "exact_match": true
+        },
+        {
+          "name": "document_id",
+          "text": "TEST-03",
+          "kind": "identifier",
+          "exact_match": false
+        },
+        {
+          "name": "paper",
+          "text": "9,600원",
+          "kind": "money",
+          "exact_match": false
+        },
+        {
+          "name": "folder",
+          "text": "7,200원",
+          "kind": "money",
+          "exact_match": false
+        },
+        {
+          "name": "total",
+          "text": "16,800원",
+          "kind": "money",
+          "exact_match": false
+        }
+      ],
+      "reading_order": {
+        "reference_lines": 17,
+        "exactly_matched_lines": 7,
+        "missing_or_nonexact_lines": [
+          1,
+          4,
+          7,
+          8,
+          9,
+          11,
+          12,
+          13,
+          14,
+          16
+        ],
+        "inversions": 2,
+        "comparable_pairs": 21,
+        "inversion_rate": 0.09523809523809523,
+        "all_lines_exact_and_in_order": false,
+        "note": "Order is checked only among complete exactly matched lines; read alongside line coverage and CER."
+      },
+      "elapsed_ms": 2092.2,
+      "model_load_ms": 0,
+      "resize": "none",
+      "notes": "One actual shared PDFOCR.session. Automatic layout uses the current app selection between real PSM 3 and PSM 6 passes; text is unmodified."
+    }
+  ],
+  "scope": "Three clean synthetic images. No claim of real-world accuracy, engine viability, or benchmark ranking."
+}

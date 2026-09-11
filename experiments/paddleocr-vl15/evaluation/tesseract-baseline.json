@@ -1,0 +1,2746 @@
+{
+  "status": "complete",
+  "engine": "tesseract-7-auto",
+  "mocked": false,
+  "synthetic_only": true,
+  "source_index_sha256": "c3d6cce8d801c5f54a3af759558b5842fe97c2320da08f1f80e6baae6ac5a5f1",
+  "started_at": "2026-09-11T11:36:43.289Z",
+  "runtime": {
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "language_argument": "kor",
+    "loaded_languages": [
+      "kor",
+      "eng"
+    ],
+    "layout": "auto",
+    "resize": "none",
+    "image_width": 1400,
+    "image_height": 1800
+  },
+  "session": {
+    "shared_across_images": true,
+    "model_load_ms": 222.7,
+    "accelerated": true
+  },
+  "progress": [
+    {
+      "id": "engine",
+      "status": "preparing engine",
+      "percent": 0,
+      "since_start_ms": 37.8
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 0,
+      "since_start_ms": 236.2
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 3,
+      "since_start_ms": 688.1
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 6,
+      "since_start_ms": 760.3
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 9,
+      "since_start_ms": 767.1
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 11,
+      "since_start_ms": 775
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 14,
+      "since_start_ms": 843
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 18,
+      "since_start_ms": 921.8
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 21,
+      "since_start_ms": 959
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 24,
+      "since_start_ms": 1007.9
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 26,
+      "since_start_ms": 1122
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 29,
+      "since_start_ms": 1201.4
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 32,
+      "since_start_ms": 1232.8
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 50,
+      "since_start_ms": 1309.7
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 52,
+      "since_start_ms": 1517.8
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 55,
+      "since_start_ms": 1583.8
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 58,
+      "since_start_ms": 1657.5
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 61,
+      "since_start_ms": 1761.7
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 64,
+      "since_start_ms": 1821.3
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 66,
+      "since_start_ms": 1889.2
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 69,
+      "since_start_ms": 1972.5
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 71,
+      "since_start_ms": 2039.6
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 74,
+      "since_start_ms": 2089.5
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 77,
+      "since_start_ms": 2197.9
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 80,
+      "since_start_ms": 2281.4
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 83,
+      "since_start_ms": 2310.5
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "status": "recognizing text",
+      "percent": 100,
+      "since_start_ms": 2390.2
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 0,
+      "since_start_ms": 2410.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 1,
+      "since_start_ms": 2672.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 3,
+      "since_start_ms": 2754.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 4,
+      "since_start_ms": 2766.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 6,
+      "since_start_ms": 2775.1
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 7,
+      "since_start_ms": 2791.7
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 9,
+      "since_start_ms": 2849
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 10,
+      "since_start_ms": 2897.2
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 11,
+      "since_start_ms": 2930.3
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 13,
+      "since_start_ms": 2930.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 14,
+      "since_start_ms": 2936.7
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 16,
+      "since_start_ms": 2942.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 18,
+      "since_start_ms": 2952.1
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 19,
+      "since_start_ms": 2964
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 21,
+      "since_start_ms": 2973.2
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 22,
+      "since_start_ms": 2984.1
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 24,
+      "since_start_ms": 2990
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 25,
+      "since_start_ms": 3004
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 26,
+      "since_start_ms": 3016.3
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 28,
+      "since_start_ms": 3027.6
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 29,
+      "since_start_ms": 3037.6
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 31,
+      "since_start_ms": 3049.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 32,
+      "since_start_ms": 3049.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 34,
+      "since_start_ms": 3122.8
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 50,
+      "since_start_ms": 3211.1
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 51,
+      "since_start_ms": 3363.9
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 53,
+      "since_start_ms": 3419.8
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 54,
+      "since_start_ms": 3516.1
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 56,
+      "since_start_ms": 3585.7
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 58,
+      "since_start_ms": 3627.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 59,
+      "since_start_ms": 3708.7
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 61,
+      "since_start_ms": 3730.8
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 63,
+      "since_start_ms": 3747.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 64,
+      "since_start_ms": 3765.7
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 66,
+      "since_start_ms": 3785.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 68,
+      "since_start_ms": 3808.7
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 69,
+      "since_start_ms": 3822.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 71,
+      "since_start_ms": 3832.2
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 72,
+      "since_start_ms": 3850.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 74,
+      "since_start_ms": 3857
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 76,
+      "since_start_ms": 3878.4
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 77,
+      "since_start_ms": 3890.5
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 79,
+      "since_start_ms": 3902.9
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 81,
+      "since_start_ms": 3911.2
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 82,
+      "since_start_ms": 3921
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 84,
+      "since_start_ms": 3994
+    },
+    {
+      "id": "02-expense-receipt",
+      "status": "recognizing text",
+      "percent": 100,
+      "since_start_ms": 4085
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 0,
+      "since_start_ms": 4107.4
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 1,
+      "since_start_ms": 4426.7
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 2,
+      "since_start_ms": 4498.4
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 4,
+      "since_start_ms": 4559.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 6,
+      "since_start_ms": 4636.1
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 7,
+      "since_start_ms": 4636.2
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 9,
+      "since_start_ms": 4636.2
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 11,
+      "since_start_ms": 4694.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 12,
+      "since_start_ms": 4756.2
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 13,
+      "since_start_ms": 4817
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 14,
+      "since_start_ms": 4826.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 16,
+      "since_start_ms": 4857.9
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 17,
+      "since_start_ms": 4890
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 18,
+      "since_start_ms": 4891.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 19,
+      "since_start_ms": 4901.6
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 21,
+      "since_start_ms": 4932.6
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 22,
+      "since_start_ms": 4934.6
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 23,
+      "since_start_ms": 4944.6
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 24,
+      "since_start_ms": 4949.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 26,
+      "since_start_ms": 4951.3
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 28,
+      "since_start_ms": 4961.2
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 29,
+      "since_start_ms": 4961.2
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 31,
+      "since_start_ms": 4961.3
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 33,
+      "since_start_ms": 5020.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 34,
+      "since_start_ms": 5097.7
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 50,
+      "since_start_ms": 5097.9
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 51,
+      "since_start_ms": 5268.3
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 54,
+      "since_start_ms": 5292.5
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 56,
+      "since_start_ms": 5314.1
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 58,
+      "since_start_ms": 5375.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 59,
+      "since_start_ms": 5446.8
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 61,
+      "since_start_ms": 5497.6
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 64,
+      "since_start_ms": 5524.3
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 66,
+      "since_start_ms": 5560.4
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 68,
+      "since_start_ms": 5630.7
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 69,
+      "since_start_ms": 5691
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 71,
+      "since_start_ms": 5765.5
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 74,
+      "since_start_ms": 5803.4
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 76,
+      "since_start_ms": 5868.4
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 77,
+      "since_start_ms": 5934.2
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 79,
+      "since_start_ms": 5958
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 81,
+      "since_start_ms": 5968.7
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 84,
+      "since_start_ms": 6105.6
+    },
+    {
+      "id": "03-two-columns-table",
+      "status": "recognizing text",
+      "percent": 100,
+      "since_start_ms": 6185.5
+    }
+  ],
+  "results": [
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "tesseract-7-auto",
+      "output_format": "plain",
+      "text": "PDF Studio 문서 인식 시험\n\n가상 문서 - Synthetic document\n\n한글과 EnglishE 함께 읽습니다.\n\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n\n비율은 12.5%이며 수량은 007개입니다.\n대문자 ORF 숫자 0, 소문자 |과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY - 1X 업무 문서가 아닙니다.",
+      "confidence": 88,
+      "words": [
+        {
+          "text": "PDF",
+          "confidence": 96,
+          "box": [
+            0.06714285714285714,
+            0.06,
+            0.13285714285714287,
+            0.08055555555555556
+          ],
+          "separator": " "
+        },
+        {
+          "text": "Studio",
+          "confidence": 93,
+          "box": [
+            0.1492857142857143,
+            0.058888888888888886,
+            0.26,
+            0.0811111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "문서",
+          "confidence": 96,
+          "box": [
+            0.2764285714285714,
+            0.05555555555555555,
+            0.3435714285714286,
+            0.08277777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "인식",
+          "confidence": 96,
+          "box": [
+            0.365,
+            0.05611111111111111,
+            0.43,
+            0.08277777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "시험",
+          "confidence": 96,
+          "box": [
+            0.45071428571428573,
+            0.05555555555555555,
+            0.5178571428571429,
+            0.08277777777777778
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "가상",
+          "confidence": 96,
+          "box": [
+            0.06642857142857143,
+            0.10277777777777777,
+            0.11142857142857143,
+            0.12055555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "문서",
+          "confidence": 91,
+          "box": [
+            0.12285714285714286,
+            0.10277777777777777,
+            0.1657142857142857,
+            0.12055555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "-",
+          "confidence": 50,
+          "box": [
+            0.18,
+            0.11222222222222222,
+            0.18285714285714286,
+            0.11444444444444445
+          ],
+          "separator": " "
+        },
+        {
+          "text": "Synthetic",
+          "confidence": 96,
+          "box": [
+            0.19357142857142856,
+            0.10444444444444445,
+            0.29214285714285715,
+            0.12333333333333334
+          ],
+          "separator": " "
+        },
+        {
+          "text": "document",
+          "confidence": 96,
+          "box": [
+            0.3028571428571429,
+            0.10444444444444445,
+            0.41214285714285714,
+            0.11888888888888889
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "한글과",
+          "confidence": 85,
+          "box": [
+            0.06642857142857143,
+            0.18888888888888888,
+            0.15357142857142858,
+            0.2111111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "EnglishE",
+          "confidence": 56,
+          "box": [
+            0.16785714285714284,
+            0.18944444444444444,
+            0.28785714285714287,
+            0.21444444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "함께",
+          "confidence": 93,
+          "box": [
+            0.3028571428571429,
+            0.18888888888888888,
+            0.35714285714285715,
+            0.2111111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "읽습니다.",
+          "confidence": 83.4,
+          "box": [
+            0.37785714285714284,
+            0.18888888888888888,
+            0.49642857142857144,
+            0.2111111111111111
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "자동",
+          "confidence": 96,
+          "box": [
+            0.06714285714285714,
+            0.24722222222222223,
+            0.12214285714285714,
+            0.26944444444444443
+          ],
+          "separator": " "
+        },
+        {
+          "text": "인식",
+          "confidence": 93,
+          "box": [
+            0.1392857142857143,
+            0.24722222222222223,
+            0.19,
+            0.26944444444444443
+          ],
+          "separator": " "
+        },
+        {
+          "text": "결과의",
+          "confidence": 90,
+          "box": [
+            0.21357142857142858,
+            0.24722222222222223,
+            0.2914285714285714,
+            0.26944444444444443
+          ],
+          "separator": " "
+        },
+        {
+          "text": "숫자를",
+          "confidence": 92.66666666666667,
+          "box": [
+            0.3157142857142857,
+            0.24444444444444444,
+            0.3942857142857143,
+            0.2788888888888889
+          ],
+          "separator": " "
+        },
+        {
+          "text": "비교합니다.",
+          "confidence": 94.5,
+          "box": [
+            0.4157142857142857,
+            0.24666666666666667,
+            0.5621428571428572,
+            0.26944444444444443
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "공백,",
+          "confidence": 97,
+          "box": [
+            0.06642857142857143,
+            0.305,
+            0.12857142857142856,
+            0.3277777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "쉼표,",
+          "confidence": 93,
+          "box": [
+            0.14357142857142857,
+            0.305,
+            0.2057142857142857,
+            0.3277777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "괄호와",
+          "confidence": 93,
+          "box": [
+            0.22642857142857142,
+            0.305,
+            0.30642857142857144,
+            0.32722222222222225
+          ],
+          "separator": " "
+        },
+        {
+          "text": "기호를",
+          "confidence": 92.66666666666667,
+          "box": [
+            0.325,
+            0.305,
+            0.40714285714285714,
+            0.32722222222222225
+          ],
+          "separator": " "
+        },
+        {
+          "text": "그대로",
+          "confidence": 93,
+          "box": [
+            0.42214285714285715,
+            0.305,
+            0.5078571428571429,
+            0.32722222222222225
+          ],
+          "separator": " "
+        },
+        {
+          "text": "확인합니다.",
+          "confidence": 87.66666666666667,
+          "box": [
+            0.5285714285714286,
+            0.305,
+            0.6757142857142857,
+            0.32722222222222225
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "문서번호:",
+          "confidence": 86.6,
+          "box": [
+            0.06642857142857143,
+            0.3622222222222222,
+            0.18928571428571428,
+            0.3844444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "TEST-2026-0911-A",
+          "confidence": 87,
+          "box": [
+            0.20142857142857143,
+            0.365,
+            0.4521428571428571,
+            0.38222222222222224
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "작성일:",
+          "confidence": 90,
+          "box": [
+            0.06642857142857143,
+            0.42,
+            0.15928571428571428,
+            0.44222222222222224
+          ],
+          "separator": " "
+        },
+        {
+          "text": "2026-09-11",
+          "confidence": 11,
+          "box": [
+            0.17285714285714285,
+            0.42277777777777775,
+            0.32071428571428573,
+            0.44
+          ],
+          "separator": " "
+        },
+        {
+          "text": "/",
+          "confidence": 91,
+          "box": [
+            0.33,
+            0.4161111111111111,
+            0.3414285714285714,
+            0.45
+          ],
+          "separator": " "
+        },
+        {
+          "text": "검토",
+          "confidence": 96,
+          "box": [
+            0.36357142857142855,
+            0.42,
+            0.4185714285714286,
+            0.44166666666666665
+          ],
+          "separator": " "
+        },
+        {
+          "text": "시간:",
+          "confidence": 93,
+          "box": [
+            0.4342857142857143,
+            0.42,
+            0.49642857142857144,
+            0.44222222222222224
+          ],
+          "separator": " "
+        },
+        {
+          "text": "09:05",
+          "confidence": 96,
+          "box": [
+            0.51,
+            0.42277777777777775,
+            0.5785714285714286,
+            0.44
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "계약",
+          "confidence": 93,
+          "box": [
+            0.06642857142857143,
+            0.4777777777777778,
+            0.12285714285714286,
+            0.5
+          ],
+          "separator": " "
+        },
+        {
+          "text": "금액은",
+          "confidence": 85,
+          "box": [
+            0.15071428571428572,
+            0.47555555555555556,
+            0.23857142857142857,
+            0.5066666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "123,450원입니다.",
+          "confidence": 92.25,
+          "box": [
+            0.23857142857142857,
+            0.47555555555555556,
+            0.4657142857142857,
+            0.5066666666666667
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "비율은",
+          "confidence": 92.66666666666667,
+          "box": [
+            0.06785714285714285,
+            0.5333333333333333,
+            0.16428571428571428,
+            0.5666666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "12.5%이며",
+          "confidence": 92.28571428571429,
+          "box": [
+            0.17714285714285713,
+            0.5355555555555556,
+            0.3007142857142857,
+            0.5577777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "수량은",
+          "confidence": 93,
+          "box": [
+            0.3242857142857143,
+            0.5333333333333333,
+            0.4135714285714286,
+            0.5666666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "007개입니다.",
+          "confidence": 94.125,
+          "box": [
+            0.4185714285714286,
+            0.5333333333333333,
+            0.5914285714285714,
+            0.5666666666666667
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "대문자",
+          "confidence": 93,
+          "box": [
+            0.06785714285714285,
+            0.5933333333333334,
+            0.15285714285714286,
+            0.6155555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "ORF",
+          "confidence": 30,
+          "box": [
+            0.16642857142857143,
+            0.5933333333333334,
+            0.21714285714285714,
+            0.6155555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "숫자",
+          "confidence": 96,
+          "box": [
+            0.2307142857142857,
+            0.5933333333333334,
+            0.28714285714285714,
+            0.6155555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "0,",
+          "confidence": 89,
+          "box": [
+            0.3007142857142857,
+            0.5961111111111111,
+            0.32,
+            0.6161111111111112
+          ],
+          "separator": " "
+        },
+        {
+          "text": "소문자",
+          "confidence": 93,
+          "box": [
+            0.335,
+            0.5933333333333334,
+            0.42142857142857143,
+            0.6155555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "|과",
+          "confidence": 81.5,
+          "box": [
+            0.4357142857142857,
+            0.5933333333333334,
+            0.47,
+            0.6155555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "숫자",
+          "confidence": 96,
+          "box": [
+            0.4835714285714286,
+            0.5933333333333334,
+            0.54,
+            0.6155555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "1.",
+          "confidence": 96,
+          "box": [
+            0.555,
+            0.5961111111111111,
+            0.5735714285714286,
+            0.6133333333333333
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "Project",
+          "confidence": 96,
+          "box": [
+            0.06714285714285714,
+            0.6516666666666666,
+            0.15642857142857142,
+            0.6744444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "status:",
+          "confidence": 96,
+          "box": [
+            0.1692857142857143,
+            0.6533333333333333,
+            0.25142857142857145,
+            0.6688888888888889
+          ],
+          "separator": " "
+        },
+        {
+          "text": "Ready",
+          "confidence": 96,
+          "box": [
+            0.2664285714285714,
+            0.6511111111111111,
+            0.3464285714285714,
+            0.6744444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "for",
+          "confidence": 96,
+          "box": [
+            0.3578571428571429,
+            0.6511111111111111,
+            0.395,
+            0.6688888888888889
+          ],
+          "separator": " "
+        },
+        {
+          "text": "review.",
+          "confidence": 96,
+          "box": [
+            0.4085714285714286,
+            0.6516666666666666,
+            0.49642857142857144,
+            0.6688888888888889
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "Contact:",
+          "confidence": 93,
+          "box": [
+            0.06571428571428571,
+            0.7094444444444444,
+            0.17357142857142857,
+            0.7266666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "demo@example.test",
+          "confidence": 88,
+          "box": [
+            0.18714285714285714,
+            0.7088888888888889,
+            0.46,
+            0.7322222222222222
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "TEST",
+          "confidence": 96,
+          "box": [
+            0.065,
+            0.9022222222222223,
+            0.11571428571428571,
+            0.9161111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "ONLY",
+          "confidence": 83,
+          "box": [
+            0.12571428571428572,
+            0.9022222222222223,
+            0.18642857142857142,
+            0.9161111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "-",
+          "confidence": 83,
+          "box": [
+            0.19642857142857142,
+            0.9094444444444445,
+            0.1992857142857143,
+            0.9116666666666666
+          ],
+          "separator": " "
+        },
+        {
+          "text": "1X",
+          "confidence": 0,
+          "box": [
+            0.21,
+            0.9,
+            0.25357142857142856,
+            0.9177777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "업무",
+          "confidence": 93,
+          "box": [
+            0.2692857142857143,
+            0.9,
+            0.31285714285714283,
+            0.9177777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "문서가",
+          "confidence": 93,
+          "box": [
+            0.32785714285714285,
+            0.9,
+            0.395,
+            0.9177777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "아닙니다.",
+          "confidence": 96,
+          "box": [
+            0.40714285714285714,
+            0.9,
+            0.5057142857142857,
+            0.9177777777777778
+          ],
+          "separator": "\n"
+        }
+      ],
+      "word_count": 62,
+      "chosen_psm": "6",
+      "elapsed_ms": 2167.9,
+      "fixture_load_ms": 12.7,
+      "model_load_ms": 222.7,
+      "resize": "none",
+      "input": {
+        "width": 1400,
+        "height": 1800,
+        "image": "01-mixed-paragraph.png",
+        "sha256": "3e72f4b4a309c9b6ae0c9f2690f96178b02fa942be4aa74cdaaf71bf9a1d63f1",
+        "bytes": 109650
+      },
+      "notes": "One actual shared PDFOCR.session. Automatic layout uses the current app selection between real PSM 3 and PSM 6 passes; text is unmodified."
+    },
+    {
+      "id": "02-expense-receipt",
+      "engine": "tesseract-7-auto",
+      "output_format": "plain",
+      "text": "경비 사용 영수증\n\nSYNTHETIC RECEIPT\n\n가상 상호: 한빛 HAE 주차장\n\n거래일시: 2026-09-11 14:35\n\n승인번호 00010203\n\n결제수단: 법인카드 (가상)\n\nSHE                                     그애\n©                                              0 —\n통행료                                   12,300원\n주차료                                   4,500원\n합계                                     16,800원\n공급가액                                 15,273원\n부가세                                   1,527원\n처리 상태: 정산 검토 중 / 06009\n\nTEST 01\\441\\ㆍ실제 결제 내역이 아닙니다.",
+      "confidence": 87,
+      "words": [
+        {
+          "text": "경비",
+          "confidence": 97,
+          "box": [
+            0.06714285714285714,
+            0.05277777777777778,
+            0.13857142857142857,
+            0.08222222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "사용",
+          "confidence": 97,
+          "box": [
+            0.16,
+            0.05277777777777778,
+            0.23642857142857143,
+            0.08277777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "영수증",
+          "confidence": 96,
+          "box": [
+            0.25642857142857145,
+            0.05277777777777778,
+            0.3707142857142857,
+            0.08222222222222222
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "SYNTHETIC",
+          "confidence": 95,
+          "box": [
+            0.06571428571428571,
+            0.10277777777777777,
+            0.19428571428571428,
+            0.11722222222222223
+          ],
+          "separator": " "
+        },
+        {
+          "text": "RECEIPT",
+          "confidence": 95,
+          "box": [
+            0.20714285714285716,
+            0.10277777777777777,
+            0.29928571428571427,
+            0.11722222222222223
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "가상",
+          "confidence": 96,
+          "box": [
+            0.06714285714285714,
+            0.17777777777777778,
+            0.12285714285714286,
+            0.2
+          ],
+          "separator": " "
+        },
+        {
+          "text": "상호:",
+          "confidence": 96,
+          "box": [
+            0.13714285714285715,
+            0.17777777777777778,
+            0.2,
+            0.19944444444444445
+          ],
+          "separator": " "
+        },
+        {
+          "text": "한빛",
+          "confidence": 54,
+          "box": [
+            0.21428571428571427,
+            0.17777777777777778,
+            0.2692857142857143,
+            0.2
+          ],
+          "separator": " "
+        },
+        {
+          "text": "HAE",
+          "confidence": 90,
+          "box": [
+            0.28714285714285714,
+            0.17777777777777778,
+            0.3707142857142857,
+            0.2
+          ],
+          "separator": " "
+        },
+        {
+          "text": "주차장",
+          "confidence": 96,
+          "box": [
+            0.38571428571428573,
+            0.17777777777777778,
+            0.47214285714285714,
+            0.2
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "거래일시:",
+          "confidence": 91.8,
+          "box": [
+            0.06642857142857143,
+            0.22277777777777777,
+            0.20642857142857143,
+            0.25277777777777777
+          ],
+          "separator": " "
+        },
+        {
+          "text": "2026-09-11",
+          "confidence": 94,
+          "box": [
+            0.20285714285714285,
+            0.22944444444444445,
+            0.3507142857142857,
+            0.24666666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "14:35",
+          "confidence": 96,
+          "box": [
+            0.3707142857142857,
+            0.22944444444444445,
+            0.43785714285714283,
+            0.24666666666666667
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "승인번호",
+          "confidence": 84,
+          "box": [
+            0.06642857142857143,
+            0.27555555555555555,
+            0.18928571428571428,
+            0.2972222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "00010203",
+          "confidence": 81,
+          "box": [
+            0.20285714285714285,
+            0.2783333333333333,
+            0.33071428571428574,
+            0.29555555555555557
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "결제수단:",
+          "confidence": 81,
+          "box": [
+            0.06714285714285714,
+            0.32222222222222224,
+            0.18928571428571428,
+            0.3522222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "법인카드",
+          "confidence": 89.5,
+          "box": [
+            0.21071428571428572,
+            0.3244444444444444,
+            0.3192857142857143,
+            0.3466666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "(가상)",
+          "confidence": 96,
+          "box": [
+            0.3342857142857143,
+            0.3244444444444444,
+            0.4085714285714286,
+            0.3477777777777778
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "SHE",
+          "confidence": 26,
+          "box": [
+            0.07357142857142857,
+            0.4111111111111111,
+            0.12928571428571428,
+            0.425
+          ],
+          "separator": "                                     "
+        },
+        {
+          "text": "그애",
+          "confidence": 87.5,
+          "box": [
+            0.6592857142857143,
+            0.4111111111111111,
+            0.7135714285714285,
+            0.42388888888888887
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "©",
+          "confidence": 38,
+          "box": [
+            0.07785714285714286,
+            0.425,
+            0.12571428571428572,
+            0.43333333333333335
+          ],
+          "separator": "                                              "
+        },
+        {
+          "text": "0",
+          "confidence": 62,
+          "box": [
+            0.6628571428571428,
+            0.42444444444444446,
+            0.6814285714285714,
+            0.43333333333333335
+          ],
+          "separator": " "
+        },
+        {
+          "text": "—",
+          "confidence": 69,
+          "box": [
+            0.695,
+            0.425,
+            0.7135714285714285,
+            0.43333333333333335
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "통행료",
+          "confidence": 96,
+          "box": [
+            0.07357142857142857,
+            0.4722222222222222,
+            0.15928571428571428,
+            0.4938888888888889
+          ],
+          "separator": "                                   "
+        },
+        {
+          "text": "12,300원",
+          "confidence": 91.71428571428571,
+          "box": [
+            0.66,
+            0.4683333333333333,
+            0.7735714285714286,
+            0.49777777777777776
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "주차료",
+          "confidence": 96,
+          "box": [
+            0.07357142857142857,
+            0.5333333333333333,
+            0.15928571428571428,
+            0.5555555555555556
+          ],
+          "separator": "                                   "
+        },
+        {
+          "text": "4,500원",
+          "confidence": 89.66666666666667,
+          "box": [
+            0.6571428571428571,
+            0.5288888888888889,
+            0.7585714285714286,
+            0.5588888888888889
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "합계",
+          "confidence": 97,
+          "box": [
+            0.07357142857142857,
+            0.5944444444444444,
+            0.12785714285714286,
+            0.6166666666666667
+          ],
+          "separator": "                                     "
+        },
+        {
+          "text": "16,800원",
+          "confidence": 89.42857142857143,
+          "box": [
+            0.6607142857142857,
+            0.59,
+            0.7785714285714286,
+            0.6194444444444445
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "공급가액",
+          "confidence": 93,
+          "box": [
+            0.07357142857142857,
+            0.6555555555555556,
+            0.18714285714285714,
+            0.6777777777777778
+          ],
+          "separator": "                                 "
+        },
+        {
+          "text": "15,273원",
+          "confidence": 89.57142857142857,
+          "box": [
+            0.66,
+            0.6511111111111111,
+            0.7757142857142857,
+            0.6811111111111111
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "부가세",
+          "confidence": 96,
+          "box": [
+            0.07357142857142857,
+            0.7166666666666667,
+            0.15714285714285714,
+            0.7388888888888889
+          ],
+          "separator": "                                   "
+        },
+        {
+          "text": "1,527원",
+          "confidence": 90.33333333333333,
+          "box": [
+            0.66,
+            0.7127777777777777,
+            0.7585714285714286,
+            0.745
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "처리",
+          "confidence": 96,
+          "box": [
+            0.06642857142857143,
+            0.8222222222222222,
+            0.11428571428571428,
+            0.8416666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "상태:",
+          "confidence": 96,
+          "box": [
+            0.12928571428571428,
+            0.8222222222222222,
+            0.18642857142857142,
+            0.8416666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "정산",
+          "confidence": 97,
+          "box": [
+            0.1992857142857143,
+            0.8222222222222222,
+            0.25,
+            0.8411111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "검토",
+          "confidence": 96,
+          "box": [
+            0.26357142857142857,
+            0.8222222222222222,
+            0.31357142857142856,
+            0.8411111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "중",
+          "confidence": 93,
+          "box": [
+            0.3392857142857143,
+            0.8227777777777778,
+            0.35,
+            0.8411111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "/",
+          "confidence": 92,
+          "box": [
+            0.37,
+            0.8244444444444444,
+            0.37142857142857144,
+            0.8427777777777777
+          ],
+          "separator": " "
+        },
+        {
+          "text": "06009",
+          "confidence": 36,
+          "box": [
+            0.38357142857142856,
+            0.8238888888888889,
+            0.47928571428571426,
+            0.845
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "TEST",
+          "confidence": 96,
+          "box": [
+            0.065,
+            0.9022222222222223,
+            0.11571428571428571,
+            0.9161111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "01\\441\\ㆍ실제",
+          "confidence": 44.6,
+          "box": [
+            0.12571428571428572,
+            0.9,
+            0.25357142857142856,
+            0.9177777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "결제",
+          "confidence": 93,
+          "box": [
+            0.26785714285714285,
+            0.9,
+            0.3107142857142857,
+            0.9177777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "내역이",
+          "confidence": 91.66666666666667,
+          "box": [
+            0.3292857142857143,
+            0.9,
+            0.3914285714285714,
+            0.9177777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "아닙니다.",
+          "confidence": 96,
+          "box": [
+            0.40714285714285714,
+            0.9,
+            0.5057142857142857,
+            0.9177777777777778
+          ],
+          "separator": "\n"
+        }
+      ],
+      "word_count": 45,
+      "chosen_psm": "6",
+      "elapsed_ms": 1682.9,
+      "fixture_load_ms": 6.6,
+      "model_load_ms": 0,
+      "resize": "none",
+      "input": {
+        "width": 1400,
+        "height": 1800,
+        "image": "02-expense-receipt.png",
+        "sha256": "88521e497e05b2347be89887842c153a2d0b9ceb2a8daec2d1c733c7de13d304",
+        "bytes": 89138
+      },
+      "notes": "One actual shared PDFOCR.session. Automatic layout uses the current app selection between real PSM 3 and PSM 6 passes; text is unmodified."
+    },
+    {
+      "id": "03-two-columns-table",
+      "engine": "tesseract-7-auto",
+      "output_format": "plain",
+      "text": "=                |     —\n출장 자료 / 확인표\n가상 EA - Layout and table test\n왼쪽 열 / 작성 안내                     오른쪽 열 / 검토 사항\n1. 문서 제목을 확인합니다.             A 금액 12,300원을 확인합니다.\n2. 한글과 English 읽습니다.           8. 문서번호 7651-03을 비교합니다.\n3. 날짜는 2026-09-11입니다.             (<. ㅇ와 0, |와 1을 구분합니다.\n구매 내역 / Purchase list\n\n파일철 (8146) 72008\n가상 표입니다. 서명이나 개인정보는 없습니다.\nTEST ONLY - End of document",
+      "confidence": 87,
+      "words": [
+        {
+          "text": "=",
+          "confidence": 49,
+          "box": [
+            0.06785714285714285,
+            0.05277777777777778,
+            0.09928571428571428,
+            0.06388888888888888
+          ],
+          "separator": "                "
+        },
+        {
+          "text": "|",
+          "confidence": 27,
+          "box": [
+            0.28,
+            0.05277777777777778,
+            0.30214285714285716,
+            0.058333333333333334
+          ],
+          "separator": "     "
+        },
+        {
+          "text": "—",
+          "confidence": 50,
+          "box": [
+            0.35928571428571426,
+            0.05555555555555555,
+            0.38642857142857145,
+            0.058333333333333334
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "출장",
+          "confidence": 96,
+          "box": [
+            0.06642857142857143,
+            0.05333333333333334,
+            0.14,
+            0.08166666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "자료",
+          "confidence": 93,
+          "box": [
+            0.15714285714285714,
+            0.05333333333333334,
+            0.23,
+            0.08166666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "/",
+          "confidence": 93,
+          "box": [
+            0.245,
+            0.05722222222222222,
+            0.26357142857142857,
+            0.08222222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "확인표",
+          "confidence": 92.33333333333333,
+          "box": [
+            0.285,
+            0.05333333333333334,
+            0.39,
+            0.0811111111111111
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "가상",
+          "confidence": 96,
+          "box": [
+            0.06642857142857143,
+            0.1,
+            0.11142857142857143,
+            0.11777777777777777
+          ],
+          "separator": " "
+        },
+        {
+          "text": "EA",
+          "confidence": 62,
+          "box": [
+            0.12285714285714286,
+            0.1,
+            0.1657142857142857,
+            0.11777777777777777
+          ],
+          "separator": " "
+        },
+        {
+          "text": "-",
+          "confidence": 69,
+          "box": [
+            0.18,
+            0.10944444444444444,
+            0.18285714285714286,
+            0.11166666666666666
+          ],
+          "separator": " "
+        },
+        {
+          "text": "Layout",
+          "confidence": 96,
+          "box": [
+            0.19428571428571428,
+            0.10222222222222223,
+            0.265,
+            0.12055555555555555
+          ],
+          "separator": " "
+        },
+        {
+          "text": "and",
+          "confidence": 96,
+          "box": [
+            0.2757142857142857,
+            0.10166666666666667,
+            0.3142857142857143,
+            0.11611111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "table",
+          "confidence": 96,
+          "box": [
+            0.325,
+            0.10166666666666667,
+            0.37785714285714284,
+            0.11611111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "test",
+          "confidence": 96,
+          "box": [
+            0.38785714285714284,
+            0.10333333333333333,
+            0.42714285714285716,
+            0.11611111111111111
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "왼쪽",
+          "confidence": 93,
+          "box": [
+            0.06571428571428571,
+            0.18333333333333332,
+            0.11142857142857143,
+            0.20166666666666666
+          ],
+          "separator": " "
+        },
+        {
+          "text": "열",
+          "confidence": 93,
+          "box": [
+            0.12357142857142857,
+            0.18333333333333332,
+            0.14285714285714285,
+            0.20055555555555554
+          ],
+          "separator": " "
+        },
+        {
+          "text": "/",
+          "confidence": 93,
+          "box": [
+            0.15357142857142858,
+            0.18555555555555556,
+            0.165,
+            0.20166666666666666
+          ],
+          "separator": " "
+        },
+        {
+          "text": "작성",
+          "confidence": 97,
+          "box": [
+            0.175,
+            0.18333333333333332,
+            0.21928571428571428,
+            0.2011111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "안내",
+          "confidence": 97,
+          "box": [
+            0.23285714285714285,
+            0.18333333333333332,
+            0.2764285714285714,
+            0.2011111111111111
+          ],
+          "separator": "                     "
+        },
+        {
+          "text": "오른쪽",
+          "confidence": 93,
+          "box": [
+            0.53,
+            0.18388888888888888,
+            0.6,
+            0.20166666666666666
+          ],
+          "separator": " "
+        },
+        {
+          "text": "열",
+          "confidence": 93,
+          "box": [
+            0.6121428571428571,
+            0.18333333333333332,
+            0.6314285714285715,
+            0.20055555555555554
+          ],
+          "separator": " "
+        },
+        {
+          "text": "/",
+          "confidence": 93,
+          "box": [
+            0.6421428571428571,
+            0.18555555555555556,
+            0.6535714285714286,
+            0.20166666666666666
+          ],
+          "separator": " "
+        },
+        {
+          "text": "검토",
+          "confidence": 96,
+          "box": [
+            0.6642857142857143,
+            0.18333333333333332,
+            0.7092857142857143,
+            0.20055555555555554
+          ],
+          "separator": " "
+        },
+        {
+          "text": "사항",
+          "confidence": 97,
+          "box": [
+            0.7207142857142858,
+            0.18333333333333332,
+            0.7671428571428571,
+            0.2011111111111111
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "1.",
+          "confidence": 96,
+          "box": [
+            0.06642857142857143,
+            0.23666666666666666,
+            0.08214285714285714,
+            0.25055555555555553
+          ],
+          "separator": " "
+        },
+        {
+          "text": "문서",
+          "confidence": 93,
+          "box": [
+            0.09285714285714286,
+            0.23444444444444446,
+            0.1357142857142857,
+            0.25222222222222224
+          ],
+          "separator": " "
+        },
+        {
+          "text": "제목을",
+          "confidence": 92.66666666666667,
+          "box": [
+            0.15357142857142858,
+            0.23444444444444446,
+            0.22,
+            0.25222222222222224
+          ],
+          "separator": " "
+        },
+        {
+          "text": "확인합니다.",
+          "confidence": 94.66666666666667,
+          "box": [
+            0.2357142857142857,
+            0.23444444444444446,
+            0.3557142857142857,
+            0.25222222222222224
+          ],
+          "separator": "             "
+        },
+        {
+          "text": "A",
+          "confidence": 88,
+          "box": [
+            0.5285714285714286,
+            0.23666666666666666,
+            0.5485714285714286,
+            0.25055555555555553
+          ],
+          "separator": " "
+        },
+        {
+          "text": "금액",
+          "confidence": 93,
+          "box": [
+            0.5592857142857143,
+            0.23444444444444446,
+            0.6028571428571429,
+            0.25222222222222224
+          ],
+          "separator": " "
+        },
+        {
+          "text": "12,300원을",
+          "confidence": 91.25,
+          "box": [
+            0.6171428571428571,
+            0.23166666666666666,
+            0.735,
+            0.25666666666666665
+          ],
+          "separator": " "
+        },
+        {
+          "text": "확인합니다.",
+          "confidence": 84,
+          "box": [
+            0.7485714285714286,
+            0.23444444444444446,
+            0.8707142857142857,
+            0.25222222222222224
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "2.",
+          "confidence": 93,
+          "box": [
+            0.06571428571428571,
+            0.2877777777777778,
+            0.08214285714285714,
+            0.3016666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "한글과",
+          "confidence": 87.66666666666667,
+          "box": [
+            0.09928571428571428,
+            0.28555555555555556,
+            0.16357142857142856,
+            0.30333333333333334
+          ],
+          "separator": " "
+        },
+        {
+          "text": "English",
+          "confidence": 39,
+          "box": [
+            0.175,
+            0.2861111111111111,
+            0.2735714285714286,
+            0.3061111111111111
+          ],
+          "separator": " "
+        },
+        {
+          "text": "읽습니다.",
+          "confidence": 95.2,
+          "box": [
+            0.28785714285714287,
+            0.28555555555555556,
+            0.385,
+            0.30333333333333334
+          ],
+          "separator": "           "
+        },
+        {
+          "text": "8.",
+          "confidence": 92,
+          "box": [
+            0.5307142857142857,
+            0.2877777777777778,
+            0.5471428571428572,
+            0.3016666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "문서번호",
+          "confidence": 84,
+          "box": [
+            0.5578571428571428,
+            0.28555555555555556,
+            0.6521428571428571,
+            0.30333333333333334
+          ],
+          "separator": " "
+        },
+        {
+          "text": "7651-03을",
+          "confidence": 50.125,
+          "box": [
+            0.6628571428571428,
+            0.2816666666666667,
+            0.7735714285714286,
+            0.30833333333333335
+          ],
+          "separator": " "
+        },
+        {
+          "text": "비교합니다.",
+          "confidence": 95,
+          "box": [
+            0.7864285714285715,
+            0.28555555555555556,
+            0.9092857142857143,
+            0.30333333333333334
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "3.",
+          "confidence": 93,
+          "box": [
+            0.06642857142857143,
+            0.3388888888888889,
+            0.08214285714285714,
+            0.3527777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "날짜는",
+          "confidence": 91.66666666666667,
+          "box": [
+            0.1,
+            0.3333333333333333,
+            0.175,
+            0.35888888888888887
+          ],
+          "separator": " "
+        },
+        {
+          "text": "2026-09-11입니다.",
+          "confidence": 91.42857142857143,
+          "box": [
+            0.1742857142857143,
+            0.3333333333333333,
+            0.37857142857142856,
+            0.35888888888888887
+          ],
+          "separator": "             "
+        },
+        {
+          "text": "(<.",
+          "confidence": 16,
+          "box": [
+            0.53,
+            0.3388888888888889,
+            0.5485714285714286,
+            0.3527777777777778
+          ],
+          "separator": " "
+        },
+        {
+          "text": "ㅇ와",
+          "confidence": 84,
+          "box": [
+            0.5592857142857143,
+            0.3338888888888889,
+            0.6014285714285714,
+            0.35944444444444446
+          ],
+          "separator": " "
+        },
+        {
+          "text": "0,",
+          "confidence": 83,
+          "box": [
+            0.61,
+            0.3388888888888889,
+            0.6264285714285714,
+            0.355
+          ],
+          "separator": " "
+        },
+        {
+          "text": "|와",
+          "confidence": 82,
+          "box": [
+            0.6385714285714286,
+            0.33666666666666667,
+            0.6664285714285715,
+            0.35444444444444445
+          ],
+          "separator": " "
+        },
+        {
+          "text": "1을",
+          "confidence": 92,
+          "box": [
+            0.6778571428571428,
+            0.3372222222222222,
+            0.71,
+            0.35388888888888886
+          ],
+          "separator": " "
+        },
+        {
+          "text": "구분합니다.",
+          "confidence": 92.16666666666667,
+          "box": [
+            0.7257142857142858,
+            0.33666666666666667,
+            0.8478571428571429,
+            0.35444444444444445
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "구매",
+          "confidence": 96,
+          "box": [
+            0.06642857142857143,
+            0.44722222222222224,
+            0.12071428571428572,
+            0.4688888888888889
+          ],
+          "separator": " "
+        },
+        {
+          "text": "내역",
+          "confidence": 92,
+          "box": [
+            0.13857142857142857,
+            0.44722222222222224,
+            0.19142857142857142,
+            0.4688888888888889
+          ],
+          "separator": " "
+        },
+        {
+          "text": "/",
+          "confidence": 91,
+          "box": [
+            0.205,
+            0.4494444444444444,
+            0.21857142857142858,
+            0.46944444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "Purchase",
+          "confidence": 95,
+          "box": [
+            0.23214285714285715,
+            0.4488888888888889,
+            0.35642857142857143,
+            0.4666666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "list",
+          "confidence": 96,
+          "box": [
+            0.37,
+            0.4488888888888889,
+            0.4092857142857143,
+            0.4666666666666667
+          ],
+          "separator": "\n\n"
+        },
+        {
+          "text": "파",
+          "confidence": 93,
+          "box": [
+            0.08357142857142857,
+            0.6638888888888889,
+            0.16,
+            0.6833333333333333
+          ],
+          "separator": ""
+        },
+        {
+          "text": "일철",
+          "confidence": 93,
+          "box": [
+            0.11714285714285715,
+            0.6411111111111111,
+            0.16214285714285714,
+            0.6916666666666667
+          ],
+          "separator": " "
+        },
+        {
+          "text": "(8146)",
+          "confidence": 90,
+          "box": [
+            0.175,
+            0.6655555555555556,
+            0.24,
+            0.685
+          ],
+          "separator": " "
+        },
+        {
+          "text": "72008",
+          "confidence": 71,
+          "box": [
+            0.7157142857142857,
+            0.6638888888888889,
+            0.8042857142857143,
+            0.6844444444444444
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "가상",
+          "confidence": 93,
+          "box": [
+            0.06642857142857143,
+            0.8444444444444444,
+            0.11142857142857143,
+            0.8622222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "표입니다.",
+          "confidence": 90.6,
+          "box": [
+            0.12285714285714286,
+            0.8444444444444444,
+            0.22285714285714286,
+            0.8622222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "서명이나",
+          "confidence": 90.5,
+          "box": [
+            0.23357142857142857,
+            0.8444444444444444,
+            0.32857142857142857,
+            0.8622222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "개인정보는",
+          "confidence": 92.2,
+          "box": [
+            0.3392857142857143,
+            0.8444444444444444,
+            0.45785714285714285,
+            0.8622222222222222
+          ],
+          "separator": " "
+        },
+        {
+          "text": "없습니다.",
+          "confidence": 96,
+          "box": [
+            0.4707142857142857,
+            0.8444444444444444,
+            0.5692857142857143,
+            0.8622222222222222
+          ],
+          "separator": "\n"
+        },
+        {
+          "text": "TEST",
+          "confidence": 96,
+          "box": [
+            0.065,
+            0.9005555555555556,
+            0.11571428571428571,
+            0.9144444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "ONLY",
+          "confidence": 93,
+          "box": [
+            0.12571428571428572,
+            0.9005555555555556,
+            0.18642857142857142,
+            0.9144444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "-",
+          "confidence": 64,
+          "box": [
+            0.19642857142857142,
+            0.9077777777777778,
+            0.1992857142857143,
+            0.91
+          ],
+          "separator": " "
+        },
+        {
+          "text": "End",
+          "confidence": 96,
+          "box": [
+            0.21071428571428572,
+            0.9,
+            0.24857142857142858,
+            0.9144444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "of",
+          "confidence": 96,
+          "box": [
+            0.26,
+            0.9,
+            0.2814285714285714,
+            0.9144444444444444
+          ],
+          "separator": " "
+        },
+        {
+          "text": "document",
+          "confidence": 95,
+          "box": [
+            0.2907142857142857,
+            0.9,
+            0.4,
+            0.9144444444444444
+          ],
+          "separator": "\n"
+        }
+      ],
+      "word_count": 69,
+      "chosen_psm": "6",
+      "elapsed_ms": 2092.2,
+      "fixture_load_ms": 13.3,
+      "model_load_ms": 0,
+      "resize": "none",
+      "input": {
+        "width": 1400,
+        "height": 1800,
+        "image": "03-two-columns-table.png",
+        "sha256": "66ae9cd4f08d868983b060800e2d1d0d3cea434612e5df9aa46687ad666a5c13",
+        "bytes": 98212
+      },
+      "notes": "One actual shared PDFOCR.session. Automatic layout uses the current app selection between real PSM 3 and PSM 6 passes; text is unmodified."
+    }
+  ],
+  "total_ms": 6201.4,
+  "external_resources": [],
+  "csp_violations": [],
+  "network_policy": "connect-src 'self' blob: data:; images embedded; OCR engine and languages embedded"
+}
