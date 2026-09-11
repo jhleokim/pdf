@@ -1,0 +1,172 @@
+{
+  "results": [
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 247
+        },
+        {
+          "name": "vision",
+          "ms": 6745.20000000298
+        },
+        {
+          "name": "embedding",
+          "ms": 61
+        },
+        {
+          "name": "prefill",
+          "ms": 2868.5999999940395
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 241,
+      "raw_text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "stop_reason": "eos",
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "elapsed_ms": 34457.90000000596
+    },
+    {
+      "id": "02-expense-receipt",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 247.90000000596046
+        },
+        {
+          "name": "vision",
+          "ms": 5793.399999991059
+        },
+        {
+          "name": "embedding",
+          "ms": 55.900000005960464
+        },
+        {
+          "name": "prefill",
+          "ms": 2188
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 188,
+      "raw_text": "경비 사용 영수증\nSYNTHETIC RECEIPT\n\n가상 상호: 한빛 테스트 주차장\n거래일시: 2026-09-11 14:35\n승인번호: 00010203\n결제수단: 법인카드 (가상)\n\n항목  금액\n통행료  12,300원\n주차료  4,500원\n합계  16,800원\n공급가액  15,273원\n부가세  1,527원\n\n처리 상태: 정산 검토 중 / Pending\n\nTEST ONLY · 실제 결제 내역이 아닙니다.",
+      "stop_reason": "eos",
+      "text": "경비 사용 영수증\nSYNTHETIC RECEIPT\n\n가상 상호: 한빛 테스트 주차장\n거래일시: 2026-09-11 14:35\n승인번호: 00010203\n결제수단: 법인카드 (가상)\n\n항목  금액\n통행료  12,300원\n주차료  4,500원\n합계  16,800원\n공급가액  15,273원\n부가세  1,527원\n\n처리 상태: 정산 검토 중 / Pending\n\nTEST ONLY · 실제 결제 내역이 아닙니다.",
+      "elapsed_ms": 25905.29999999702
+    },
+    {
+      "id": "03-two-columns-table",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 445.19999998807907
+        },
+        {
+          "name": "vision",
+          "ms": 4968.600000008941
+        },
+        {
+          "name": "embedding",
+          "ms": 56
+        },
+        {
+          "name": "prefill",
+          "ms": 1970.3999999910593
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 253,
+      "raw_text": "출장 자료 / 확인표\n\n가상 문서 · Layout and table test\n\n윈윈 열 / 작성 안내\n1. 문서 제목을 확인합니다.\n2. 한글과 English를 읽습니다.\n3. 날짜는 2026-09-11 입니다.\n\n오른쪽 열 / 검토 사항\nA. 금액 12,300원을 확인합니다.\nB. 문서번호 TEST-03을 비교합니다.\nC. 0와 0, I와 1을 구분합니다.\n\n구매 내역 / Purchase list\n\n폼목\n복사용지 A4\n파일철 (Blue)\n함계\n가상 표입니다. 서명이나 개인정보는 없습니다.\n\n수량\n2\n3\n5\n\n금액\n9,600원\n7,200원\n16,800원",
+      "stop_reason": "eos",
+      "text": "출장 자료 / 확인표\n\n가상 문서 · Layout and table test\n\n윈윈 열 / 작성 안내\n1. 문서 제목을 확인합니다.\n2. 한글과 English를 읽습니다.\n3. 날짜는 2026-09-11 입니다.\n\n오른쪽 열 / 검토 사항\nA. 금액 12,300원을 확인합니다.\nB. 문서번호 TEST-03을 비교합니다.\nC. 0와 0, I와 1을 구분합니다.\n\n구매 내역 / Purchase list\n\n폼목\n복사용지 A4\n파일철 (Blue)\n함계\n가상 표입니다. 서명이나 개인정보는 없습니다.\n\n수량\n2\n3\n5\n\n금액\n9,600원\n7,200원\n16,800원",
+      "elapsed_ms": 30257.29999999702
+    }
+  ]
+}

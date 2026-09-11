@@ -1,6 +1,36 @@
 # PDF Studio — Basic & Pro
 
-현재 버전: **v4.0**. 화면 우측 하단에서 확인할 수 있습니다.
+현재 소스 버전: **v5.0**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다.
+
+브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집은 기기에서 처리합니다. v5.0 웹의 기본 OCR은 Paddle이며, 단독 실행 파일의 OCR은 Tesseract입니다.
+
+| 구성 | 웹 v5.0 | 단독 실행 HTML v5.0 |
+|---|---|---|
+| 기본 OCR | PaddleOCR-VL-1.5 Community Q4 | Tesseract.js 7.0.0 |
+| 모델 준비 | 첫 OCR 실행 시 약 900MB 다운로드, 브라우저 캐시 재사용 | 엔진·한글·영어 데이터를 HTML에 내장 |
+| 실행 조건 | WebGPU와 충분한 그래픽 메모리가 있는 PC 브라우저 | 내장 Tesseract를 실행할 수 있는 브라우저 |
+| 문서 처리 | Paddle은 브라우저 안에서 처리 | 브라우저 안에서 처리 |
+| Gemini | 숨김 기능 유지, 매 실행 전 별도 전송 동의 | 버튼·확인창·API 연결 모듈 제외 |
+| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/paddle/` 자산, API Worker | `dist/PDF-Studio-Standalone-v5.0.html` 한 파일 |
+
+## v5.0 웹 Paddle OCR
+
+- [ONNX Community PaddleOCR-VL-1.5](https://huggingface.co/onnx-community/PaddleOCR-VL-1.5-ONNX/tree/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4)의 revision **`ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4`**를 고정합니다. Q4 vision/decoder와 해당 변환본의 embedding을 사용합니다. PP-OCRv5나 공식 PaddleOCR 전체 문서 분석 파이프라인과 같은 구성이 아닙니다.
+- 모델·토크나이저 6개 파일의 원본 합계는 **899,511,134바이트(약 900MB / 858MiB)**입니다. 실행용 JavaScript·WASM 다운로드는 별도입니다. 모델은 첫 OCR 실행 때 준비하므로 기본 페이지 편집만 하려고 모델 전체를 받을 필요는 없습니다.
+- 웹 방문자는 사이트와 같은 출처의 정적 모델 파일을 받습니다. 공개 Hugging Face 모델 다운로드는 개발·CI 준비 단계에서만 사용합니다. Paddle에 입력한 페이지 이미지와 인식 결과는 외부 OCR 서버로 보내지 않습니다. 별도로 동의한 Gemini 인식만 Cloudflare를 거쳐 Google로 페이지 이미지를 전송합니다.
+- WebGPU 지원 여부와 `maxStorageBufferBindingSize` 512MiB 이상을 확인합니다. 이 값은 GPU 전체 메모리 용량이 아니며, 실제 실행에는 모델과 중간 결과를 담을 여유 메모리가 더 필요합니다. GPU를 사용할 수 없거나 한도가 부족하면 이유를 표시하고 중단합니다. 웹에서 Tesseract로 자동 전환하지 않습니다. 모바일과 모든 GPU의 동작을 보장하지 않습니다.
+- **먼저 한 페이지 인식 → 글자와 줄 위치 확인 → 확인한 결과를 PDF에 포함 → 결과 만들기** 순서로 사용합니다. Spotting의 글줄 좌표를 사용하며 제공되지 않은 신뢰도 점수를 만들지 않습니다. 좌표가 없거나 출력이 잘린 결과를 검색 가능한 PDF 완료로 처리하지 않습니다.
+- 검색용 PDF는 원래 페이지 모습 위에 숨은 텍스트를 추가합니다. 글줄 안의 글자 폭은 내장 글꼴로 추정하므로 특정 단어의 선택 영역이 실제 글자와 어긋날 수 있습니다. 작은 글자·복잡한 표·다단 문서·손글씨에는 오인식과 누락이 있을 수 있습니다. 큰 모델의 준비 시간과 페이지 인식 시간은 구분해서 평가해야 합니다.
+
+### 모델 무결성과 브라우저 캐시
+
+개발 단계에서 `vendor/paddle/model-source.json`과 코드의 고정된 크기·SHA-256을 대조합니다. 원본을 **20MiB 이하 48개 조각**으로 만들고, `vendor/paddle/assets/<revision>/assets.json`에 원본과 각 조각의 경로·크기·해시를 기록합니다. 이 크기는 [Cloudflare Static Assets의 파일당 25MiB 제한](https://developers.cloudflare.com/workers/platform/limits/#static-assets) 안에 들어갑니다.
+
+브라우저는 각 조각의 길이와 SHA-256을 확인한 후 원본 순서대로 합칩니다. 확인한 모델 조각만 revision별 CacheStorage에 저장하며, 문서 파일이나 OCR 결과를 이 모델 캐시에 넣지 않습니다. 캐시가 남아 있으면 다음 인식에서 재사용합니다. 손상된 캐시 조각은 지우고 다시 받습니다. 비공개 창·저장 공간 부족 등으로 캐시에 쓸 수 없어도 그 실행의 OCR은 계속 시도하지만 다음 사용 때 다시 다운로드할 수 있습니다. 브라우저가 캐시를 정리하거나 사용자가 사이트 데이터를 삭제하면 재다운로드가 필요하므로 영구 보관이나 웹의 완전 오프라인 실행을 보장하지 않습니다.
+
+모델 자산은 `/ocr/paddle/models/<revision>/`, 실행 코드는 해시가 붙은 파일명으로 배포합니다. 모델·런타임 응답은 장기 캐시하고 HTML은 재검증합니다. `run_worker_first`는 `/api/*`에만 적용하므로 모델 전달은 정적 자산 경로를 사용합니다. R2 버킷이나 서버 OCR 엔진 설치는 필요하지 않습니다.
+
+단독 실행본은 위 모델 다운로드·Paddle WebGPU 경로를 포함하지 않습니다. 편집과 Tesseract OCR에 서버·CDN·계정·API 키가 필요하지 않으며, Gemini 숨김 기능도 포함하지 않습니다. 과거의 1.24GB Paddle 단일 HTML 실험과 현재 제공하는 Tesseract standalone은 구분합니다. 당시 측정 조건과 제한은 [실험 기록](experiments/paddleocr-vl15/README.md)에 있습니다.
 
 ## v4.0 작업 경험과 처리 최적화
 
@@ -12,10 +42,7 @@
 - 웹과 단독 실행본을 소스 모듈 선택으로 생성합니다. 단독 실행본은 Gemini UI/클라이언트 모듈을 처음부터 제외하며, Tesseract와 언어 데이터는 동일하게 내장합니다.
 - 검증: Node 테스트 50개와 실제 브라우저 PDF/OCR/저장/모바일 검사를 사용합니다. 작은 합성 문서의 확대 변경은 추가 보정 1회·PDF 읽기/저장 각 2회에서 모두 0회로 감소했습니다. 단일 PC 측정 약 474ms → 190ms이며 일반 성능 보장은 아닙니다. 모든 페이지 썸네일을 미리 만드는 기존 파일 불러오기 방식은 이번 변경 범위에 포함하지 않았습니다.
 
-브라우저 안에서 동작하는 **오프라인 지원** PDF 페이지 편집기입니다.
-기본 편집과 Tesseract OCR은 `index.html` 한 파일에서 로컬로 처리합니다. 별도로 표시하고 동의한 Gemini 인식만 페이지 이미지를 외부로 전송합니다.
-
-웹 배포본은 `index.html`이며 선택 기능인 Gemini에는 인터넷과 Cloudflare Worker가 필요합니다. 단독 실행본은 `npm run build:standalone`으로 생성하는 `dist/PDF-Studio-Standalone-v4.0.html`입니다. 단독 실행본에는 Gemini 숨김 버튼·확인창·API 연결 모듈이 없으며, 편집과 Tesseract OCR에 서버·CDN·계정·API 키가 필요하지 않습니다. 웹 배포는 `wrangler.jsonc`에 따라 Worker와 `.deploy/index.html`만 배포합니다.
+위 항목은 v4.0에서 도입한 편집 경험의 기록입니다. v5.0의 웹 OCR·배포 파일 구성은 앞의 설명을 따릅니다.
 
 ## 작업 모드
 
@@ -43,13 +70,13 @@
 - 배치를 확정하면 여러 도장을 함께 배치할 수 있습니다. 현재/선택 범위는 페이지 ID로 고정되어 재배열에도 대상을 유지합니다. 모든 페이지 범위는 추가한 페이지도 포함합니다.
 - 보관 버튼을 누른 도장만 이 브라우저에 저장합니다(최대 8개, 브라우저 저장 용량 범위). 보관함에서 직접 삭제하거나 투명 PNG를 내려받을 수 있습니다. Basic의 기존 사진 삽입과 독립적이며 Pro 결과 만들기에 반영됩니다.
 
-### 텍스트 인식 (OCR)
+### 단독 실행본의 Tesseract OCR
 
-- Tesseract.js 7.0.0 / tesseract.js-core 7.0.0 / LSTM, 한글+영어 또는 영어. 엔진·언어 데이터를 모두 HTML 내부에 포함하며 문서 전송·CDN·최초 다운로드가 없습니다. 글꼴을 포함한 단독 실행 파일은 약 22.6 MiB입니다. relaxed SIMD 가속 코어와 호환용 코어를 함께 내장하고 기기에서 선택합니다. 더블클릭하는 standalone에서도 같은 엔진을 사용합니다.
+- Tesseract.js 7.0.0 / tesseract.js-core 7.0.0 / LSTM, 한글+영어 또는 영어. 엔진·언어 데이터를 모두 HTML 내부에 포함하며 문서 전송·CDN·최초 다운로드가 없습니다. relaxed SIMD 가속 코어와 호환용 코어를 함께 내장하고 기기에서 선택합니다. 더블클릭하는 standalone에서도 같은 엔진을 사용합니다.
 - 현재 페이지 시험 인식 후, 선택 페이지 또는 전체 인식. 한글과 영어를 함께 읽습니다. 자동 모드는 문단 분석(PSM 3)과 본문 분석(PSM 6)을 비교하지만, 화면에는 하나의 연속 진행률로 표시합니다. 페이지 PNG는 한 번만 인코딩해 두 분석에서 재사용합니다. 같은 문서·보정·언어·문서 구성으로 이미 인식한 로컬 결과는 메모리에서 재사용합니다. 한 단 본문(6), 흩어진 글자(11)를 직접 선택할 수도 있습니다. 렌더는 300 DPI 목표, 긴 변 3,400px/9MP로 제한하고 한 번에 한 페이지씩 처리합니다.
 - 인식된 내용, 엔진 확신도와 낮은 확신도의 단어를 보여줍니다. 확신도는 정확도가 아닙니다. **확인한 결과를 PDF에 포함**을 눌러야 검색용 숨은 텍스트 층이 추가됩니다. 한글 음절 사이에 임의 공백을 넣지 않고 원래 띄어쓰기를 유지합니다. TXT 저장도 제공합니다.
 - 기존 텍스트가 하나라도 있는 페이지는 중복 OCR을 피하기 위해 건너뜁니다. 일부 글자만 있는 혼합 페이지에 빠진 글자를 추가하는 기능이나 기존 OCR을 덮어쓰는 기능은 포함하지 않습니다. 글자 편집·표를 엑셀로 변환하는 기능도 아닙니다.
-- 페이지 회전/Basic 주석/스캔 보정/재단/압축 설정이 바뀌면 해당 인식은 만료되며 재인식이 필요합니다. 인식 중 취소는 기존 확인 결과와 원본 문서를 유지합니다. 한 번의 새 인식 작업은 이전 인식 결과 목록을 대체합니다.
+- 페이지 회전/Basic 주석/스캔 보정/재단/압축 설정이 바뀌면 해당 인식은 만료되며 재인식이 필요합니다. 인식 중 취소는 기존 확인 결과와 원본 문서를 유지합니다. 일부 페이지를 다시 인식할 때 다른 페이지의 유효한 결과는 유지하며, 새 결과는 다시 확인해야 PDF에 포함됩니다.
 - 처리 순서는 스캔/페이지 설정 → 번호·워터마크 → 선택한 전체 압축 → 확인한 OCR → 도장입니다. OCR은 번호·워터마크·새 도장을 제외한 출력 페이지를 인식합니다. 전체 압축과 함께 써도 새로 확인한 OCR과 도장은 최종 결과에 남습니다. 기존 링크·양식·텍스트는 전체 압축의 보존 대상이 아닙니다.
 - ABBYY 수준의 정확도를 보장하지 않습니다. 작은 글자, 흐림, 복잡한 표, 필기, 세로쓰기에는 오류·누락이 있을 수 있으므로 실제 문서의 시험 인식 결과를 확인해야 합니다.
 
@@ -70,18 +97,31 @@ AI 업스케일링은 포함하지 않습니다. OCR은 사용자가 별도로 �
 
 ## 개발과 검증
 
-기본 HTML 빌드와 Node 회귀 검사는 Node.js 22 이상에서 외부 패키지 설치 없이 실행합니다. Worker 개발·배포에는 `npm install`로 Wrangler를 설치합니다. OCR 자산은 `vendor/ocr/`에 버전·해시를 고정하고 라이선스를 포함합니다.
+Node.js 22 이상을 사용합니다. 저장소 루트의 `package-lock.json`을 함께 사용하며, 새 체크아웃에서는 먼저 `npm ci`를 실행합니다. ONNX Runtime Web 1.29.0, Transformers.js 4.2.0, esbuild 0.25.10과 Wrangler 등 개발 의존성을 고정합니다. 최종 사용자는 Node나 Python을 설치할 필요가 없습니다.
 
 ```sh
-node scripts/build.mjs
-node --test tests/*.test.cjs
+npm ci
+npm run build
+npm test
 ```
+
+`npm run build`는 웹 HTML과 `.deploy/ocr/paddle/` 런타임·모델 자산을 준비합니다. 유효한 모델 조각이 없으면 `scripts/download-paddle-models.mjs`의 `ensurePaddleSources()`를 호출한 뒤 `scripts/prepare-paddle-assets.mjs`로 조각을 만듭니다. 기존 원본은 `vendor/paddle/source/<revision>/`에서 재사용하며, `PADDLE_MODEL_DIR`에 이미 받은 원본 디렉터리(`onnx/`, `tokenizer.json`, `tokenizer_config.json`이 있는 위치)를 지정해 로컬 복사로 준비할 수도 있습니다.
+
+처음 빌드하는 개발·CI 환경에는 npm 패키지와 공개 Hugging Face 모델을 받을 인터넷 연결 및 원본·조각·배포 복사본을 둘 디스크 공간이 필요합니다. 다운로드 도구는 고정 revision에서 8MiB Range로 받고, 요청당 30초·최대 3회 시도·파일당 15분 제한을 적용합니다. 범위·길이·원본 전체 SHA-256 검증 후에만 파일을 교체하며, 손상·누락된 파일만 다시 준비합니다. 원본·조각·`.deploy/`·`dist/`는 Git에서 제외합니다. 출처와 라이선스는 추적하는 `vendor/paddle/model-source.json`, `vendor/paddle/licenses/`에 보관합니다. Tesseract 자산의 버전·해시·라이선스는 `vendor/ocr/`에 있습니다.
+
+Cloudflare와 같은 경로로 로컬 확인하려면 `npx wrangler dev`를 실행하고 안내된 localhost 주소를 엽니다. `wrangler.jsonc`의 빌드 명령이 웹 빌드 후 `scripts/build-deploy.mjs`를 실행해 `.deploy/index.html`, 라이선스와 응답 헤더를 준비합니다. 웹 v5.0은 `index.html`만 따로 복사하거나 더블클릭하는 배포 방식이 아닙니다.
+
+배포 권한이 있는 Wrangler 로그인 또는 CI의 Cloudflare API 토큰을 준비한 뒤 `npm run deploy`를 실행합니다. CI도 Node.js 22 이상에서 `npm ci` 후 `npm run deploy`로 재현할 수 있습니다. 배포 명령은 같은 빌드를 다시 수행합니다. `.deploy/`의 HTML·모델·런타임·라이선스와 `server/worker.mjs`가 함께 대상이며, 기존 Gemini Secret은 HTML이나 Git에 넣지 않습니다. 모델 준비·테스트·빌드 성공은 공개 사이트에서 실제 OCR과 PDF 저장을 확인한 것과 별개입니다.
+
+단독 실행 파일은 `npm ci` 후 `npm run build:standalone`으로 생성합니다. 이 명령은 웹 Paddle 모델을 다운로드하지 않습니다. 출력은 `dist/PDF-Studio-Standalone-v5.0.html`이며 Paddle과 Gemini 연결 모듈을 제외합니다.
+
+모델 준비·전달의 회귀 검사는 `tests/prepare-paddle-assets.test.cjs`, `tests/download-paddle-models.test.cjs`, `tests/paddle-assets.test.cjs`에서 분할 재조립, 손상·범위 오류, 다운로드 취소, 캐시 재사용·실패를 확인합니다. 이 모의 테스트는 실제 GPU 추론이나 인식 정확도 검증을 대신하지 않습니다. 실제 웹 확인에서는 첫 다운로드와 재사용, GPU 미지원 안내, 인식 중 취소, 한 페이지 결과 확인 및 PDF의 검색 텍스트·원본 화면 보존을 함께 확인합니다.
 
 `src/editor.js`는 Basic 편집 로직, `src/pro-engine.js`는 이미지 처리, `src/pro-document.js`는 페이지 규격·번호·워터마크, `src/pro-deskew.js`는 오프라인 기울기 감지·보정, `src/pro-pipeline.js`는 공통 미리보기/저장 처리와 페이지 전체 압축, `src/pro-rail.js`는 목록 너비 조절, `src/pro-ui.js`는 Pro 상호작용, `src/pro-result.js`는 비교 기준과 결과 용량 선택, `src/pro-live-preview.js`는 취소 가능한 자동 미리보기입니다. 빌드는 이 파일들과 패널·스타일을 `index.html`에 인라인합니다. 기존 PDF 라이브러리·폰트·CMap 및 라이선스는 그대로 포함됩니다.
 
 회귀 검사는 마스크의 DeviceGray 원본 유지와 B&W의 연한 글자·1비트 패킹도 포함합니다. 실제 브라우저 코덱·렌더 검증은 `node tests/create-pro-browser.cjs` 실행 후 로컬 서버의 `/tests/fixtures/pro-check.html`에서 확인합니다. 합성 문서로 각도·숨은 OCR·회색조·대비·배경·압축·재단·A4·한글 워터마크·번호 및 미리보기/저장 결과 일치를 검사합니다. 생성한 테스트 파일은 Git에서 제외됩니다.
 
-웹 기능은 `index.html`을 정적 서버에서 열어 확인합니다. 단독 실행은 `npm run build:standalone` 후 `dist/`의 HTML을 더블클릭합니다. `src/`를 수정했다면 해당 빌드를 다시 실행하세요.
+웹은 위 Wrangler 개발 서버에서 확인합니다. 단독 실행은 빌드 후 `dist/`의 HTML을 더블클릭합니다. `src/`를 수정했다면 해당 빌드를 다시 실행하세요.
 
 ## 기능
 
@@ -100,8 +140,8 @@ node --test tests/*.test.cjs
 
 ## 사용
 
-GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
-단독 실행본 `PDF-Studio-Standalone-v4.0.html`은 더블클릭하면 서버나 설치 없이 열립니다. 단독 실행본의 OCR은 Tesseract만 제공합니다.
+웹은 배포된 PDF Studio 주소에서 엽니다. Pro의 텍스트 인식을 처음 실행하면 모델 준비가 시작됩니다.
+단독 실행본 `PDF-Studio-Standalone-v5.0.html`은 더블클릭하면 서버나 설치 없이 열립니다. 단독 실행본의 OCR은 Tesseract만 제공합니다.
 
 ### 단축키
 
@@ -126,7 +166,7 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 
 ## 포함 라이브러리
 
-파일 하나로 동작하도록 아래 라이브러리를 본문에 인라인했습니다. 라이선스 전문은 `index.html` 하단에 있습니다.
+PDF 편집용 아래 라이브러리는 HTML 본문에 인라인했습니다. 해당 라이선스 전문은 `index.html` 하단에 있습니다. 웹 Paddle 모델·런타임은 별도 정적 자산이며 관련 고지는 `vendor/paddle/licenses/`와 배포 경로 `/ocr/paddle/licenses/`에 있습니다.
 
 - [pdf.js](https://mozilla.github.io/pdf.js/) 3.11.174 — Mozilla, Apache License 2.0
 - [pdf-lib](https://pdf-lib.js.org/) 1.17.1 — Hopding, MIT License
@@ -160,7 +200,7 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 새 도구 회귀 검사: `node tests/create-tools-browser.cjs` → `/tests/fixtures/tools-check.html`. HTTP 요청을 CSP로 차단한 상태에서 실제 한글 OCR, 원본 픽셀 보존, 검색 추출, 회전/재단/UserUnit 도장 배치와 전체 압축의 도장·OCR 유지를 확인합니다. `file://`로 같은 검사를 열어 완전 오프라인 경로도 검증할 수 있습니다. 추가 UI 검사는 `node tests/create-tools-ui.cjs`로 생성합니다.
 
 
-## 숨김 Gemini 인식 (v4.0)
+## 숨김 Gemini 인식 (v5.0에서도 유지)
 
 - 웹 배포본에서 상단 Pro 버튼을 같은 탭에서 8번 누르면 텍스트 인식 안에 **Gemini로 인식하기**가 나타납니다. 새로고침하면 다시 숨깁니다. Basic/Pro 전환만으로 네트워크 요청이나 문서 전송은 하지 않습니다.
 - 범위는 현재/선택/모든 페이지. 실행 버튼은 전송 확인창을 열며, 서버 연결 상태 확인에는 문서가 포함되지 않습니다. **민감정보 없는 문서임을 확인합니다**는 매 실행마다 새로 체크해야 합니다. 확인 대기 중 문서·보정·언어가 바뀌면 다시 확인해야 합니다.
@@ -174,7 +214,7 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 
 1. Workers & Pages → **pdf** → Settings → Variables and Secrets에서 **Secret** 유형으로 **GEMINI_API_KEY**를 추가하고 배포합니다. GitHub나 HTML에 키를 넣지 않습니다.
 2. 기본 모델은 `GEMINI_MODEL=gemini-3.8-flash`입니다. 반복되는 503 오류에는 마지막 시도에서만 `GEMINI_FALLBACK_MODEL=gemini-3.7-flash`를 사용합니다. 예비 모델 변수를 비우면 같은 모델로만 재시도합니다. 모델 변경은 wrangler 설정과 해당 API 프로젝트의 지원 모델을 함께 확인합니다.
-3. `npm install`, `npm run deploy`. Git 자동 배포도 `npx wrangler deploy`를 사용합니다. Wrangler 빌드는 HTML 생성 후 공개용 디렉터리에 HTML 하나만 복사합니다.
+3. `npm ci` 후 `npm run deploy`를 실행합니다. Git/CI 배포도 같은 Wrangler 빌드를 사용합니다. 웹 HTML과 Paddle 모델·런타임·라이선스를 `.deploy/`에 준비하여 API Worker와 함께 배포합니다. 전체 재현 절차와 최초 모델 다운로드 조건은 앞의 **개발과 검증**을 따릅니다.
 4. 키가 없으면 상태 API는 `available:false`를 반환하며 문서 전송 버튼은 비활성화됩니다. 이 상태 확인은 키 등록 여부만 검사하며, Google의 키 인증·모델 가용성·쿼터까지 확인하지 않습니다.
 5. `placement.region=gcp:us-east4`로 API Worker 실행 위치를 지정합니다. Google이 일부 Cloudflare 접속 지역을 지원하지 않는 오류에 대응하기 위한 설정이며, 위치 보장을 의미하지는 않습니다. 정적 HTML은 방문자 가까이에서 제공합니다.
 

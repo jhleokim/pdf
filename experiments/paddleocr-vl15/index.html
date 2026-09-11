@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="connect-src 'self' blob: data:">
+<title>PaddleOCR-VL-1.5 브라우저 실행 검증</title>
+<style>body{font:15px system-ui;max-width:1000px;margin:32px auto;padding:0 20px;color:#202124;background:#f5f6f6}button{font:inherit;padding:10px 16px;background:#008577;color:white;border:0;border-radius:5px;margin:4px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border:1px solid #d9dfdf;padding:16px;border-radius:5px}p{line-height:1.6}button:disabled{opacity:.5}</style>
+<h1>PaddleOCR-VL-1.5 브라우저 실행 검증</h1>
+<p>설치 없는 브라우저 실행 가능성을 확인하는 시험 화면입니다. 문서를 외부 인식 서버로 전송하지 않습니다. 비공식 ONNX 변환 모델을 사용하며 PDF Studio 운영본과 별도로 검증합니다.</p>
+<label>변환본 <select id="conversion"><option value="lbm">lbm364dl · 크기 제약 진단</option><option value="community" selected>onnx-community · 동적 크기 시험</option></select></label>
+<button id="probe">브라우저 실행 환경 확인</button><button id="load" disabled>ONNX 엔진 불러오기</button>
+<p><label>시험 문서 <select id="fixture"><option value="01-mixed-paragraph">한글·영문 본문</option><option value="02-expense-receipt">금액·날짜 영수증</option><option value="03-two-columns-table">두 열·표</option></select></label>
+<label>이미지 상한 <select id="pixels"><option value="262144">0.26MP · 초기 시험</option><option value="112896">고정 336×336 · 변환본 진단</option><option value="524288">0.52MP</option><option value="1003520" selected>1MP · 기본 OCR</option><option value="1605632">1.6MP · 추가 시험</option></select></label>
+<label>출력 상한 <input id="tokens" type="number" value="768" min="16" max="1536" step="16"></label></p>
+<button id="recognize" disabled>문자 인식 시험</button><button id="spotting" disabled>텍스트 위치 인식 시험</button><button id="cancel" disabled>취소</button>
+<pre id="status" role="status">준비</pre><pre id="text"></pre><canvas id="preview" style="max-width:420px;width:100%;height:auto"></canvas><pre id="result"></pre>
+<script type="importmap">{"imports":{"onnxruntime-web/webgpu":"./node_modules/onnxruntime-web/dist/ort.webgpu.min.mjs","onnxruntime-common":"./node_modules/onnxruntime-web/dist/ort.webgpu.min.mjs"}}</script>
+<script type="module" src="./main.mjs"></script></html>

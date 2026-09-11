@@ -1,0 +1,2038 @@
+{
+  "model": "PaddleOCR-VL-1.5",
+  "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+  "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+  "events": [
+    {
+      "message": "브라우저 실행 환경 확인 완료",
+      "time": "2026-09-11T11:42:46.130Z"
+    },
+    {
+      "message": "embed_tokens 불러오는 중",
+      "time": "2026-09-11T11:42:46.233Z"
+    },
+    {
+      "message": "vision_encoder 불러오는 중",
+      "time": "2026-09-11T11:42:47.507Z"
+    },
+    {
+      "message": "decoder_model_merged 불러오는 중",
+      "time": "2026-09-11T11:42:48.974Z"
+    },
+    {
+      "message": "PaddleOCR-VL-1.5 브라우저 엔진 준비 완료",
+      "time": "2026-09-11T11:42:50.208Z"
+    },
+    {
+      "message": "이미지 전처리",
+      "time": "2026-09-11T11:43:13.958Z"
+    },
+    {
+      "message": "이미지 분석",
+      "time": "2026-09-11T11:43:14.145Z"
+    },
+    {
+      "message": "문자 인식 · 첫 토큰 생성",
+      "time": "2026-09-11T11:43:15.585Z"
+    },
+    {
+      "message": "문자 인식 · 1개 토큰",
+      "time": "2026-09-11T11:43:16.170Z"
+    },
+    {
+      "message": "문자 인식 · 17개 토큰",
+      "time": "2026-09-11T11:43:17.738Z"
+    },
+    {
+      "message": "문자 인식 · 33개 토큰",
+      "time": "2026-09-11T11:43:19.149Z"
+    },
+    {
+      "message": "문자 인식 · 49개 토큰",
+      "time": "2026-09-11T11:43:20.599Z"
+    },
+    {
+      "message": "문자 인식 · 65개 토큰",
+      "time": "2026-09-11T11:43:22.070Z"
+    },
+    {
+      "message": "문자 인식 · 81개 토큰",
+      "time": "2026-09-11T11:43:23.518Z"
+    },
+    {
+      "message": "문자 인식 · 97개 토큰",
+      "time": "2026-09-11T11:43:24.995Z"
+    },
+    {
+      "message": "문자 인식 · 113개 토큰",
+      "time": "2026-09-11T11:43:26.543Z"
+    },
+    {
+      "message": "문자 인식 · 129개 토큰",
+      "time": "2026-09-11T11:43:27.996Z"
+    },
+    {
+      "message": "문자 인식 · 145개 토큰",
+      "time": "2026-09-11T11:43:29.419Z"
+    },
+    {
+      "message": "문자 인식 · 161개 토큰",
+      "time": "2026-09-11T11:43:30.888Z"
+    },
+    {
+      "message": "문자 인식 · 177개 토큰",
+      "time": "2026-09-11T11:43:32.378Z"
+    },
+    {
+      "message": "문자 인식 · 193개 토큰",
+      "time": "2026-09-11T11:43:33.895Z"
+    },
+    {
+      "message": "문자 인식 · 209개 토큰",
+      "time": "2026-09-11T11:43:35.544Z"
+    },
+    {
+      "message": "문자 인식 · 225개 토큰",
+      "time": "2026-09-11T11:43:37.079Z"
+    },
+    {
+      "message": "문자 인식 · 241개 토큰",
+      "time": "2026-09-11T11:43:38.505Z"
+    },
+    {
+      "message": "시험 인식 완료",
+      "time": "2026-09-11T11:43:38.793Z"
+    },
+    {
+      "message": "이미지 전처리",
+      "time": "2026-09-11T11:44:18.389Z"
+    },
+    {
+      "message": "이미지 분석",
+      "time": "2026-09-11T11:44:18.638Z"
+    },
+    {
+      "message": "문자 인식 · 첫 토큰 생성",
+      "time": "2026-09-11T11:44:25.444Z"
+    },
+    {
+      "message": "문자 인식 · 1개 토큰",
+      "time": "2026-09-11T11:44:28.323Z"
+    },
+    {
+      "message": "문자 인식 · 17개 토큰",
+      "time": "2026-09-11T11:44:30.121Z"
+    },
+    {
+      "message": "문자 인식 · 33개 토큰",
+      "time": "2026-09-11T11:44:31.776Z"
+    },
+    {
+      "message": "문자 인식 · 49개 토큰",
+      "time": "2026-09-11T11:44:33.520Z"
+    },
+    {
+      "message": "문자 인식 · 65개 토큰",
+      "time": "2026-09-11T11:44:35.273Z"
+    },
+    {
+      "message": "문자 인식 · 81개 토큰",
+      "time": "2026-09-11T11:44:36.940Z"
+    },
+    {
+      "message": "문자 인식 · 97개 토큰",
+      "time": "2026-09-11T11:44:38.450Z"
+    },
+    {
+      "message": "문자 인식 · 113개 토큰",
+      "time": "2026-09-11T11:44:40.205Z"
+    },
+    {
+      "message": "문자 인식 · 129개 토큰",
+      "time": "2026-09-11T11:44:41.945Z"
+    },
+    {
+      "message": "문자 인식 · 145개 토큰",
+      "time": "2026-09-11T11:44:43.590Z"
+    },
+    {
+      "message": "문자 인식 · 161개 토큰",
+      "time": "2026-09-11T11:44:45.173Z"
+    },
+    {
+      "message": "문자 인식 · 177개 토큰",
+      "time": "2026-09-11T11:44:46.617Z"
+    },
+    {
+      "message": "문자 인식 · 193개 토큰",
+      "time": "2026-09-11T11:44:48.148Z"
+    },
+    {
+      "message": "문자 인식 · 209개 토큰",
+      "time": "2026-09-11T11:44:49.695Z"
+    },
+    {
+      "message": "문자 인식 · 225개 토큰",
+      "time": "2026-09-11T11:44:51.218Z"
+    },
+    {
+      "message": "문자 인식 · 241개 토큰",
+      "time": "2026-09-11T11:44:52.689Z"
+    },
+    {
+      "message": "시험 인식 완료",
+      "time": "2026-09-11T11:44:52.821Z"
+    },
+    {
+      "message": "이미지 전처리",
+      "time": "2026-09-11T11:45:42.057Z"
+    },
+    {
+      "message": "이미지 분석",
+      "time": "2026-09-11T11:45:42.306Z"
+    },
+    {
+      "message": "문자 인식 · 첫 토큰 생성",
+      "time": "2026-09-11T11:45:48.156Z"
+    },
+    {
+      "message": "문자 인식 · 1개 토큰",
+      "time": "2026-09-11T11:45:50.352Z"
+    },
+    {
+      "message": "문자 인식 · 17개 토큰",
+      "time": "2026-09-11T11:45:51.879Z"
+    },
+    {
+      "message": "문자 인식 · 33개 토큰",
+      "time": "2026-09-11T11:45:53.330Z"
+    },
+    {
+      "message": "문자 인식 · 49개 토큰",
+      "time": "2026-09-11T11:45:54.855Z"
+    },
+    {
+      "message": "문자 인식 · 65개 토큰",
+      "time": "2026-09-11T11:45:56.336Z"
+    },
+    {
+      "message": "문자 인식 · 81개 토큰",
+      "time": "2026-09-11T11:45:57.842Z"
+    },
+    {
+      "message": "문자 인식 · 97개 토큰",
+      "time": "2026-09-11T11:45:59.325Z"
+    },
+    {
+      "message": "문자 인식 · 113개 토큰",
+      "time": "2026-09-11T11:46:00.808Z"
+    },
+    {
+      "message": "문자 인식 · 129개 토큰",
+      "time": "2026-09-11T11:46:02.313Z"
+    },
+    {
+      "message": "문자 인식 · 145개 토큰",
+      "time": "2026-09-11T11:46:03.785Z"
+    },
+    {
+      "message": "문자 인식 · 161개 토큰",
+      "time": "2026-09-11T11:46:05.300Z"
+    },
+    {
+      "message": "문자 인식 · 177개 토큰",
+      "time": "2026-09-11T11:46:06.814Z"
+    },
+    {
+      "message": "시험 인식 완료",
+      "time": "2026-09-11T11:46:07.933Z"
+    },
+    {
+      "message": "이미지 전처리",
+      "time": "2026-09-11T11:47:44.871Z"
+    },
+    {
+      "message": "이미지 분석",
+      "time": "2026-09-11T11:47:45.318Z"
+    },
+    {
+      "message": "문자 인식 · 첫 토큰 생성",
+      "time": "2026-09-11T11:47:50.343Z"
+    },
+    {
+      "message": "문자 인식 · 1개 토큰",
+      "time": "2026-09-11T11:47:52.326Z"
+    },
+    {
+      "message": "문자 인식 · 17개 토큰",
+      "time": "2026-09-11T11:47:53.754Z"
+    },
+    {
+      "message": "문자 인식 · 33개 토큰",
+      "time": "2026-09-11T11:47:55.187Z"
+    },
+    {
+      "message": "문자 인식 · 49개 토큰",
+      "time": "2026-09-11T11:47:56.665Z"
+    },
+    {
+      "message": "문자 인식 · 65개 토큰",
+      "time": "2026-09-11T11:47:58.106Z"
+    },
+    {
+      "message": "문자 인식 · 81개 토큰",
+      "time": "2026-09-11T11:47:59.536Z"
+    },
+    {
+      "message": "문자 인식 · 97개 토큰",
+      "time": "2026-09-11T11:48:00.975Z"
+    },
+    {
+      "message": "문자 인식 · 113개 토큰",
+      "time": "2026-09-11T11:48:02.399Z"
+    },
+    {
+      "message": "문자 인식 · 129개 토큰",
+      "time": "2026-09-11T11:48:03.840Z"
+    },
+    {
+      "message": "문자 인식 · 145개 토큰",
+      "time": "2026-09-11T11:48:05.275Z"
+    },
+    {
+      "message": "문자 인식 · 161개 토큰",
+      "time": "2026-09-11T11:48:06.713Z"
+    },
+    {
+      "message": "문자 인식 · 177개 토큰",
+      "time": "2026-09-11T11:48:08.134Z"
+    },
+    {
+      "message": "문자 인식 · 193개 토큰",
+      "time": "2026-09-11T11:48:09.569Z"
+    },
+    {
+      "message": "문자 인식 · 209개 토큰",
+      "time": "2026-09-11T11:48:10.995Z"
+    },
+    {
+      "message": "문자 인식 · 225개 토큰",
+      "time": "2026-09-11T11:48:12.423Z"
+    },
+    {
+      "message": "문자 인식 · 241개 토큰",
+      "time": "2026-09-11T11:48:13.848Z"
+    },
+    {
+      "message": "시험 인식 완료",
+      "time": "2026-09-11T11:48:15.099Z"
+    },
+    {
+      "message": "이미지 전처리",
+      "time": "2026-09-11T11:50:14.136Z"
+    },
+    {
+      "message": "이미지 분석",
+      "time": "2026-09-11T11:50:14.383Z"
+    },
+    {
+      "message": "문자 인식 · 첫 토큰 생성",
+      "time": "2026-09-11T11:50:19.197Z"
+    },
+    {
+      "message": "문자 인식 · 1개 토큰",
+      "time": "2026-09-11T11:50:21.197Z"
+    },
+    {
+      "message": "문자 인식 · 17개 토큰",
+      "time": "2026-09-11T11:50:22.671Z"
+    },
+    {
+      "message": "문자 인식 · 33개 토큰",
+      "time": "2026-09-11T11:50:24.116Z"
+    },
+    {
+      "message": "문자 인식 · 49개 토큰",
+      "time": "2026-09-11T11:50:25.595Z"
+    },
+    {
+      "message": "문자 인식 · 65개 토큰",
+      "time": "2026-09-11T11:50:27.069Z"
+    },
+    {
+      "message": "문자 인식 · 81개 토큰",
+      "time": "2026-09-11T11:50:28.547Z"
+    },
+    {
+      "message": "문자 인식 · 97개 토큰",
+      "time": "2026-09-11T11:50:30.035Z"
+    },
+    {
+      "message": "문자 인식 · 113개 토큰",
+      "time": "2026-09-11T11:50:31.499Z"
+    },
+    {
+      "message": "문자 인식 · 129개 토큰",
+      "time": "2026-09-11T11:50:32.999Z"
+    },
+    {
+      "message": "문자 인식 · 145개 토큰",
+      "time": "2026-09-11T11:50:34.488Z"
+    },
+    {
+      "message": "문자 인식 · 161개 토큰",
+      "time": "2026-09-11T11:50:35.970Z"
+    },
+    {
+      "message": "문자 인식 · 177개 토큰",
+      "time": "2026-09-11T11:50:37.464Z"
+    },
+    {
+      "message": "문자 인식 · 193개 토큰",
+      "time": "2026-09-11T11:50:38.950Z"
+    },
+    {
+      "message": "문자 인식 · 209개 토큰",
+      "time": "2026-09-11T11:50:40.420Z"
+    },
+    {
+      "message": "문자 인식 · 225개 토큰",
+      "time": "2026-09-11T11:50:41.920Z"
+    },
+    {
+      "message": "문자 인식 · 241개 토큰",
+      "time": "2026-09-11T11:50:43.387Z"
+    },
+    {
+      "message": "문자 인식 · 257개 토큰",
+      "time": "2026-09-11T11:50:44.925Z"
+    },
+    {
+      "message": "문자 인식 · 273개 토큰",
+      "time": "2026-09-11T11:50:46.404Z"
+    },
+    {
+      "message": "문자 인식 · 289개 토큰",
+      "time": "2026-09-11T11:50:47.899Z"
+    },
+    {
+      "message": "문자 인식 · 305개 토큰",
+      "time": "2026-09-11T11:50:49.387Z"
+    },
+    {
+      "message": "문자 인식 · 321개 토큰",
+      "time": "2026-09-11T11:50:50.843Z"
+    },
+    {
+      "message": "문자 인식 · 337개 토큰",
+      "time": "2026-09-11T11:50:52.315Z"
+    },
+    {
+      "message": "시험 인식 완료",
+      "time": "2026-09-11T11:50:53.091Z"
+    }
+  ],
+  "runs": [
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 262144,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 185
+        },
+        {
+          "name": "vision",
+          "ms": 1423.5999999940395
+        },
+        {
+          "name": "embedding",
+          "ms": 16.200000002980232
+        },
+        {
+          "name": "prefill",
+          "ms": 582.9000000059605
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          40,
+          32
+        ],
+        "pixelDims": [
+          1,
+          1280,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 320,
+        "resizedWidth": 448,
+        "resizedHeight": 560
+      },
+      "prompt": {
+        "length": 333,
+        "imageTokens": 320,
+        "ropeDelta": -300
+      },
+      "generated_tokens": 243,
+      "raw_text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 침표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 0와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "stop_reason": "eos",
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 침표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 0와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "elapsed_ms": 24861.40000000596
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 247
+        },
+        {
+          "name": "vision",
+          "ms": 6745.20000000298
+        },
+        {
+          "name": "embedding",
+          "ms": 61
+        },
+        {
+          "name": "prefill",
+          "ms": 2868.5999999940395
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 241,
+      "raw_text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "stop_reason": "eos",
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\n\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "elapsed_ms": 34457.90000000596
+    },
+    {
+      "id": "02-expense-receipt",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 247.90000000596046
+        },
+        {
+          "name": "vision",
+          "ms": 5793.399999991059
+        },
+        {
+          "name": "embedding",
+          "ms": 55.900000005960464
+        },
+        {
+          "name": "prefill",
+          "ms": 2188
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 188,
+      "raw_text": "경비 사용 영수증\nSYNTHETIC RECEIPT\n\n가상 상호: 한빛 테스트 주차장\n거래일시: 2026-09-11 14:35\n승인번호: 00010203\n결제수단: 법인카드 (가상)\n\n항목  금액\n통행료  12,300원\n주차료  4,500원\n합계  16,800원\n공급가액  15,273원\n부가세  1,527원\n\n처리 상태: 정산 검토 중 / Pending\n\nTEST ONLY · 실제 결제 내역이 아닙니다.",
+      "stop_reason": "eos",
+      "text": "경비 사용 영수증\nSYNTHETIC RECEIPT\n\n가상 상호: 한빛 테스트 주차장\n거래일시: 2026-09-11 14:35\n승인번호: 00010203\n결제수단: 법인카드 (가상)\n\n항목  금액\n통행료  12,300원\n주차료  4,500원\n합계  16,800원\n공급가액  15,273원\n부가세  1,527원\n\n처리 상태: 정산 검토 중 / Pending\n\nTEST ONLY · 실제 결제 내역이 아닙니다.",
+      "elapsed_ms": 25905.29999999702
+    },
+    {
+      "id": "03-two-columns-table",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "ocr",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 512,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 445.19999998807907
+        },
+        {
+          "name": "vision",
+          "ms": 4968.600000008941
+        },
+        {
+          "name": "embedding",
+          "ms": 56
+        },
+        {
+          "name": "prefill",
+          "ms": 1970.3999999910593
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 253,
+      "raw_text": "출장 자료 / 확인표\n\n가상 문서 · Layout and table test\n\n윈윈 열 / 작성 안내\n1. 문서 제목을 확인합니다.\n2. 한글과 English를 읽습니다.\n3. 날짜는 2026-09-11 입니다.\n\n오른쪽 열 / 검토 사항\nA. 금액 12,300원을 확인합니다.\nB. 문서번호 TEST-03을 비교합니다.\nC. 0와 0, I와 1을 구분합니다.\n\n구매 내역 / Purchase list\n\n폼목\n복사용지 A4\n파일철 (Blue)\n함계\n가상 표입니다. 서명이나 개인정보는 없습니다.\n\n수량\n2\n3\n5\n\n금액\n9,600원\n7,200원\n16,800원",
+      "stop_reason": "eos",
+      "text": "출장 자료 / 확인표\n\n가상 문서 · Layout and table test\n\n윈윈 열 / 작성 안내\n1. 문서 제목을 확인합니다.\n2. 한글과 English를 읽습니다.\n3. 날짜는 2026-09-11 입니다.\n\n오른쪽 열 / 검토 사항\nA. 금액 12,300원을 확인합니다.\nB. 문서번호 TEST-03을 비교합니다.\nC. 0와 0, I와 1을 구분합니다.\n\n구매 내역 / Purchase list\n\n폼목\n복사용지 A4\n파일철 (Blue)\n함계\n가상 표입니다. 서명이나 개인정보는 없습니다.\n\n수량\n2\n3\n5\n\n금액\n9,600원\n7,200원\n16,800원",
+      "elapsed_ms": 30257.29999999702
+    },
+    {
+      "id": "01-mixed-paragraph",
+      "engine": "paddleocr-vl-1.5-community-q4-webgpu",
+      "conversion": "onnx-community/PaddleOCR-VL-1.5-ONNX",
+      "revision": "ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4",
+      "task": "spotting",
+      "output_format": "plain",
+      "max_pixels": 1003520,
+      "max_tokens": 1024,
+      "stages": [
+        {
+          "name": "preprocess",
+          "ms": 243.3999999910593
+        },
+        {
+          "name": "vision",
+          "ms": 4758.899999991059
+        },
+        {
+          "name": "embedding",
+          "ms": 55.29999999701977
+        },
+        {
+          "name": "prefill",
+          "ms": 1990
+        }
+      ],
+      "status": "complete",
+      "preprocess": {
+        "grid": [
+          1,
+          80,
+          62
+        ],
+        "pixelDims": [
+          1,
+          4960,
+          3,
+          14,
+          14
+        ],
+        "imageTokenCount": 1240,
+        "resizedWidth": 868,
+        "resizedHeight": 1120
+      },
+      "prompt": {
+        "length": 1253,
+        "imageTokens": 1240,
+        "ropeDelta": -1200
+      },
+      "generated_tokens": 344,
+      "raw_text": "PDF Studio 문서 인식 시험<|LOC_61|><|LOC_54|><|LOC_520|><|LOC_53|><|LOC_521|><|LOC_85|><|LOC_62|><|LOC_86|>\n가상 문서 · Synthetic document<|LOC_61|><|LOC_100|><|LOC_415|><|LOC_99|><|LOC_416|><|LOC_127|><|LOC_62|><|LOC_128|>\n한글과 English를 함께 읽습니다.<|LOC_62|><|LOC_184|><|LOC_498|><|LOC_183|><|LOC_498|><|LOC_217|><|LOC_62|><|LOC_218|>\n자동 인식 결과의 숫자를 비교합니다.<|LOC_62|><|LOC_242|><|LOC_564|><|LOC_241|><|LOC_564|><|LOC_272|><|LOC_62|><|LOC_273|>\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.<|LOC_62|><|LOC_298|><|LOC_679|><|LOC_297|><|LOC_679|><|LOC_329|><|LOC_62|><|LOC_330|>\n문서번호: TEST-2026-0911-A<|LOC_61|><|LOC_356|><|LOC_454|><|LOC_355|><|LOC_455|><|LOC_386|><|LOC_62|><|LOC_387|>\n작성일: 2026-09-11 / 검토 시간: 09:05<|LOC_61|><|LOC_414|><|LOC_579|><|LOC_413|><|LOC_579|><|LOC_445|><|LOC_61|><|LOC_446|>\n계약 금액은 123,450원입니다.<|LOC_62|><|LOC_472|><|LOC_468|><|LOC_471|><|LOC_468|><|LOC_503|><|LOC_62|><|LOC_504|>\n비율은 12.5%이며 수량은 007개입니다.<|LOC_62|><|LOC_529|><|LOC_591|><|LOC_528|><|LOC_592|><|LOC_560|><|LOC_62|><|LOC_561|>\n대문자 O와 숫자 0, 소문자 1과 숫자 1.<|LOC_62|><|LOC_588|><|LOC_574|><|LOC_587|><|LOC_575|><|LOC_620|><|LOC_62|><|LOC_621|>\nProject status: Ready for review.<|LOC_62|><|LOC_646|><|LOC_496|><|LOC_645|><|LOC_496|><|LOC_678|><|LOC_62|><|LOC_679|>\nContact: demo@example.test<|LOC_61|><|LOC_703|><|LOC_463|><|LOC_702|><|LOC_464|><|LOC_735|><|LOC_62|><|LOC_736|>\nTEST ONLY · 실제 업무 문서가 아닙니다.<|LOC_61|><|LOC_898|><|LOC_506|><|LOC_897|><|LOC_506|><|LOC_925|><|LOC_61|><|LOC_926|>",
+      "stop_reason": "eos",
+      "text": "PDF Studio 문서 인식 시험\n가상 문서 · Synthetic document\n한글과 English를 함께 읽습니다.\n자동 인식 결과의 숫자를 비교합니다.\n공백, 쉼표, 괄호와 기호를 그대로 확인합니다.\n문서번호: TEST-2026-0911-A\n작성일: 2026-09-11 / 검토 시간: 09:05\n계약 금액은 123,450원입니다.\n비율은 12.5%이며 수량은 007개입니다.\n대문자 O와 숫자 0, 소문자 1과 숫자 1.\nProject status: Ready for review.\nContact: demo@example.test\nTEST ONLY · 실제 업무 문서가 아닙니다.",
+      "words": [
+        {
+          "text": "PDF Studio 문서 인식 시험",
+          "box": [
+            0.061,
+            0.053,
+            0.521,
+            0.086
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.054
+            ],
+            [
+              0.52,
+              0.053
+            ],
+            [
+              0.521,
+              0.085
+            ],
+            [
+              0.062,
+              0.086
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "가상 문서 · Synthetic document",
+          "box": [
+            0.061,
+            0.099,
+            0.416,
+            0.128
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.1
+            ],
+            [
+              0.415,
+              0.099
+            ],
+            [
+              0.416,
+              0.127
+            ],
+            [
+              0.062,
+              0.128
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "한글과 English를 함께 읽습니다.",
+          "box": [
+            0.062,
+            0.183,
+            0.498,
+            0.218
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.184
+            ],
+            [
+              0.498,
+              0.183
+            ],
+            [
+              0.498,
+              0.217
+            ],
+            [
+              0.062,
+              0.218
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "자동 인식 결과의 숫자를 비교합니다.",
+          "box": [
+            0.062,
+            0.241,
+            0.564,
+            0.273
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.242
+            ],
+            [
+              0.564,
+              0.241
+            ],
+            [
+              0.564,
+              0.272
+            ],
+            [
+              0.062,
+              0.273
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "공백, 쉼표, 괄호와 기호를 그대로 확인합니다.",
+          "box": [
+            0.062,
+            0.297,
+            0.679,
+            0.33
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.298
+            ],
+            [
+              0.679,
+              0.297
+            ],
+            [
+              0.679,
+              0.329
+            ],
+            [
+              0.062,
+              0.33
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "문서번호: TEST-2026-0911-A",
+          "box": [
+            0.061,
+            0.355,
+            0.455,
+            0.387
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.356
+            ],
+            [
+              0.454,
+              0.355
+            ],
+            [
+              0.455,
+              0.386
+            ],
+            [
+              0.062,
+              0.387
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "작성일: 2026-09-11 / 검토 시간: 09:05",
+          "box": [
+            0.061,
+            0.413,
+            0.579,
+            0.446
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.414
+            ],
+            [
+              0.579,
+              0.413
+            ],
+            [
+              0.579,
+              0.445
+            ],
+            [
+              0.061,
+              0.446
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "계약 금액은 123,450원입니다.",
+          "box": [
+            0.062,
+            0.471,
+            0.468,
+            0.504
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.472
+            ],
+            [
+              0.468,
+              0.471
+            ],
+            [
+              0.468,
+              0.503
+            ],
+            [
+              0.062,
+              0.504
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "비율은 12.5%이며 수량은 007개입니다.",
+          "box": [
+            0.062,
+            0.528,
+            0.592,
+            0.561
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.529
+            ],
+            [
+              0.591,
+              0.528
+            ],
+            [
+              0.592,
+              0.56
+            ],
+            [
+              0.062,
+              0.561
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "대문자 O와 숫자 0, 소문자 1과 숫자 1.",
+          "box": [
+            0.062,
+            0.587,
+            0.575,
+            0.621
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.588
+            ],
+            [
+              0.574,
+              0.587
+            ],
+            [
+              0.575,
+              0.62
+            ],
+            [
+              0.062,
+              0.621
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "Project status: Ready for review.",
+          "box": [
+            0.062,
+            0.645,
+            0.496,
+            0.679
+          ],
+          "polygon": [
+            [
+              0.062,
+              0.646
+            ],
+            [
+              0.496,
+              0.645
+            ],
+            [
+              0.496,
+              0.678
+            ],
+            [
+              0.062,
+              0.679
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "Contact: demo@example.test",
+          "box": [
+            0.061,
+            0.702,
+            0.464,
+            0.736
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.703
+            ],
+            [
+              0.463,
+              0.702
+            ],
+            [
+              0.464,
+              0.735
+            ],
+            [
+              0.062,
+              0.736
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        },
+        {
+          "text": "TEST ONLY · 실제 업무 문서가 아닙니다.",
+          "box": [
+            0.061,
+            0.897,
+            0.506,
+            0.926
+          ],
+          "polygon": [
+            [
+              0.061,
+              0.898
+            ],
+            [
+              0.506,
+              0.897
+            ],
+            [
+              0.506,
+              0.925
+            ],
+            [
+              0.061,
+              0.926
+            ]
+          ],
+          "separator": "\n",
+          "confidence": null
+        }
+      ],
+      "warnings": [],
+      "elapsed_ms": 38983.59999999404
+    }
+  ],
+  "browser": {
+    "secureContext": true,
+    "webgpu": true,
+    "adapter": true,
+    "hardwareConcurrency": 20,
+    "features": [
+      "depth32float-stencil8",
+      "rg11b10ufloat-renderable",
+      "texture-formats-tier1",
+      "bgra8unorm-storage",
+      "texture-compression-bc",
+      "dual-source-blending",
+      "core-features-and-limits",
+      "float32-filterable",
+      "indirect-first-instance",
+      "float32-blendable",
+      "subgroup-size-control",
+      "depth-clip-control",
+      "texture-compression-bc-sliced-3d",
+      "clip-distances",
+      "shader-f16",
+      "timestamp-query",
+      "texture-formats-tier2",
+      "primitive-index",
+      "texture-component-swizzle",
+      "subgroups"
+    ],
+    "limits": {
+      "maxBufferSize": 2147483648,
+      "maxStorageBufferBindingSize": 2147483644,
+      "maxComputeWorkgroupStorageSize": 32768
+    }
+  },
+  "ortVersion": {
+    "common": "1.29.0",
+    "web": "1.29.0"
+  },
+  "sessions": [
+    {
+      "name": "embed_tokens",
+      "elapsedMs": 1273.5,
+      "inputs": [
+        {
+          "name": "input_ids",
+          "isTensor": true,
+          "type": "int64",
+          "shape": [
+            1,
+            "num_tokens"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "embeddings",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            "num_tokens",
+            1024
+          ]
+        }
+      ]
+    },
+    {
+      "name": "vision_encoder",
+      "elapsedMs": 1467.5,
+      "inputs": [
+        {
+          "name": "pixel_values",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            "num_patches",
+            3,
+            14,
+            14
+          ]
+        },
+        {
+          "name": "image_grid_thw",
+          "isTensor": true,
+          "type": "int64",
+          "shape": [
+            1,
+            3
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_embeds",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            "u89",
+            1024
+          ]
+        }
+      ]
+    },
+    {
+      "name": "decoder_model_merged",
+      "elapsedMs": 887.6000000089407,
+      "inputs": [
+        {
+          "name": "inputs_embeds",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            "seq_len",
+            1024
+          ]
+        },
+        {
+          "name": "attention_mask",
+          "isTensor": true,
+          "type": "int64",
+          "shape": [
+            1,
+            "total_seq"
+          ]
+        },
+        {
+          "name": "past_key_values.0.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.0.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.1.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.1.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.2.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.2.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.3.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.3.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.4.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.4.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.5.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.5.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.6.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.6.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.7.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.7.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.8.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.8.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.9.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.9.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.10.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.10.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.11.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.11.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.12.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.12.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.13.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.13.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.14.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.14.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.15.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.15.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.16.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.16.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.17.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        },
+        {
+          "name": "past_key_values.17.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq",
+            128
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "present.0.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.0.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.1.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.1.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.2.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.2.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.3.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.3.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.4.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.4.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.5.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.5.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.6.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.6.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.7.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.7.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.8.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.8.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.9.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.9.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.10.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.10.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.11.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.11.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.12.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.12.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.13.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.13.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.14.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.14.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.15.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.15.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.16.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.16.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.17.key",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "present.17.value",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            2,
+            "past_seq + seq_len",
+            128
+          ]
+        },
+        {
+          "name": "logits",
+          "isTensor": true,
+          "type": "float32",
+          "shape": [
+            1,
+            "seq_len",
+            103424
+          ]
+        }
+      ]
+    }
+  ],
+  "tokenizer": {
+    "type": "LlamaTokenizer",
+    "test": [
+      93972,
+      2497,
+      93963
+    ]
+  }
+}

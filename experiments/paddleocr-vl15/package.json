@@ -1,0 +1,9 @@
+{
+  "name": "pdf-studio-paddle-vl15-browser-evaluation",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "4.2.0",
+    "onnxruntime-web": "1.29.0"
+  }
+}

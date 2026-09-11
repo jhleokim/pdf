@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
+import { buildPaddleWeb } from './build-paddle-web.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => readFileSync(resolve(root, file), 'utf8').trim();
 const ocrManifest=JSON.parse(read('vendor/ocr/manifest.json'));
@@ -11,6 +12,7 @@ for(const [file,expected] of Object.entries(ocrManifest.files)){
 }
 export function buildHTML({standalone=false}={}){
 let html = read('index.html');
+html=html.replace(/<!-- paddle-bootstrap:start -->[\s\S]*?<!-- paddle-bootstrap:end -->\s*/,'');
 function block(name, content, before) {
   const start = `<!-- ${name}:start -->`, end = `<!-- ${name}:end -->`;
   const chunk = `${start}\n${content}\n${end}`;
@@ -56,10 +58,17 @@ block('stamp-dialog',read('src/stamp-dialog.html'),'</body>');
 html=html.replace(/<!-- pro-dialog:start -->[\s\S]*?<!-- pro-dialog:end -->\s*/, '');
 block('pro-dialog', read('src/pro-dialog.html'), '<!-- pro-panel:start -->');
 const assets={'ocr-client':'tesseract.min.js','ocr-core':'tesseract-core-lstm.wasm.js','ocr-core-fast':'tesseract-core-relaxedsimd-lstm.wasm.js','ocr-worker':'worker.min.js','ocr-lang-kor':'lang/kor.traineddata.gz','ocr-lang-eng':'lang/eng.traineddata.gz'};
-block('ocr-assets',Object.entries(assets).map(([id,file])=>`<script type="application/octet-stream" id="${id}">${readFileSync(resolve(root,'vendor/ocr',file)).toString('base64')}</script>`).join('\n'),'</body>');
+if(standalone)block('ocr-assets',Object.entries(assets).map(([id,file])=>`<script type="application/octet-stream" id="${id}">${readFileSync(resolve(root,'vendor/ocr',file)).toString('base64')}</script>`).join('\n'),'</body>');
+else html=html.replace(/<!-- ocr-assets:start -->[\s\S]*?<!-- ocr-assets:end -->\s*/,'');
 block('ocr-licenses','<details hidden><summary>OCR licenses</summary><pre>'+['LICENSE-tesseract.js','LICENSE-tesseract.js-core','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt','NOTICE.txt'].map(f=>read('vendor/ocr/'+f).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('\n')+'</pre></details>','</body>');
 html=html.replace(/<!-- pro-runtime:start -->[\s\S]*?<!-- pro-runtime:end -->\s*/, '');
 block('pro-runtime', ['pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','pro-tools-ui.js','pro-gemini-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')).map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
+if(!standalone){
+  const paddle=JSON.parse(read('vendor/paddle/web-build.json'));
+  if(!/^\/ocr\/paddle\/runtime-[a-f0-9]{16}\.mjs$/.test(paddle.runtimeURL))throw Error('Invalid Paddle runtime path');
+  block('paddle-bootstrap',`<script id="paddle-bootstrap">globalThis.PDFOCR_DEFAULT_PROVIDER='paddle-vl15';globalThis.PDFPaddleReady=import(${JSON.stringify(paddle.runtimeURL)});globalThis.PDFPaddleReady.catch(()=>{});</script>`,'<!-- pro-runtime:start -->');
+  html=html.replace('네트워크 0건','기기에서 인식');
+}
 block('markup-runtime',['markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js','print-ui.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')
   .replace('<h1>PDF 페이지 편집기</h1>', '<h1>PDF Studio</h1>')
@@ -70,6 +79,7 @@ html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio
 return html+'\n';
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ await buildPaddleWeb();
  const html=buildHTML();writeFileSync(resolve(root,'index.html'),html,'utf8');
- console.log('Built web index.html ('+(Buffer.byteLength(html)/1048576).toFixed(2)+' MiB); no external assets.');
+ console.log('Built web index.html ('+(Buffer.byteLength(html)/1048576).toFixed(2)+' MiB); model loads on first OCR use.');
 }

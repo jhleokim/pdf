@@ -1,0 +1,21 @@
+# Keep reproducible source, fixtures, model provenance, and dependency locks.
+/node_modules/
+/bundle-tools/node_modules/
+/models/
+!/package-lock.json
+!/bundle-tools/package-lock.json
+
+# Authored index.html is the small browser harness; these HTMLs are build output.
+/pdf-studio-paddle-*.html
+/paddle-vl15-standalone-experiment.html
+/tesseract-baseline.html
+/*.build.json
+/*.verification.json
+/*.manifest.json
+/*.partial*
+/*.range-*
+/validate-preprocess.json
+/validate-spotting.json
+/results/
+__pycache__/
+*.pyc
