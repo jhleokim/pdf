@@ -69,31 +69,47 @@
       emit(1);return score(alternate)>score(first)*1.03?alternate:first;
     }};
   }
-  function makeFont(doc,records){
+  async function makeFont(doc,records,signal){
+    check(signal);
+    // Tesseract's word boxes retain the existing standalone writer. Line-level
+    // Paddle/Gemini results use bundled NanumGothic proportions as an estimate;
+    // the source font and per-character bounds are not known to either model.
+    const proportional=records.some(r=>r.source==='paddle-vl15'||r.source==='gemini');
+    const metrics=proportional?(await PDFMarkupText.load('gothic')).font:null;check(signal);
+    if(metrics&&(!Number.isFinite(metrics.unitsPerEm)||metrics.unitsPerEm<=0))throw new Error('검색 텍스트의 글꼴 크기 정보를 읽지 못했습니다.');
+    const glyphWidth=ch=>{
+      const point=ch.codePointAt(0);
+      if(!metrics||!metrics.hasGlyphForCodePoint(point))return 600;
+      const width=metrics.glyphForCodePoint(point).advanceWidth/metrics.unitsPerEm*1000;
+      if(!Number.isFinite(width)||width<0)throw new Error('검색 텍스트의 문자 폭을 읽지 못했습니다.');
+      return width;
+    };
     const P=PDFLib,c=doc.context,chars=[...new Set(records.flatMap(r=>r.words.flatMap(w=>[...w.text,' '])))];
     if(chars.length>60000)throw new Error('인식한 문자 종류가 너무 많습니다. 문서를 나누어 처리하세요.');
     const map=new Map(chars.map((ch,i)=>[ch,i+1]));
+    const widths=chars.map(glyphWidth),widthMap=new Map(chars.map((ch,i)=>[ch,widths[i]]));
     const hex=n=>n.toString(16).padStart(4,'0').toUpperCase();
     const unicode=ch=>Array.from({length:ch.length},(_,i)=>hex(ch.charCodeAt(i))).join('');
     let cmap='/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /PDFStudioOCR def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n';
     for(let i=0;i<chars.length;i+=100){const part=chars.slice(i,i+100);cmap+=`${part.length} beginbfchar\n`+part.map(ch=>`<${hex(map.get(ch))}> <${unicode(ch)}>`).join('\n')+'\nendbfchar\n';}
     cmap+='endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend';
     const descriptor=c.register(c.obj({Type:'FontDescriptor',FontName:'PDFStudioOCR',Flags:4,FontBBox:[0,-200,1000,1000],ItalicAngle:0,Ascent:800,Descent:-200,CapHeight:800,StemV:80}));
-    const descendant=c.register(c.obj({Type:'Font',Subtype:'CIDFontType2',BaseFont:'PDFStudioOCR',CIDSystemInfo:{Registry:P.PDFString.of('Adobe'),Ordering:P.PDFString.of('Identity'),Supplement:0},FontDescriptor:descriptor,DW:600,CIDToGIDMap:'Identity'}));
+    const descendant=c.register(c.obj({Type:'Font',Subtype:'CIDFontType2',BaseFont:'PDFStudioOCR',CIDSystemInfo:{Registry:P.PDFString.of('Adobe'),Ordering:P.PDFString.of('Identity'),Supplement:0},FontDescriptor:descriptor,DW:600,W:[1,widths],CIDToGIDMap:'Identity'}));
     const ref=c.register(c.obj({Type:'Font',Subtype:'Type0',BaseFont:'PDFStudioOCR',Encoding:'Identity-H',DescendantFonts:[descendant],ToUnicode:c.register(c.flateStream(cmap))}));
-    return {ref,encode:text=>P.PDFHexString.of([...text].map(ch=>hex(map.get(ch))).join(''))};
+    return {ref,measure:text=>[...text].reduce((sum,ch)=>sum+widthMap.get(ch),0)/1000,encode:text=>P.PDFHexString.of([...text].map(ch=>hex(map.get(ch))).join(''))};
   }
   async function apply(doc,records,{pageIds=[],signal}={}){
     const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&r.words.length);
     if(!active.length)return {pages:0,words:0};
-    const P=PDFLib,G=PDFProDocument,font=makeFont(doc,active);let pages=0,words=0;
+    const P=PDFLib,G=PDFProDocument,font=await makeFont(doc,active,signal);check(signal);let pages=0,words=0;
     for(const record of active){
       check(signal);const page=doc.getPage(pageIds.indexOf(record.uid)),b=G.visibleBox(page),r=((page.getRotation().angle%360)+360)%360;
       const w=r%180?b.height:b.width,h=r%180?b.width:b.height,rad=r*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
       const name=page.node.newFontDictionary('OCR',font.ref),ops=[P.pushGraphicsState(),P.beginText(),P.setTextRenderingMode(3),P.setFontAndSize(name,1)];
       for(const word of record.words){
         const [l,t,rt,bt]=word.box;if(![l,t,rt,bt].every(Number.isFinite)||rt<=l||bt<=t)continue;
-        const text=word.text+(word.separator===''?'':' '),sx=(rt-l)*w/(Math.max(1,[...word.text].length)*.6),sy=(bt-t)*h;
+        const measured=font.measure(word.text);if(!(measured>0))continue;
+        const text=word.text+(word.separator===''?'':' '),sx=(rt-l)*w/measured,sy=(bt-t)*h;
         const [x,y]=G.displayToPdf(l*w,(bt-(bt-t)*.18)*h,b,r);
         ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(font.encode(text)));words++;
       }

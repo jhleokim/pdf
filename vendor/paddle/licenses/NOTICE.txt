@@ -1,0 +1,55 @@
+PDF Studio PaddleOCR-VL-1.5 browser integration
+============================================
+
+This package combines the following upstream projects. It is not
+an official PaddlePaddle, Microsoft, Hugging Face, or ONNX Community release.
+
+PaddleOCR-VL-1.5 / PaddlePaddle
+  Original model: https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.5
+  Source project: https://github.com/PaddlePaddle/PaddleOCR
+  License: Apache License 2.0. The original license text is included as
+  PaddleOCR-Apache-2.0-LICENSE.txt.
+  License source retrieved 2026-09-11:
+  https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/main/LICENSE
+
+ONNX Community conversion
+  https://huggingface.co/onnx-community/PaddleOCR-VL-1.5-ONNX
+  Pinned revision: ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4
+  The conversion's original model card declares license: apache-2.0.
+  The complete original model card is included as
+  MODEL-CARD.md; model/config/tokenizer files are
+  preserved as downloaded. This package uses its Q4 vision/decoder and FP32
+  embedding files without changing the ONNX graphs or model weights.
+
+ONNX Runtime Web 1.29.0 / Microsoft Corporation
+  https://github.com/microsoft/onnxruntime
+  License: MIT. The complete versioned LICENSE and ThirdPartyNotices.txt are
+  included as onnxruntime-1.29.0-LICENSE.txt and
+  onnxruntime-1.29.0-ThirdPartyNotices.txt.
+  Sources:
+  https://raw.githubusercontent.com/microsoft/onnxruntime/v1.29.0/LICENSE
+  https://raw.githubusercontent.com/microsoft/onnxruntime/v1.29.0/ThirdPartyNotices.txt
+
+Hugging Face Transformers.js 4.2.0, Tokenizers.js, and Jinja.js
+  https://github.com/huggingface/transformers.js
+  Original installed-package LICENSE texts are included for transformers,
+  tokenizers, and jinja. The distributed browser code is bundled/minified;
+  retained license comments are preserved by esbuild legalComments:inline.
+
+PDF Studio modifications (2026-09-11)
+  The original Paddle image preprocessing, prompt construction, M-RoPE, and
+  Spotting output handling were ported to JavaScript in preprocess.mjs.
+  Source URLs and assumptions are recorded in that file. The browser resize
+  implementation is not claimed to be byte-identical to Pillow.
+  session.mjs adds browser inference orchestration and adapts results to
+  PDF Studio. The web application uses Paddle for local recognition and
+  adds proportional character widths to its searchable-PDF writer.
+  Web model delivery splits unchanged source files into verified chunks,
+  fetched from the application's origin and reused through CacheStorage.
+  These modified browser files and packaging adapters are independent work;
+  they do not represent upstream model/runtime endorsement.
+
+Existing PDF Studio notices
+  Original PDF Studio PDF/rendering/markup font assets and notices remain in
+  the generated application shell. The separate standalone build retains
+  Tesseract and its notices; it does not include this web Paddle loader.

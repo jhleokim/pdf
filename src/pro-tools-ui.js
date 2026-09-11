@@ -1,4 +1,41 @@
 'use strict';
+// The web build selects Paddle before this script runs. Standalone defaults to
+// its embedded Tesseract engine; hidden Gemini always uses its explicit provider.
+const PADDLE_EXPECTED_MODEL='PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1';
+const PADDLE_MODEL_CACHE_TAG=PADDLE_EXPECTED_MODEL+'/spotting';
+const OCR_LINE_POSITION_NOTE='줄 단위 위치라 단어 선택 영역은 실제 글자와 다를 수 있습니다. 원본 글꼴을 알 수 없어 내장 글꼴의 문자 폭으로 추정합니다.';
+function ocrDefaultProvider(){return globalThis.PDFOCR_DEFAULT_PROVIDER==='paddle-vl15'?'paddle-vl15':'tesseract';}
+function ocrValidWord(word){const b=word?.box;return typeof word?.text==='string'&&!!word.text.trim()&&Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1];}
+function ocrCanEmbed(r){return !!r&&!r.skipped&&Array.isArray(r.words)&&r.words.length>0&&r.words.every(ocrValidWord)&&(r.source!=='paddle-vl15'||r.canEmbed===true&&r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
+function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>w.text?.trim()));}
+function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='paddle-vl15'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
+function configureLocalOCR(){
+  if(ocrDefaultProvider()!=='paddle-vl15')return;
+  $('ocrDescription').innerHTML='<strong>PaddleOCR-VL-1.5</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지의 글자와 줄 위치를 확인하세요.';
+  $('ocrProcessingNote').textContent='PC의 WebGPU 환경이 필요합니다. 첫 사용에는 인식 모델 약 900MB를 다운로드하며, 문서는 기기에서 처리합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
+  $('ocrStatus').textContent='처음 인식할 때 모델을 준비합니다. 다운로드와 인식에 시간이 걸릴 수 있습니다.';
+  $('ocrConfidenceNote').textContent='신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE;
+  // Keep the Korean/English value for the hidden Gemini consent flow.
+  $('ocrLanguage').closest('label').hidden=true;
+  $('ocrLayout').closest('label').hidden=true;$('ocrLayout').value='auto';$('ocrLayout').disabled=true;
+}
+async function startPaddleSession(language,signal,onProgress,layout){
+  if(globalThis.PDFPaddleReady)await waitForOCR(globalThis.PDFPaddleReady,signal);
+  signal.throwIfAborted();
+  if(typeof globalThis.PDFPaddle?.session!=='function')throw new Error('Paddle 인식 엔진을 준비하지 못했습니다. 페이지를 새로 열어 다시 시도해 주세요.');
+  if(globalThis.PDFPaddle.model!==PADDLE_EXPECTED_MODEL)throw new Error('Paddle 모델 버전이 일치하지 않습니다. 페이지를 새로 열어 주세요.');
+  const session=await globalThis.PDFPaddle.session(language,signal,onProgress,layout);
+  return {close:()=>session.close(),async recognize(canvas){
+    const result=await session.recognize(canvas);signal.throwIfAborted();
+    if(!result||typeof result.text!=='string')throw new Error('Paddle 인식 결과 형식을 확인하지 못했습니다.');
+    if(result.model&&result.model!==PADDLE_EXPECTED_MODEL)throw new Error('인식 결과의 모델 버전이 일치하지 않습니다. 다시 인식해 주세요.');
+    const stopped=result.stop_reason??result.stopReason;
+    if(result.status&&result.status!=='complete'||stopped&&stopped!=='eos')throw new Error('Paddle 인식이 끝까지 완료되지 않았습니다. 페이지를 나누어 다시 시도해 주세요.');
+    const actual=Array.isArray(result.words)?result.words:[],valid=actual.length>0&&actual.every(ocrValidWord);
+    const words=valid?actual.map(({confidence,...word})=>({...word})):[];
+    return {...result,words,confidence:null,canEmbed:valid,modelCacheTag:PADDLE_MODEL_CACHE_TAG,coordinateStatus:valid?'model-spotting':'unavailable',geometryNote:valid?'':'줄 위치를 확인하지 못했습니다. 텍스트는 저장할 수 있지만 검색용 PDF에는 포함하지 않습니다.'};
+  }};
+}
 const ocrActionIds=['ocrSample','ocrRun'];
 // Completed pages survive a failed batch in memory, independently of accepted PDF text.
 // One entry per page/provider; removed pages and explicit clear/reset release their text.
@@ -16,10 +53,10 @@ let stampShelf=[],stampEditing=null,stampLoadSequence=0,ocrRecords=[],ocrAccepte
 const stampControlIds=['stampScope','stampAnchor','stampX','stampY','stampWidth','stampOpacity'];
 function toolsChanged(){toolsRevision++;proInvalidate();syncToolSummaries();scheduleLivePreview();}
 function syncToolSummaries(){
-  const marks=stampMarks.length+(stampAsset?1:0),recognized=ocrRecords.filter(r=>r.words.length).length;
+  const marks=stampMarks.length+(stampAsset?1:0),recognized=ocrRecords.filter(ocrHasText).length;
   $('stampSummary').textContent=marks?`도장 ${marks}개 배치`:'사진에서 만들고, 원하는 곳에 찍기';
   $('stampSection').classList.toggle('has-settings',marks>0);
-  $('ocrSummary').textContent=recognized?`${recognized}쪽 · ${ocrAccepted?'검색 텍스트 포함':'인식 결과 확인 중'}`:'스캔을 검색·복사 가능한 PDF로';
+  $('ocrSummary').textContent=recognized?`${ocrAccepted?ocrRecords.filter(ocrCanEmbed).length:recognized}쪽 · ${ocrAccepted?'검색 텍스트 포함':'인식 결과 확인 중'}`:'스캔을 검색·복사 가능한 PDF로';
   $('ocrSection').classList.toggle('has-settings',recognized>0);
 }
 function toolDownload(data,name,type){const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),8000);}
@@ -29,13 +66,13 @@ function currentStamp(){
   return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:toolTargets($('stampScope').value).map(p=>p.uid),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
-function ocrKey(p,o){return JSON.stringify([p.uid,p.docId,p.srcIndex,p.rotation,p.annots,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
+function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
 function readToolOptions(o,strict=false){
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
-  const valid=ocrRecords.filter(r=>{const p=pages.find(p=>p.uid===r.uid);return p&&r.key===ocrKey(p,o);});
+  const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
   const stale=ocrRecords.some(r=>pages.some(p=>p.uid===r.uid)&&!valid.includes(r));
   if(strict&&ocrAccepted&&stale)throw new Error('OCR 후 페이지 또는 보정 설정이 바뀌었습니다. 텍스트 인식에서 다시 인식하거나 결과를 지워 주세요.');
-  o.ocr=ocrAccepted?valid.filter(r=>!r.skipped):[];return o;
+  o.ocr=ocrAccepted?valid.filter(ocrCanEmbed):[];return o;
 }
 function syncToolsState(){
   if(ocrRunning)return;
@@ -46,11 +83,11 @@ function syncToolsState(){
   if(state!==toolsLastState){if(stampAsset&&$('stampScope').value!=='all')proInvalidate();toolsLastState=state;renderStampMarks();}
   if(ocrRecords.length){
     let o;try{o=readProOptions();}catch(_){return;}
-    const stale=ocrRecords.some(r=>{const p=pages.find(p=>p.uid===r.uid);return !p||ocrKey(p,o)!==r.key;});
-    $('ocrAccept').disabled=stale||!ocrRecords.some(r=>r.words.length)||ocrAccepted;
+    const stale=ocrRecords.some(r=>!ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
+    $('ocrAccept').disabled=stale||!ocrRecords.some(ocrCanEmbed)||ocrAccepted;
     if(stale)$('ocrStatus').textContent='페이지 또는 보정 설정이 바뀌었습니다. 이전 인식은 저장하지 않습니다. 다시 인식해 주세요.';
     if(stale)$('ocrSummary').textContent='설정 변경 · 다시 인식 필요';
-    else if(ocrAccepted)$('ocrStatus').textContent=`검색용 텍스트 ${ocrRecords.filter(r=>r.words.length).length}쪽이 결과 PDF에 포함됩니다.`;
+    else if(ocrAccepted)$('ocrStatus').textContent=`검색용 텍스트 ${ocrRecords.filter(ocrCanEmbed).length}쪽이 결과 PDF에 포함됩니다.`;
   }
 }
 function resetTools(){stampMarks=[];stampAsset=null;stampEditing=null;stampSource=stampOriginal=stampPixels=stampUndoState=null;ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;$('stampActive').hidden=true;$('ocrResults').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();}
@@ -135,23 +172,24 @@ function moveStamp(e){const g=placementGesture;if(!g||g.id!==e.pointerId)return;
 $('compareAfterScroll').addEventListener('pointermove',moveStamp);
 $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGesture;if(!g||g.id!==e.pointerId)return;moveStamp(e);$('stampAnchor').value='top-left';$('stampX').value=(g.x*25.4/72).toFixed(1);$('stampY').value=(g.y*25.4/72).toFixed(1);g.ghost.remove();placementGesture=null;toolsChanged();});
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
-async function runOCR(sample,provider='tesseract',confirmedList=null,consent=false,force=false){
+async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,consent=false,force=false){
   if(ocrRunning||proAbort||!pages.length)return;
-  if(provider!=='tesseract'&&typeof PDFGemini==='undefined')return;
+  if(!['tesseract','paddle-vl15','gemini'].includes(provider))return;
+  if(provider==='gemini'&&typeof PDFGemini==='undefined')return;
   if(provider==='gemini'&&consent!==true){toast('민감정보 없는 문서임을 먼저 확인해 주세요.',true);return;}
   const list=[...(confirmedList||toolTargets(sample?'current':$('ocrScope').value))];if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let o;try{o=readProOptions();}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
   const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='';
-  const unchanged=()=>{const current=readProOptions();return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider==='gemini'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
-  const remember=(p,record)=>{if(pages.includes(p)&&record.key===ocrKey(p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
+  const unchanged=()=>{const current=readProOptions();return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
+  const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
   if(force)for(const p of list)ocrCheckpoints.delete(provider+':'+p.uid);
   const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
-  ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':'텍스트 인식을 준비하는 중…');
+  ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':provider==='paddle-vl15'?'PaddleOCR-VL-1.5 모델을 준비하는 중…':'텍스트 인식을 준비하는 중…');
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
-      const matches=r=>r&&r.uid===p.uid&&r.key===key&&r.source===provider&&r.language===language&&(provider==='gemini'||r.layout===layout)&&!r.skipped;
+      const matches=r=>r&&r.uid===p.uid&&r.key===key&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&!r.skipped&&(provider!=='paddle-vl15'||ocrCanEmbed(r));
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask;
@@ -171,17 +209,28 @@ async function runOCR(sample,provider='tesseract',confirmedList=null,consent=fal
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
           update(.12);
           if(!engine){
+            const recognitionSignal=proAbort.signal;
             const onProgress=m=>{
+              if(recognitionSignal.aborted||!ocrRunning)return;
               if(provider==='gemini'){
                 const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':'Gemini가 글자를 읽는 중…';
                 busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
+              }
+              if(provider==='paddle-vl15'){
+                const label=m.status==='recognizing text'?'Paddle 텍스트 인식 중':'Paddle 모델 준비 중';
+                const detail=m.detail?' · '+String(m.detail):'';
+                busy(true,recognizingPage+'쪽 · '+label+detail+' ('+(position+1)+'/'+list.length+')');
+                // Token totals are unknown. Only mark a page complete on the
+                // runtime's actual completion signal, never a guessed percent.
+                if(m.status==='recognizing text'&&m.progress===1)update(.98);
+                return;
               }
               if(m.status==='recognizing text'){
                 const n=Math.max(0,Math.min(1,m.progress||0));update(.12+n*.86);
                 busy(true,`${recognizingPage}쪽 · 텍스트 인식 중 ${Math.min(99,Math.round(n*100))}%`);
               }else busy(true,'텍스트 인식을 준비하는 중…');
             };
-            engine=provider==='gemini'?await PDFGemini.session(language,proAbort.signal,onProgress,true):await PDFOCR.session(language,proAbort.signal,onProgress,layout);
+            engine=provider==='gemini'?await PDFGemini.session(language,recognitionSignal,onProgress,true):provider==='paddle-vl15'?await startPaddleSession(language,recognitionSignal,onProgress,layout):await PDFOCR.session(language,recognitionSignal,onProgress,layout);
           }
           const result=await engine.recognize(canvas);checkProAbort();
           const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
@@ -192,9 +241,9 @@ async function runOCR(sample,provider='tesseract',confirmedList=null,consent=fal
     if(!unchanged())throw new Error('처리 중 문서 또는 설정이 바뀌었습니다. 다시 인식해 주세요.');
     const merged=new Map(ocrRecords.map(r=>[r.uid,r]));for(const r of fresh)merged.set(r.uid,r);
     const current=readProOptions();let outdated=0;
-    ocrRecords=pages.flatMap((p,i)=>{const r=merged.get(p.uid);if(!r)return [];if(r.key!==ocrKey(p,current)){outdated++;return [];}return [{...r,page:i+1}];});ocrAccepted=false;renderOCRResults();toolsChanged();
+    ocrRecords=pages.flatMap((p,i)=>{const r=merged.get(p.uid);if(!r)return [];if(!ocrRecordCurrent(r,p,current)){outdated++;return [];}return [{...r,page:i+1}];});ocrAccepted=false;renderOCRResults();toolsChanged();
     const skipped=fresh.filter(r=>r.skipped).length;
-    status=`${provider==='gemini'?'Gemini · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀.${outdated?' 설정이 바뀐 이전 결과 '+outdated+'쪽은 제외했습니다.':''} 내용을 확인한 뒤 PDF 포함을 선택하세요.`;
+    status=`${provider==='gemini'?'Gemini · ':provider==='paddle-vl15'?'PaddleOCR-VL-1.5 · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀.${outdated?' 설정이 바뀐 이전 결과 '+outdated+'쪽은 제외했습니다.':''}${ocrRecords.some(ocrCanEmbed)?' 내용을 확인한 뒤 PDF 포함을 선택하세요.':fresh.some(ocrHasText)?' 텍스트는 저장할 수 있지만 검색용 PDF에 포함할 위치 정보가 없습니다.':' 기존 검색 텍스트를 유지합니다.'}`;
   }catch(e){
     const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':e.message||'텍스트 인식에 실패했습니다.';
     let resumable=false;try{resumable=unchanged();}catch(_){}
@@ -207,14 +256,15 @@ async function runOCR(sample,provider='tesseract',confirmedList=null,consent=fal
 }
 function renderOCRResults(){
   $('ocrResults').hidden=!ocrRecords.length;$('ocrResultPage').replaceChildren();
-  ocrRecords.forEach((r,i)=>{const option=document.createElement('option');option.value=i;option.textContent=`${r.page}쪽${r.skipped?' · 기존 텍스트 유지':!r.words.length?' · 인식한 글자 없음':''}`;$('ocrResultPage').append(option);});renderOCRText();
+  ocrRecords.forEach((r,i)=>{const option=document.createElement('option');option.value=i;option.textContent=`${r.page}쪽${r.skipped?' · 기존 텍스트 유지':!ocrHasText(r)?' · 인식한 글자 없음':!ocrCanEmbed(r)?' · 텍스트만 · 위치 없음':''}`;$('ocrResultPage').append(option);});renderOCRText();
 }
 function renderOCRText(){const r=ocrRecords[Number($('ocrResultPage').value)];if(!r)return;const host=$('ocrText');host.replaceChildren();
-  if(r.skipped)host.textContent=r.text;else for(const word of r.words){const span=document.createElement('span');span.textContent=word.text+(word.separator??' ');if(word.uncertain||(Number.isFinite(word.confidence)&&word.confidence<70)){span.className='uncertain';span.title=r.source==='gemini'?'확인이 필요한 글줄':`엔진 확신도 ${Math.round(word.confidence)}`;}host.append(span);}
-  $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
+  if(r.skipped||!r.words.length)host.textContent=r.text;else for(const word of r.words){const span=document.createElement('span');span.textContent=word.text+(word.separator??' ');if(word.uncertain||(r.source!=='paddle-vl15'&&Number.isFinite(word.confidence)&&word.confidence<70)){span.className='uncertain';span.title=r.source==='gemini'||r.source==='paddle-vl15'?'확인이 필요한 글줄':`엔진 확신도 ${Math.round(word.confidence)}`;}host.append(span);}
+  $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='paddle-vl15'?(ocrCanEmbed(r)?'PaddleOCR-VL-1.5 · '+r.words.length+'개 글줄 · 신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.geometryNote||'줄 위치가 없어 텍스트 저장만 가능합니다. 검색용 PDF에는 포함하지 않습니다.'):r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
+  $('ocrConfidenceNote').textContent=r.source==='paddle-vl15'?'신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.source==='gemini'?'밑줄은 확인이 필요한 글줄입니다. '+OCR_LINE_POSITION_NOTE:'밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.';
 }
 $('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$('ocrResultPage').onchange=renderOCRText;
-$('ocrAccept').onclick=()=>{ocrAccepted=true;toolsChanged();syncToolsState();};
+$('ocrAccept').onclick=()=>{if($('ocrAccept').disabled||!ocrRecords.some(ocrCanEmbed))return;ocrAccepted=true;toolsChanged();syncToolsState();};
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
 $('ocrTxt').onclick=()=>toolDownload('\ufeff'+ocrRecords.map(r=>`[${r.page}쪽]\n${r.text}`).join('\n\n'),'인식한 텍스트.txt','text/plain;charset=utf-8');
-syncToolsState();
+configureLocalOCR();syncToolsState();

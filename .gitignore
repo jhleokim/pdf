@@ -9,3 +9,7 @@ dist/
 .dev.vars*
 .env*
 worker-configuration.d.ts
+vendor/paddle/assets/
+vendor/paddle/source/
+vendor/paddle/web-build.json
+!package-lock.json
