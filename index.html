@@ -901,6 +901,11 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .pro-rail-resizing,.pro-rail-resizing *{cursor:col-resize!important;user-select:none!important}
 .pro-warning{padding:10px;background:var(--accent-wash);border-left:2px solid var(--accent);color:var(--ink-2);font-size:12px;line-height:1.7}
 @media(min-width:881px){body[data-mode=pro].pro-preview-open .pro-rail-divider{display:flex}}
+
+/* Quiet, readable timing for long document jobs. */
+#busy .box{min-width:min(420px,90vw);gap:12px;padding:22px 24px;box-sizing:border-box}#busyText{flex:1;min-width:140px}#busyCancel{margin-left:0}
+.busy-metrics{flex:0 0 100%;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1.6}.busy-stat{display:flex;justify-content:space-between;gap:12px}.busy-stat strong{color:var(--ink);font-size:13px}
+#busyProgress{display:block;width:100%;height:6px;margin:10px 0 8px;appearance:none;border:0;border-radius:2px;overflow:hidden;background:var(--line)}#busyProgress::-webkit-progress-bar{background:var(--line)}#busyProgress::-webkit-progress-value{background:var(--brand,#008579)}#busyProgress::-moz-progress-bar{background:var(--brand,#008579)}
 .stamp-drop{position:relative;display:flex;align-items:center;gap:10px;padding:16px 12px;border:1px dashed var(--line-2);border-radius:5px;cursor:pointer;background:var(--surface-2)}
 .stamp-drop span{display:grid;gap:6px;font-size:13px;font-weight:600}.stamp-drop small{font-size:11px;font-weight:400;color:var(--ink-3)}
 .stamp-drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.stamp-drop:focus-within,.stamp-drop.over{outline:2px solid var(--action);outline-offset:2px}
@@ -1400,7 +1405,8 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
   <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 8h10M12 8v9m-3 0h6"/></svg></span><span><span class="pro-tool-title">텍스트 인식 <span class="pro-beta">BETA</span></span><small id="ocrSummary">스캔을 검색·복사 가능한 PDF로</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
   <div class="pro-section-body">
     <p id="ocrDescription" class="pro-hint">원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.</p>
-    <label class="pro-field" for="ocrLanguage"><span>인식 언어</span><select id="ocrLanguage"><option value="kor+eng">한국어 + 영어</option><option value="eng">영어</option></select></label>
+    <label class="pro-field" for="ocrProvider"><span>인식 모델</span><select id="ocrProvider"><option value="tesseract" selected>Tesseract · 기본</option><option value="paddle-vl15">PaddleOCR-VL-1.5 · WebGPU</option></select></label>
+      <label class="pro-field" for="ocrLanguage"><span>인식 언어</span><select id="ocrLanguage"><option value="kor+eng">한국어 + 영어</option><option value="eng">영어</option></select></label>
     <label class="pro-field" for="ocrLayout"><span>문서 구성</span><select id="ocrLayout"><option value="auto">자동</option><option value="6">본문 위주 · 한 단</option><option value="11">흩어진 글자 · 서식과 영수증</option></select></label>
     <button class="btn" id="ocrSample">현재 페이지 시험 인식</button>
     <div class="pro-two-fields"><label class="pro-field" for="ocrScope"><span>여러 페이지 인식</span><select id="ocrScope"><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label><button class="btn" id="ocrRun">범위 인식</button></div>
@@ -1543,7 +1549,7 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 </div>
 
 <div id="modal"><button class="close" id="modalClose"><svg class="ic lg"><use href="#i-x"/></svg></button><div class="frame"><canvas id="modalCanvas"></canvas></div></div>
-<div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button></div></div>
+
 <input type="file" id="fileInput" accept="application/pdf,.pdf,image/*" multiple hidden>
 <input type="file" id="stampInput" accept="image/*" hidden>
 <div id="toast"></div>
@@ -1676,8 +1682,8 @@ function toast(msg, isErr){
   t.className = 'show' + (isErr ? ' err' : '');
   clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3400);
 }
-const progress = p => $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%';
-const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); };
+const progress = p => { $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%'; globalThis.PDFWorkProgress?.update(p); };
+const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
 const buzz = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(_){} };
 
 /* ════════════════════════════════════════════════════════════
@@ -4090,10 +4096,84 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
   <footer class="pdf-save-actions"><button class="btn" id="printBack">닫기</button><button class="btn primary" id="printRetry" disabled><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg><span>인쇄 창 열기</span></button></footer>
 </dialog>
 <!-- print-dialog:end -->
+<!-- work-progress-ui:start -->
+<div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button><div class="busy-metrics" id="busyMetrics" aria-live="off"><div class="busy-stat"><strong id="busyPercent">전체 작업 0%</strong><span id="busyElapsed">0분 00초 경과</span></div><progress id="busyProgress" max="100" value="0" aria-label="작업 진행률"></progress><div id="busyRemaining">남은 시간 계산 중</div></div></div></div>
+<!-- work-progress-ui:end -->
 <!-- paddle-bootstrap:start -->
-<script id="paddle-bootstrap">globalThis.PDFOCR_DEFAULT_PROVIDER='paddle-vl15';globalThis.PDFPaddleReady=import("/ocr/paddle/runtime-be360123b27b6edd.mjs");globalThis.PDFPaddleReady.catch(()=>{});</script>
+<script id="paddle-bootstrap">globalThis.PDFTesseractManifest={"ocr-client":{"bytes":62961,"sha256":"000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e","file":"tesseract.min.js","url":"/ocr/tesseract/7.0.0/000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e-tesseract.min.js"},"ocr-core":{"bytes":3896484,"sha256":"eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680","file":"tesseract-core-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680-tesseract-core-lstm.wasm.js"},"ocr-core-fast":{"bytes":3905767,"sha256":"861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3","file":"tesseract-core-relaxedsimd-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3-tesseract-core-relaxedsimd-lstm.wasm.js"},"ocr-worker":{"bytes":111307,"sha256":"576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d","file":"worker.min.js","url":"/ocr/tesseract/7.0.0/576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d-worker.min.js"},"ocr-lang-kor":{"bytes":1572336,"sha256":"78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126","file":"lang/kor.traineddata.gz","url":"/ocr/tesseract/7.0.0/78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126-kor.traineddata.gz"},"ocr-lang-eng":{"bytes":2952873,"sha256":"45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91","file":"lang/eng.traineddata.gz","url":"/ocr/tesseract/7.0.0/45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91-eng.traineddata.gz"}};globalThis.PDFPaddleLoad=()=>globalThis.PDFPaddleReady??=(import("/ocr/paddle/runtime-ac8954536940eb64.mjs").catch(error=>{globalThis.PDFPaddleReady=null;throw error;}));</script>
 <!-- paddle-bootstrap:end -->
 <!-- pro-runtime:start -->
+<script id="work-progress">
+/* Measured progress only: elapsed time is real; remaining time is an estimate. */
+(() => {
+  function createTracker(now=()=>performance.now()) {
+    let start=now(),phaseStart=start,lastChange=start,value=0,updates=0,canceled=false,phase='전체 작업',rateKnown=true,deadline=null,plan=null;
+    return {
+      phase(name,known=true){phase=name;phaseStart=lastChange=now();value=0;updates=0;rateKnown=known;deadline=null;plan=null;},
+      estimate(ms){deadline=Number.isFinite(ms)&&ms>0?now()+ms:null;},
+      plan(from,to,ms){if(Number.isFinite(ms)&&ms>0)plan={from,to,ms,at:now()};},
+      update(percent){if(canceled||!Number.isFinite(percent))return;const next=Math.max(value,Math.min(99,Math.max(0,percent)));if(next>value){value=next;lastChange=now();updates++;}},
+      cancel(){value=this.snapshot().percent;canceled=true;},
+      snapshot(){const time=now(),elapsed=Math.max(0,time-start),phaseElapsed=Math.max(0,time-phaseStart);
+        const measurable=rateKnown&&updates>=2&&value>=3&&phaseElapsed>=2000;
+        const remaining=measurable?Math.max(1000,phaseElapsed*(100-value)/value):null;
+        const projected=plan&&!canceled?plan.from+(plan.to-plan.from)*Math.min(.95,Math.max(0,(time-plan.at)/plan.ms)):value;
+        return {phase,percent:Math.floor(Math.min(99,Math.max(value,projected))),estimated:projected>value,indeterminate:!rateKnown&&!plan&&value===0,elapsed,remaining:deadline!==null?(deadline>time?deadline-time:null):time-lastChange>15000?null:remaining,canceled};}
+    };
+  }
+  const duration=ms=>{const seconds=Math.max(0,Math.ceil(ms/1000));return Math.floor(seconds/60)+'분 '+String(seconds%60).padStart(2,'0')+'초';};
+  let tracker=null,timer=null;
+  function render(){if(!tracker)return;const s=tracker.snapshot(),root=document.getElementById('busyMetrics');if(!root)return;
+    document.getElementById('busyPercent').textContent=s.canceled?'취소 중':s.phase+(s.indeterminate?' · 진행 중':' '+(s.estimated?'약 ':'')+s.percent+'%');
+    document.getElementById('busyElapsed').textContent=duration(s.elapsed)+' 경과';
+    document.getElementById('busyRemaining').textContent=s.canceled?'작업을 안전하게 정리하고 있습니다.':s.remaining===null?'남은 시간 계산 중':'이 단계 약 '+duration(s.remaining)+' 남음 · 예상';
+    const bar=document.getElementById('busyProgress');if(s.indeterminate)bar.removeAttribute('value');else bar.value=s.percent;bar.setAttribute('aria-label',s.phase+' 진행률');
+  }
+  // Only timings are stored; no page text, filenames or images are persisted.
+  let timings={};try{const saved=JSON.parse(globalThis.localStorage.getItem('pdf-ocr-timings-v1'));if(saved&&typeof saved==='object'&&Object.keys(saved).length<=32)timings=saved;}catch{}
+  globalThis.PDFWorkProgress={createTracker,duration,
+    start(){if(tracker)return;tracker=createTracker();render();timer=setInterval(render,1000);},
+    stop(){clearInterval(timer);timer=null;tracker=null;},
+    phase(name,known=true){tracker?.phase(name,known);render();},
+    update(percent){tracker?.update(percent);render();},
+    estimate(ms){tracker?.estimate(ms);render();},
+    plan(from,to,ms){tracker?.plan(from,to,ms);render();},
+    previous(key){const n=timings[key];return Number.isFinite(n)&&n>=500&&n<=600000?n:null;},
+    sample(key,ms){if(!Number.isFinite(ms)||ms<500||ms>600000)return;const old=this.previous(key);timings[key]=old?old*.5+ms*.5:ms;if(Object.keys(timings).length>32)delete timings[Object.keys(timings)[0]];try{globalThis.localStorage?.setItem('pdf-ocr-timings-v1',JSON.stringify(timings));}catch{}},
+    cancel(){tracker?.cancel();render();}
+  };
+})();
+</script>
+<script id="pro-tesseract-assets">
+/* Web-only public engine assets. No document is passed to this loader. */
+(() => {
+  const loaded=new Map();
+  globalThis.PDFTesseractAssets=loaded;
+  globalThis.PDFTesseractLoad=async(language,fast,signal,onProgress)=>{
+    const ids=['ocr-client','ocr-worker',fast?'ocr-core-fast':'ocr-core','ocr-lang-eng',...(language==='eng'?[]:['ocr-lang-kor'])];
+    const entries=ids.map(id=>[id,globalThis.PDFTesseractManifest[id]]),total=entries.reduce((n,[,e])=>n+e.bytes,0);let completed=0;
+    const emit=()=>onProgress?.({status:'loading assets',progress:completed/total,detail:'Tesseract 데이터 준비'});
+    emit();
+    for(const [id,entry] of entries){
+      signal?.throwIfAborted();
+      if(!loaded.has(id)){
+        const response=await fetch(entry.url,{signal,credentials:'omit',cache:'force-cache'});
+        if(!response.ok||!response.body)throw Error('Tesseract 데이터를 받지 못했습니다. 연결을 확인하고 다시 시도하세요.');
+        const reader=response.body.getReader(),bytes=new Uint8Array(entry.bytes);let offset=0;
+        const abort=()=>{void reader.cancel().catch(()=>{});};signal?.addEventListener('abort',abort,{once:true});
+        try{while(true){signal?.throwIfAborted();const {done,value}=await reader.read();signal?.throwIfAborted();if(done)break;if(offset+value.length>bytes.length){await reader.cancel();throw Error('인식 데이터 크기가 일치하지 않습니다.');}bytes.set(value,offset);offset+=value.length;}}
+        finally{signal?.removeEventListener('abort',abort);reader.releaseLock();}
+        if(offset!==entry.bytes)throw Error('인식 데이터를 끝까지 받지 못했습니다.');
+        const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
+        signal?.throwIfAborted();if(digest!==entry.sha256)throw Error('인식 데이터가 손상됐습니다. 페이지를 새로 열어 주세요.');
+        loaded.set(id,bytes);
+      }
+      completed+=entry.bytes;emit();
+    }
+    signal?.throwIfAborted();
+  };
+})();
+</script>
 <script id="pro-engine">
 /* PDF Studio Pro — local, image-only PDF processing. No page rasterization.
  * PDFLib 1.17.1 must be available as globalThis.PDFLib.
@@ -4756,7 +4836,7 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
 (() => {
   'use strict';
   const check=signal=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
-  function bytes(id){const data=document.getElementById(id).textContent.trim();if(Uint8Array.fromBase64)return Uint8Array.fromBase64(data);const raw=atob(data),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+  function bytes(id){const cached=globalThis.PDFTesseractAssets?.get(id);if(cached)return cached;const data=document.getElementById(id).textContent.trim();if(Uint8Array.fromBase64)return Uint8Array.fromBase64(data);const raw=atob(data),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
   function fastCore(){try{return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,15,1,13,0,65,1,253,15,65,2,253,15,253,128,2,11]));}catch(_){return false;}}
   function bounded(promise,signal,ms=120000){
     return new Promise((resolve,reject)=>{
@@ -4770,13 +4850,14 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
   }
   async function session(language,signal,onProgress,layout='auto'){
     check(signal);
+    await globalThis.PDFTesseractLoad?.(language,fastCore(),signal,onProgress);check(signal);
     if(!globalThis.Tesseract){
       const script=document.createElement('script');script.textContent=new TextDecoder().decode(bytes('ocr-client'));document.head.appendChild(script);
     }
     // Upstream accepts {code,data} while loading but reads .data as a language name
     // during initialize. Normalize only that message in our worker bootstrap.
     const bootstrap=`self.addEventListener('message',e=>{const m=e.data;if(m.action==='initialize'&&Array.isArray(m.payload?.langs))m.payload.langs=m.payload.langs.map(l=>typeof l==='string'?l:l.code);});\n`;
-    const accelerated=fastCore()&&!!document.getElementById('ocr-core-fast');
+    const accelerated=fastCore()&&!!(globalThis.PDFTesseractAssets?.has('ocr-core-fast')||document.getElementById('ocr-core-fast'));
     const url=URL.createObjectURL(new Blob([bootstrap,bytes(accelerated?'ocr-core-fast':'ocr-core'),'\n',bytes('ocr-worker')],{type:'application/javascript'}));
     const languages=(language==='eng'?['eng']:['kor','eng']).map(code=>({code,data:bytes('ocr-lang-'+code)}));
     let worker,closed=false,rejectFault,passIndex=0,lastProgress=0,reading=false;
@@ -5651,35 +5732,32 @@ function downloadProResult(){
 $('proDownload').onclick=downloadProResult;
 const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.textContent='+ 파일 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
-$('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';};
+$('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';globalThis.PDFWorkProgress?.cancel();};
 proReady=true;refreshProControls();
 let savedProMode='basic';try{if(localStorage.getItem('pdfed-mode')==='pro')savedProMode='pro';}catch(_){}
 setProMode(savedProMode);
 </script>
 <script id="pro-tools-ui">
 'use strict';
-// The web build selects Paddle before this script runs. Standalone defaults to
-// its embedded Tesseract engine; hidden Gemini always uses its explicit provider.
+// Tesseract is the default in both builds. Paddle is an explicit web choice.
 const PADDLE_EXPECTED_MODEL='PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1';
 const PADDLE_MODEL_CACHE_TAG=PADDLE_EXPECTED_MODEL+'/spotting';
 const OCR_LINE_POSITION_NOTE='줄 단위 위치라 단어 선택 영역은 실제 글자와 다를 수 있습니다. 원본 글꼴을 알 수 없어 내장 글꼴의 문자 폭으로 추정합니다.';
-function ocrDefaultProvider(){return globalThis.PDFOCR_DEFAULT_PROVIDER==='paddle-vl15'?'paddle-vl15':'tesseract';}
+function ocrDefaultProvider(){return globalThis.PDFPaddleLoad&&$('ocrProvider')?.value==='paddle-vl15'?'paddle-vl15':'tesseract';}
 function ocrValidWord(word){const b=word?.box;return typeof word?.text==='string'&&!!word.text.trim()&&Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1];}
 function ocrCanEmbed(r){return !!r&&!r.skipped&&Array.isArray(r.words)&&r.words.length>0&&r.words.every(ocrValidWord)&&(r.source!=='paddle-vl15'||r.canEmbed===true&&r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>w.text?.trim()));}
 function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='paddle-vl15'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function configureLocalOCR(){
-  if(ocrDefaultProvider()!=='paddle-vl15')return;
-  $('ocrDescription').innerHTML='<strong>PaddleOCR-VL-1.5</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지의 글자와 줄 위치를 확인하세요.';
-  $('ocrProcessingNote').textContent='PC의 WebGPU 환경이 필요합니다. 첫 사용에는 인식 모델 약 900MB를 다운로드하며, 문서는 기기에서 처리합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
-  $('ocrStatus').textContent='처음 인식할 때 모델을 준비합니다. 다운로드와 인식에 시간이 걸릴 수 있습니다.';
-  $('ocrConfidenceNote').textContent='신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE;
-  // Keep the Korean/English value for the hidden Gemini consent flow.
-  $('ocrLanguage').closest('label').hidden=true;
-  $('ocrLayout').closest('label').hidden=true;$('ocrLayout').value='auto';$('ocrLayout').disabled=true;
+  const paddle=ocrDefaultProvider()==='paddle-vl15';
+  $('ocrDescription').innerHTML='<strong>'+(paddle?'PaddleOCR-VL-1.5':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
+  $('ocrProcessingNote').textContent=paddle?'PC의 WebGPU 환경이 필요합니다. 첫 사용에는 모델 약 900MB를 다운로드하며, 문서는 기기에서 처리합니다.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
+  if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
+  $('ocrLanguage').closest('label').hidden=paddle;
+  $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;
 }
 async function startPaddleSession(language,signal,onProgress,layout){
-  if(globalThis.PDFPaddleReady)await waitForOCR(globalThis.PDFPaddleReady,signal);
+  if(globalThis.PDFPaddleLoad)await waitForOCR(globalThis.PDFPaddleLoad(),signal);
   signal.throwIfAborted();
   if(typeof globalThis.PDFPaddle?.session!=='function')throw new Error('Paddle 인식 엔진을 준비하지 못했습니다. 페이지를 새로 열어 다시 시도해 주세요.');
   if(globalThis.PDFPaddle.model!==PADDLE_EXPECTED_MODEL)throw new Error('Paddle 모델 버전이 일치하지 않습니다. 페이지를 새로 열어 주세요.');
@@ -5695,7 +5773,7 @@ async function startPaddleSession(language,signal,onProgress,layout){
     return {...result,words,confidence:null,canEmbed:valid,modelCacheTag:PADDLE_MODEL_CACHE_TAG,coordinateStatus:valid?'model-spotting':'unavailable',geometryNote:valid?'':'줄 위치를 확인하지 못했습니다. 텍스트는 저장할 수 있지만 검색용 PDF에는 포함하지 않습니다.'};
   }};
 }
-const ocrActionIds=['ocrSample','ocrRun'];
+const ocrActionIds=['ocrSample','ocrRun','ocrProvider'];
 // Completed pages survive a failed batch in memory, independently of accepted PDF text.
 // One entry per page/provider; removed pages and explicit clear/reset release their text.
 const ocrCheckpoints=new Map();
@@ -5737,7 +5815,7 @@ function syncToolsState(){
   if(ocrRunning)return;
   const activePages=new Set(pages.map(p=>p.uid));for(const [id,r] of ocrCheckpoints)if(!activePages.has(r.uid))ocrCheckpoints.delete(id);
   syncToolSummaries();
-  for(const id of ocrActionIds)$(id).disabled=!pages.length||!!proAbort;
+  for(const id of ocrActionIds)$(id).disabled=(id!=='ocrProvider'&&!pages.length)||!!proAbort;
   const state=JSON.stringify([pages.map(p=>p.uid),previewUid,selected().map(p=>p.uid),toolsRevision]);
   if(state!==toolsLastState){if(stampAsset&&$('stampScope').value!=='all')proInvalidate();toolsLastState=state;renderStampMarks();}
   if(ocrRecords.length){
@@ -5844,7 +5922,11 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
   if(force)for(const p of list)ocrCheckpoints.delete(provider+':'+p.uid);
   const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
+  let workStage='',recognizedMs=0,measuredPages=0;
+  const timingKey=(provider==='paddle-vl15'?PADDLE_MODEL_CACHE_TAG:provider)+':'+language+':'+layout;
+  const stage=(name,known=true)=>{if(workStage!==name){workStage=name;globalThis.PDFWorkProgress?.phase(name,known);}};
   ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':provider==='paddle-vl15'?'PaddleOCR-VL-1.5 모델을 준비하는 중…':'텍스트 인식을 준비하는 중…');
+  stage('문서 준비');
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
@@ -5871,7 +5953,11 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
             const recognitionSignal=proAbort.signal;
             const onProgress=m=>{
               if(recognitionSignal.aborted||!ocrRunning)return;
+              if(m.status==='loading assets'){
+                stage('모델 준비');progress(m.progress*100);busy(true,m.detail||'인식 데이터를 준비하는 중…');return;
+              }
               if(provider==='gemini'){
+                stage('문서 인식',position>0);
                 const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':'Gemini가 글자를 읽는 중…';
                 busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
               }
@@ -5879,19 +5965,25 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
                 const label=m.status==='recognizing text'?'Paddle 텍스트 인식 중':'Paddle 모델 준비 중';
                 const detail=m.detail?' · '+String(m.detail):'';
                 busy(true,recognizingPage+'쪽 · '+label+detail+' ('+(position+1)+'/'+list.length+')');
-                // Token totals are unknown. Only mark a page complete on the
-                // runtime's actual completion signal, never a guessed percent.
-                if(m.status==='recognizing text'&&m.progress===1)update(.98);
+                // Generated token totals are unknown; measure completed pages instead.
+                if(m.status==='recognizing text'){stage('문서 인식',false);if(m.progress===1)update(.98);}
                 return;
               }
               if(m.status==='recognizing text'){
+                stage('문서 인식');
                 const n=Math.max(0,Math.min(1,m.progress||0));update(.12+n*.86);
-                busy(true,`${recognizingPage}쪽 · 텍스트 인식 중 ${Math.min(99,Math.round(n*100))}%`);
+                busy(true,`${recognizingPage}쪽 글자 인식 · ${position+1}/${list.length}페이지`);
               }else busy(true,'텍스트 인식을 준비하는 중…');
             };
             engine=provider==='gemini'?await PDFGemini.session(language,recognitionSignal,onProgress,true):provider==='paddle-vl15'?await startPaddleSession(language,recognitionSignal,onProgress,layout):await PDFOCR.session(language,recognitionSignal,onProgress,layout);
           }
+          stage('문서 인식',provider==='tesseract');
+          const expected=measuredPages?recognizedMs/measuredPages:globalThis.PDFWorkProgress?.previous(timingKey);
+          if(provider!=='tesseract'&&expected){globalThis.PDFWorkProgress?.estimate(expected*(list.length-position));globalThis.PDFWorkProgress?.plan(position/list.length*95,(position+1)/list.length*95,expected);}
+          const recognizedAt=performance.now();
           const result=await engine.recognize(canvas);checkProAbort();
+          recognizedMs+=performance.now()-recognizedAt;measuredPages++;
+          globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
           const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{await pdfTask?.destroy();}
@@ -5922,6 +6014,7 @@ function renderOCRText(){const r=ocrRecords[Number($('ocrResultPage').value)];if
   $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='paddle-vl15'?(ocrCanEmbed(r)?'PaddleOCR-VL-1.5 · '+r.words.length+'개 글줄 · 신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.geometryNote||'줄 위치가 없어 텍스트 저장만 가능합니다. 검색용 PDF에는 포함하지 않습니다.'):r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
   $('ocrConfidenceNote').textContent=r.source==='paddle-vl15'?'신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.source==='gemini'?'밑줄은 확인이 필요한 글줄입니다. '+OCR_LINE_POSITION_NOTE:'밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.';
 }
+$('ocrProvider').onchange=()=>{configureLocalOCR();};
 $('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$('ocrResultPage').onchange=renderOCRText;
 $('ocrAccept').onclick=()=>{if($('ocrAccept').disabled||!ocrRecords.some(ocrCanEmbed))return;ocrAccepted=true;toolsChanged();syncToolsState();};
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};

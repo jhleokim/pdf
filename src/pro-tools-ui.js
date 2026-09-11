@@ -1,26 +1,23 @@
 'use strict';
-// The web build selects Paddle before this script runs. Standalone defaults to
-// its embedded Tesseract engine; hidden Gemini always uses its explicit provider.
+// Tesseract is the default in both builds. Paddle is an explicit web choice.
 const PADDLE_EXPECTED_MODEL='PaddleOCR-VL-1.5/community-Q4/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4/browser-v1';
 const PADDLE_MODEL_CACHE_TAG=PADDLE_EXPECTED_MODEL+'/spotting';
 const OCR_LINE_POSITION_NOTE='줄 단위 위치라 단어 선택 영역은 실제 글자와 다를 수 있습니다. 원본 글꼴을 알 수 없어 내장 글꼴의 문자 폭으로 추정합니다.';
-function ocrDefaultProvider(){return globalThis.PDFOCR_DEFAULT_PROVIDER==='paddle-vl15'?'paddle-vl15':'tesseract';}
+function ocrDefaultProvider(){return globalThis.PDFPaddleLoad&&$('ocrProvider')?.value==='paddle-vl15'?'paddle-vl15':'tesseract';}
 function ocrValidWord(word){const b=word?.box;return typeof word?.text==='string'&&!!word.text.trim()&&Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1];}
 function ocrCanEmbed(r){return !!r&&!r.skipped&&Array.isArray(r.words)&&r.words.length>0&&r.words.every(ocrValidWord)&&(r.source!=='paddle-vl15'||r.canEmbed===true&&r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>w.text?.trim()));}
 function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='paddle-vl15'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function configureLocalOCR(){
-  if(ocrDefaultProvider()!=='paddle-vl15')return;
-  $('ocrDescription').innerHTML='<strong>PaddleOCR-VL-1.5</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지의 글자와 줄 위치를 확인하세요.';
-  $('ocrProcessingNote').textContent='PC의 WebGPU 환경이 필요합니다. 첫 사용에는 인식 모델 약 900MB를 다운로드하며, 문서는 기기에서 처리합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
-  $('ocrStatus').textContent='처음 인식할 때 모델을 준비합니다. 다운로드와 인식에 시간이 걸릴 수 있습니다.';
-  $('ocrConfidenceNote').textContent='신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE;
-  // Keep the Korean/English value for the hidden Gemini consent flow.
-  $('ocrLanguage').closest('label').hidden=true;
-  $('ocrLayout').closest('label').hidden=true;$('ocrLayout').value='auto';$('ocrLayout').disabled=true;
+  const paddle=ocrDefaultProvider()==='paddle-vl15';
+  $('ocrDescription').innerHTML='<strong>'+(paddle?'PaddleOCR-VL-1.5':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
+  $('ocrProcessingNote').textContent=paddle?'PC의 WebGPU 환경이 필요합니다. 첫 사용에는 모델 약 900MB를 다운로드하며, 문서는 기기에서 처리합니다.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
+  if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
+  $('ocrLanguage').closest('label').hidden=paddle;
+  $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;
 }
 async function startPaddleSession(language,signal,onProgress,layout){
-  if(globalThis.PDFPaddleReady)await waitForOCR(globalThis.PDFPaddleReady,signal);
+  if(globalThis.PDFPaddleLoad)await waitForOCR(globalThis.PDFPaddleLoad(),signal);
   signal.throwIfAborted();
   if(typeof globalThis.PDFPaddle?.session!=='function')throw new Error('Paddle 인식 엔진을 준비하지 못했습니다. 페이지를 새로 열어 다시 시도해 주세요.');
   if(globalThis.PDFPaddle.model!==PADDLE_EXPECTED_MODEL)throw new Error('Paddle 모델 버전이 일치하지 않습니다. 페이지를 새로 열어 주세요.');
@@ -36,7 +33,7 @@ async function startPaddleSession(language,signal,onProgress,layout){
     return {...result,words,confidence:null,canEmbed:valid,modelCacheTag:PADDLE_MODEL_CACHE_TAG,coordinateStatus:valid?'model-spotting':'unavailable',geometryNote:valid?'':'줄 위치를 확인하지 못했습니다. 텍스트는 저장할 수 있지만 검색용 PDF에는 포함하지 않습니다.'};
   }};
 }
-const ocrActionIds=['ocrSample','ocrRun'];
+const ocrActionIds=['ocrSample','ocrRun','ocrProvider'];
 // Completed pages survive a failed batch in memory, independently of accepted PDF text.
 // One entry per page/provider; removed pages and explicit clear/reset release their text.
 const ocrCheckpoints=new Map();
@@ -78,7 +75,7 @@ function syncToolsState(){
   if(ocrRunning)return;
   const activePages=new Set(pages.map(p=>p.uid));for(const [id,r] of ocrCheckpoints)if(!activePages.has(r.uid))ocrCheckpoints.delete(id);
   syncToolSummaries();
-  for(const id of ocrActionIds)$(id).disabled=!pages.length||!!proAbort;
+  for(const id of ocrActionIds)$(id).disabled=(id!=='ocrProvider'&&!pages.length)||!!proAbort;
   const state=JSON.stringify([pages.map(p=>p.uid),previewUid,selected().map(p=>p.uid),toolsRevision]);
   if(state!==toolsLastState){if(stampAsset&&$('stampScope').value!=='all')proInvalidate();toolsLastState=state;renderStampMarks();}
   if(ocrRecords.length){
@@ -185,7 +182,11 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
   if(force)for(const p of list)ocrCheckpoints.delete(provider+':'+p.uid);
   const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
+  let workStage='',recognizedMs=0,measuredPages=0;
+  const timingKey=(provider==='paddle-vl15'?PADDLE_MODEL_CACHE_TAG:provider)+':'+language+':'+layout;
+  const stage=(name,known=true)=>{if(workStage!==name){workStage=name;globalThis.PDFWorkProgress?.phase(name,known);}};
   ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':provider==='paddle-vl15'?'PaddleOCR-VL-1.5 모델을 준비하는 중…':'텍스트 인식을 준비하는 중…');
+  stage('문서 준비');
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
@@ -212,7 +213,11 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
             const recognitionSignal=proAbort.signal;
             const onProgress=m=>{
               if(recognitionSignal.aborted||!ocrRunning)return;
+              if(m.status==='loading assets'){
+                stage('모델 준비');progress(m.progress*100);busy(true,m.detail||'인식 데이터를 준비하는 중…');return;
+              }
               if(provider==='gemini'){
+                stage('문서 인식',position>0);
                 const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':'Gemini가 글자를 읽는 중…';
                 busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
               }
@@ -220,19 +225,25 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
                 const label=m.status==='recognizing text'?'Paddle 텍스트 인식 중':'Paddle 모델 준비 중';
                 const detail=m.detail?' · '+String(m.detail):'';
                 busy(true,recognizingPage+'쪽 · '+label+detail+' ('+(position+1)+'/'+list.length+')');
-                // Token totals are unknown. Only mark a page complete on the
-                // runtime's actual completion signal, never a guessed percent.
-                if(m.status==='recognizing text'&&m.progress===1)update(.98);
+                // Generated token totals are unknown; measure completed pages instead.
+                if(m.status==='recognizing text'){stage('문서 인식',false);if(m.progress===1)update(.98);}
                 return;
               }
               if(m.status==='recognizing text'){
+                stage('문서 인식');
                 const n=Math.max(0,Math.min(1,m.progress||0));update(.12+n*.86);
-                busy(true,`${recognizingPage}쪽 · 텍스트 인식 중 ${Math.min(99,Math.round(n*100))}%`);
+                busy(true,`${recognizingPage}쪽 글자 인식 · ${position+1}/${list.length}페이지`);
               }else busy(true,'텍스트 인식을 준비하는 중…');
             };
             engine=provider==='gemini'?await PDFGemini.session(language,recognitionSignal,onProgress,true):provider==='paddle-vl15'?await startPaddleSession(language,recognitionSignal,onProgress,layout):await PDFOCR.session(language,recognitionSignal,onProgress,layout);
           }
+          stage('문서 인식',provider==='tesseract');
+          const expected=measuredPages?recognizedMs/measuredPages:globalThis.PDFWorkProgress?.previous(timingKey);
+          if(provider!=='tesseract'&&expected){globalThis.PDFWorkProgress?.estimate(expected*(list.length-position));globalThis.PDFWorkProgress?.plan(position/list.length*95,(position+1)/list.length*95,expected);}
+          const recognizedAt=performance.now();
           const result=await engine.recognize(canvas);checkProAbort();
+          recognizedMs+=performance.now()-recognizedAt;measuredPages++;
+          globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
           const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{await pdfTask?.destroy();}
@@ -263,6 +274,7 @@ function renderOCRText(){const r=ocrRecords[Number($('ocrResultPage').value)];if
   $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='paddle-vl15'?(ocrCanEmbed(r)?'PaddleOCR-VL-1.5 · '+r.words.length+'개 글줄 · 신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.geometryNote||'줄 위치가 없어 텍스트 저장만 가능합니다. 검색용 PDF에는 포함하지 않습니다.'):r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
   $('ocrConfidenceNote').textContent=r.source==='paddle-vl15'?'신뢰도 점수는 제공하지 않습니다. '+OCR_LINE_POSITION_NOTE:r.source==='gemini'?'밑줄은 확인이 필요한 글줄입니다. '+OCR_LINE_POSITION_NOTE:'밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.';
 }
+$('ocrProvider').onchange=()=>{configureLocalOCR();};
 $('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$('ocrResultPage').onchange=renderOCRText;
 $('ocrAccept').onclick=()=>{if($('ocrAccept').disabled||!ocrRecords.some(ocrCanEmbed))return;ocrAccepted=true;toolsChanged();syncToolsState();};
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};

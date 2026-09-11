@@ -54,7 +54,7 @@ export function createPaddleAssets({manifest,baseURL,fetchImpl=globalThis.fetch,
     const cache=await getCache();check(signal);const result=new Uint8Array(asset.size);let offset=0;
     for(const chunk of asset.chunks){
       const bytes=await loadChunk(chunk,cache,signal);check(signal);result.set(bytes,offset);offset+=bytes.length;
-      onProgress?.({status:'preparing engine',progress:0,detail:'인식 데이터 준비 '+Math.round(offset/1048576)+' / '+Math.round(asset.size/1048576)+' MB'});
+      onProgress?.({status:'loading assets',assetPath:path,loadedBytes:offset,totalModelBytes:manifest.totalSize,progress:offset/asset.size,detail:'인식 데이터 준비 '+Math.round(offset/1048576)+' / '+Math.round(asset.size/1048576)+' MB'});
     }
     check(signal);return result;
   }};

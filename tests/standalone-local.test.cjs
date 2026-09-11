@@ -10,6 +10,9 @@ test('standalone embeds Tesseract and excludes web Paddle bootstrap and Gemini e
   assert.doesNotMatch(offline,/<script\b[^>]*\bsrc\s*=/i);
   assert.equal(script(offline,'paddle-bootstrap'),undefined,'offline must not start a Paddle runtime download');
   assert.doesNotMatch(offline,/\/ocr\/paddle\/runtime-[a-f0-9]+\.mjs/);
+  assert.doesNotMatch(offline,/id="pro-tesseract-assets"|value="paddle-vl15"/);
+  assert.match(web,/value="tesseract" selected/);
+  assert.match(web,/value="paddle-vl15"/);
   const assets={'ocr-client':'tesseract.min.js','ocr-core':'tesseract-core-lstm.wasm.js','ocr-core-fast':'tesseract-core-relaxedsimd-lstm.wasm.js','ocr-worker':'worker.min.js','ocr-lang-kor':'lang/kor.traineddata.gz','ocr-lang-eng':'lang/eng.traineddata.gz'};
   for(const [id,file] of Object.entries(assets)){
     const embedded=script(offline,id);assert.ok(embedded,id+' is embedded offline');
@@ -21,11 +24,14 @@ test('standalone embeds Tesseract and excludes web Paddle bootstrap and Gemini e
   }
   const defaults=script(offline,'pro-tools-ui').match(/function ocrDefaultProvider\(\)\{[^}]*\}/)?.[0];
   assert.ok(defaults,'the common UI exposes the build-selected default provider');
-  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{}),'tesseract','no web bootstrap means embedded Tesseract');
-  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{PDFOCR_DEFAULT_PROVIDER:'paddle-vl15'}),'paddle-vl15');
+  const selected=value=>()=>({value});
+  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('tesseract')}),'tesseract');
+  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('paddle-vl15')}),'tesseract','standalone cannot select unavailable Paddle');
+  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('tesseract'),PDFPaddleLoad:()=>{}}),'tesseract');
+  assert.equal(vm.runInNewContext(defaults+';ocrDefaultProvider()',{$:selected('paddle-vl15'),PDFPaddleLoad:()=>{}}),'paddle-vl15');
   const bootstrap=script(web,'paddle-bootstrap'),manifest=JSON.parse(fs.readFileSync(path.join(root,'vendor/paddle/web-build.json'),'utf8'));
   assert.ok(bootstrap,'web includes its lazy runtime bootstrap');
-  assert.match(bootstrap,/PDFOCR_DEFAULT_PROVIDER\s*=\s*['"]paddle-vl15['"]/);
+  const context={};vm.runInNewContext(bootstrap,context);assert.equal(context.PDFPaddleReady,undefined,'no Paddle import before choosing it');assert.equal(typeof context.PDFPaddleLoad,'function');assert.ok(context.PDFTesseractManifest['ocr-client']);
   assert.match(manifest.runtimeURL,/^\/ocr\/paddle\/runtime-[a-f0-9]{16}\.mjs$/);
   const runtimeURL=bootstrap.match(/import\(("[^"]+")\)/)?.[1];
   assert.ok(runtimeURL,'web loads the versioned runtime module');assert.equal(JSON.parse(runtimeURL),manifest.runtimeURL);
