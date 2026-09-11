@@ -83,7 +83,7 @@ export async function createPaddleSession({signal,onProgress,assetLoader,configu
         await new Promise(resolve=>setTimeout(resolve,0));
       }
       check();
-      if(stop!=='eos')throw Error('인식 출력 한도에 도달했습니다. 페이지를 나누어 시험하세요.');
+      if(stop!=='eos')throw Error('Paddle 실험판의 '+maxTokens.toLocaleString('ko-KR')+'토큰 출력 한도에 도달해 이 페이지를 끝까지 읽지 못했습니다. 결과를 완료로 저장하지 않습니다. Tesseract 또는 활성화한 Google Vision을 이용해 주세요.');
       const rawText=tokenizer.decode(tokenIds,{skip_special_tokens:false}),parsed=parseSpotting(rawText);
       if(!parsed.words.length)throw Error('검색용 PDF에 필요한 텍스트 위치를 인식하지 못했습니다.');
       emit('recognizing text','텍스트와 위치 인식 완료',1);

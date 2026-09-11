@@ -10,8 +10,8 @@ function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>
 function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='paddle-vl15'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function configureLocalOCR(){
   const paddle=ocrDefaultProvider()==='paddle-vl15';
-  $('ocrDescription').innerHTML='<strong>'+(paddle?'PaddleOCR-VL-1.5':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
-  $('ocrProcessingNote').textContent=paddle?'PC의 WebGPU 환경이 필요합니다. 첫 사용에는 모델 약 900MB를 다운로드합니다. 페이지 인식은 최대 2분이며, 응답이 멈추면 자동 종료합니다. 빠른 인식은 Tesseract를 이용하세요.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
+  $('ocrDescription').innerHTML='<strong>'+(paddle?'PaddleOCR-VL-1.5 · 실험용':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
+  $('ocrProcessingNote').textContent=paddle?'브라우저 실험판입니다. 실제 계약서에서 시간 초과가 확인되어 업무용으로 권장하지 않습니다. 최초 모델 약 900MB · PC WebGPU 필요. 2분은 완료 예상이 아닌 중단 제한입니다. 기본 Tesseract 또는 활성화한 Google Vision을 이용하세요.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
   if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
   $('ocrLanguage').closest('label').hidden=paddle;
   $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;

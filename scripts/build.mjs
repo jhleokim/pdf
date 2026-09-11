@@ -53,7 +53,7 @@ block('markup-licenses','<details hidden><summary>Markup font licenses</summary>
 html=html.replace(/<!-- markup-runtime:start -->[\s\S]*?<!-- markup-runtime:end -->\s*/,'');
 block('mode-switch', '<div class="mode-switch" role="group" aria-label="작업 모드"><button id="modeBasic" aria-pressed="true">Basic</button><button id="modePro" aria-pressed="false">Pro</button></div><div class="pro-mobile-switch" id="proMobileSwitch" hidden><button id="proWorkspace">미리보기 크게</button><button id="proSettings">설정과 함께</button></div>', '<div class="tools">');
 const panel=read('src/pro-panel.html');
-const toolPanel=read('src/pro-tools.html').replace('<!-- cloud-ocr-tools -->',standalone?'':read('src/pro-vision-tools.html')).replace('<!-- cloud-ocr-dialog -->',standalone?'':read('src/pro-vision-unlock.html')+'\n'+read('src/pro-vision-dialog.html')).replace('<!-- paddle-model-option -->',standalone?'':'<option value="paddle-vl15">PaddleOCR-VL-1.5 · WebGPU</option>').replace('<!-- vision-model-option -->','');
+const toolPanel=read('src/pro-tools.html').replace('<!-- cloud-ocr-tools -->',standalone?'':read('src/pro-vision-tools.html')).replace('<!-- cloud-ocr-dialog -->',standalone?'':read('src/pro-vision-unlock.html')+'\n'+read('src/pro-vision-dialog.html')).replace('<!-- paddle-model-option -->',standalone?'':'<option value="paddle-vl15">PaddleOCR-VL-1.5 · 실험용</option>').replace('<!-- vision-model-option -->','');
 const panelSplit=panel.indexOf('<details class="pro-section">',panel.indexOf('</details>'));
 block('pro-panel',panel.slice(0,panelSplit)+toolPanel+'\n'+panel.slice(panelSplit), '</main>');
 block('stamp-dialog',read('src/stamp-dialog.html'),'</body>');
