@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const check=signal=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
-  function bytes(id){const data=document.getElementById(id).textContent.trim();if(Uint8Array.fromBase64)return Uint8Array.fromBase64(data);const raw=atob(data),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+  function bytes(id){const cached=globalThis.PDFTesseractAssets?.get(id);if(cached)return cached;const data=document.getElementById(id).textContent.trim();if(Uint8Array.fromBase64)return Uint8Array.fromBase64(data);const raw=atob(data),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
   function fastCore(){try{return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,15,1,13,0,65,1,253,15,65,2,253,15,253,128,2,11]));}catch(_){return false;}}
   function bounded(promise,signal,ms=120000){
     return new Promise((resolve,reject)=>{
@@ -16,13 +16,14 @@
   }
   async function session(language,signal,onProgress,layout='auto'){
     check(signal);
+    await globalThis.PDFTesseractLoad?.(language,fastCore(),signal,onProgress);check(signal);
     if(!globalThis.Tesseract){
       const script=document.createElement('script');script.textContent=new TextDecoder().decode(bytes('ocr-client'));document.head.appendChild(script);
     }
     // Upstream accepts {code,data} while loading but reads .data as a language name
     // during initialize. Normalize only that message in our worker bootstrap.
     const bootstrap=`self.addEventListener('message',e=>{const m=e.data;if(m.action==='initialize'&&Array.isArray(m.payload?.langs))m.payload.langs=m.payload.langs.map(l=>typeof l==='string'?l:l.code);});\n`;
-    const accelerated=fastCore()&&!!document.getElementById('ocr-core-fast');
+    const accelerated=fastCore()&&!!(globalThis.PDFTesseractAssets?.has('ocr-core-fast')||document.getElementById('ocr-core-fast'));
     const url=URL.createObjectURL(new Blob([bootstrap,bytes(accelerated?'ocr-core-fast':'ocr-core'),'\n',bytes('ocr-worker')],{type:'application/javascript'}));
     const languages=(language==='eng'?['eng']:['kor','eng']).map(code=>({code,data:bytes('ocr-lang-'+code)}));
     let worker,closed=false,rejectFault,passIndex=0,lastProgress=0,reading=false;

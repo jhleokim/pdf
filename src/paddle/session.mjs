@@ -20,7 +20,9 @@ export async function createPaddleSession({signal,onProgress,assetLoader,configu
   const emit=(status,detail,progress=0)=>onProgress?.({status,detail,progress});
   const check=()=>{signal?.throwIfAborted();if(closed)throw new DOMException('취소했습니다.','AbortError');};
   const sessions={};let tokenizer,closed=false,active=null;
-  const load=async path=>{check();const bytes=await assetSource(path,signal,onProgress);check();return bytes;};
+  const prepared=new Map();
+  const assetProgress=m=>{if(m.assetPath&&m.totalModelBytes){prepared.set(m.assetPath,m.loadedBytes);const loaded=[...prepared.values()].reduce((a,b)=>a+b,0);onProgress?.({...m,progress:loaded/m.totalModelBytes,detail:'모델 데이터 '+Math.round(loaded/1048576)+' / '+Math.round(m.totalModelBytes/1048576)+' MB'});}else onProgress?.(m);};
+  const load=async path=>{check();const bytes=await assetSource(path,signal,assetProgress);check();return bytes;};
   async function release(){for(const s of Object.values(sessions))await s.release().catch(()=>{});}
   try{
     for(const [key,file,label] of [['embedding','embedding.onnx','문자 모델'],['vision','vision_encoder_q4.onnx','이미지 분석 모델'],['decoder','decoder_q4.onnx','인식 모델']]){

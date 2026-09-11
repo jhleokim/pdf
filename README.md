@@ -2,16 +2,22 @@
 
 현재 소스 버전: **v5.0**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다.
 
-브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집은 기기에서 처리합니다. v5.0 웹의 기본 OCR은 Paddle이며, 단독 실행 파일의 OCR은 Tesseract입니다.
+브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집은 기기에서 처리합니다. v5.0 웹의 기본 OCR은 Tesseract이며 드롭다운에서 Paddle을 선택할 수 있고, 단독 실행 파일의 OCR은 Tesseract입니다.
 
 | 구성 | 웹 v5.0 | 단독 실행 HTML v5.0 |
 |---|---|---|
-| 기본 OCR | PaddleOCR-VL-1.5 Community Q4 | Tesseract.js 7.0.0 |
-| 모델 준비 | 첫 OCR 실행 시 약 900MB 다운로드, 브라우저 캐시 재사용 | 엔진·한글·영어 데이터를 HTML에 내장 |
-| 실행 조건 | WebGPU와 충분한 그래픽 메모리가 있는 PC 브라우저 | 내장 Tesseract를 실행할 수 있는 브라우저 |
+| 기본 OCR | Tesseract.js 7.0.0 · PaddleOCR-VL-1.5 Community Q4 선택 가능 | Tesseract.js 7.0.0 |
+| 모델 준비 | Tesseract는 필요한 엔진·언어만 첫 사용에 다운로드. Paddle 선택 시 약 900MB, 캐시 재사용 | 엔진·한글·영어 데이터를 HTML에 내장 |
+| 실행 조건 | Tesseract는 일반 브라우저, Paddle은 WebGPU와 충분한 그래픽 메모리가 있는 PC | 내장 Tesseract를 실행할 수 있는 브라우저 |
 | 문서 처리 | Paddle은 브라우저 안에서 처리 | 브라우저 안에서 처리 |
 | Gemini | 숨김 기능 유지, 매 실행 전 별도 전송 동의 | 버튼·확인창·API 연결 모듈 제외 |
-| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/paddle/` 자산, API Worker | `dist/PDF-Studio-Standalone-v5.0.html` 한 파일 |
+| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/` 자산, API Worker | `dist/PDF-Studio-Standalone-v5.0.html` 한 파일 |
+
+## OCR 모델 선택과 진행 안내
+
+Tesseract를 기본으로 제공하고 인식 모델 드롭다운에서 PaddleOCR-VL-1.5를 선택할 수 있습니다. 선택만으로는 Paddle 런타임이나 모델을 다운로드하지 않습니다. 기존 인식 결과는 모델을 바꿔도 유지하고, 실제 인식 요청에는 선택한 모델을 사용합니다.
+
+오래 걸리는 작업 창에는 현재 단계의 진행률, 경과 시간과 예상 남은 시간을 분·초로 표시합니다. 다운로드 바이트와 Tesseract 인식률에서 처리 속도를 계산합니다. Paddle/Gemini는 전체 출력량을 알 수 없어 첫 사용에는 진행 중·남은 시간 계산 중으로 표시합니다. 완료한 페이지가 있으면 실제 인식 시간으로 진행률과 남은 시간을 추정하고 `약`으로 구분합니다. 기기에는 모델·언어·분석 방식별 처리 시간 숫자만 저장하여 다음 작업에도 활용하며 문서 내용은 저장하지 않습니다. 추정 시간이 지났거나 진행이 오래 멈추면 0초를 약속하지 않고 다시 계산 중으로 표시합니다.
 
 ## v5.0 웹 Paddle OCR
 

@@ -55,8 +55,8 @@ function toast(msg, isErr){
   t.className = 'show' + (isErr ? ' err' : '');
   clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3400);
 }
-const progress = p => $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%';
-const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); };
+const progress = p => { $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%'; globalThis.PDFWorkProgress?.update(p); };
+const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
 const buzz = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(_){} };
 
 /* ════════════════════════════════════════════════════════════
