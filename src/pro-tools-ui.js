@@ -1,5 +1,16 @@
 'use strict';
 const ocrActionIds=['ocrSample','ocrRun'];
+// Completed pages survive a failed batch in memory, independently of accepted PDF text.
+// One entry per page/provider; removed pages and explicit clear/reset release their text.
+const ocrCheckpoints=new Map();
+function waitForOCR(promise,signal){
+  return new Promise((resolve,reject)=>{
+    const abort=()=>{signal.removeEventListener('abort',abort);reject(signal.reason);};
+    signal.addEventListener('abort',abort,{once:true});
+    promise.then(value=>{signal.removeEventListener('abort',abort);resolve(value);},error=>{signal.removeEventListener('abort',abort);reject(error);});
+    if(signal.aborted)abort();
+  });
+}
 let toolsRevision=0,stampAsset=null,stampMarks=[],stampPositioning=false,stampSource=null,stampOriginal=null,stampPixels=null,stampUndoState=null,stampShowingSource=false;
 let stampShelf=[],stampEditing=null,stampLoadSequence=0,ocrRecords=[],ocrAccepted=false,ocrRunning=false,toolsLastState='';
 const stampControlIds=['stampScope','stampAnchor','stampX','stampY','stampWidth','stampOpacity'];
@@ -28,6 +39,7 @@ function readToolOptions(o,strict=false){
 }
 function syncToolsState(){
   if(ocrRunning)return;
+  const activePages=new Set(pages.map(p=>p.uid));for(const [id,r] of ocrCheckpoints)if(!activePages.has(r.uid))ocrCheckpoints.delete(id);
   syncToolSummaries();
   for(const id of ocrActionIds)$(id).disabled=!pages.length||!!proAbort;
   const state=JSON.stringify([pages.map(p=>p.uid),previewUid,selected().map(p=>p.uid),toolsRevision]);
@@ -41,7 +53,7 @@ function syncToolsState(){
     else if(ocrAccepted)$('ocrStatus').textContent=`검색용 텍스트 ${ocrRecords.filter(r=>r.words.length).length}쪽이 결과 PDF에 포함됩니다.`;
   }
 }
-function resetTools(){stampMarks=[];stampAsset=null;stampEditing=null;stampSource=stampOriginal=stampPixels=stampUndoState=null;ocrRecords=[];ocrAccepted=false;$('stampActive').hidden=true;$('ocrResults').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();}
+function resetTools(){stampMarks=[];stampAsset=null;stampEditing=null;stampSource=stampOriginal=stampPixels=stampUndoState=null;ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;$('stampActive').hidden=true;$('ocrResults').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();}
 function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning)setLivePreviewOpen(true);}
 function renderStampMarks(){
   const host=$('stampPlacements');host.replaceChildren();
@@ -123,37 +135,47 @@ function moveStamp(e){const g=placementGesture;if(!g||g.id!==e.pointerId)return;
 $('compareAfterScroll').addEventListener('pointermove',moveStamp);
 $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGesture;if(!g||g.id!==e.pointerId)return;moveStamp(e);$('stampAnchor').value='top-left';$('stampX').value=(g.x*25.4/72).toFixed(1);$('stampY').value=(g.y*25.4/72).toFixed(1);g.ghost.remove();placementGesture=null;toolsChanged();});
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
-async function runOCR(sample,provider='tesseract',confirmedList=null,consent=false){
+async function runOCR(sample,provider='tesseract',confirmedList=null,consent=false,force=false){
   if(ocrRunning||proAbort||!pages.length)return;
   if(provider!=='tesseract'&&typeof PDFGemini==='undefined')return;
   if(provider==='gemini'&&consent!==true){toast('민감정보 없는 문서임을 먼저 확인해 주세요.',true);return;}
-  const list=confirmedList||toolTargets(sample?'current':$('ocrScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
+  const list=[...(confirmedList||toolTargets(sample?'current':$('ocrScope').value))];if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let o;try{o=readProOptions();}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
-  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value;let engine=null,recognizingPage=0,position=0,reused=0;
+  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='';
+  const unchanged=()=>{const current=readProOptions();return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider==='gemini'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
+  const remember=(p,record)=>{if(pages.includes(p)&&record.key===ocrKey(p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
+  if(force)for(const p of list)ocrCheckpoints.delete(provider+':'+p.uid);
   const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
   ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':'텍스트 인식을 준비하는 중…');
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
-      const cached=provider==='tesseract'&&ocrRecords.find(r=>r.uid===p.uid&&r.key===key&&r.source==='tesseract'&&r.language===language&&r.layout===layout&&!r.skipped);
+      const matches=r=>r&&r.uid===p.uid&&r.key===key&&r.source===provider&&r.language===language&&(provider==='gemini'||r.layout===layout)&&!r.skipped;
+      const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
-      const doc=await buildEditedDocument([p]);let pdfTask;
+      let pdfTask;
       try{
-        const baseline=await doc.save(),probe=pdfjsLib.getDocument({data:baseline.slice(),...DOC_OPTS});
-        let existing;try{const pdf=await probe.promise;existing=(await(await pdf.getPage(1)).getTextContent()).items.map(t=>t.str||'').join('').trim();}finally{await probe.destroy();}
+        // Preserve the existing searchable-text skip policy without serializing/reopening the PDF.
+        // Shared PDF.js source reads can be cancelled without destroying the document being edited.
+        const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
+        const existing=p.annots?.some(a=>a.shape==='text'&&a.text?.trim())||(await waitForOCR(source.getTextContent(),proAbort.signal)).items.some(t=>t.str?.trim());
         checkProAbort();update(.05);
-        if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'기존 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0});update(1);continue;}
+        if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
+        const doc=await buildEditedDocument([p],{signal:proAbort.signal});checkProAbort();
         const processed=await PDFProPipeline.apply(doc,o,{signal:proAbort.signal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]});checkProAbort();
-        pdfTask=pdfjsLib.getDocument({data:await processed.doc.save(),...DOC_OPTS});const pdf=await pdfTask.promise,page=await pdf.getPage(1),base=page.getViewport({scale:1});
+        pdfTask=pdfjsLib.getDocument({data:await processed.doc.save(),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,proAbort.signal),page=await waitForOCR(pdf.getPage(1),proAbort.signal),base=page.getViewport({scale:1});
         const scale=Math.min(300/72,3400/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
           update(.12);
           if(!engine){
             const onProgress=m=>{
-              if(provider==='gemini'){busy(true,`${recognizingPage}쪽 · Gemini가 글자를 읽는 중…`);return;}
+              if(provider==='gemini'){
+                const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':'Gemini가 글자를 읽는 중…';
+                busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
+              }
               if(m.status==='recognizing text'){
                 const n=Math.max(0,Math.min(1,m.progress||0));update(.12+n*.86);
                 busy(true,`${recognizingPage}쪽 · 텍스트 인식 중 ${Math.min(99,Math.round(n*100))}%`);
@@ -161,16 +183,27 @@ async function runOCR(sample,provider='tesseract',confirmedList=null,consent=fal
             };
             engine=provider==='gemini'?await PDFGemini.session(language,proAbort.signal,onProgress,true):await PDFOCR.session(language,proAbort.signal,onProgress,layout);
           }
-          const result=await engine.recognize(canvas);checkProAbort();fresh.push({...result,source:provider,language,layout,uid:p.uid,key,page:index+1});
+          const result=await engine.recognize(canvas);checkProAbort();
+          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{await pdfTask?.destroy();}
       progress((i+1)/list.length*95);await idle();
     }
-    if(snapshot!==proFingerprint())throw new Error('처리 중 문서가 바뀌었습니다. 다시 인식해 주세요.');
-    ocrRecords=fresh;ocrAccepted=false;renderOCRResults();toolsChanged();
-    const skipped=fresh.filter(r=>r.skipped).length;$('ocrStatus').textContent=`${provider==='gemini'?'Gemini · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀. 내용을 확인한 뒤 PDF 포함을 선택하세요.`;
-  }catch(e){toast(e.name==='AbortError'?'텍스트 인식을 취소했습니다.':e.message||'텍스트 인식에 실패했습니다.',e.name!=='AbortError');}
-  finally{await engine?.close();ocrRunning=false;finishProWork();}
+    if(!unchanged())throw new Error('처리 중 문서 또는 설정이 바뀌었습니다. 다시 인식해 주세요.');
+    const merged=new Map(ocrRecords.map(r=>[r.uid,r]));for(const r of fresh)merged.set(r.uid,r);
+    const current=readProOptions();let outdated=0;
+    ocrRecords=pages.flatMap((p,i)=>{const r=merged.get(p.uid);if(!r)return [];if(r.key!==ocrKey(p,current)){outdated++;return [];}return [{...r,page:i+1}];});ocrAccepted=false;renderOCRResults();toolsChanged();
+    const skipped=fresh.filter(r=>r.skipped).length;
+    status=`${provider==='gemini'?'Gemini · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀.${outdated?' 설정이 바뀐 이전 결과 '+outdated+'쪽은 제외했습니다.':''} 내용을 확인한 뒤 PDF 포함을 선택하세요.`;
+  }catch(e){
+    const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':e.message||'텍스트 인식에 실패했습니다.';
+    let resumable=false;try{resumable=unchanged();}catch(_){}
+    status=message+(resumable&&completed+reused?` 완료한 ${completed+reused}쪽은 이 탭에서 보관합니다. 다시 인식하면 완료한 페이지를 재사용합니다.`:'')+(ocrRecords.length?' 이전 인식 결과는 유지됩니다.':'');
+    if(e.retryAfter)status+=` 약 ${Math.ceil(e.retryAfter)}초 뒤 다시 시도하세요.`;
+    toast(message,e.name!=='AbortError');
+  }finally{
+    try{await engine?.close();}finally{ocrRunning=false;finishProWork();if(status)$('ocrStatus').textContent=status;}
+  }
 }
 function renderOCRResults(){
   $('ocrResults').hidden=!ocrRecords.length;$('ocrResultPage').replaceChildren();
@@ -182,6 +215,6 @@ function renderOCRText(){const r=ocrRecords[Number($('ocrResultPage').value)];if
 }
 $('ocrSample').onclick=()=>runOCR(true);$('ocrRun').onclick=()=>runOCR(false);$('ocrResultPage').onchange=renderOCRText;
 $('ocrAccept').onclick=()=>{ocrAccepted=true;toolsChanged();syncToolsState();};
-$('ocrClear').onclick=()=>{ocrRecords=[];ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
+$('ocrClear').onclick=()=>{ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
 $('ocrTxt').onclick=()=>toolDownload('\ufeff'+ocrRecords.map(r=>`[${r.page}쪽]\n${r.text}`).join('\n\n'),'인식한 텍스트.txt','text/plain;charset=utf-8');
 syncToolsState();

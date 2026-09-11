@@ -160,12 +160,14 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 새 도구 회귀 검사: `node tests/create-tools-browser.cjs` → `/tests/fixtures/tools-check.html`. HTTP 요청을 CSP로 차단한 상태에서 실제 한글 OCR, 원본 픽셀 보존, 검색 추출, 회전/재단/UserUnit 도장 배치와 전체 압축의 도장·OCR 유지를 확인합니다. `file://`로 같은 검사를 열어 완전 오프라인 경로도 검증할 수 있습니다. 추가 UI 검사는 `node tests/create-tools-ui.cjs`로 생성합니다.
 
 
-## v3.9 숨김 Gemini 인식
+## 숨김 Gemini 인식 (v4.0)
 
 - 웹 배포본에서 상단 Pro 버튼을 같은 탭에서 8번 누르면 텍스트 인식 안에 **Gemini로 인식하기**가 나타납니다. 새로고침하면 다시 숨깁니다. Basic/Pro 전환만으로 네트워크 요청이나 문서 전송은 하지 않습니다.
 - 범위는 현재/선택/모든 페이지. 실행 버튼은 전송 확인창을 열며, 서버 연결 상태 확인에는 문서가 포함되지 않습니다. **민감정보 없는 문서임을 확인합니다**는 매 실행마다 새로 체크해야 합니다. 확인 대기 중 문서·보정·언어가 바뀌면 다시 확인해야 합니다.
 - 동의한 페이지의 렌더 JPEG만 Cloudflare를 거쳐 Google로 전송합니다. 파일명과 원본 PDF 전체는 보내지 않으며, 기존 텍스트가 있는 페이지는 보내지 않습니다. 앱 서버는 이미지·인식 결과를 저장하거나 로그에 기록하지 않습니다. Google의 데이터 처리 조건은 사용자의 API 프로젝트에 적용되는 약관을 따릅니다.
 - 인식 결과는 검토 후 기존 **확인한 결과를 PDF에 포함**으로 반영합니다. Gemini의 줄 좌표는 모델 추정값이며 정밀한 단어 위치를 보장하지 않습니다. 엔진 확신도 숫자를 만들어 표시하지 않습니다. 취소·실패·출력 잘림·비정상 좌표에서는 기존 결과를 유지합니다.
+- 같은 탭에서 문서·언어·보정 설정이 같으면 완료한 페이지 결과를 재사용합니다. 중간 실패나 취소 후 같은 범위로 실행하면 완료한 페이지는 다시 전송하지 않고 이어서 인식합니다. **완료한 페이지도 새로 인식**을 체크하면 선택 범위의 캐시를 비우고 새로 요청합니다. 검색 가능한 텍스트가 있는 페이지를 건너뛰는 동작은 이 옵션에서도 유지합니다.
+- 결과 캐시는 탭 메모리에만 있으며 새로고침·초기화·OCR 결과 지우기로 해제됩니다. 페이지 내용·회전·인식 관련 설정이 바뀌면 이전 결과를 재사용하지 않습니다. 일부 페이지만 다시 인식해도 나머지 유효한 페이지 결과는 유지하며, 새 결과를 PDF에 넣으려면 다시 검토·확인해야 합니다.
 - 단독 실행본에서는 Tesseract만 사용합니다. Pro 버튼을 반복해서 눌러도 Gemini 기능이 나타나지 않으며, 단독 실행본을 HTTP로 열어도 이 기능은 포함되지 않습니다.
 
 ### Cloudflare 설정
@@ -180,10 +182,14 @@ GitHub Pages에 배포되어 있다면 주소를 열기만 하면 됩니다.
 
 Google의 일시적 HTTP 오류(408/500/502/503/504)는 약 1초·2초 간격으로 최대 두 번 재시도하며 전체 80초 제한과 사용자 취소를 공유합니다. 키·권한·요청 오류와 사용 한도(429)는 재시도하거나 다른 모델로 전환하지 않습니다. 서버가 더 긴 대기 시간을 요청하면 조기 재시도하지 않습니다. 오류 응답은 키, 접근 제한, 모델, 지역, 사용 한도, 서버 장애를 구분하며 Google 원문 응답·키·문서 내용은 노출하지 않습니다.
 
+v4.0에서는 원본의 검색 텍스트를 확인하기 위해 PDF를 다시 저장하고 여는 과정을 제거했습니다. JPEG 준비를 비동기로 처리하고, 전송 제한을 넘는 경우에만 JPEG 품질을 단계적으로 조정합니다. 기본 Gemini 3.8/3.7 Flash는 `thinkingLevel:low`로 설정하고 temperature는 별도 고정하지 않습니다. 이는 [Google의 thinking 설정](https://ai.google.dev/gemini-api/docs/generate-content/thinking)과 [Gemini 3 생성 설정 권장사항](https://ai.google.dev/gemini-api/docs/generate-content/text-generation)을 따른 것으로, 문서별 인식 정확도나 처리 시간을 보장하는 값은 아닙니다. 이미지 준비부터 응답 본문 읽기까지 취소·시간 제한을 적용하며, 한도·시간 초과·출력 잘림은 원인을 구분해 안내합니다.
+
 ### 추가 검증
 
 - `node tests/create-workspace.cjs` → `/tests/fixtures/workspace-check.html`, `/tests/fixtures/workspace-mobile.html`: 확대 캐시, 설정 상태, 저장 버튼·단축키, 빠른 페이지 전환, 모바일 조작 공간, 문서 초기화를 검사합니다.
 - `node --test tests/standalone-local.test.cjs`: 단독 실행본의 클라우드 모듈 제외, 내장 로컬 엔진 보존, 스크립트 구문과 웹 빌드 재현성을 검사합니다.
 - `node --test tests/gemini-worker.test.cjs`: 동의 누락·잘못된 이미지·출처·크기·비밀키·429·잘린 결과, 오류 분류, 일시 장애 후 복구, 예비 모델, 재시도 횟수·호출 제한·취소·서버 대기 시간 검사. Google 호출은 모의 응답을 사용합니다.
+- `node --test tests/gemini-client.test.cjs`: 이미지 준비·응답 본문 수신 중 취소, 요청 중복 방지, 응답 검증, 한도 대기 시간과 세션 종료를 검사합니다.
+- `node tests/create-gemini-flow.cjs` → `/tests/fixtures/gemini-flow.html`: 결과 재사용, 선택 범위 병합, 실패·취소 후 이어하기, 강제 재인식, 변경된 페이지 무효화, 기존 검색 텍스트 건너뛰기를 검사합니다. `--standalone`은 `/tests/fixtures/gemini-flow-standalone.html`에서 클라우드 기능 제외를 검사합니다.
 - `node tests/create-ocr-ui.cjs` → `/tests/fixtures/ocr-ui-check.html`: 합성 PDF로 숨김 8회·매회 동의·업로드 차단·로컬 결과 재사용·취소·검색 PDF를 검사합니다.
 - `node tests/create-tools-browser.cjs`: HTTP 요청이 차단된 상태에서 실제 한글/영어 OCR, 진행률, 원본 픽셀 보존 및 PDF 검색 추출을 검사합니다.
