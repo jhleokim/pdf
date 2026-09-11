@@ -31,7 +31,7 @@ test('both builds have unique control ids and embed the current common applicati
     const markup=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
     const ids=[...markup.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
     assert.equal(new Set(ids).size,ids.length,kind+': duplicate ids break UI event bindings');
-    for(const name of [...common,...(kind==='web'?['pro-gemini','pro-gemini-ui']:[])]){
+    for(const name of [...common,...(kind==='web'?['pro-gemini','pro-vision','pro-vision-ui','pro-vision-unlock']:[])]){
       const id=name==='editor'?'editor-code':name;
       const match=html.match(new RegExp(`<script id="${id}">([\\s\\S]*?)<\\/script>`));
       assert.ok(match,`${kind}: ${id} embedded`);
