@@ -2,6 +2,23 @@
 
 운영 PDF Studio와 별도로 실행하는 실험입니다. 공식 PaddlePaddle의 탐지/한국어 인식 ONNX 모델을 WebAssembly 단일 스레드로 실행합니다. 별도 GPU나 OCR 서버는 사용하지 않습니다. 현재 운영 엔진을 교체하지 않습니다.
 
+웹 시험판: https://pdf-ocr-lab.hanatrust.workers.dev/
+
+## 웹 배포
+
+루트에서 아래 명령으로 별도 Worker `pdf-ocr-lab`에 배포합니다. 운영 `pdf` Worker 설정과 API Secret은 사용하지 않습니다. 공개 실행 파일/모델만 명시적으로 복사하며, 사용자 PDF와 OCR 결과가 있는 `work/`를 배포 폴더로 지정하지 않습니다. 배포 폴더에 예상하지 않은 파일이 있으면 빌드가 실패합니다.
+
+```powershell
+node experiments/ppocr-v5-browser/build-web.mjs
+npx wrangler deploy --config experiments/ppocr-v5-browser/wrangler.jsonc --dry-run
+npx wrangler deploy --config experiments/ppocr-v5-browser/wrangler.jsonc
+node experiments/ppocr-v5-browser/verify-web.mjs
+```
+
+배포 확인 스크립트는 공개된 14개 파일의 SHA-256을 로컬 빌드와 대조하고, CSP 적용 및 시험 문서/결과 경로의 404 응답을 확인합니다. 웹 실행은 분리된 JS/WASM/ONNX 파일을 사용합니다. 이는 단일 HTML의 파일 직접 실행 검증과 별개입니다.
+
+2026-09-12 웹 배포 `26d3da8f-09ef-4716-884b-6390a2587533` 검증: 공개 HTTPS 주소에서 원본 PDF 6/6페이지 인식 완료, 준비 포함 86.56초. 페이지별 26.92 / 25.49 / 6.01 / 4.40 / 5.25 / 5.68초였습니다. 브라우저 오류 로그는 없었고, 공개 파일 14개 모두 해시가 일치했습니다. 네트워크/실행 환경이 다른 배포 후 확인 1회이므로 이전 결과 대비 속도 개선율로 해석하지 않습니다.
+
 ## 모델과 구현
 
 - 탐지: 공식 `PaddlePaddle/PP-OCRv5_mobile_det_onnx`, revision `e6f4fa85f00e168c862bc462aebca69eef9b3d3d`, 4,826,518 bytes.
