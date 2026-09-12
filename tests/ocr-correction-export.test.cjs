@@ -30,9 +30,9 @@ function streams(page){
   const contents=page.node.Contents();
   return Array.from({length:contents?.size()||0},(_,i)=>Buffer.from(P.decodePDFRawStream(contents.lookup(i)).decode()).toString('utf8')).join('\n');
 }
-function fontInfo(doc,page){
+function fontInfo(doc,page,name){
   const fonts=page.node.Resources().lookup(P.PDFName.of('Font'));
-  const type0=fonts.lookup(fonts.keys()[0]),descendant=type0.lookup(P.PDFName.of('DescendantFonts')).lookup(0);
+  const type0=fonts.lookup(name?P.PDFName.of(name):fonts.keys()[0]),descendant=type0.lookup(P.PDFName.of('DescendantFonts')).lookup(0);
   const widths=descendant.lookup(P.PDFName.of('W')).lookup(1).asArray().map(v=>v.asNumber());
   const cmap=Buffer.from(P.decodePDFRawStream(type0.lookup(P.PDFName.of('ToUnicode'))).decode()).toString('utf8');
   const mapping=new Map();
@@ -40,6 +40,15 @@ function fontInfo(doc,page){
     const units=match[2].match(/.{4}/g).map(s=>parseInt(s,16));mapping.set(parseInt(match[1],16),String.fromCharCode(...units));
   }
   return {widths,mapping};
+}
+function decodedRuns(doc,page){
+  let name;const out=[];
+  for(const match of streams(page).matchAll(/\/([^\s]+) 1 Tf|([-+\d.eE ]+) Tm\s*<([0-9A-F]+)> Tj/g)){
+    if(match[1]){name=match[1];continue;}
+    const info=fontInfo(doc,page,name),codes=match[3].match(/.{4}/g).map(code=>parseInt(code,16));
+    out.push({name,codes,matrix:match[2].trim().split(/\s+/).map(Number),text:codes.map(code=>info.mapping.get(code)).join(''),advance:codes.reduce((sum,code)=>sum+info.widths[code-1],0)/1000,...info});
+  }
+  return out;
 }
 
 test('corrected Korean text is searchable; removed regions and superseded text are absent',async()=>{
@@ -125,4 +134,63 @@ test('edited line advance, including emitted separator space, fits its box at ev
       }
     }
   }finally{await pdf.destroy();}
+});
+
+test('a large Vision correction replaces only its covered words and preserves untouched word fonts and boxes',async()=>{
+  const doc=await P.PDFDocument.create(),ids=['v0','v90','v180','v270'];
+  const words=[
+    {text:'Wi 계약서',box:[.1,.1,.4,.15],separator:'\n',confidence:92},
+    {text:'삭제될',box:[.1,.25,.2,.3],separator:' ',confidence:81},
+    {text:'옛 금액',box:[.24,.25,.4,.3],separator:' ',confidence:75},
+    {text:'오인식',box:[.44,.25,.65,.3],separator:'\n',confidence:63},
+    {text:'보존한 단어',box:[.1,.42,.4,.47],separator:'\n',confidence:96}
+  ];
+  const replacement={indices:[1,2,3],text:'계약금 일금 123,450원 (공동명의자 수정)',box:[.1,.25,.65,.3]};
+  const records=ids.map(uid=>({uid,source:'vision',granularity:'word',words:structuredClone(words),correctionLines:[structuredClone(replacement)]})),snapshot=structuredClone(records);
+  for(let i=0;i<4;i++){const page=addPage(doc,430,660);page.setMediaBox(-20,40,430,660);page.setCropBox(5,65,380,595);page.setRotation(P.degrees(i*90));page.node.set(P.PDFName.of('UserUnit'),P.PDFNumber.of(2));}
+  const before=fontLoads.length,report=await PDFOCR.apply(doc,records,{pageIds:ids});
+  assert.equal(report.pages,4);assert.equal(report.words,12);assert.deepEqual(fontLoads.slice(before),['gothic']);assert.deepEqual(records,snapshot,'Writer mutated original Vision words or correction metadata');
+  const loaded=await P.PDFDocument.load(await doc.save()),pdf=await parsed(doc),expected=[words[0],{...replacement,separator:'\n'},words[4]];
+  try{
+    for(let i=0;i<4;i++){
+      const page=loaded.getPage(i),runs=decodedRuns(loaded,page),jsPage=await pdf.getPage(i+1),viewport=jsPage.getViewport({scale:1});
+      const text=(await jsPage.getTextContent()).items.filter(item=>item.str.trim()).map(item=>item.str.trim());
+      assert.equal(text.join(' ').replace(/\s+/g,' '),expected.map(word=>word.text).join(' '));assert.doesNotMatch(text.join('\n'),/삭제될|옛 금액|오인식/);assert.equal(runs.length,3);
+      assert.notEqual(runs[0].name,runs[1].name,'Corrected line reused the untouched word font');assert.equal(runs[0].name,runs[2].name,'An untouched following word lost its original font');
+      for(const run of [runs[0],runs[2]])assert.ok(run.widths.every(width=>width===600),'Unchanged Vision word character advances changed');
+      for(const [code,ch] of runs[1].mapping){const width=font.hasGlyphForCodePoint(ch.codePointAt(0))?font.glyphForCodePoint(ch.codePointAt(0)).advanceWidth/font.unitsPerEm*1000:600;near(runs[1].widths[code-1],width,'Corrected line proportional glyph '+ch);}
+      for(let n=0;n<runs.length;n++){
+        const run=runs[n],box=expected[n].box,start=viewport.convertToViewportPoint(run.matrix[4],run.matrix[5]);
+        const end=viewport.convertToViewportPoint(run.matrix[4]+run.matrix[0]*run.advance,run.matrix[5]+run.matrix[1]*run.advance);
+        assert.equal(run.text,expected[n].text+' ');near(start[0]/viewport.width,box[0],'Vision start '+i+'/'+n);near(end[0]/viewport.width,box[2],'Vision end '+i+'/'+n);
+        near(start[1]/viewport.height,box[3]-(box[3]-box[1])*.18,'Vision baseline '+i+'/'+n);near(end[1],start[1],'Vision displayed baseline');
+      }
+    }
+  }finally{await pdf.destroy();}
+});
+
+test('an explicitly cleared correction line removes its covered words without erasing other text',async()=>{
+  const doc=await P.PDFDocument.create();addPage(doc,500,700);
+  const words=[{text:'전체 삭제할 줄',box:[.1,.1,.7,.2],separator:'\n'},{text:'남기는 문장',box:[.1,.3,.7,.4],separator:'\n'}];
+  const report=await PDFOCR.apply(doc,[{uid:'one',source:'vision',words,correctionLines:[{indices:[0],text:'',box:words[0].box}]}],{pageIds:['one']});
+  assert.equal(report.pages,1);assert.equal(report.words,1);const pdf=await parsed(doc);
+  try{assert.equal((await(await pdf.getPage(1)).getTextContent()).items.filter(item=>item.str.trim()).map(item=>item.str.trim()).join(' '),'남기는 문장');}finally{await pdf.destroy();}
+});
+
+test('invalid or overlapping correction metadata fails before any PDF text or font is appended',async()=>{
+  const words=[{text:'첫 단어',box:[.1,.1,.3,.2],separator:' '},{text:'둘째 단어',box:[.4,.1,.7,.2],separator:'\n'}];
+  const valid={indices:[0,1],text:'교정한 문장',box:[.1,.1,.7,.2]};
+  const cases=[
+    null,{},[{...valid,indices:[]}],[{...valid,indices:[0,0]}],[{...valid,indices:[-1]}],[{...valid,indices:[2]}],[{...valid,indices:[.5]}],
+    [{...valid,box:[.1,.1,.8,.2]}],[{...valid,box:[.1,.1,Infinity,.2]}],[{...valid,text:'다른\n글줄'}],
+    [valid,{indices:[1],text:'중복 교정',box:words[1].box}]
+  ];
+  for(const correctionLines of cases){
+    const doc=await P.PDFDocument.create();const page=addPage(doc,500,700),initialObjects=doc.context.enumerateIndirectObjects().length;
+    await assert.rejects(PDFOCR.apply(doc,[{uid:'one',source:'vision',words,correctionLines}],{pageIds:['one']}),/OCR 교정 글줄/);
+    assert.equal(doc.context.enumerateIndirectObjects().length,initialObjects,'Invalid correction added font objects');assert.equal(page.node.Contents()?.size()||0,0,'Invalid correction partially altered the PDF');
+  }
+  const doc=await P.PDFDocument.create();addPage(doc,500,700);addPage(doc,500,700);
+  await assert.rejects(PDFOCR.apply(doc,[{uid:'valid',source:'vision',words,correctionLines:[valid]},{uid:'bad',source:'vision',words,correctionLines:[{...valid,indices:[9]}]}],{pageIds:['valid','bad']}),/OCR 교정 글줄/);
+  assert.ok(doc.getPages().every(page=>!page.node.Contents()?.size()),'An earlier valid page was written before rejecting a later invalid correction');
 });

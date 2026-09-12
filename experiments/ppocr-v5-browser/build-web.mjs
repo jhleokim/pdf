@@ -6,7 +6,7 @@ const root=new URL('../../',import.meta.url);
 const trial=new URL('work/ppocr-v5-trial/',root);
 const out=new URL('dist/ppocr-v5-web/',root);
 // Never deploy the working directory: it also contains private test documents/results.
-const assets=['index.html','ui.js','ocr-correction.js','worker.js','engine.js','ort.js','opencv.js','pdfjs.js','pdf.worker.js','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'];
+const assets=['index.html','ui.js','ocr-correction-lines.js','ocr-correction.js','worker.js','engine.js','ort.js','opencv.js','pdfjs.js','pdf.worker.js','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'];
 const allowed=new Set([...assets,'licenses.txt','_headers']);
 fs.mkdirSync(out,{recursive:true});
 for(const name of fs.readdirSync(out))if(!allowed.has(name))throw Error('Unexpected deployment file: '+name);

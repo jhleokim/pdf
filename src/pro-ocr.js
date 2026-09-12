@@ -99,20 +99,48 @@
     const ref=c.register(c.obj({Type:'Font',Subtype:'Type0',BaseFont:'PDFStudioOCR',Encoding:'Identity-H',DescendantFonts:[descendant],ToUnicode:c.register(c.flateStream(cmap))}));
     return {ref,measure:text=>[...text].reduce((sum,ch)=>sum+widthMap.get(ch),0)/1000,encode:text=>P.PDFHexString.of([...text].map(ch=>hex(map.get(ch))).join(''))};
   }
+  function correctionWords(record){
+    const words=record.words,lines=record.correctionLines;
+    if(lines===undefined)return words;
+    const invalid=()=>{throw new Error('OCR 교정 글줄의 텍스트 또는 위치가 올바르지 않습니다. 교정 창에서 내용을 다시 확인해 주세요.');};
+    if(!Array.isArray(lines)||lines.length>words.length)invalid();
+    const covered=new Set(),replacements=new Map();
+    const validBox=b=>Array.isArray(b)&&b.length===4&&b.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&b[2]>b[0]&&b[3]>b[1];
+    for(const line of lines){
+      if(!line||!Array.isArray(line.indices)||!line.indices.length||typeof line.text!=='string'||line.text.length>60000||/[\u0000-\u001f\u007f\u2028\u2029]/.test(line.text)||!validBox(line.box))invalid();
+      const indices=[...line.indices].sort((a,b)=>a-b),seen=new Set();
+      for(const index of indices){if(!Number.isInteger(index)||index<0||index>=words.length||seen.has(index)||covered.has(index)||!validBox(words[index]?.box))invalid();seen.add(index);}
+      const bounds=indices.map(index=>words[index].box),union=[Math.min(...bounds.map(b=>b[0])),Math.min(...bounds.map(b=>b[1])),Math.max(...bounds.map(b=>b[2])),Math.max(...bounds.map(b=>b[3]))];
+      if(union.some((value,i)=>Math.abs(value-line.box[i])>1e-6))invalid();
+      for(const index of indices)covered.add(index);
+      replacements.set(indices[0],{text:line.text,box:union,separator:words[indices.at(-1)].separator??'\n',correctionLine:true});
+    }
+    // Keep every untouched word at its original position in the source order.
+    // Empty replacements deliberately remove their covered words, not a page.
+    return words.flatMap((word,index)=>replacements.has(index)?[replacements.get(index)]:covered.has(index)?[]:[word]);
+  }
   async function apply(doc,records,{pageIds=[],signal}={}){
-    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:r.words.filter(w=>w.text?.trim())})).filter(r=>r.words.length);
+    check(signal);
+    // Validate all replacement metadata before adding a font or content stream.
+    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:correctionWords(r).filter(w=>w.text?.trim())})).filter(r=>r.words.length);
     if(!active.length)return {pages:0,words:0};
-    const P=PDFLib,G=PDFProDocument,font=await makeFont(doc,active,signal);check(signal);let pages=0,words=0;
+    // A large line correction needs estimated proportional widths. Keep the
+    // untouched Vision word font/geometry independent of that approximation.
+    const ordinary=active.map(r=>({...r,words:r.words.filter(w=>!w.correctionLine)})).filter(r=>r.words.length);
+    const corrected=active.map(r=>({...r,granularity:'line',words:r.words.filter(w=>w.correctionLine)})).filter(r=>r.words.length);
+    const P=PDFLib,G=PDFProDocument,font=ordinary.length?await makeFont(doc,ordinary,signal):null,lineFont=corrected.length?await makeFont(doc,corrected,signal):null;check(signal);let pages=0,words=0;
     for(const record of active){
       check(signal);const page=doc.getPage(pageIds.indexOf(record.uid)),b=G.visibleBox(page),r=((page.getRotation().angle%360)+360)%360;
       const w=r%180?b.height:b.width,h=r%180?b.width:b.height,rad=r*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
-      const name=page.node.newFontDictionary('OCR',font.ref),ops=[P.pushGraphicsState(),P.beginText(),P.setTextRenderingMode(3),P.setFontAndSize(name,1)];
+      const names=new Map(),ops=[P.pushGraphicsState(),P.beginText(),P.setTextRenderingMode(3)];let selectedFont=null;
       for(const word of record.words){
         const [l,t,rt,bt]=word.box;if(![l,t,rt,bt].every(Number.isFinite)||rt<=l||bt<=t)continue;
-        const text=word.text+(word.separator===''?'':' '),measured=font.measure(text);if(!(measured>0))continue;
+        const outputFont=word.correctionLine?lineFont:font;
+        const text=word.text+(word.separator===''?'':' '),measured=outputFont.measure(text);if(!(measured>0))continue;
         const sx=(rt-l)*w/measured,sy=(bt-t)*h;
         const [x,y]=G.displayToPdf(l*w,(bt-(bt-t)*.18)*h,b,r);
-        ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(font.encode(text)));words++;
+        if(selectedFont!==outputFont){if(!names.has(outputFont))names.set(outputFont,page.node.newFontDictionary('OCR',outputFont.ref));ops.push(P.setFontAndSize(names.get(outputFont),1));selectedFont=outputFont;}
+        ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(outputFont.encode(text)));words++;
       }
       ops.push(P.endText(),P.popGraphicsState());page.pushOperators(...ops);pages++;
     }

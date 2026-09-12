@@ -928,6 +928,9 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .ocr-correction-fields{min-height:0;flex:1;overflow:auto;overscroll-behavior:contain;padding:12px;scrollbar-gutter:stable}.ocr-correction-field{position:relative;margin:0 0 6px;border:1px solid transparent;border-radius:5px;padding:9px 11px;transition:border-color .12s,background .12s}.ocr-correction-field:hover{background:var(--paper)}.ocr-correction-field.is-active{border-color:var(--accent-line);background:var(--accent-wash);box-shadow:inset 3px 0 var(--accent)}.ocr-correction-field-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;min-height:17px}.ocr-correction-field label{color:var(--ink-3);font-size:10px;font-weight:550}.ocr-correction-field-status{display:flex;gap:7px;align-items:center;font-size:9px;color:var(--ink-3)}.ocr-correction-field-status .needs-review{color:var(--ink-2)}.ocr-correction-field-status .needs-review::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#ad8244;margin-right:4px;vertical-align:1px}.ocr-correction-field-status .was-edited{color:var(--accent-ink)}.ocr-correction-field textarea{display:block;resize:vertical;box-sizing:border-box;width:100%;min-height:29px;max-height:220px;margin:0;border:1px solid transparent;border-radius:3px;padding:4px 0;background:transparent;color:var(--ink);font-family:inherit;font-size:13px;line-height:1.7;letter-spacing:-.015em;overflow:auto;scrollbar-width:thin}.ocr-correction-field textarea:focus{outline:none}.ocr-correction-field:focus-within{border-color:var(--accent);background:var(--accent-wash)}.ocr-correction-field textarea::placeholder{color:var(--ink-3);font-size:11px}.ocr-correction-field.is-plain textarea{min-height:220px}.ocr-correction-empty{padding:26px 12px;color:var(--ink-2);font-size:12px;line-height:1.8}.ocr-correction-text-note{flex:none;padding:12px 18px;margin:0;border-top:1px solid var(--line);font-size:10.5px;line-height:1.65;color:var(--ink-3);background:var(--surface)}
 .ocr-correction-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 20px;border-top:1px solid var(--line);background:var(--surface);flex:none}.ocr-correction-status{font-size:11px;color:var(--ink-2);line-height:1.6}.ocr-correction-status p{color:#b04444;margin:4px 0 0}.ocr-correction-actions,.ocr-correction-discard>div{display:flex;align-items:center;gap:8px}.ocr-correction-actions .btn{min-width:76px;justify-content:center}.ocr-correction-discard{display:flex;align-items:center;gap:12px}.ocr-correction-discard p{font-size:12px;color:var(--ink-2);margin:0}.ocr-correction-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.ocr-correction button:focus-visible,.ocr-correction select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ocr-correction[data-applying=true] .ocr-correction-body{pointer-events:none;opacity:.7}
 @keyframes ocr-correction-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.ocr-correction-reading-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 18px;border-bottom:1px solid var(--line);flex:none;color:var(--ink-3);font-size:10px}.ocr-correction-reading-tools .btn{height:27px;padding:0 6px;font-size:10px;font-weight:500;color:var(--accent-ink)}.ocr-correction-reading-tools .btn:disabled{color:var(--ink-3);opacity:.65}
+/* A compact reading column: one field per source line, with quiet line numbers. */
+.ocr-correction-fields{padding:12px 10px}.ocr-correction-field{display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:8px;margin:0;padding:5px 10px 5px 5px;border-radius:3px}.ocr-correction-field-top{display:contents}.ocr-correction-field label{grid-column:1;grid-row:1;align-self:start;text-align:right;padding-top:6px;font-variant-numeric:tabular-nums;font-size:9px;user-select:none}.ocr-correction-field textarea{grid-column:2;grid-row:1;font-size:13px;line-height:1.85;min-height:30px;resize:none;padding:2px 0}.ocr-correction-field-status{grid-column:2;grid-row:2;font-size:9px;min-height:0}.ocr-correction-field-status:has(.needs-review:not([hidden])),.ocr-correction-field-status:has(.was-edited:not([hidden])){padding:0 0 2px}.ocr-correction-field.is-active{box-shadow:inset 2px 0 var(--accent)}.ocr-correction-field.is-plain{display:block}.ocr-correction-field.is-plain .ocr-correction-field-top{display:flex}.ocr-correction-field.is-plain label{text-align:left;padding-top:0}.ocr-correction-field textarea::selection{background:var(--accent);color:white}.ocr-correction-box{border-color:rgba(0,133,125,.22);background:transparent}.ocr-correction-box.is-line-active{border-color:rgba(0,133,125,.55);background:rgba(0,133,125,.065)}.ocr-correction-box[aria-pressed=true]{border-color:#00857d;background:rgba(0,133,125,.2)}
 @media(max-width:760px){.ocr-correction{width:calc(100vw - 16px);height:calc(100dvh - 16px);border-radius:6px}.ocr-correction-head{padding:14px 16px 12px}.ocr-correction h2{font-size:18px}.ocr-correction-head p{font-size:11px}.ocr-correction-toolbar{padding:8px 12px}.ocr-correction-pages>span{display:none}.ocr-correction-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(160px,.9fr) minmax(180px,1fr)}.ocr-correction-text{border-left:0;border-top:1px solid var(--line)}.ocr-correction-pane-head{min-height:36px;padding:8px 12px}.ocr-correction-pane-head>span{font-size:9px}.ocr-correction-scroll{padding:16px}.ocr-correction-fields{padding:6px 8px}.ocr-correction-field textarea{font-size:16px;line-height:1.6}.ocr-correction-text-note{padding:8px 12px;font-size:10px}.ocr-correction-footer{padding:10px 12px;gap:8px}.ocr-correction-discard{flex-direction:column;align-items:flex-end;gap:7px}.ocr-correction-discard p{font-size:11px}.ocr-correction-actions .btn{min-width:64px;padding:0 10px}.ocr-correction-status{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ocr-correction[open]{animation:none}.ocr-correction-box,.ocr-correction-field{transition:none}}
 /* v4 workspace refinements; the existing Hana/charcoal palette is unchanged. */
@@ -4122,7 +4125,7 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
 <!-- ocr-correction-dialog:start -->
 <dialog id="ocrCorrectionDialog" class="ocr-correction" aria-labelledby="ocrCorrectionTitle" aria-describedby="ocrCorrectionDescription">
   <header class="ocr-correction-head">
-    <div><span class="ocr-correction-eyebrow">PDF STUDIO · 텍스트 인식</span><h2 id="ocrCorrectionTitle">인식 텍스트 교정</h2><p id="ocrCorrectionDescription">원본의 영역을 선택하고, 연결된 텍스트를 수정하세요.</p></div>
+    <div><span class="ocr-correction-eyebrow">PDF STUDIO · 텍스트 인식</span><h2 id="ocrCorrectionTitle">인식 텍스트 교정</h2><p id="ocrCorrectionDescription">글줄 단위로 읽고 수정하세요. 원본의 단어를 누르면 해당 텍스트가 선택됩니다.</p></div>
     <button type="button" class="btn icon quiet" id="ocrCorrectionClose" aria-label="텍스트 교정 닫기"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
   </header>
   <div class="ocr-correction-toolbar">
@@ -4136,6 +4139,7 @@ OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
     </section>
     <section class="ocr-correction-text" aria-labelledby="ocrCorrectionTextTitle">
       <div class="ocr-correction-pane-head"><h3 id="ocrCorrectionTextTitle">인식 텍스트 <span id="ocrCorrectionFieldCount"></span></h3><span id="ocrCorrectionSelection" role="status" aria-live="polite">영역을 선택하세요</span></div>
+      <div class="ocr-correction-reading-tools"><span>글줄별 편집</span><button type="button" class="btn quiet" id="ocrCorrectionReviewNext" disabled>확인 필요한 줄 없음</button></div>
       <div class="ocr-correction-fields" id="ocrCorrectionFields"></div>
       <p class="ocr-correction-text-note">검색·복사할 텍스트만 수정합니다. 원본 페이지의 글자와 모양은 유지됩니다.</p>
     </section>
@@ -11762,20 +11766,48 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     const ref=c.register(c.obj({Type:'Font',Subtype:'Type0',BaseFont:'PDFStudioOCR',Encoding:'Identity-H',DescendantFonts:[descendant],ToUnicode:c.register(c.flateStream(cmap))}));
     return {ref,measure:text=>[...text].reduce((sum,ch)=>sum+widthMap.get(ch),0)/1000,encode:text=>P.PDFHexString.of([...text].map(ch=>hex(map.get(ch))).join(''))};
   }
+  function correctionWords(record){
+    const words=record.words,lines=record.correctionLines;
+    if(lines===undefined)return words;
+    const invalid=()=>{throw new Error('OCR 교정 글줄의 텍스트 또는 위치가 올바르지 않습니다. 교정 창에서 내용을 다시 확인해 주세요.');};
+    if(!Array.isArray(lines)||lines.length>words.length)invalid();
+    const covered=new Set(),replacements=new Map();
+    const validBox=b=>Array.isArray(b)&&b.length===4&&b.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&b[2]>b[0]&&b[3]>b[1];
+    for(const line of lines){
+      if(!line||!Array.isArray(line.indices)||!line.indices.length||typeof line.text!=='string'||line.text.length>60000||/[\u0000-\u001f\u007f\u2028\u2029]/.test(line.text)||!validBox(line.box))invalid();
+      const indices=[...line.indices].sort((a,b)=>a-b),seen=new Set();
+      for(const index of indices){if(!Number.isInteger(index)||index<0||index>=words.length||seen.has(index)||covered.has(index)||!validBox(words[index]?.box))invalid();seen.add(index);}
+      const bounds=indices.map(index=>words[index].box),union=[Math.min(...bounds.map(b=>b[0])),Math.min(...bounds.map(b=>b[1])),Math.max(...bounds.map(b=>b[2])),Math.max(...bounds.map(b=>b[3]))];
+      if(union.some((value,i)=>Math.abs(value-line.box[i])>1e-6))invalid();
+      for(const index of indices)covered.add(index);
+      replacements.set(indices[0],{text:line.text,box:union,separator:words[indices.at(-1)].separator??'\n',correctionLine:true});
+    }
+    // Keep every untouched word at its original position in the source order.
+    // Empty replacements deliberately remove their covered words, not a page.
+    return words.flatMap((word,index)=>replacements.has(index)?[replacements.get(index)]:covered.has(index)?[]:[word]);
+  }
   async function apply(doc,records,{pageIds=[],signal}={}){
-    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:r.words.filter(w=>w.text?.trim())})).filter(r=>r.words.length);
+    check(signal);
+    // Validate all replacement metadata before adding a font or content stream.
+    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:correctionWords(r).filter(w=>w.text?.trim())})).filter(r=>r.words.length);
     if(!active.length)return {pages:0,words:0};
-    const P=PDFLib,G=PDFProDocument,font=await makeFont(doc,active,signal);check(signal);let pages=0,words=0;
+    // A large line correction needs estimated proportional widths. Keep the
+    // untouched Vision word font/geometry independent of that approximation.
+    const ordinary=active.map(r=>({...r,words:r.words.filter(w=>!w.correctionLine)})).filter(r=>r.words.length);
+    const corrected=active.map(r=>({...r,granularity:'line',words:r.words.filter(w=>w.correctionLine)})).filter(r=>r.words.length);
+    const P=PDFLib,G=PDFProDocument,font=ordinary.length?await makeFont(doc,ordinary,signal):null,lineFont=corrected.length?await makeFont(doc,corrected,signal):null;check(signal);let pages=0,words=0;
     for(const record of active){
       check(signal);const page=doc.getPage(pageIds.indexOf(record.uid)),b=G.visibleBox(page),r=((page.getRotation().angle%360)+360)%360;
       const w=r%180?b.height:b.width,h=r%180?b.width:b.height,rad=r*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
-      const name=page.node.newFontDictionary('OCR',font.ref),ops=[P.pushGraphicsState(),P.beginText(),P.setTextRenderingMode(3),P.setFontAndSize(name,1)];
+      const names=new Map(),ops=[P.pushGraphicsState(),P.beginText(),P.setTextRenderingMode(3)];let selectedFont=null;
       for(const word of record.words){
         const [l,t,rt,bt]=word.box;if(![l,t,rt,bt].every(Number.isFinite)||rt<=l||bt<=t)continue;
-        const text=word.text+(word.separator===''?'':' '),measured=font.measure(text);if(!(measured>0))continue;
+        const outputFont=word.correctionLine?lineFont:font;
+        const text=word.text+(word.separator===''?'':' '),measured=outputFont.measure(text);if(!(measured>0))continue;
         const sx=(rt-l)*w/measured,sy=(bt-t)*h;
         const [x,y]=G.displayToPdf(l*w,(bt-(bt-t)*.18)*h,b,r);
-        ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(font.encode(text)));words++;
+        if(selectedFont!==outputFont){if(!names.has(outputFont))names.set(outputFont,page.node.newFontDictionary('OCR',outputFont.ref));ops.push(P.setFontAndSize(names.get(outputFont),1));selectedFont=outputFont;}
+        ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(outputFont.encode(text)));words++;
       }
       ops.push(P.endText(),P.popGraphicsState());page.pushOperators(...ops);pages++;
     }
@@ -12592,6 +12624,142 @@ proReady=true;refreshProControls();
 let savedProMode='basic';try{if(localStorage.getItem('pdfed-mode')==='pro')savedProMode='pro';}catch(_){}
 setProMode(savedProMode);
 </script>
+<script id="ocr-correction-lines">
+/* Group OCR words for editing without replacing their original coordinates. */
+(() => {
+  'use strict';
+  const MAX_DIFF_CELLS=1000000,MAX_LINE_LENGTH=60000;
+  const normalize=value=>String(value??'').replace(/[\r\n\u2028\u2029]+/g,' ').replace(/\t/g,' ');
+  const ending=word=>word.separator??' ';
+  const hardBreak=value=>/[\r\n\u2028\u2029]/.test(value);
+  function box(word){const b=word?.box;return Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1]?b:null;}
+  function sameRow(previous,next){
+    const a=box(previous),b=box(next);if(!a||!b)return false;
+    const ah=a[3]-a[1],bh=b[3]-b[1],height=Math.min(ah,bh),overlap=Math.min(a[3],b[3])-Math.max(a[1],b[1]);
+    const punctuation=word=>/^[\p{P}\p{S}]+$/u.test(String(word.text||''));
+    const smallPunctuation=punctuation(previous)||punctuation(next);
+    let rowHeight=height;
+    if(smallPunctuation){
+      // Vision often gives a comma or period only its small ink bounding box.
+      const large=ah>=bh?a:b,small=ah>=bh?b:a,h=Math.max(ah,bh),center=(small[1]+small[3])/2;
+      if(center<large[1]-h*.15||center>large[3]+h*.25)return false;
+      rowHeight=h;
+    }else if(overlap<height*.55||Math.max(ah,bh)>height*1.9||Math.abs(a[1]+a[3]-b[1]-b[3])>height*1.3)return false;
+    const gap=b[0]-a[2];
+    // Permit subpixel OCR box jitter; substantial overlap is a separate region.
+    if(gap< -Math.min(.0005,rowHeight*.08)||b[0]<a[0])return false;
+    const glyphA=(a[2]-a[0])/Math.max(1,[...String(previous.text||'')].length),glyphB=(b[2]-b[0])/Math.max(1,[...String(next.text||'')].length);
+    // Both terms are horizontal normalized lengths. A page's normalized text
+    // height cannot bound its horizontal spacing without its aspect ratio.
+    return gap<=Math.min(.018,Math.max(glyphA,glyphB)*1.5);
+  }
+  function group(record){
+    const words=Array.isArray(record?.words)?record.words:[];
+    if(record?.skipped)return [];
+    if(record?.granularity==='line'||['paddle-v5','paddle-vl15','gemini'].includes(record?.source))return words.map((_,index)=>({indices:[index]}));
+    const saved=new Map();
+    for(const entry of [...record?.correctionGroups||[],...record?.correctionLines||[]]){const indices=entry?.indices;if(Array.isArray(indices)&&indices.length&&indices.every((index,at)=>Number.isInteger(index)&&index>=0&&!!words[index]&&(!at||index===indices[at-1]+1)))saved.set(indices[0],indices);}
+    const result=[];let current=null,length=0;
+    for(let index=0;index<words.length;index++){
+      if(saved.has(index)){const indices=saved.get(index);result.push({indices:[...indices]});index=indices[indices.length-1];current=null;length=0;continue;}
+      const word=words[index];
+      const previous=words[index-1];
+      if(!current||hardBreak(ending(previous))||!sameRow(previous,word)||length+String(word.text||'').length>4000){current={indices:[]};result.push(current);length=0;}
+      current.indices.push(index);length+=String(word.text||'').length+String(ending(word)).length;
+    }
+    return result;
+  }
+  function indicesOf(record,line){
+    const indices=line?.indices;
+    if(!Array.isArray(indices)||!indices.length||indices.some((index,i)=>!Number.isInteger(index)||index<0||!record?.words?.[index]||i>0&&index<=indices[i-1]))throw new RangeError('교정할 글줄 영역이 올바르지 않습니다.');
+    return indices;
+  }
+  function layout(record,line){
+    const indices=indicesOf(record,line),ranges=[];let text='';
+    indices.forEach((index,at)=>{const word=record.words[index],start=text.length;text+=normalize(word.text);ranges.push({index,start,end:text.length});if(at<indices.length-1)text+=normalize(ending(word));});
+    return {text,ranges};
+  }
+  function units(record,indices){
+    const chars=[],owners=[],kinds=[];
+    indices.forEach((index,at)=>{for(const char of normalize(record.words[index].text)){chars.push(char);owners.push(index);kinds.push('text');}if(at<indices.length-1)for(const char of normalize(ending(record.words[index]))){chars.push(char);owners.push(index);kinds.push('separator');}});
+    return {chars,owners,kinds};
+  }
+  function insertionOwner(base,position,fallback,onlyWhitespace=false){
+    // New content after a word's separating space belongs beside the next word.
+    if(onlyWhitespace&&position>0&&base.kinds[position-1]==='separator')return base.owners[position-1];
+    if(position<base.owners.length&&(position===0||base.kinds[position-1]==='separator'))return base.owners[position];
+    return base.owners[Math.max(0,position-1)]??base.owners[position]??fallback;
+  }
+  function matchOwners(base,target,fallback){
+    const source=base.chars,n=source.length,m=target.length,owners=new Array(m);
+    let first=0,oldEnd=n,newEnd=m,matched=0;
+    while(first<oldEnd&&first<newEnd&&source[first]===target[first]){owners[first]=base.owners[first];if(/\S/u.test(source[first]))matched++;first++;}
+    while(oldEnd>first&&newEnd>first&&source[oldEnd-1]===target[newEnd-1]){oldEnd--;newEnd--;owners[newEnd]=base.owners[oldEnd];if(/\S/u.test(source[oldEnd]))matched++;}
+    const rows=oldEnd-first,cols=newEnd-first;
+    if(!cols)return {owners,matched,bounded:false};
+    if(!rows){const owner=insertionOwner(base,first,fallback,target.slice(first,newEnd).every(char=>/\s/u.test(char)));for(let j=first;j<newEnd;j++)owners[j]=owner;return {owners,matched,bounded:false};}
+    if((rows+1)*(cols+1)>MAX_DIFF_CELLS){
+      // An unanchored paste can be enormous. Keep its prefix/suffix slots exact;
+      // place the replacement at its first affected region, never evenly split it.
+      const owner=base.owners[first]??insertionOwner(base,first,fallback);
+      for(let j=first;j<newEnd;j++)owners[j]=owner;
+      return {owners,matched,bounded:true};
+    }
+    const width=cols+1,cost=new Uint32Array((rows+1)*width);
+    for(let i=0;i<=rows;i++)cost[i*width]=i;
+    for(let j=0;j<=cols;j++)cost[j]=j;
+    for(let i=1;i<=rows;i++)for(let j=1;j<=cols;j++)cost[i*width+j]=Math.min(cost[(i-1)*width+j-1]+(source[first+i-1]===target[first+j-1]?0:1),cost[(i-1)*width+j]+1,cost[i*width+j-1]+1);
+    let i=rows,j=cols;
+    while(i||j){
+      const at=i*width+j;
+      if(i&&j&&cost[at]===cost[(i-1)*width+j-1]+(source[first+i-1]===target[first+j-1]?0:1)){owners[first+j-1]=base.owners[first+i-1];if(source[first+i-1]===target[first+j-1]&&/\S/u.test(source[first+i-1]))matched++;i--;j--;}
+      else if(i&&cost[at]===cost[(i-1)*width+j]+1)i--;
+      else{owners[first+j-1]=insertionOwner(base,first+i,fallback,/\s/u.test(target[first+j-1]));j--;}
+    }
+    // Ownership must follow original word order even around ambiguous insertions.
+    let previous=fallback;for(let at=0;at<owners.length;at++){owners[at]=Math.max(previous,owners[at]??previous);previous=owners[at];}
+    return {owners,matched,bounded:false};
+  }
+  function correctionLine(record,original,indices,text,approximate){
+    const same=entry=>Array.isArray(entry?.indices)&&entry.indices.length===indices.length&&entry.indices.every((index,at)=>index===indices[at]);
+    // Keep the editing group stable when a deletion or a short correction
+    // changes the text length used by the initial geometric grouping heuristic.
+    const groups=(record.correctionGroups||[]).filter(entry=>!same(entry)),oldGroup=(original.correctionGroups||[]).find(same);
+    if(text===layout(original,{indices}).text){if(oldGroup)groups.push({indices:[...oldGroup.indices]});}
+    else groups.push({indices:[...indices]});
+    if(groups.length)record.correctionGroups=groups;else if(Object.hasOwn(original,'correctionGroups'))record.correctionGroups=[];else delete record.correctionGroups;
+    const entries=(record.correctionLines||[]).filter(entry=>!same(entry));
+    const old=(original.correctionLines||[]).find(same);
+    if(text===layout(original,{indices}).text){if(old)entries.push({...old,indices:[...old.indices],box:old.box?[...old.box]:old.box});}
+    else if(approximate||old){
+      const boxes=indices.map(index=>box(original.words[index]));
+      if(boxes.every(Boolean))entries.push({indices:[...indices],text,box:[Math.min(...boxes.map(b=>b[0])),Math.min(...boxes.map(b=>b[1])),Math.max(...boxes.map(b=>b[2])),Math.max(...boxes.map(b=>b[3]))]});
+    }
+    if(entries.length)record.correctionLines=entries;else if(Object.hasOwn(original,'correctionLines'))record.correctionLines=[];else delete record.correctionLines;
+  }
+  function update(draft,page,line,value){
+    const original=draft?.original?.[page],record=draft?.records?.[page];
+    if(!original||!record||record.skipped)throw new RangeError('교정할 인식 페이지가 없습니다.');
+    const indices=indicesOf(original,line);indicesOf(record,line);
+    const text=normalize(value);if(text.length>MAX_LINE_LENGTH)throw new RangeError('한 글줄은 60,000자까지 수정할 수 있습니다.');
+    const source=layout(original,line);
+    if(text===source.text){for(const index of indices){record.words[index].text=original.words[index].text;if(Object.hasOwn(original.words[index],'separator'))record.words[index].separator=original.words[index].separator;else delete record.words[index].separator;}correctionLine(record,original,indices,text,false);return layout(record,line);}
+    const base=units(original,indices),target=[...text],diff=matchOwners(base,target,indices[0]),owners=diff.owners,parts=new Map(indices.map(index=>[index,[]]));
+    target.forEach((char,index)=>parts.get(owners[index]).push(char));
+    indices.forEach((index,at)=>{
+      const fragment=parts.get(index).join(''),word=record.words[index],old=original.words[index],last=at===indices.length-1;
+      if(fragment===normalize(old.text)+(last?'':normalize(ending(old)))){word.text=old.text;if(Object.hasOwn(old,'separator'))word.separator=old.separator;else delete word.separator;return;}
+      if(last){word.text=fragment;if(Object.hasOwn(old,'separator'))word.separator=old.separator;else delete word.separator;}
+      else{const tail=fragment.match(/[\t \f\v\u00a0]+$/)?.[0]||'';word.text=fragment.slice(0,fragment.length-tail.length);word.separator=tail;}
+    });
+    const count=value=>[...String(value)].filter(char=>/\S/u.test(char)).length;
+    const oldCount=count(source.text),newCount=count(text),expanded=indices.some(index=>count(record.words[index].text)>Math.max(count(original.words[index].text)*1.8,count(original.words[index].text)+4));
+    correctionLine(record,original,indices,text,indices.length>1&&newCount>0&&(diff.bounded||diff.matched/Math.max(1,oldCount,newCount)<.45||expanded));
+    return layout(record,line);
+  }
+  globalThis.PDFOCRLines=Object.freeze({group,layout,update});
+})();
+</script>
 <script id="ocr-correction">
 /* Local OCR correction: edit a draft, then atomically hand it back to Studio. */
 (() => {
@@ -12601,8 +12769,9 @@ setProMode(savedProMode);
   const singleLine=value=>String(value??'').replace(/[\r\n\u2028\u2029]+/g,' ');
   function createDraft(records){if(!Array.isArray(records))throw new TypeError('교정할 인식 결과가 필요합니다.');return {original:copy(records),records:copy(records)};}
   function updateWord(draft,page,index,text){const word=draft.records[page]?.words?.[index];if(!word||draft.records[page].skipped)throw new RangeError('수정할 텍스트 영역이 없습니다.');word.text=singleLine(text);return word.text;}
-  function changedWords(draft){let count=0;draft.records.forEach((record,p)=>{if(record.skipped)return;if(record.words?.length)record.words.forEach((word,w)=>{if(word.text!==draft.original[p].words[w].text)count++;});else if(record.text!==draft.original[p].text)count++;});return count;}
-  function materialize(draft){return draft.records.map((record,p)=>{const out=copy(record);if(out.skipped)return out;if(out.words?.length){let changed=false;out.words.forEach((word,w)=>{if(word.text!==draft.original[p].words[w].text){changed=true;word.corrected=true;word.uncertain=false;}});if(changed)out.text=out.words.filter(word=>word.text?.trim()).map(word=>word.text+(word.separator??' ')).join('').trim();}return out;});}
+  const wordChanged=(word,original)=>word.text!==original.text||word.separator!==original.separator;
+  function changedWords(draft){let count=0;draft.records.forEach((record,p)=>{if(record.skipped)return;if(record.words?.length)record.words.forEach((word,w)=>{if(wordChanged(word,draft.original[p].words[w]))count++;});else if(record.text!==draft.original[p].text)count++;});return count;}
+  function materialize(draft){return draft.records.map((record,p)=>{const out=copy(record);if(out.skipped)return out;if(out.words?.length){let changed=false;out.words.forEach((word,w)=>{if(wordChanged(word,draft.original[p].words[w])){changed=true;word.corrected=true;word.uncertain=false;}});if(changed)out.text=out.words.map(word=>(word.text||'')+(word.separator??' ')).join('').trim();}return out;});}
   function boxOf(word){const b=Array.isArray(word?.box)?word.box:[word?.x,word?.y,word?.x+word?.w,word?.y+word?.h];return b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1]?b:null;}
   const data=Object.freeze({createDraft,updateWord,changedWords,materialize,boxOf,singleLine});
   let active=null;
@@ -12615,36 +12784,39 @@ setProMode(savedProMode);
     const listeners=new AbortController(),savedFocus=document.activeElement;
     let page=Math.max(0,Math.min(draft.records.length-1,Number(options.initialIndex)||0)),zoom=1,selected=-1,closed=false,applying=false,renderSequence=0,renderAbort=null;
     let rendered=false;
-    const selectedByPage=new Map(),fieldNodes=new Map(),boxNodes=new Map();
+    const selectedByPage=new Map(),fieldNodes=new Map(),boxNodes=new Map(),wordLines=new Map();
+    let lines=[],markedWord=null,markedLine=null;
     const promise=new Promise(resolve=>{active={resolve};});
     const session=active;
     const on=(node,type,handler)=>node.addEventListener(type,handler,{signal:listeners.signal});
     const motion=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
     function scrollNear(container,node){if(!node)return;const c=container.getBoundingClientRect(),n=node.getBoundingClientRect();let top=container.scrollTop,left=container.scrollLeft;if(n.top<c.top+12)top-=c.top+12-n.top;else if(n.bottom>c.bottom-12)top+=n.bottom-c.bottom+12;if(n.left<c.left+12)left-=c.left+12-n.left;else if(n.right>c.right-12)left+=n.right-c.right+12;container.scrollTo({top,left,behavior:motion()});}
     function grow(input){input.style.height='auto';input.style.height=Math.min(220,Math.max(29,input.scrollHeight+2))+'px';}
-    function refreshChanges(){const count=changedWords(draft);$('Changes').textContent=count?`${count}개 영역 수정 · 적용 전`:'수정한 영역 없음';$('Apply').disabled=!count||applying;}
+    function refreshChanges(){const count=changedWords(draft),estimated=draft.records.reduce((n,r)=>n+(r.correctionLines?.length||0),0);$('Changes').textContent=(count?`${count}개 영역 수정 · 적용 전`:'수정한 영역 없음')+(estimated?` · 크게 고친 ${estimated}개 줄은 글줄 범위로 저장`:'');$('Apply').disabled=!count||applying;}
     function showError(message){$('Error').textContent=message||'';$('Error').hidden=!message;}
-    function focusWord(index,fromBox=false){
-      if(!fieldNodes.has(index))return;
+    function focusWord(index,fromBox=false,scrollImage=true){
+      const lineIndex=index<0?-1:wordLines.get(index),field=fieldNodes.get(lineIndex);if(!field)return;
       selected=index;selectedByPage.set(page,index);
-      for(const [i,node] of fieldNodes)node.row.classList.toggle('is-active',i===index);
-      for(const [i,node] of boxNodes){node.setAttribute('aria-pressed',String(i===index));node.tabIndex=i===index?0:-1;}
-      $('Selection').textContent=index<0?'페이지 텍스트 선택':`${index+1}번 영역 선택`;
-      const field=fieldNodes.get(index);
-      if(fromBox){field.input.focus({preventScroll:true});field.input.select();scrollNear($('Fields'),field.row);}else scrollNear($('ImageScroll'),boxNodes.get(index));
+      if(markedLine!==lineIndex){fieldNodes.get(markedLine)?.row.classList.remove('is-active');field.row.classList.add('is-active');for(const wi of lines[markedLine]?.indices||[])boxNodes.get(wi)?.classList.remove('is-line-active');for(const wi of lines[lineIndex]?.indices||[])boxNodes.get(wi)?.classList.add('is-line-active');markedLine=lineIndex;}
+      if(markedWord!==index){const previous=boxNodes.get(markedWord),current=boxNodes.get(index);if(previous){previous.setAttribute('aria-pressed','false');previous.tabIndex=-1;}if(current){current.setAttribute('aria-pressed','true');current.tabIndex=0;}markedWord=index;}
+      $('Selection').textContent=index<0?'페이지 텍스트':`${lineIndex+1}번째 줄`;
+      if(fromBox){field.input.focus({preventScroll:true});const range=PDFOCRLines.layout(draft.records[page],lines[lineIndex]).ranges.find(r=>r.index===index);if(range)field.input.setSelectionRange(range.start,range.end);else field.input.select();scrollNear($('Fields'),field.row);}else if(scrollImage)scrollNear($('ImageScroll'),boxNodes.get(index));
     }
-    function renderField(word,index,plain=false){
-      const row=document.createElement('div');row.className='ocr-correction-field'+(plain?' is-plain':'');row.dataset.word=String(index);
+    function fieldChanged(lineIndex){return lineIndex<0?draft.records[page].text!==draft.original[page].text:lines[lineIndex].indices.some(i=>wordChanged(draft.records[page].words[i],draft.original[page].words[i]));}
+    function needsReview(lineIndex){return lineIndex>=0&&lines[lineIndex].indices.some(i=>{const word=draft.records[page].words[i];return !wordChanged(word,draft.original[page].words[i])&&!word.corrected&&(word.uncertain||Number.isFinite(word.confidence)&&word.confidence<70);});}
+    function refreshReview(){let count=0;for(const [index,field] of fieldNodes){field.edited.hidden=!fieldChanged(index);field.low.hidden=!needsReview(index);if(!field.low.hidden)count++;} $('ReviewNext').disabled=!count;$('ReviewNext').textContent=count?`확인 필요한 줄 ${count}개 · 다음`:'확인 필요한 줄 없음';}
+    function syncCaret(input,scrollImage=true){const lineIndex=Number(input.dataset.line);if(lineIndex<0){focusWord(-1,false,scrollImage);return;}const ranges=PDFOCRLines.layout(draft.records[page],lines[lineIndex]).ranges,at=input.selectionStart;const range=ranges.find(r=>r.start<=at&&at<r.end)||ranges.find(r=>r.start>=at)||ranges.at(-1);if(range)focusWord(range.index,false,scrollImage);}
+    function renderField(line,index,plain=false){
+      const row=document.createElement('div');row.className='ocr-correction-field'+(plain?' is-plain':'');row.dataset.line=String(index);
       const top=document.createElement('div');top.className='ocr-correction-field-top';
-      const label=document.createElement('label');label.htmlFor='ocrCorrectionWord'+index;label.textContent=plain?'페이지 텍스트':String(index+1).padStart(2,'0');
+      const label=document.createElement('label');label.htmlFor='ocrCorrectionLine'+index;label.textContent=plain?'텍스트':String(index+1).padStart(2,'0');
       const status=document.createElement('span');status.className='ocr-correction-field-status';
-      const low=document.createElement('span');low.className='needs-review';low.textContent='확인 필요';low.hidden=!word.uncertain&&!(Number.isFinite(word.confidence)&&word.confidence<70);
+      const low=document.createElement('span');low.className='needs-review';low.textContent='확인 필요';low.hidden=true;
       const edited=document.createElement('span');edited.className='was-edited';edited.textContent='수정됨';edited.hidden=true;
       status.append(low,edited);top.append(label,status);
-      const input=document.createElement('textarea');input.id=label.htmlFor;input.rows=1;input.spellcheck=false;input.value=word.text||'';input.setAttribute('aria-label',plain?'페이지 인식 텍스트':`${index+1}번 영역 인식 텍스트`);input.placeholder='빈 영역 · 검색 텍스트에서 제외';input.dataset.word=String(index);
+      const input=document.createElement('textarea');input.id=label.htmlFor;input.rows=1;input.spellcheck=false;input.maxLength=60000;input.value=plain?draft.records[page].text||'':PDFOCRLines.layout(draft.records[page],line).text;input.setAttribute('aria-label',plain?'페이지 인식 텍스트':`${index+1}번째 줄 인식 텍스트`);input.placeholder='빈 줄 · 검색 텍스트에서 제외';input.dataset.line=String(index);
       row.append(top,input);$('Fields').append(row);fieldNodes.set(index,{row,input,edited,low});grow(input);
-      edited.hidden=plain?draft.records[page].text===draft.original[page].text:word.text===draft.original[page].words[index].text;
-      if(!plain){const b=boxOf(word);if(b){const box=document.createElement('button');box.type='button';box.className='ocr-correction-box';box.dataset.word=String(index);box.dataset.empty=String(!word.text?.trim());box.setAttribute('aria-label',`${index+1}번 영역: ${word.text?.slice(0,90)||'빈 텍스트'}`);box.setAttribute('aria-controls',input.id);box.setAttribute('aria-pressed','false');box.tabIndex=-1;box.style.left=b[0]*100+'%';box.style.top=b[1]*100+'%';box.style.width=(b[2]-b[0])*100+'%';box.style.height=(b[3]-b[1])*100+'%';$('Boxes').append(box);boxNodes.set(index,box);}}
+      if(!plain)for(const wordIndex of line.indices){wordLines.set(wordIndex,index);const word=draft.records[page].words[wordIndex],b=boxOf(word);if(b){const box=document.createElement('button');box.type='button';box.className='ocr-correction-box';box.dataset.word=String(wordIndex);box.dataset.empty=String(!word.text?.trim());box.setAttribute('aria-label',`${index+1}번째 줄 · ${word.text?.slice(0,90)||'빈 텍스트'}`);box.setAttribute('aria-controls',input.id);box.setAttribute('aria-pressed','false');box.tabIndex=-1;box.style.left=b[0]*100+'%';box.style.top=b[1]*100+'%';box.style.width=(b[2]-b[0])*100+'%';box.style.height=(b[3]-b[1])*100+'%';$('Boxes').append(box);boxNodes.set(wordIndex,box);}}
     }
     function fitWidth(){const pane=$('ImageScroll');return Math.max(100,pane.clientWidth-(innerWidth<=760?32:48)-2);}
     function updateZoom(){$('Sheet').style.width=fitWidth()*zoom+'px';$('ZoomValue').value=Math.round(zoom*100)+'%';$('ZoomOut').disabled=zoom<=.5;$('ZoomIn').disabled=zoom>=3;}
@@ -12652,39 +12824,42 @@ setProMode(savedProMode);
       const id=++renderSequence;renderAbort?.abort();renderAbort=new AbortController();const signal=renderAbort.signal;
       rendered=false;$('Sheet').hidden=true;$('ImageState').hidden=false;$('ImageState').textContent='페이지를 준비하고 있습니다.';
       const canvas=$('Canvas');canvas.width=canvas.height=1;$('ImageScroll').scrollTo({top:0,left:0,behavior:'instant'});$('Fields').scrollTop=0;
-      fieldNodes.clear();boxNodes.clear();$('Fields').replaceChildren();$('Boxes').replaceChildren();$('Selection').textContent='영역을 선택하세요';
+      fieldNodes.clear();boxNodes.clear();wordLines.clear();markedWord=markedLine=null;$('Fields').replaceChildren();$('Boxes').replaceChildren();$('Selection').textContent='영역을 선택하세요';
       const record=draft.records[page];$('Page').value=String(page);$('PageCount').textContent=`${page+1} / ${draft.records.length}`;$('Prev').disabled=page===0;$('Next').disabled=page===draft.records.length-1;
-      $('FieldCount').textContent=record.words?.length?`${record.words.length}개 영역`:'';
+      lines=record.words?.length?PDFOCRLines.group(draft.original[page]):[];
+      $('FieldCount').textContent=lines.length?`${lines.length}개 글줄${lines.length<record.words.length?' · '+record.words.length.toLocaleString()+'개 단어':''}`:'';
       if(record.skipped){const note=document.createElement('p');note.className='ocr-correction-empty';note.textContent='기존 검색 텍스트를 유지한 페이지입니다. 새 인식 결과가 없어 교정할 영역이 없습니다.';$('Fields').append(note);}
-      else if(record.words?.length)record.words.forEach((word,index)=>renderField(word,index));
+      else if(record.words?.length)lines.forEach((line,index)=>renderField(line,index));
       else{renderField({text:record.text||''},-1,true);const note=document.createElement('p');note.className='ocr-correction-empty';note.textContent='영역 위치가 없는 결과입니다. 텍스트 파일용 내용을 수정할 수 있습니다.';$('Fields').prepend(note);}
-      selected=selectedByPage.get(page)??(record.words?.length?0:-1);if(fieldNodes.has(selected))focusWord(selected);
+      selected=selectedByPage.get(page)??(record.words?.length?0:-1);focusWord(selected);refreshReview();
       try{
         const source=await options.renderPage(copy(record),{signal});
         if(closed||id!==renderSequence||signal.aborted)return;
         if(!source?.width||!source?.height)throw new Error('페이지 이미지를 불러오지 못했습니다.');
-        canvas.width=source.width;canvas.height=source.height;canvas.getContext('2d',{alpha:false}).drawImage(source,0,0);rendered=true;$('Sheet').hidden=false;$('ImageState').hidden=true;updateZoom();
+        canvas.width=source.width;canvas.height=source.height;canvas.getContext('2d',{alpha:false}).drawImage(source,0,0);rendered=true;$('Sheet').hidden=false;$('ImageState').hidden=true;updateZoom();scrollNear($('ImageScroll'),boxNodes.get(selected));
       }catch(error){if(closed||id!==renderSequence||signal.aborted)return;$('ImageState').textContent=error?.message||'페이지를 불러오지 못했습니다. 다른 페이지를 선택한 뒤 다시 확인해 주세요.';}
       refreshChanges();
     }
-    function finish(applied){if(closed)return;closed=true;renderAbort?.abort();listeners.abort();observer?.disconnect();$('Canvas').width=$('Canvas').height=1;fieldNodes.clear();boxNodes.clear();$('Fields').replaceChildren();$('Boxes').replaceChildren();if(dialog.open)dialog.close();dialog.removeAttribute('data-applying');active=null;session.resolve(applied);if(savedFocus?.isConnected)savedFocus.focus({preventScroll:true});}
+    function finish(applied){if(closed)return;closed=true;renderAbort?.abort();listeners.abort();observer?.disconnect();$('Canvas').width=$('Canvas').height=1;fieldNodes.clear();boxNodes.clear();wordLines.clear();$('Fields').replaceChildren();$('Boxes').replaceChildren();if(dialog.open)dialog.close();dialog.removeAttribute('data-applying');active=null;session.resolve(applied);if(savedFocus?.isConnected)savedFocus.focus({preventScroll:true});}
     function requestClose(){if(applying)return;if(changedWords(draft)){showError('');$('Actions').hidden=true;$('Discard').hidden=false;$('Keep').focus();}else finish(false);}
     function changePage(index){if(applying)return;page=Math.max(0,Math.min(draft.records.length-1,index));showError('');renderPage();}
-    on($('Fields'),'focusin',event=>{if(event.target.matches('textarea[data-word]'))focusWord(Number(event.target.dataset.word));});
+    on($('Fields'),'focusin',event=>{if(event.target.matches('textarea[data-line]'))syncCaret(event.target);});
+    for(const type of ['click','keyup','select'])on($('Fields'),type,event=>{if(event.target.matches('textarea[data-line]'))syncCaret(event.target);});
     on($('Fields'),'input',event=>{
-      const input=event.target;if(applying||!input.matches('textarea[data-word]'))return;const index=Number(input.dataset.word),field=fieldNodes.get(index);
+      const input=event.target;if(applying||!input.matches('textarea[data-line]')||event.isComposing)return;const index=Number(input.dataset.line);
       if(index<0)draft.records[page].text=input.value;
-      else{const normalized=updateWord(draft,page,index,input.value);if(input.value!==normalized){const start=input.selectionStart,end=input.selectionEnd;input.value=normalized;input.setSelectionRange(Math.min(start,normalized.length),Math.min(end,normalized.length));}const box=boxNodes.get(index);if(box){box.dataset.empty=String(!normalized.trim());box.setAttribute('aria-label',`${index+1}번 영역: ${normalized.slice(0,90)||'빈 텍스트'}`);}}
-      field.edited.hidden=index<0?draft.records[page].text===draft.original[page].text:draft.records[page].words[index].text===draft.original[page].words[index].text;
-      grow(input);refreshChanges();showError('');
+      else{const normalized=PDFOCRLines.update(draft,page,lines[index],input.value).text;if(input.value!==normalized){const start=input.selectionStart,end=input.selectionEnd;input.value=normalized;input.setSelectionRange(Math.min(start,normalized.length),Math.min(end,normalized.length));}for(const wi of lines[index].indices){const word=draft.records[page].words[wi],box=boxNodes.get(wi);if(box){box.dataset.empty=String(!word.text.trim());box.setAttribute('aria-label',`${index+1}번째 줄 · ${word.text.slice(0,90)||'빈 텍스트'}`);}}}
+      grow(input);refreshChanges();refreshReview();syncCaret(input,false);showError('');
     });
+    on($('Fields'),'compositionend',event=>{if(event.target.matches('textarea[data-line]'))event.target.dispatchEvent(new Event('input',{bubbles:true}));});
     on($('Boxes'),'click',event=>{const box=event.target.closest('button[data-word]');if(box)focusWord(Number(box.dataset.word),true);});
-    on($('Boxes'),'keydown',event=>{const box=event.target.closest('button[data-word]');if(!box||!['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(event.key))return;event.preventDefault();const keys=[...boxNodes.keys()],at=keys.indexOf(Number(box.dataset.word)),next=keys[Math.max(0,Math.min(keys.length-1,at+(['ArrowDown','ArrowRight'].includes(event.key)?1:-1)))];focusWord(next);boxNodes.get(next)?.focus({preventScroll:true});scrollNear($('ImageScroll'),boxNodes.get(next));scrollNear($('Fields'),fieldNodes.get(next)?.row);});
+    on($('Boxes'),'keydown',event=>{const box=event.target.closest('button[data-word]');if(!box||!['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(event.key))return;event.preventDefault();const keys=[...boxNodes.keys()],at=keys.indexOf(Number(box.dataset.word)),next=keys[Math.max(0,Math.min(keys.length-1,at+(['ArrowDown','ArrowRight'].includes(event.key)?1:-1)))];focusWord(next);boxNodes.get(next)?.focus({preventScroll:true});scrollNear($('ImageScroll'),boxNodes.get(next));scrollNear($('Fields'),fieldNodes.get(wordLines.get(next))?.row);});
+    on($('ReviewNext'),'click',()=>{const pending=lines.map((_,i)=>i).filter(needsReview),current=wordLines.get(selected)??-1,index=pending.find(i=>i>current)??pending[0];if(index!==undefined)focusWord(lines[index].indices.find(wi=>{const w=draft.records[page].words[wi];return !w.corrected&&(w.uncertain||Number.isFinite(w.confidence)&&w.confidence<70);})??lines[index].indices[0],true);});
     on($('Page'),'change',()=>changePage(Number($('Page').value)));on($('Prev'),'click',()=>changePage(page-1));on($('Next'),'click',()=>changePage(page+1));
     on($('ZoomOut'),'click',()=>{zoom=Math.max(.5,Math.round((zoom-.25)*100)/100);updateZoom();});on($('ZoomIn'),'click',()=>{zoom=Math.min(3,Math.round((zoom+.25)*100)/100);updateZoom();});on($('Fit'),'click',()=>{zoom=1;updateZoom();});
     on($('Close'),'click',requestClose);on($('Cancel'),'click',requestClose);on(dialog,'cancel',event=>{event.preventDefault();requestClose();});
     on(dialog,'close',()=>finish(false));
-    on($('Keep'),'click',()=>{$('Discard').hidden=true;$('Actions').hidden=false;fieldNodes.get(selected)?.input.focus({preventScroll:true});});on($('DiscardConfirm'),'click',()=>finish(false));
+    on($('Keep'),'click',()=>{$('Discard').hidden=true;$('Actions').hidden=false;fieldNodes.get(wordLines.get(selected)??-1)?.input.focus({preventScroll:true});});on($('DiscardConfirm'),'click',()=>finish(false));
     on($('Apply'),'click',async()=>{if(applying||!changedWords(draft))return;applying=true;dialog.dataset.applying='true';const controls=[...dialog.querySelectorAll('button,select,textarea')].map(node=>[node,node.disabled]);for(const [node] of controls)node.disabled=true;$('Apply').textContent='적용 중…';showError('');try{await options.onApply?.(materialize(draft));for(const [node,disabled] of controls)node.disabled=disabled;finish(true);}catch(error){applying=false;dialog.removeAttribute('data-applying');for(const [node,disabled] of controls)node.disabled=disabled;$('Apply').textContent='수정 적용';showError(error?.message||'수정 내용을 적용하지 못했습니다. 다시 시도해 주세요.');refreshChanges();}});
     const observer=typeof ResizeObserver==='function'?new ResizeObserver(()=>{if(rendered)updateZoom();}):null;
     observer?.observe($('ImageScroll'));
@@ -12988,6 +13163,7 @@ function renderOCRText(){const host=$('ocrText');host.replaceChildren();const r=
   $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='paddle-v5'?(ocrCanEmbed(r)?'PP-OCRv5 · '+r.words.length+'개 글줄 · 엔진 확신도 '+Math.round(r.confidence||0)+' / 100 · '+OCR_LINE_POSITION_NOTE:r.geometryNote||'줄 위치가 없어 텍스트 저장만 가능합니다. 검색용 PDF에는 포함하지 않습니다.'):r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
   $('ocrConfidenceNote').textContent=r.source==='paddle-v5'?'밑줄은 확인이 필요한 글줄입니다. 확신도는 실제 정확도와 다릅니다. '+OCR_LINE_POSITION_NOTE:r.source==='gemini'?'밑줄은 확인이 필요한 글줄입니다. '+OCR_LINE_POSITION_NOTE:'밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.';
   if(r.source==='vision'&&!r.skipped)$('ocrConfidence').textContent=`Google Vision · ${r.words.length}단어 · 단어 위치 포함`+(Number.isFinite(r.confidence)?` · 엔진 확신도 ${Math.round(r.confidence)} / 100`:'');
+  if(r.correctionLines?.length)$('ocrConfidenceNote').textContent+=` 크게 고친 ${r.correctionLines.length}개 줄은 원래 글줄 범위 안에서 글자 위치를 추정해 저장합니다.`;
 }
 async function renderOCRCorrectionPage(record,{signal}={}){
   const p=pages.find(p=>p.uid===record.uid),options=readProOptions();

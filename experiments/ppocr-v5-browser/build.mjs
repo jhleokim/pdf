@@ -7,7 +7,7 @@ for(const [src,dst] of [
  ['node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm','ort-wasm-simd-threaded.wasm'],
  ['experiments/ppocr-v5-browser/node_modules/@techstark/opencv-js/dist/opencv.js','opencv.js'],
  ['work/ppocr-v5-models/det.onnx','det.onnx'],['work/ppocr-v5-models/rec.onnx','rec.onnx'],['work/ppocr-v5-models/dict.json','dict.json'],
- ['experiments/ppocr-v5-browser/engine.js','engine.js'],['experiments/ppocr-v5-browser/worker.js','worker.js'],['experiments/ppocr-v5-browser/ui.js','ui.js'],['src/ocr-correction.js','ocr-correction.js']])fs.copyFileSync(new URL(src,root),new URL(dst,out));
+ ['experiments/ppocr-v5-browser/engine.js','engine.js'],['experiments/ppocr-v5-browser/worker.js','worker.js'],['experiments/ppocr-v5-browser/ui.js','ui.js'],['src/ocr-correction-lines.js','ocr-correction-lines.js'],['src/ocr-correction.js','ocr-correction.js']])fs.copyFileSync(new URL(src,root),new URL(dst,out));
 const shell=fs.readFileSync(new URL('experiments/ppocr-v5-browser/index.html',root),'utf8')
  .replace('<!-- correction-style -->','<style>'+fs.readFileSync(new URL('src/ocr-correction.css',root),'utf8')+'</style>')
  .replace('<!-- correction-dialog -->',fs.readFileSync(new URL('src/ocr-correction.html',root),'utf8'));

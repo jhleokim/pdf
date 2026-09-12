@@ -2,6 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const context=vm.createContext({structuredClone});
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/ocr-correction.js'),'utf8'),context);
 const api=context.PDFOCRCorrection.data;
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/ocr-correction-lines.js'),'utf8'),context);
 const fixture=()=>[{uid:'page-1',key:'rotated-90',page:2,source:'ppocr-v5',language:'kor+eng',words:[{text:'원래',box:[.1,.2,.3,.4],separator:' ',confidence:62,uncertain:true,quad:[[.1,.2],[.3,.2],[.3,.4],[.1,.4]]},{text:'문장',box:[.4,.2,.6,.4],separator:'\n',confidence:94}],text:'원래 문장'}];
 const plain=value=>JSON.parse(JSON.stringify(value));
 test('draft editing isolates original records, nested geometry, and cancelled work',()=>{
@@ -34,4 +35,17 @@ test('skipped pages stay unmodified and geometry-free text remains correctable',
 test('selection overlay uses only finite normalized canonical boxes, with legacy fallback',()=>{
   assert.deepEqual(plain(api.boxOf({box:[.1,.2,.8,.9]})),[.1,.2,.8,.9]);assert.deepEqual(plain(api.boxOf({x:.1,y:.2,w:.5,h:.5})),[.1,.2,.6,.7]);
   for(const box of [[0,0,2,1],[.4,0,.2,1],[0,NaN,1,1],[0,0,1],[-.1,0,1,1]])assert.equal(api.boxOf({box}),null);
+});
+
+test('spacing-only line edits enable Apply, preserve untouched raw text, and undo exactly',()=>{
+  const source=fixture(),draft=api.createDraft(source),line={indices:[0,1]};
+  context.PDFOCRLines.update(draft,0,line,'원래문장');assert.equal(api.changedWords(draft),1);
+  assert.equal(api.materialize(draft)[0].text,'원래문장');assert.equal(api.materialize(draft)[0].words[0].corrected,true);
+  context.PDFOCRLines.update(draft,0,line,'원래 문장');assert.equal(api.changedWords(draft),0);assert.equal(api.materialize(draft)[0].text,source[0].text);
+});
+
+test('deleting a final word preserves the boundary before the next line',()=>{
+  const source=fixture();source[0].words.push({text:'다음줄',box:[.1,.5,.5,.55],separator:'\n'});
+  const draft=api.createDraft(source);context.PDFOCRLines.update(draft,0,{indices:[0,1]},'원래');
+  const result=api.materialize(draft)[0];assert.equal(result.text,'원래\n다음줄');assert.equal(result.words[1].text,'');assert.equal(result.words[1].separator,'\n');
 });

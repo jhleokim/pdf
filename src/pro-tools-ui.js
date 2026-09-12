@@ -289,6 +289,7 @@ function renderOCRText(){const host=$('ocrText');host.replaceChildren();const r=
   $('ocrConfidence').textContent=r.skipped?'이 페이지에는 새 OCR을 추가하지 않습니다.':r.source==='paddle-v5'?(ocrCanEmbed(r)?'PP-OCRv5 · '+r.words.length+'개 글줄 · 엔진 확신도 '+Math.round(r.confidence||0)+' / 100 · '+OCR_LINE_POSITION_NOTE:r.geometryNote||'줄 위치가 없어 텍스트 저장만 가능합니다. 검색용 PDF에는 포함하지 않습니다.'):r.source==='gemini'?`Gemini · ${r.words.length}개 글줄 · 글자와 추정 위치를 확인해 주세요.`:`인식 ${r.words.length}단어 · 엔진 확신도 ${Math.round(r.confidence)} / 100 · 확인 필요 ${r.words.filter(w=>w.confidence<70).length}단어`;
   $('ocrConfidenceNote').textContent=r.source==='paddle-v5'?'밑줄은 확인이 필요한 글줄입니다. 확신도는 실제 정확도와 다릅니다. '+OCR_LINE_POSITION_NOTE:r.source==='gemini'?'밑줄은 확인이 필요한 글줄입니다. '+OCR_LINE_POSITION_NOTE:'밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.';
   if(r.source==='vision'&&!r.skipped)$('ocrConfidence').textContent=`Google Vision · ${r.words.length}단어 · 단어 위치 포함`+(Number.isFinite(r.confidence)?` · 엔진 확신도 ${Math.round(r.confidence)} / 100`:'');
+  if(r.correctionLines?.length)$('ocrConfidenceNote').textContent+=` 크게 고친 ${r.correctionLines.length}개 줄은 원래 글줄 범위 안에서 글자 위치를 추정해 저장합니다.`;
 }
 async function renderOCRCorrectionPage(record,{signal}={}){
   const p=pages.find(p=>p.uid===record.uid),options=readProOptions();
