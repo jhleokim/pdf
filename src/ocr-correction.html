@@ -1,0 +1,26 @@
+<dialog id="ocrCorrectionDialog" class="ocr-correction" aria-labelledby="ocrCorrectionTitle" aria-describedby="ocrCorrectionDescription">
+  <header class="ocr-correction-head">
+    <div><span class="ocr-correction-eyebrow">PDF STUDIO · 텍스트 인식</span><h2 id="ocrCorrectionTitle">인식 텍스트 교정</h2><p id="ocrCorrectionDescription">원본의 영역을 선택하고, 연결된 텍스트를 수정하세요.</p></div>
+    <button type="button" class="btn icon quiet" id="ocrCorrectionClose" aria-label="텍스트 교정 닫기"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+  </header>
+  <div class="ocr-correction-toolbar">
+    <div class="ocr-correction-pages"><button type="button" class="btn icon" id="ocrCorrectionPrev" aria-label="이전 교정 페이지">‹</button><label for="ocrCorrectionPage" class="ocr-correction-sr">교정할 페이지</label><select id="ocrCorrectionPage"></select><button type="button" class="btn icon" id="ocrCorrectionNext" aria-label="다음 교정 페이지">›</button><span id="ocrCorrectionPageCount"></span></div>
+    <div class="ocr-correction-zoom" role="group" aria-label="원본 확대"><button type="button" class="btn icon" id="ocrCorrectionZoomOut" aria-label="원본 축소">−</button><output id="ocrCorrectionZoomValue" aria-live="polite">100%</output><button type="button" class="btn icon" id="ocrCorrectionZoomIn" aria-label="원본 확대">+</button><button type="button" class="btn quiet" id="ocrCorrectionFit">맞춤</button></div>
+  </div>
+  <div class="ocr-correction-body">
+    <section class="ocr-correction-original" aria-labelledby="ocrCorrectionOriginalTitle">
+      <div class="ocr-correction-pane-head"><h3 id="ocrCorrectionOriginalTitle">원본 페이지</h3><span>영역을 누르면 해당 텍스트로 이동</span></div>
+      <div class="ocr-correction-scroll" id="ocrCorrectionImageScroll"><p class="ocr-correction-image-state" id="ocrCorrectionImageState" role="status">페이지를 준비하고 있습니다.</p><div class="ocr-correction-sheet" id="ocrCorrectionSheet" hidden><canvas id="ocrCorrectionCanvas" aria-label="인식 영역이 표시된 원본 페이지"></canvas><div class="ocr-correction-boxes" id="ocrCorrectionBoxes" role="group" aria-label="인식한 텍스트 영역"></div></div></div>
+    </section>
+    <section class="ocr-correction-text" aria-labelledby="ocrCorrectionTextTitle">
+      <div class="ocr-correction-pane-head"><h3 id="ocrCorrectionTextTitle">인식 텍스트 <span id="ocrCorrectionFieldCount"></span></h3><span id="ocrCorrectionSelection" role="status" aria-live="polite">영역을 선택하세요</span></div>
+      <div class="ocr-correction-fields" id="ocrCorrectionFields"></div>
+      <p class="ocr-correction-text-note">검색·복사할 텍스트만 수정합니다. 원본 페이지의 글자와 모양은 유지됩니다.</p>
+    </section>
+  </div>
+  <footer class="ocr-correction-footer">
+    <div class="ocr-correction-status"><span id="ocrCorrectionChanges" role="status" aria-live="polite">수정한 영역 없음</span><p id="ocrCorrectionError" role="alert" hidden></p></div>
+    <div class="ocr-correction-actions" id="ocrCorrectionActions"><button type="button" class="btn" id="ocrCorrectionCancel">취소</button><button type="button" class="btn primary" id="ocrCorrectionApply" disabled>수정 적용</button></div>
+    <div class="ocr-correction-discard" id="ocrCorrectionDiscard" hidden><p role="alert">수정한 내용을 버리고 닫을까요?</p><div><button type="button" class="btn" id="ocrCorrectionKeep">계속 편집</button><button type="button" class="btn" id="ocrCorrectionDiscardConfirm">변경 버리기</button></div></div>
+  </footer>
+</dialog>

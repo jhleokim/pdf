@@ -35,6 +35,7 @@
       <label class="pro-field" for="ocrResultPage"><span>인식 결과</span><select id="ocrResultPage"></select></label>
       <p id="ocrConfidence" class="pro-hint"></p><div id="ocrText" class="ocr-text" tabindex="0" aria-label="인식한 텍스트"></div>
       <p id="ocrConfidenceNote" class="pro-hint">밑줄은 엔진 확신도가 낮은 단어입니다. 확신도는 실제 정확도와 다릅니다.</p>
+      <details class="ocr-advanced"><summary>고급옵션</summary><p class="pro-hint">원문 영역과 인식한 글자를 대조하고, 검색·복사할 텍스트를 수정합니다.</p><button class="btn" id="ocrCorrect">인식 결과 교정</button></details>
       <button class="btn primary" id="ocrAccept">확인한 결과를 PDF에 포함</button>
       <div class="stamp-actions"><button class="btn quiet" id="ocrTxt">텍스트 저장</button><button class="btn quiet" id="ocrClear">인식 결과 지우기</button></div>
     </div>

@@ -1,0 +1,88 @@
+# PP-OCRv5 한국어 브라우저 시험판
+
+운영 PDF Studio와 별도로 실행하는 실험입니다. 공식 PaddlePaddle의 탐지/한국어 인식 ONNX 모델을 WebAssembly 단일 스레드로 실행합니다. 별도 GPU나 OCR 서버는 사용하지 않습니다. 현재 운영 엔진을 교체하지 않습니다.
+
+웹 시험판: https://pdf-ocr-lab.hanatrust.workers.dev/
+
+## 웹 배포
+
+루트에서 아래 명령으로 별도 Worker `pdf-ocr-lab`에 배포합니다. 운영 `pdf` Worker 설정과 API Secret은 사용하지 않습니다. 공개 실행 파일/모델만 명시적으로 복사하며, 사용자 PDF와 OCR 결과가 있는 `work/`를 배포 폴더로 지정하지 않습니다. 배포 폴더에 예상하지 않은 파일이 있으면 빌드가 실패합니다.
+
+```powershell
+node experiments/ppocr-v5-browser/build-web.mjs
+npx wrangler deploy --config experiments/ppocr-v5-browser/wrangler.jsonc --dry-run
+npx wrangler deploy --config experiments/ppocr-v5-browser/wrangler.jsonc
+node experiments/ppocr-v5-browser/verify-web.mjs
+```
+
+배포 확인 스크립트는 공개된 14개 파일의 SHA-256을 로컬 빌드와 대조하고, CSP 적용 및 시험 문서/결과 경로의 404 응답을 확인합니다. 웹 실행은 분리된 JS/WASM/ONNX 파일을 사용합니다. 이는 단일 HTML의 파일 직접 실행 검증과 별개입니다.
+
+2026-09-12 웹 배포 `26d3da8f-09ef-4716-884b-6390a2587533` 검증: 공개 HTTPS 주소에서 원본 PDF 6/6페이지 인식 완료, 준비 포함 86.56초. 페이지별 26.92 / 25.49 / 6.01 / 4.40 / 5.25 / 5.68초였습니다. 브라우저 오류 로그는 없었고, 공개 파일 14개 모두 해시가 일치했습니다. 네트워크/실행 환경이 다른 배포 후 확인 1회이므로 이전 결과 대비 속도 개선율로 해석하지 않습니다.
+
+## 모델과 구현
+
+- 탐지: 공식 `PaddlePaddle/PP-OCRv5_mobile_det_onnx`, revision `e6f4fa85f00e168c862bc462aebca69eef9b3d3d`, 4,826,518 bytes.
+- 인식: 공식 `PaddlePaddle/korean_PP-OCRv5_mobile_rec_onnx`, revision `5c6f574b8e2230adf4287b33e736d71b9fabd28e`, 13,418,787 bytes.
+- 모델 합계 18,245,305 bytes. 파일별 SHA-256과 출처는 `models.json`에 고정합니다.
+- ONNX Runtime Web 1.29.0은 루트 lockfile을 사용합니다. OpenCV.js 4.12.0과 YAML 2.8.1은 이 폴더 lockfile을 사용합니다.
+- BGR 정규화, DB threshold .3 / box score .6 / unclip ratio 1.5, 회전 사각형·원근 보정 crop, 48px 높이 한국어 CTC 인식, 4개 글줄 배치를 사용합니다. 원본 페이지를 통째로 저해상도 인식하지 않고 탐지 좌표로 원본 이미지에서 글줄을 잘라 읽습니다.
+- 한글 자모 결과는 NFC로 정규화합니다. 표·세로쓰기·다단 문서의 읽기 순서는 자체 휴리스틱이며 공식 문서 레이아웃 파이프라인이 아닙니다.
+- Worker에서 엔진을 실행하며 취소/180초 제한은 Worker를 종료합니다. 페이지별 완료 결과는 유지합니다. PDF.js로 PDF를 직접 열거나 이미지들을 입력할 수 있습니다. 시험판은 최대 12페이지입니다.
+- PDF 검색 텍스트 저장 연동은 아직 포함하지 않습니다. 화면 글줄 사각형과 인식 텍스트, 결과 JSON을 검토하는 시험판입니다. 글줄 사각형은 개별 문자 선택 위치를 보장하지 않습니다.
+
+## 재현
+
+저장소 루트에서 실행합니다. 공개 모델만 다운로드하며 입력 문서는 다운로드 스크립트에 전달하지 않습니다.
+
+```powershell
+npm ci
+npm ci --prefix experiments/ppocr-v5-browser
+node experiments/ppocr-v5-browser/prepare.mjs
+node experiments/ppocr-v5-browser/build.mjs
+node experiments/ppocr-v5-browser/build-baseline.mjs
+node experiments/ppocr-v5-browser/build-standalone.mjs
+node --test experiments/ppocr-v5-browser/engine.test.cjs
+```
+
+로컬 정적 서버로 저장소 루트를 제공하고 `/work/ppocr-v5-trial/`을 엽니다. `/work/ppocr-v5-trial/baseline.html`은 현재 PDF Studio의 Tesseract 한국어+영어 자동 모드 대조 시험입니다. `dist/PP-OCRv5-Korean-Trial.html`은 모델과 실행 파일을 포함한 단일 파일입니다. 외부 HTTP 연결을 허용하지 않는 CSP를 포함합니다.
+
+원본 문서, 페이지 이미지, OCR 전문, 결과 JSON은 `work/`에만 두고 Git에 올리지 않습니다. 아래 결과는 테스트 1회 기준이며 공식 벤치마크 점수가 아닙니다.
+
+## 같은 6페이지 이미지 비교
+
+사용자가 제공한 스캔 PDF를 Poppler로 긴 변 2367px PNG 6장으로 렌더링하여 두 엔진에 동일하게 입력했습니다. PP-OCRv5 탐지는 긴 변 1536px, 인식 crop은 원본 이미지에서 얻습니다. Tesseract는 앱의 한국어+영어 자동 모드(PSM3/6 비교)를 그대로 사용합니다. Windows / RTX 2080 SUPER가 설치된 PC의 내장 Chromium이며 두 엔진 모두 WASM CPU 경로입니다.
+
+| 페이지 | PP-OCRv5 초 | Tesseract 초 |
+|---|---:|---:|
+| 1 | 36.45 | 36.06 |
+| 2 | 36.64 | 36.88 |
+| 3 | 8.57 | 4.00 |
+| 4 | 6.45 | 2.67 |
+| 5 | 6.92 | 4.89 |
+| 6 | 7.42 | 4.11 |
+| 전체 준비 포함 | 103.66 | 89.09 |
+
+두 엔진 모두 6/6 완료했습니다. 이 시험에서 PP-OCRv5는 더 빠르지 않았습니다. 이전 VL 모델은 같은 PDF 첫 페이지를 120초 내 완료하지 못했지만, 이는 별도 경로의 이전 측정이므로 위 표와 모든 전처리 조건이 같다고 주장하지 않습니다. 단일 실행이며 백그라운드 부하를 통제한 벤치마크가 아닙니다. 초기 시험판에서 OpenCV thenable을 잘못 await해 멈춘 탭이 있었고 제어 도구로 종료하지 못했습니다. 이후 코드에서 그 초기화 오류를 수정하고 Worker를 사용했습니다.
+
+## 원본 PDF 직접 입력 최종 확인
+
+읽기 순서 보정 후 PDF.js로 원본 PDF를 직접 여는 최종 경로도 6/6 완료했습니다. 페이지별 인식은 37.23 / 31.48 / 6.46 / 4.71 / 5.72 / 6.16초, 전체 준비·렌더 포함 94.67초였습니다. Poppler 이미지 비교와 렌더링 및 코드 시점이 달라 속도 개선율로 계산하지 않습니다.
+
+## 인식 품질과 채택 판단
+
+이미지를 보고 정한 제목·조항·서식 문구·숫자 표기 28개를 공백/구두점 제거 후 연속 문자열로 점검했습니다. 결과를 본 뒤 고른 사후 점검이며 무작위 표본이나 전체 CER이 아닙니다. 초기 6장 비교에서는 PP-OCRv5 25/28, Tesseract 19/28이 일치했습니다. 읽기 순서 때문에 문자열이 끊어진 경우도 실패로 계산합니다. 불명확한 조항 제목 하나는 정답을 확정하지 못해 제외했습니다.
+
+- 작은 본문, 필기, 붉은 인장에는 오인식이 남습니다. 특정 필기 숫자/기호는 두 엔진 모두 놓쳤습니다. 실제 금액이 채워진 문서가 아니므로 금액 인식 정확도를 평가했다고 할 수 없습니다.
+- 첫 페이지의 글줄 overlay를 시각 확인했습니다. 제목/본문 영역을 찾았지만 전 페이지 좌표 IoU, 문자별 위치, PDF 검색·선택·저장 정확도는 측정하지 않았습니다.
+- 초기 열 분리 휴리스틱이 짧은 표 양식까지 두 열로 나누어 제목 순서를 흐트러뜨렸습니다. 충분한 긴 본문 글줄이 있을 때만 열 분리를 적용하도록 수정하고 회귀 검사했습니다.
+- **운영 교체 보류.** VL보다 현실적인 로컬 후보이지만, Tesseract보다 전반적으로 우수하다고 결론내릴 근거는 부족합니다.
+
+## 단일 HTML 검증 한계
+
+모델/엔진을 넣은 HTML은 약 59.9MB이며 모델 해시·스크립트 구문·외부 스크립트 미참조를 검사했습니다. `file://` 직접 실행은 브라우저 도구의 URL 정책이 차단했으므로 미검증입니다. HTTP 시험 성공이나 정적 검사를 파일 직접 실행 성공으로 대체하지 않습니다. 최종 사용자의 더블클릭 실행 확인이 필요합니다.
+
+## 마지막 회귀 확인
+
+- 같은 줄의 작은 세로 위치 차이를 허용하도록 정렬을 보정했습니다. 3페이지 이미지 실제 재실행(6.67초)에서 제목이 `위 → 임 → 장` 순서로 출력됨을 확인했습니다. 위의 28개 사후 점검 점수는 이전 비교 결과 그대로이며 재산정하지 않았습니다.
+- 인식 중 취소 버튼을 눌러 취소 상태와 재실행 버튼 복귀를 확인했습니다. 새 작업 시작 시 이전 문서 미리보기와 진행률도 초기화합니다.
+- 읽기 순서 및 단일 파일 정적 검증 테스트 4개를 통과했습니다.
