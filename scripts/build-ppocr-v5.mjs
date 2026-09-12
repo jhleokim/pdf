@@ -38,8 +38,12 @@ export async function buildPPOCRV5Assets({outputDirectory = defaultOutput} = {})
     assets[name] = {file, bytes: bytes.length, sha256: hash};
     writeFileSync(resolve(outputDirectory, file), bytes);
   }
-  for (const [name, source] of Object.entries(sources)) write(name, readFileSync(resolve(root, source)));
-  const adapter = readFileSync(resolve(root, 'src/ppocr-v5/adapter.js'), 'utf8').replace('/* PPV5_ASSETS */ {}', JSON.stringify(assets));
+  for (const [name, source] of Object.entries(sources)) {
+    const bytes=readFileSync(resolve(root, source));
+    // Source checkout line endings must not change immutable asset URLs.
+    write(name, /\.m?js$/.test(name)?Buffer.from(bytes.toString('utf8').replace(/\r\n/g,'\n')):bytes);
+  }
+  const adapter = readFileSync(resolve(root, 'src/ppocr-v5/adapter.js'), 'utf8').replace(/\r\n/g,'\n').replace('/* PPV5_ASSETS */ {}', JSON.stringify(assets));
   write('adapter.js', Buffer.from(adapter));
   for (const [name, source] of Object.entries(licenses)) writeFileSync(resolve(outputDirectory, name), readFileSync(resolve(root, source)));
   const metadata = {schemaVersion: 1, model: PPOCRV5_MODEL, runtimeURL: '/ocr/ppocr-v5/' + assets['adapter.js'].file,
