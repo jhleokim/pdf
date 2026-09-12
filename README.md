@@ -2,45 +2,56 @@
 
 현재 소스 버전: **v5.0**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다.
 
-브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집은 기기에서 처리합니다. v5.0 웹의 기본 OCR은 Tesseract이며 드롭다운에서 Paddle을 선택할 수 있고, 단독 실행 파일의 OCR은 Tesseract입니다.
+브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집과 로컬 OCR은 기기에서 처리합니다. 웹과 단독 실행 HTML 모두 Tesseract가 기본이며, 인식 모델 드롭다운에서 **PP-OCRv5 · 경량 한국어**를 선택할 수 있습니다.
 
 | 구성 | 웹 v5.0 | 단독 실행 HTML v5.0 |
 |---|---|---|
-| 기본 OCR | Tesseract.js 7.0.0 · PaddleOCR-VL-1.5 Community Q4 선택 가능 | Tesseract.js 7.0.0 |
-| 모델 준비 | Tesseract는 필요한 엔진·언어만 첫 사용에 다운로드. Paddle 선택 시 약 900MB, 캐시 재사용 | 엔진·한글·영어 데이터를 HTML에 내장 |
-| 실행 조건 | Tesseract는 일반 브라우저, Paddle은 WebGPU와 충분한 그래픽 메모리가 있는 PC | 내장 Tesseract를 실행할 수 있는 브라우저 |
-| 문서 처리 | Paddle은 브라우저 안에서 처리 | 브라우저 안에서 처리 |
-| Google Vision | Pro 8회 클릭 후 활성화 문구 입력, 매 실행 전 전송 동의 | 버튼·확인창·API 연결 모듈 제외 |
+| OCR 모델 | Tesseract.js 7.0.0 기본 · PP-OCRv5 경량 한국어 선택 | 동일한 두 로컬 엔진 제공 |
+| 모델 준비 | 선택한 엔진의 첫 인식 때 필요한 파일 다운로드. PP-OCRv5 모델 약 18.2MB, 실행 코드·WASM 별도 | 두 엔진·모델·언어 데이터를 HTML에 내장, 선택한 엔진만 초기화 |
+| 실행 조건 | Web Worker·WebAssembly·Canvas를 지원하는 브라우저. PP-OCRv5는 GPU 불필요 | 같은 브라우저 기능 필요. 설치·CDN·API 키 없이 실행하도록 구성 |
+| 문서 처리 | Tesseract·PP-OCRv5는 브라우저 안에서 처리 | 브라우저 안에서 처리 |
+| 인식 결과 교정 | 원본 영역과 텍스트를 연결한 교정 창 | 같은 교정 창 제공 |
+| Google Vision | Pro 8회 클릭 후 활성화 문구 입력, 매 실행 전 전송 동의 | 활성화 창·버튼·API 연결 모듈 제외 |
 | 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/` 자산, API Worker | `dist/PDF-Studio-Standalone-v5.0.html` 한 파일 |
 
 ## OCR 모델 선택과 진행 안내
 
-Tesseract를 기본으로 제공하고 인식 모델 드롭다운에서 PaddleOCR-VL-1.5를 선택할 수 있습니다. 선택만으로는 Paddle 런타임이나 모델을 다운로드하지 않습니다. 기존 인식 결과는 모델을 바꿔도 유지하고, 실제 인식 요청에는 선택한 모델을 사용합니다.
+**Pro → 텍스트 인식 → 인식 모델**에서 Tesseract 또는 **PP-OCRv5 · 경량 한국어**를 선택합니다. 선택만으로는 런타임이나 모델을 다운로드하지 않습니다. 기존 인식 결과는 모델을 바꿔도 유지하고, 실제 인식 요청에는 선택한 모델을 사용합니다. PP-OCRv5는 시험판에서 검증한 경량 엔진을 PDF Studio에 통합한 것으로, 별도 사이트에 문서를 다시 올릴 필요가 없습니다.
 
-오래 걸리는 작업 창에는 현재 단계의 진행률, 경과 시간과 예상 남은 시간을 분·초로 표시합니다. 다운로드 바이트와 Tesseract 인식률에서 처리 속도를 계산합니다. Paddle/Google Vision은 전체 출력량을 알 수 없어 첫 사용에는 진행 중·남은 시간 계산 중으로 표시합니다. 완료한 페이지가 있으면 실제 인식 시간으로 진행률과 남은 시간을 추정하고 `약`으로 구분합니다. 기기에는 모델·언어·분석 방식별 처리 시간 숫자만 저장하여 다음 작업에도 활용하며 문서 내용은 저장하지 않습니다. 추정 시간이 지났거나 진행이 오래 멈추면 0초를 약속하지 않고 다시 계산 중으로 표시합니다.
+오래 걸리는 작업 창에는 현재 단계의 진행률, 경과 시간과 예상 남은 시간을 분·초로 표시합니다. Tesseract의 인식 진행률과 PP-OCRv5의 처리한 글줄 비율을 사용하며, 모델 준비와 문서 인식을 구분합니다. Google Vision처럼 전체 처리량을 알 수 없는 작업은 처음에 남은 시간을 계산 중으로 표시하고, 완료한 페이지의 실제 처리 시간이나 이전 처리 시간으로 추정할 때는 `약`으로 구분합니다. 기기에는 모델·언어·분석 방식별 처리 시간 숫자만 저장하며 문서 내용은 저장하지 않습니다. 추정 시간이 지나거나 진행이 오래 멈추면 0초를 약속하지 않고 다시 계산 중으로 표시합니다.
 
-## v5.0 웹 Paddle OCR — 실문서 검증 실패 / 실험용
+### 고급옵션의 인식 결과 교정
 
-2026-09-12 실제 6페이지 스캔 계약서로 재검증했습니다. 첫 페이지에서 WebGPU 초기화와 토큰 생성은 동작했지만 120초 인식 제한 안에 완료하지 못했습니다. 공식 모델 벤치마크나 합성 문서 시험을 이 브라우저 구현의 업무용 성능으로 일반화하지 않습니다. [실문서 검증 보고서](docs/paddle-real-document-review.md)를 확인하세요.
+1. 현재 페이지를 시험 인식하거나 선택·전체 페이지를 인식합니다.
+2. **고급옵션 → 인식 결과 교정**을 엽니다. 왼쪽에는 인식에 사용한 페이지와 영역, 오른쪽에는 연결된 텍스트 필드가 표시됩니다.
+3. 왼쪽 영역을 클릭하면 해당 텍스트 필드로 이동하고 선택 표시가 함께 바뀝니다. 오른쪽 필드를 선택해도 원본의 대응 영역이 표시됩니다. 페이지 이동·확대·맞춤으로 원문과 대조할 수 있습니다.
+4. 필요한 글자를 고친 뒤 **수정 적용**을 누릅니다. 닫기·취소에서는 초안을 버리거나 계속 수정할 수 있습니다. 적용 전 초안은 기존 인식 결과와 분리되며, 적용한 변경은 메모리에 있는 결과에 반영됩니다.
+5. 내용을 확인하고 **확인한 결과를 PDF에 포함**을 다시 선택한 뒤 결과를 만들어 저장합니다. 수정하면 이전의 PDF 포함 확인은 해제됩니다. TXT 저장에도 수정한 내용이 반영됩니다.
 
-- [ONNX Community PaddleOCR-VL-1.5](https://huggingface.co/onnx-community/PaddleOCR-VL-1.5-ONNX/tree/ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4)의 revision **`ebc8e65ff106df8088bbb3f31ce00bf2fccb24b4`**를 고정합니다. Q4 vision/decoder와 해당 변환본의 embedding을 사용합니다. PP-OCRv5나 공식 PaddleOCR 전체 문서 분석 파이프라인과 같은 구성이 아닙니다.
-- 모델·토크나이저 6개 파일의 원본 합계는 **899,511,134바이트(약 900MB / 858MiB)**입니다. 실행용 JavaScript·WASM 다운로드는 별도입니다. 모델은 첫 OCR 실행 때 준비하므로 기본 페이지 편집만 하려고 모델 전체를 받을 필요는 없습니다.
-- 웹 방문자는 사이트와 같은 출처의 정적 모델 파일을 받습니다. 공개 Hugging Face 모델 다운로드는 개발·CI 준비 단계에서만 사용합니다. Paddle에 입력한 페이지 이미지와 인식 결과는 외부 OCR 서버로 보내지 않습니다. 별도로 동의한 Google Vision 인식만 Cloudflare를 거쳐 Google로 페이지 이미지를 전송합니다.
-- WebGPU 지원 여부와 `maxStorageBufferBindingSize` 512MiB 이상을 확인합니다. 이 값은 GPU 전체 메모리 용량이 아니며, 실제 실행에는 모델과 중간 결과를 담을 여유 메모리가 더 필요합니다. GPU를 사용할 수 없거나 한도가 부족하면 이유를 표시하고 중단합니다. 웹에서 Tesseract로 자동 전환하지 않습니다. 모바일과 모든 GPU의 동작을 보장하지 않습니다.
-- Paddle 전처리·모델 초기화·GPU 추론은 전용 모듈 Worker에서 실행합니다. UI의 취소/시간 제한은 GPU 완료를 기다리지 않고 Worker를 종료합니다. 모델 준비는 최대 5분, 페이지 인식은 최대 2분, 진행 메시지 없는 대기는 최대 90초로 제한합니다. 검증을 통과한 고성능 GPU 어댑터를 실제 ONNX 런타임에서도 사용합니다. 다운로드 완료와 WebGPU 초기화는 별도 단계로 표시합니다.
-- Gemini의 한도 초과(429)는 자동 재전송하지 않으며 서버의 재시도 대기 시간 동안 같은 탭의 추가 업로드를 막습니다. 한도 초기화를 보장하는 시간이 아니므로 계속 429가 발생하면 프로젝트 한도를 확인해야 합니다. Gemini 페이지 처리에는 이미지 준비를 포함한 2분 제한이 있고, 요청 자체의 90초 제한도 유지합니다. 실패 원인은 OCR 패널에 표시하고 완료한 페이지는 보존합니다.
-- **먼저 한 페이지 인식 → 글자와 줄 위치 확인 → 확인한 결과를 PDF에 포함 → 결과 만들기** 순서로 사용합니다. Spotting의 글줄 좌표를 사용하며 제공되지 않은 신뢰도 점수를 만들지 않습니다. 좌표가 없거나 출력이 잘린 결과를 검색 가능한 PDF 완료로 처리하지 않습니다.
-- 검색용 PDF는 원래 페이지 모습 위에 숨은 텍스트를 추가합니다. 글줄 안의 글자 폭은 내장 글꼴로 추정하므로 특정 단어의 선택 영역이 실제 글자와 어긋날 수 있습니다. 작은 글자·복잡한 표·다단 문서·손글씨에는 오인식과 누락이 있을 수 있습니다. 큰 모델의 준비 시간과 페이지 인식 시간은 구분해서 평가해야 합니다.
+교정은 **검색·복사용 숨은 텍스트**를 바꾸며 원본 스캔 이미지에 보이는 글자는 바꾸지 않습니다. 필드를 비우면 해당 글줄을 출력 텍스트에서 제외합니다. 텍스트 위치가 없는 결과는 TXT 내용만 수정할 수 있고, 기존 검색 텍스트가 있어 인식을 건너뛴 페이지에는 새 교정 영역을 만들지 않습니다. 텍스트는 일반 문자열로 처리하며 HTML로 실행하지 않습니다. 새로고침하면 저장하지 않은 결과와 초안은 사라집니다.
 
-### 모델 무결성과 브라우저 캐시
+## PP-OCRv5 경량 한국어 엔진
 
-개발 단계에서 `vendor/paddle/model-source.json`과 코드의 고정된 크기·SHA-256을 대조합니다. 원본을 **20MiB 이하 48개 조각**으로 만들고, `vendor/paddle/assets/<revision>/assets.json`에 원본과 각 조각의 경로·크기·해시를 기록합니다. 이 크기는 [Cloudflare Static Assets의 파일당 25MiB 제한](https://developers.cloudflare.com/workers/platform/limits/#static-assets) 안에 들어갑니다.
+공식 PaddlePaddle의 한국어 인식 모델과 글자 영역 탐지 모델을 사용합니다. 인식은 전용 Worker에서 **WebAssembly 단일 스레드**로 실행하며 WebGPU를 요구하지 않습니다. 공식 전체 문서 분석 파이프라인을 이식한 구성은 아니며, 줄 순서는 브라우저 구현의 휴리스틱을 사용합니다.
 
-브라우저는 각 조각의 길이와 SHA-256을 확인한 후 원본 순서대로 합칩니다. 확인한 모델 조각만 revision별 CacheStorage에 저장하며, 문서 파일이나 OCR 결과를 이 모델 캐시에 넣지 않습니다. 캐시가 남아 있으면 다음 인식에서 재사용합니다. 손상된 캐시 조각은 지우고 다시 받습니다. 비공개 창·저장 공간 부족 등으로 캐시에 쓸 수 없어도 그 실행의 OCR은 계속 시도하지만 다음 사용 때 다시 다운로드할 수 있습니다. 브라우저가 캐시를 정리하거나 사용자가 사이트 데이터를 삭제하면 재다운로드가 필요하므로 영구 보관이나 웹의 완전 오프라인 실행을 보장하지 않습니다.
+- 한국어 인식: `PaddlePaddle/korean_PP-OCRv5_mobile_rec_onnx`, revision `5c6f574b8e2230adf4287b33e736d71b9fabd28e`.
+- 영역 탐지: `PaddlePaddle/PP-OCRv5_mobile_det_onnx`, revision `e6f4fa85f00e168c862bc462aebca69eef9b3d3d`.
+- 두 ONNX 모델 합계는 **18,245,305바이트(약 18.2MB)**입니다. OpenCV·ONNX Runtime·WASM·문자 사전은 별도입니다. 한국어와 영어를 함께 처리하며 언어·문단 분석 설정은 Tesseract에서 사용합니다.
+- 검증한 시험판과 같은 긴 변 2,367px 이하의 입력, 탐지 긴 변 1,536px를 사용하고 한 번에 한 페이지씩 인식합니다. 모델 준비와 페이지 인식은 각각 최대 180초이며, 취소·시간 초과 시 Worker를 종료합니다. 중간 실패가 발생해도 완료한 페이지 결과는 유지합니다.
+- 인식된 글줄의 위치와 엔진 확신도를 제공합니다. 확신도는 실제 정확도가 아니며 작은 글자·표·다단 문서·필기에는 오인식과 누락이 있을 수 있습니다. 줄 안의 글자 폭은 내장 글꼴로 추정하므로 특정 단어의 선택 영역은 원본 글자와 어긋날 수 있습니다.
+- 교정한 내용도 원래 글줄 영역 안에 숨은 텍스트로 배치합니다. 잘못 읽은 줄을 수정할 수 있지만, 인식하지 못한 영역을 새로 그리거나 글자별 위치를 다시 계산하는 기능은 포함하지 않습니다.
 
-모델 자산은 `/ocr/paddle/models/<revision>/`, 실행 코드는 해시가 붙은 파일명으로 배포합니다. 모델·런타임 응답은 장기 캐시하고 HTML은 재검증합니다. `run_worker_first`는 `/api/*`에만 적용하므로 모델 전달은 정적 자산 경로를 사용합니다. R2 버킷이나 서버 OCR 엔진 설치는 필요하지 않습니다.
+시험판의 실제 6페이지 문서는 모두 인식을 완료했습니다. 동일 이미지 비교에서는 PP-OCRv5 약 104초, Tesseract 약 89초였으며 경량 엔진이 항상 더 빠르거나 정확하다고 보장하지 않습니다. 상세 조건과 한계는 [경량 엔진 시험 기록](experiments/ppocr-v5-browser/README.md)을 참고하세요. 이 기록은 시험판의 측정이며 최종 PDF Studio 전체 사용 흐름의 성능 측정과 구분합니다.
 
-단독 실행본은 위 모델 다운로드·Paddle WebGPU 경로를 포함하지 않습니다. 편집과 Tesseract OCR에 서버·CDN·계정·API 키가 필요하지 않으며, Gemini 숨김 기능도 포함하지 않습니다. 과거의 1.24GB Paddle 단일 HTML 실험과 현재 제공하는 Tesseract standalone은 구분합니다. 당시 측정 조건과 제한은 [실험 기록](experiments/paddleocr-vl15/README.md)에 있습니다.
+이전 **PaddleOCR-VL-1.5 브라우저 구현은 현재 드롭다운과 배포 자산에서 제외**했습니다. 당시 시간 초과 원인과 검증 범위는 [폐기한 VL 구현 검증 기록](docs/paddle-real-document-review.md)에 남겨 둡니다.
+
+### 모델 무결성과 자산 전달
+
+빌드 시 `experiments/ppocr-v5-browser/models.json`에 고정한 크기·SHA-256으로 공식 모델과 설정 파일을 검증하고, 검증한 한국어 설정에서 문자 사전을 만듭니다. 준비된 원본은 Git에서 제외한 `work/ppocr-v5-models/`에 둡니다. 실행용 모델·사전은 Worker에서도 길이와 SHA-256을 확인합니다.
+
+웹 자산은 같은 출처의 **`/ocr/ppocr-v5/`** 아래 해시가 붙은 파일명으로 배포합니다. 자산은 브라우저 HTTP 캐시를 재사용하고 `manifest.json`과 HTML은 재검증합니다. 문서 이미지나 인식 결과를 모델 자산으로 저장하지 않습니다. 브라우저가 캐시를 정리하거나 비공개 창을 사용하면 다음 실행에서 파일을 다시 받을 수 있으므로 웹의 완전 오프라인 실행을 보장하지 않습니다. 공개 모델 다운로드는 개발·CI 준비 단계에서만 수행하며, 페이지 이미지는 외부 OCR 서버로 보내지 않습니다. 별도로 동의한 Google Vision만 Cloudflare를 거쳐 Google로 전송합니다.
+
+단독 실행본은 Tesseract와 PP-OCRv5의 모델·런타임을 모두 HTML에 포함하고, 선택한 엔진의 첫 실행에 Blob URL을 준비합니다. Google Vision·Gemini의 활성화 UI와 API 연결 모듈, API 키는 포함하지 않습니다. **이번 통합의 `file://` 직접 실행은 브라우저 도구의 URL 정책 제한으로 실동작 미검증**입니다. 내장 자산 무결성, 스크립트 구문과 Blob 로더 동작의 자동 검증을 직접 파일 실행 완료로 취급하지 않습니다.
 
 ## v4.0 작업 경험과 처리 최적화
 
@@ -73,7 +84,7 @@ Tesseract를 기본으로 제공하고 인식 모델 드롭다운에서 PaddleOC
 ## v3.8 도장·서명과 텍스트 인식
 ### Google Cloud Vision OCR (웹 전용)
 
-Pro → 텍스트 인식 → 인식 모델에서 `Google Vision · 클라우드`를 선택합니다. 기본 Tesseract와 Paddle은 기기 내 처리이며, Vision은 전송 동의 후에만 서버를 호출합니다. standalone에는 Vision 옵션·클라이언트·동의 화면을 넣지 않습니다.
+숨김 기능을 활성화한 뒤 Pro → 텍스트 인식 → 인식 모델에서 `Google Vision · 클라우드`를 선택합니다. 기본 Tesseract와 Paddle은 기기 내 처리이며, Vision은 전송 동의 후에만 서버를 호출합니다. standalone에는 Vision 옵션·클라이언트·동의 화면을 넣지 않습니다.
 
 Cloud Vision OCR 엔진은 오픈소스 모델이 아닙니다. 공개 Apache 2.0 코드는 [클라이언트 라이브러리](https://github.com/googleapis/google-cloud-node/tree/main/packages/google-cloud-vision)입니다. 여기서는 SDK 대신 [REST v1 `images:annotate`](https://docs.cloud.google.com/vision/docs/reference/rest/v1/images/annotate)를 사용합니다. 문서용 `DOCUMENT_TEXT_DETECTION`, 모델 채널 `builtin/latest`를 명시합니다. [공식 모델 옵션](https://docs.cloud.google.com/vision/docs/reference/rest/v1/Feature)은 `builtin/stable`, `builtin/latest`, OCR용 `builtin/weekly`를 지원합니다. `latest`는 Google이 갱신하는 별칭이며 다운로드 가능한 고정 모델 버전이 아닙니다.
 
@@ -94,12 +105,12 @@ Cloud Vision OCR 엔진은 오픈소스 모델이 아닙니다. 공개 Apache 2.
 - 배치를 확정하면 여러 도장을 함께 배치할 수 있습니다. 현재/선택 범위는 페이지 ID로 고정되어 재배열에도 대상을 유지합니다. 모든 페이지 범위는 추가한 페이지도 포함합니다.
 - 보관 버튼을 누른 도장만 이 브라우저에 저장합니다(최대 8개, 브라우저 저장 용량 범위). 보관함에서 직접 삭제하거나 투명 PNG를 내려받을 수 있습니다. Basic의 기존 사진 삽입과 독립적이며 Pro 결과 만들기에 반영됩니다.
 
-### 단독 실행본의 Tesseract OCR
+### Tesseract OCR 동작
 
-- Tesseract.js 7.0.0 / tesseract.js-core 7.0.0 / LSTM, 한글+영어 또는 영어. 엔진·언어 데이터를 모두 HTML 내부에 포함하며 문서 전송·CDN·최초 다운로드가 없습니다. relaxed SIMD 가속 코어와 호환용 코어를 함께 내장하고 기기에서 선택합니다. 더블클릭하는 standalone에서도 같은 엔진을 사용합니다.
+- Tesseract.js 7.0.0 / tesseract.js-core 7.0.0 / LSTM, 한글+영어 또는 영어. 웹은 같은 출처의 엔진·언어 자산을 첫 사용에 받고, 단독 실행본은 모두 HTML 내부에 포함합니다. 단독 실행본의 인식에는 문서 전송·CDN·최초 다운로드가 없습니다. relaxed SIMD 가속 코어와 호환용 코어 중 기기에 맞는 코어를 선택합니다.
 - 현재 페이지 시험 인식 후, 선택 페이지 또는 전체 인식. 한글과 영어를 함께 읽습니다. 자동 모드는 문단 분석(PSM 3)과 본문 분석(PSM 6)을 비교하지만, 화면에는 하나의 연속 진행률로 표시합니다. 페이지 PNG는 한 번만 인코딩해 두 분석에서 재사용합니다. 같은 문서·보정·언어·문서 구성으로 이미 인식한 로컬 결과는 메모리에서 재사용합니다. 한 단 본문(6), 흩어진 글자(11)를 직접 선택할 수도 있습니다. 렌더는 300 DPI 목표, 긴 변 3,400px/9MP로 제한하고 한 번에 한 페이지씩 처리합니다.
 - 인식된 내용, 엔진 확신도와 낮은 확신도의 단어를 보여줍니다. 확신도는 정확도가 아닙니다. **확인한 결과를 PDF에 포함**을 눌러야 검색용 숨은 텍스트 층이 추가됩니다. 한글 음절 사이에 임의 공백을 넣지 않고 원래 띄어쓰기를 유지합니다. TXT 저장도 제공합니다.
-- 기존 텍스트가 하나라도 있는 페이지는 중복 OCR을 피하기 위해 건너뜁니다. 일부 글자만 있는 혼합 페이지에 빠진 글자를 추가하는 기능이나 기존 OCR을 덮어쓰는 기능은 포함하지 않습니다. 글자 편집·표를 엑셀로 변환하는 기능도 아닙니다.
+- 기존 텍스트가 하나라도 있는 페이지는 중복 OCR을 피하기 위해 건너뜁니다. 일부 글자만 있는 혼합 페이지에 빠진 글자를 추가하는 기능이나 기존 OCR을 덮어쓰는 기능은 포함하지 않습니다. 원본 스캔 이미지에 보이는 글자를 직접 편집하거나 표를 엑셀로 변환하는 기능은 아닙니다. 인식 결과 교정은 새로 읽은 검색용 텍스트에 적용됩니다.
 - 페이지 회전/Basic 주석/스캔 보정/재단/압축 설정이 바뀌면 해당 인식은 만료되며 재인식이 필요합니다. 인식 중 취소는 기존 확인 결과와 원본 문서를 유지합니다. 일부 페이지를 다시 인식할 때 다른 페이지의 유효한 결과는 유지하며, 새 결과는 다시 확인해야 PDF에 포함됩니다.
 - 처리 순서는 스캔/페이지 설정 → 번호·워터마크 → 선택한 전체 압축 → 확인한 OCR → 도장입니다. OCR은 번호·워터마크·새 도장을 제외한 출력 페이지를 인식합니다. 전체 압축과 함께 써도 새로 확인한 OCR과 도장은 최종 결과에 남습니다. 기존 링크·양식·텍스트는 전체 압축의 보존 대상이 아닙니다.
 - ABBYY 수준의 정확도를 보장하지 않습니다. 작은 글자, 흐림, 복잡한 표, 필기, 세로쓰기에는 오류·누락이 있을 수 있으므로 실제 문서의 시험 인식 결과를 확인해야 합니다.
@@ -121,7 +132,7 @@ AI 업스케일링은 포함하지 않습니다. OCR은 사용자가 별도로 �
 
 ## 개발과 검증
 
-Node.js 22 이상을 사용합니다. 저장소 루트의 `package-lock.json`을 함께 사용하며, 새 체크아웃에서는 먼저 `npm ci`를 실행합니다. ONNX Runtime Web 1.29.0, Transformers.js 4.2.0, esbuild 0.25.10과 Wrangler 등 개발 의존성을 고정합니다. 최종 사용자는 Node나 Python을 설치할 필요가 없습니다.
+Node.js 22 이상을 사용합니다. 저장소 루트의 `package-lock.json`과 함께 `npm ci`를 실행하면 OpenCV·YAML을 포함한 빌드 의존성을 설치합니다. ONNX Runtime Web 1.29.0, OpenCV.js 4.12.0-release.1, YAML 2.8.1, esbuild와 Wrangler 등의 버전을 고정합니다. 최종 사용자는 Node나 Python을 설치할 필요가 없습니다.
 
 ```sh
 npm ci
@@ -129,17 +140,17 @@ npm run build
 npm test
 ```
 
-`npm run build`는 웹 HTML과 `.deploy/ocr/paddle/` 런타임·모델 자산을 준비합니다. 유효한 모델 조각이 없으면 `scripts/download-paddle-models.mjs`의 `ensurePaddleSources()`를 호출한 뒤 `scripts/prepare-paddle-assets.mjs`로 조각을 만듭니다. 기존 원본은 `vendor/paddle/source/<revision>/`에서 재사용하며, `PADDLE_MODEL_DIR`에 이미 받은 원본 디렉터리(`onnx/`, `tokenizer.json`, `tokenizer_config.json`이 있는 위치)를 지정해 로컬 복사로 준비할 수도 있습니다.
+`npm run build`는 웹 HTML과 **`.deploy/ocr/ppocr-v5/`** 런타임·모델 자산을 준비합니다. `scripts/build-ppocr-v5.mjs`가 공식 모델 준비·검증과 해시 파일명 생성을 담당하고 `manifest.json`에 파일 크기·SHA-256을 기록합니다. Tesseract 자산은 기존 `vendor/ocr/`에서 준비합니다. 이전 VL 모델의 다운로드·분할 도구는 현재 빌드에 사용하지 않습니다.
 
-처음 빌드하는 개발·CI 환경에는 npm 패키지와 공개 Hugging Face 모델을 받을 인터넷 연결 및 원본·조각·배포 복사본을 둘 디스크 공간이 필요합니다. 다운로드 도구는 고정 revision에서 8MiB Range로 받고, 요청당 30초·최대 3회 시도·파일당 15분 제한을 적용합니다. 범위·길이·원본 전체 SHA-256 검증 후에만 파일을 교체하며, 손상·누락된 파일만 다시 준비합니다. 원본·조각·`.deploy/`·`dist/`는 Git에서 제외합니다. 출처와 라이선스는 추적하는 `vendor/paddle/model-source.json`, `vendor/paddle/licenses/`에 보관합니다. Tesseract 자산의 버전·해시·라이선스는 `vendor/ocr/`에 있습니다.
+처음 빌드하는 개발·CI 환경에는 npm 패키지와 고정된 공개 모델을 받을 인터넷 연결이 필요합니다. 손상되거나 없는 모델은 다시 받습니다. 모델·문자 사전 원본을 둔 `work/`, `.deploy/`, `dist/`는 Git에서 제외합니다. 출처·해시는 `experiments/ppocr-v5-browser/models.json`에 있으며 PaddleOCR·OpenCV 라이선스는 같은 실험 디렉터리, ONNX Runtime 고지는 `vendor/paddle/licenses/`에 보관합니다. 배포본에는 해당 고지를 `/ocr/ppocr-v5/` 아래 함께 제공하고, 단독 실행본에도 포함합니다. Tesseract의 버전·해시·라이선스는 `vendor/ocr/`에 있습니다.
 
-Cloudflare와 같은 경로로 로컬 확인하려면 `npx wrangler dev`를 실행하고 안내된 localhost 주소를 엽니다. `wrangler.jsonc`의 빌드 명령이 웹 빌드 후 `scripts/build-deploy.mjs`를 실행해 `.deploy/index.html`, 라이선스와 응답 헤더를 준비합니다. 웹 v5.0은 `index.html`만 따로 복사하거나 더블클릭하는 배포 방식이 아닙니다.
+Cloudflare와 같은 경로로 로컬 확인하려면 `npx wrangler dev`를 실행하고 안내된 localhost 주소를 엽니다. `wrangler.jsonc`의 빌드 명령이 웹 빌드 후 `scripts/build-deploy.mjs`를 실행해 `.deploy/index.html`, Tesseract 자산과 응답 헤더를 준비하며 이전 VL의 생성된 배포 자산을 제외합니다. 웹 v5.0은 `index.html`만 따로 복사하거나 더블클릭하는 배포 방식이 아닙니다.
 
-배포 권한이 있는 Wrangler 로그인 또는 CI의 Cloudflare API 토큰을 준비한 뒤 `npm run deploy`를 실행합니다. CI도 Node.js 22 이상에서 `npm ci` 후 `npm run deploy`로 재현할 수 있습니다. 배포 명령은 같은 빌드를 다시 수행합니다. `.deploy/`의 HTML·모델·런타임·라이선스와 `server/worker.mjs`가 함께 대상이며, 기존 Gemini Secret은 HTML이나 Git에 넣지 않습니다. 모델 준비·테스트·빌드 성공은 공개 사이트에서 실제 OCR과 PDF 저장을 확인한 것과 별개입니다.
+배포 권한이 있는 Wrangler 로그인 또는 CI의 Cloudflare API 토큰을 준비한 뒤 `npm run deploy`를 실행합니다. CI도 Node.js 22 이상에서 `npm ci` 후 `npm run deploy`로 재현할 수 있습니다. 배포 명령은 같은 빌드를 다시 수행합니다. `.deploy/`의 HTML·모델·런타임·라이선스와 `server/worker.mjs`가 함께 대상입니다. Google Vision Secret과 기존 Gemini Secret은 HTML이나 Git에 넣지 않습니다. 이번 로컬 엔진·교정 UI 통합은 기존 API 서버의 기능이나 키를 변경하지 않습니다.
 
-단독 실행 파일은 `npm ci` 후 `npm run build:standalone`으로 생성합니다. 이 명령은 웹 Paddle 모델을 다운로드하지 않습니다. 출력은 `dist/PDF-Studio-Standalone-v5.0.html`이며 Paddle과 Gemini 연결 모듈을 제외합니다.
+단독 실행 파일은 `npm ci` 후 `npm run build:standalone`으로 생성합니다. 이 빌드도 공식 PP-OCRv5 모델을 준비하고 검증하므로 새 개발 환경에는 모델 다운로드가 필요합니다. 출력은 **`dist/PDF-Studio-Standalone-v5.0.html`**이며 완성된 파일에는 두 로컬 OCR 엔진과 모델을 내장합니다. 사용 시 클라우드 API 키나 별도 모델 다운로드를 요구하지 않도록 구성했습니다. `file://` 직접 실행의 실제 호환성은 위 미검증 범위를 참고하세요.
 
-모델 준비·전달의 회귀 검사는 `tests/prepare-paddle-assets.test.cjs`, `tests/download-paddle-models.test.cjs`, `tests/paddle-assets.test.cjs`에서 분할 재조립, 손상·범위 오류, 다운로드 취소, 캐시 재사용·실패를 확인합니다. 이 모의 테스트는 실제 GPU 추론이나 인식 정확도 검증을 대신하지 않습니다. 실제 웹 확인에서는 첫 다운로드와 재사용, GPU 미지원 안내, 인식 중 취소, 한 페이지 결과 확인 및 PDF의 검색 텍스트·원본 화면 보존을 함께 확인합니다.
+이번 통합 후 Node 회귀 테스트는 **165개 통과**했습니다. PP-OCRv5 어댑터·로더 10개, 교정 초안 6개, 교정 후 PDF 출력 3개를 포함합니다. `tests/ppocr-v5-adapter.test.cjs`와 `tests/ppocr-v5-bootstrap.test.cjs`는 좌표·신뢰도 변환, 잘못된 위치, 취소·시간 제한, 모델 크기·해시, 지연 로딩과 재시도를 검사합니다. `tests/ocr-correction.test.cjs`와 `tests/ocr-correction-export.test.cjs`는 초안 분리, 적용·취소, 수정 텍스트와 좌표 보존, PDF 검색용 텍스트를 검사합니다. 자동 테스트 통과는 실제 문서의 인식 정확도나 모든 브라우저의 실행 보장이 아닙니다. 실제 웹에서는 인식·영역 선택·교정·다시 확인·PDF 저장 흐름을 함께 점검합니다.
 
 `src/editor.js`는 Basic 편집 로직, `src/pro-engine.js`는 이미지 처리, `src/pro-document.js`는 페이지 규격·번호·워터마크, `src/pro-deskew.js`는 오프라인 기울기 감지·보정, `src/pro-pipeline.js`는 공통 미리보기/저장 처리와 페이지 전체 압축, `src/pro-rail.js`는 목록 너비 조절, `src/pro-ui.js`는 Pro 상호작용, `src/pro-result.js`는 비교 기준과 결과 용량 선택, `src/pro-live-preview.js`는 취소 가능한 자동 미리보기입니다. 빌드는 이 파일들과 패널·스타일을 `index.html`에 인라인합니다. 기존 PDF 라이브러리·폰트·CMap 및 라이선스는 그대로 포함됩니다.
 
@@ -165,7 +176,7 @@ Cloudflare와 같은 경로로 로컬 확인하려면 `npx wrangler dev`를 실�
 ## 사용
 
 웹은 배포된 PDF Studio 주소에서 엽니다. Pro의 텍스트 인식을 처음 실행하면 모델 준비가 시작됩니다.
-단독 실행본 `PDF-Studio-Standalone-v5.0.html`은 더블클릭하면 서버나 설치 없이 열립니다. 단독 실행본의 OCR은 Tesseract만 제공합니다.
+단독 실행본 `PDF-Studio-Standalone-v5.0.html`은 파일을 직접 열어 사용하도록 구성했으며 Tesseract와 PP-OCRv5를 제공합니다. 이번 통합의 실제 `file://` 실행은 아직 검증하지 못했습니다.
 
 ### 단축키
 
@@ -190,7 +201,7 @@ Cloudflare와 같은 경로로 로컬 확인하려면 `npx wrangler dev`를 실�
 
 ## 포함 라이브러리
 
-PDF 편집용 아래 라이브러리는 HTML 본문에 인라인했습니다. 해당 라이선스 전문은 `index.html` 하단에 있습니다. 웹 Paddle 모델·런타임은 별도 정적 자산이며 관련 고지는 `vendor/paddle/licenses/`와 배포 경로 `/ocr/paddle/licenses/`에 있습니다.
+PDF 편집용 아래 라이브러리는 HTML 본문에 인라인했습니다. 해당 라이선스 전문은 `index.html` 하단에 있습니다. 웹 PP-OCRv5 모델·런타임과 라이선스 고지는 `/ocr/ppocr-v5/` 정적 자산으로 제공하며 단독 실행본에는 함께 내장합니다. 출처는 앞의 모델 무결성과 개발 설명을 참고하세요.
 
 - [pdf.js](https://mozilla.github.io/pdf.js/) 3.11.174 — Mozilla, Apache License 2.0
 - [pdf-lib](https://pdf-lib.js.org/) 1.17.1 — Hopding, MIT License

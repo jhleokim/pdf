@@ -6,7 +6,7 @@ const root=new URL('../../',import.meta.url);
 const trial=new URL('work/ppocr-v5-trial/',root);
 const out=new URL('dist/ppocr-v5-web/',root);
 // Never deploy the working directory: it also contains private test documents/results.
-const assets=['index.html','ui.js','worker.js','engine.js','ort.js','opencv.js','pdfjs.js','pdf.worker.js','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'];
+const assets=['index.html','ui.js','ocr-correction.js','worker.js','engine.js','ort.js','opencv.js','pdfjs.js','pdf.worker.js','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'];
 const allowed=new Set([...assets,'licenses.txt','_headers']);
 fs.mkdirSync(out,{recursive:true});
 for(const name of fs.readdirSync(out))if(!allowed.has(name))throw Error('Unexpected deployment file: '+name);
@@ -19,7 +19,7 @@ for(const name of assets)fs.copyFileSync(new URL(name,trial),new URL(name,out));
 const licenses=['experiments/ppocr-v5-browser/LICENSE-PaddleOCR','experiments/ppocr-v5-browser/LICENSE-OpenCV','vendor/paddle/licenses/onnxruntime-1.29.0-LICENSE.txt','vendor/paddle/licenses/onnxruntime-1.29.0-ThirdPartyNotices.txt'];
 fs.writeFileSync(new URL('licenses.txt',out),licenses.map(name=>fs.readFileSync(new URL(name,root),'utf8')).join('\n\n'));
 let html=fs.readFileSync(new URL('index.html',out),'utf8');
-html=html.replace('</html>','<footer><p><a href="licenses.txt">오픈소스 라이선스</a> · <a href="https://pdf.hanatrust.workers.dev/">PDF Studio로 돌아가기</a></p></footer></html>');
+html=html.replace('<!-- license-link -->',' · <a href="licenses.txt">오픈소스 라이선스</a>');
 fs.writeFileSync(new URL('index.html',out),html);
 fs.writeFileSync(new URL('_headers',out),`/*
   X-Content-Type-Options: nosniff

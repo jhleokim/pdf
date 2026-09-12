@@ -75,7 +75,7 @@
     // Tesseract's word boxes retain the existing standalone writer. Line-level
     // Paddle/Gemini results use bundled NanumGothic proportions as an estimate;
     // the source font and per-character bounds are not known to either model.
-    const proportional=records.some(r=>r.source==='paddle-vl15'||r.source==='gemini');
+    const proportional=records.some(r=>r.granularity==='line'||r.source==='paddle-v5'||r.source==='paddle-vl15'||r.source==='gemini');
     const metrics=proportional?(await PDFMarkupText.load('gothic')).font:null;check(signal);
     if(metrics&&(!Number.isFinite(metrics.unitsPerEm)||metrics.unitsPerEm<=0))throw new Error('검색 텍스트의 글꼴 크기 정보를 읽지 못했습니다.');
     const glyphWidth=ch=>{
@@ -100,7 +100,7 @@
     return {ref,measure:text=>[...text].reduce((sum,ch)=>sum+widthMap.get(ch),0)/1000,encode:text=>P.PDFHexString.of([...text].map(ch=>hex(map.get(ch))).join(''))};
   }
   async function apply(doc,records,{pageIds=[],signal}={}){
-    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&r.words.length);
+    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:r.words.filter(w=>w.text?.trim())})).filter(r=>r.words.length);
     if(!active.length)return {pages:0,words:0};
     const P=PDFLib,G=PDFProDocument,font=await makeFont(doc,active,signal);check(signal);let pages=0,words=0;
     for(const record of active){
@@ -109,8 +109,8 @@
       const name=page.node.newFontDictionary('OCR',font.ref),ops=[P.pushGraphicsState(),P.beginText(),P.setTextRenderingMode(3),P.setFontAndSize(name,1)];
       for(const word of record.words){
         const [l,t,rt,bt]=word.box;if(![l,t,rt,bt].every(Number.isFinite)||rt<=l||bt<=t)continue;
-        const measured=font.measure(word.text);if(!(measured>0))continue;
-        const text=word.text+(word.separator===''?'':' '),sx=(rt-l)*w/measured,sy=(bt-t)*h;
+        const text=word.text+(word.separator===''?'':' '),measured=font.measure(text);if(!(measured>0))continue;
+        const sx=(rt-l)*w/measured,sy=(bt-t)*h;
         const [x,y]=G.displayToPdf(l*w,(bt-(bt-t)*.18)*h,b,r);
         ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(font.encode(text)));words++;
       }
