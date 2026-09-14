@@ -65,7 +65,9 @@
     }
     try {
       if (signal?.aborted) abort();
-      await request('init', {urls, assets});
+      const embedded=options.embedded?.() || root.PDFPaddleV5Payload?.();
+      signal?.throwIfAborted();
+      await request('init', {urls, assets, ...(embedded?{embedded}:{})}, embedded?Object.values(embedded.buffers).map(bytes=>bytes.buffer):[]);
     } catch (error) {terminate(error); throw error;}
     return {model: MODEL,
       async recognize(canvas) {

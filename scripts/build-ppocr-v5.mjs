@@ -68,7 +68,24 @@ export function getPPOCRV5Bootstrap({standalone = false, outputDirectory = defau
       if (bytes.length !== asset.bytes || sha(bytes) !== asset.sha256) throw Error('PP-OCRv5 standalone integrity mismatch: ' + name);
       return [name, {mime: mime(name), data: bytes.toString('base64')}];
     }));
-    setup = 'const embedded=' + JSON.stringify(embedded) + ';let urls;function assetURLs(){if(urls)return urls;urls={};for(const [name,asset]of Object.entries(embedded)){const raw=atob(asset.data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);urls[name]=URL.createObjectURL(new Blob([bytes],{type:asset.mime}));}globalThis.PDFPaddleV5Assets=urls;return urls;}';
+    setup = 'const embedded=' + JSON.stringify(embedded) + `;
+let urls;
+function decode(name){const raw=atob(embedded[name].data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return bytes;}
+function assetURLs(){
+ if(urls)return urls;urls={};
+ // A file document and its worker can have different opaque origins. Never
+ // import/fetch a parent-created blob:null URL inside the standalone worker.
+ const parts=['ort.js','opencv.js','engine.js','worker.js'].map(name=>decode(name));
+ const joined=[];for(const part of parts)joined.push(part,'\\n;\\n');
+ urls['worker.js']=URL.createObjectURL(new Blob(joined,{type:'text/javascript'}));
+ urls['adapter.js']=URL.createObjectURL(new Blob([decode('adapter.js')],{type:'text/javascript'}));
+ globalThis.PDFPaddleV5Assets=urls;
+ globalThis.PDFPaddleV5Payload=()=>({
+  moduleURL:'data:text/javascript;base64,'+embedded['ort-wasm-simd-threaded.mjs'].data,
+  buffers:Object.fromEntries(['ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'].map(name=>[name,decode(name)]))
+ });
+ return urls;
+}`;
   }
   return '(function(){' + setup + 'globalThis.PDFPaddleLoad=()=>globalThis.PDFPaddleReady??=new Promise((resolve,reject)=>{if(globalThis.PDFPaddleV5){resolve(globalThis.PDFPaddleV5);return;}const script=document.createElement("script");let timer=setTimeout(()=>{script.remove();reject(new Error("Paddle 엔진 준비 시간이 초과됐습니다. 다시 시도해 주세요."));},30000);script.onload=()=>{clearTimeout(timer);script.remove();globalThis.PDFPaddleV5?resolve(globalThis.PDFPaddleV5):reject(new Error("Paddle 엔진을 준비하지 못했습니다."));};script.onerror=()=>{clearTimeout(timer);script.remove();reject(new Error("Paddle 엔진을 불러오지 못했습니다. 연결을 확인해 주세요."));};script.src=' + (standalone ? 'assetURLs()["adapter.js"]' : 'runtimeURL') + ';document.head.append(script);}).catch(error=>{globalThis.PDFPaddleReady=null;throw error;});})();';
 }

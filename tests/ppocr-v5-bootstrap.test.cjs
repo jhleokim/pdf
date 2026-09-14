@@ -12,7 +12,8 @@ async function fixture() {
   const content = Buffer.from('/* local fixture */'), sha256 = createHash('sha256').update(content).digest('hex');
   const file = 'adapter-' + sha256.slice(0, 16) + '.js';
   writeFileSync(join(directory, file), content);
-  writeFileSync(join(directory, 'manifest.json'), JSON.stringify({model: builder.PPOCRV5_MODEL, runtimeURL: '/ocr/ppocr-v5/' + file, assets: {'adapter.js': {file, bytes: content.length, sha256}}}));
+  const names=['adapter.js','ort.js','opencv.js','engine.js','worker.js','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'];
+  writeFileSync(join(directory, 'manifest.json'), JSON.stringify({model: builder.PPOCRV5_MODEL, runtimeURL: '/ocr/ppocr-v5/' + file, assets:Object.fromEntries(names.map(name=>[name,{file, bytes: content.length, sha256}]))}));
   return {directory, builder, cleanup() {unlinkSync(join(directory, file)); unlinkSync(join(directory, 'manifest.json')); rmdirSync(directory);}};
 }
 
@@ -27,9 +28,15 @@ test('standalone bootstrap stays lazy, uses Blob scripts, and reuses its loaded 
     const first = context.PDFPaddleLoad(), second = context.PDFPaddleLoad();
     assert.equal(first, second);
     assert.equal((await first).model, f.builder.PPOCRV5_MODEL);
-    assert.equal(scripts[0].src, 'blob:local-1');
-    assert.equal(context.PDFPaddleV5Assets['adapter.js'], 'blob:local-1');
-    assert.equal(created.length, 1); assert.equal(scripts.length, 1);
+    assert.equal(scripts[0].src, 'blob:local-2');
+    assert.equal(context.PDFPaddleV5Assets['adapter.js'], 'blob:local-2');
+    assert.equal(context.PDFPaddleV5Assets['worker.js'], 'blob:local-1');
+    assert.equal(created.length, 2); assert.equal(scripts.length, 1);
+    assert.equal((await created[0].text()).split('/* local fixture */').length,5,'four scripts share a single worker');
+    const payload=context.PDFPaddleV5Payload(),retry=context.PDFPaddleV5Payload();
+    assert.match(payload.moduleURL,/^data:text\/javascript;base64,/);
+    assert.equal(Object.keys(payload.buffers).length,4);
+    assert.notEqual(payload.buffers['det.onnx'].buffer,retry.buffers['det.onnx'].buffer,'retry gets fresh transferable bytes');
     await context.PDFPaddleLoad(); assert.equal(scripts.length, 1);
   } finally {f.cleanup();}
 });

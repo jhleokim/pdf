@@ -99,3 +99,21 @@ test('model bytes must match the manifest hash and declared size', async () => {
   await assert.rejects(readAsset('det.onnx', {'det.onnx': 'blob:fixture'}, {'det.onnx': {...expected, bytes: 2}}), /크기/);
   await assert.rejects(readAsset('det.onnx', {'det.onnx': 'blob:fixture'}, {'det.onnx': {...expected, bytes: 25000001}}), /정보/);
 });
+
+test('standalone initialization transfers embedded buffers without parent blob URLs',async()=>{
+  const {workers,options}=workerFactory(),buffer=new Uint8Array([1,2,3]);
+  const session=await createSession(null,null,{...options,embedded:()=>({moduleURL:'data:text/javascript;base64,AA==',buffers:{'det.onnx':buffer}})});
+  const init=workers[0].messages[0];assert.equal(init.data.embedded.buffers['det.onnx'],buffer);assert.deepEqual(init.transfer,[buffer.buffer]);await session.close();
+});
+
+test('standalone worker initializes with importScripts and fetch unavailable, and still rejects corrupt bytes',async()=>{
+  const bytes=new Uint8Array([1,2,3]),expected={bytes:3,sha256:createHash('sha256').update(bytes).digest('hex')};
+  const buffers=Object.fromEntries(['ort-wasm-simd-threaded.wasm','det.onnx','rec.onnx','dict.json'].map(n=>[n,bytes]));
+  const assets=Object.fromEntries(Object.keys(buffers).map(n=>[n,expected])),messages=[];
+  const sandbox=vm.createContext({onmessage:null,postMessage:m=>messages.push(m),Uint8Array,crypto:webcrypto,ort:{env:{wasm:{}}},importScripts(){throw Error('parent blob script blocked');},fetch(){throw Error('parent blob fetch blocked');},async createPPV5({asset}){assert.deepEqual(await asset('det.onnx'),bytes);assert.deepEqual(await asset('rec.onnx'),bytes);return {};}});
+  vm.runInContext(readFileSync(require.resolve('../src/ppocr-v5/worker.js'),'utf8'),sandbox);
+  await sandbox.onmessage({data:{id:1,type:'init',urls:{},assets,embedded:{moduleURL:'data:text/javascript;base64,AA==',buffers:{...buffers}}}});
+  assert.equal(messages.at(-1).type,'result');assert.equal(sandbox.ort.env.wasm.wasmBinary,undefined);
+  await sandbox.onmessage({data:{id:2,type:'init',urls:{},assets,embedded:{moduleURL:'data:text/javascript;base64,AA==',buffers:{...buffers,'ort-wasm-simd-threaded.wasm':new Uint8Array([4,5,6])}}}});
+  assert.equal(messages.at(-1).type,'error');assert.match(messages.at(-1).error.message,/손상/);
+});

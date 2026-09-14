@@ -3,9 +3,14 @@
 let engine, requestID = 0, phase = 'init';
 const progress = (status, detail, value = 0) => postMessage({id: requestID, type: 'progress', progress: {status, detail, progress: Math.max(0, Math.min(1, value))}});
 
-async function readAsset(name, urls, assets) {
+async function readAsset(name, urls, assets, embedded) {
   const expected = assets[name];
   if (!expected || !Number.isSafeInteger(expected.bytes) || expected.bytes <= 0 || expected.bytes > 25000000 || !/^[a-f0-9]{64}$/.test(expected.sha256)) throw Error('Paddle 파일 정보가 올바르지 않습니다.');
+  if(embedded){
+    const bytes=embedded[name];
+    if(!(bytes instanceof Uint8Array)||bytes.byteLength!==expected.bytes)throw Error('Paddle 내장 데이터 크기가 일치하지 않습니다.');
+    await verifyAsset(bytes,expected);return bytes;
+  }
   const url = urls[name];
   if (typeof url !== 'string' || !/^(https?:|blob:)/.test(url)) throw Error('Paddle 파일 주소가 올바르지 않습니다.');
   const response = await fetch(url, {credentials: 'omit'});
@@ -22,9 +27,13 @@ async function readAsset(name, urls, assets) {
     }
   } finally {reader.releaseLock();}
   if (offset !== expected.bytes) throw Error('Paddle 인식 데이터가 끝까지 도착하지 않았습니다.');
+  await verifyAsset(bytes,expected);
+  return bytes;
+}
+async function verifyAsset(bytes,expected){
+  if(!crypto?.subtle)throw Error('이 실행 환경에서는 내장 OCR 데이터 검증을 사용할 수 없습니다. HTML 파일을 Chrome 또는 Edge에서 직접 열어 주세요.');
   const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
   if (digest !== expected.sha256) throw Error('Paddle 인식 데이터가 손상됐습니다. 페이지를 새로 열어 주세요.');
-  return bytes;
 }
 
 onmessage = async ({data}) => {
@@ -32,10 +41,17 @@ onmessage = async ({data}) => {
   try {
     if (data.type === 'init') {
       progress('preparing engine', 'Paddle 경량 엔진 준비');
-      const {urls, assets} = data;
-      importScripts(urls['ort.js'], urls['opencv.js'], urls['engine.js']);
-      ort.env.wasm.wasmPaths = {mjs: urls['ort-wasm-simd-threaded.mjs'], wasm: urls['ort-wasm-simd-threaded.wasm']};
-      engine = await createPPV5({asset: name => readAsset(name, urls, assets), onProgress: (label, value) => progress(phase === 'init' ? 'preparing engine' : 'recognizing text', label, phase === 'init' ? 0 : .1 + .89 * (value || 0))});
+      const {urls, assets, embedded} = data;
+      if(embedded){
+        if(!/^data:text\/javascript;base64,/.test(embedded.moduleURL))throw Error('Paddle 내장 실행 모듈이 올바르지 않습니다.');
+        ort.env.wasm.wasmPaths={mjs:embedded.moduleURL};
+        ort.env.wasm.wasmBinary=await readAsset('ort-wasm-simd-threaded.wasm',urls,assets,embedded.buffers);
+      }else{
+        importScripts(urls['ort.js'], urls['opencv.js'], urls['engine.js']);
+        ort.env.wasm.wasmPaths = {mjs: urls['ort-wasm-simd-threaded.mjs'], wasm: urls['ort-wasm-simd-threaded.wasm']};
+      }
+      engine = await createPPV5({asset: name => readAsset(name, urls, assets,embedded?.buffers), onProgress: (label, value) => progress(phase === 'init' ? 'preparing engine' : 'recognizing text', label, phase === 'init' ? 0 : .1 + .89 * (value || 0))});
+      if(embedded){ort.env.wasm.wasmBinary=undefined;embedded.buffers={};}
       postMessage({id: data.id, type: 'result', result: {ready: true}});
     } else if (data.type === 'recognize') {
       if (!engine || !Number.isSafeInteger(data.width) || !Number.isSafeInteger(data.height) || data.width < 1 || data.height < 1 || data.width * data.height > 6000000 || data.pixels?.byteLength !== data.width * data.height * 4) throw Error('인식할 페이지 데이터가 올바르지 않습니다.');
