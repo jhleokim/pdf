@@ -1544,7 +1544,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 <div id="proRailDivider" class="pro-rail-divider" role="separator" aria-label="페이지 목록 너비" aria-orientation="vertical" aria-controls="boardWrap" tabindex="0" title="드래그하여 목록 넓히기 · 더블클릭 기본 너비 · 방향키로 조절"><span></span></div>
 <section id="proCompare" class="live-preview" aria-labelledby="compareTitle" hidden>
 <header class="compare-head"><div><h2 id="compareTitle">현재 미리보기</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
-<div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><button type="button" class="btn quiet" id="compareDeskewToggle" aria-pressed="false" disabled><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m16 3 4 4-4 4M20 7h-8a7 7 0 1 0 7 9"/></svg>기울기 조절</button><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
+<div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><button type="button" class="btn quiet" id="compareDeskewToggle" aria-pressed="false" disabled><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m16 3 4 4-4 4M20 7h-8a7 7 0 1 0 7 9"/></svg>기울기 조절</button><label>확대 <select id="compareZoom" title="Ctrl + 휠로 확대·축소"><option value=".25">25%</option><option value=".5">50%</option><option value=".75">75%</option><option value="1" selected>페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option><option value="5">500%</option></select></label></div>
 <div class="compare-stage" id="compareStage"><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter" aria-label="Pro 설정 적용 결과"></canvas></div><div class="compare-scroll compare-original" id="compareBeforeScroll" aria-hidden="true"><canvas id="compareBefore" aria-label="Pro 적용 전 편집본"></canvas></div><button class="btn" id="compareOriginal" aria-pressed="false" title="마우스를 올리거나 눌러 원본 보기" disabled><svg class="ic"><use href="#i-eye"/></svg>원본 보기</button>
 <div id="deskewInteraction" class="deskew-interaction" hidden>
   <div id="deskewPreviewArea" class="deskew-preview-area">
@@ -3739,7 +3739,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 5.1.1">v5.1.1</span>
+<span class="app-version" aria-label="버전 5.1.2">v5.1.2</span>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -13075,6 +13075,18 @@ let proPreviewOpen=true, liveTimer, liveController=null, liveSequence=0;
 let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false, liveCache=null;
 let originalHover=false, originalPinned=false;
 let liveOutputSize=null;
+let liveZoomAnchor=null;
+function setLiveZoomValue(value){
+  const zoom=$('compareZoom'),factor=Math.round(Math.max(.25,Math.min(5,value))*1000)/1000;
+  let option=[...zoom.options].find(o=>o.id!=='compareZoomCustom'&&Number(o.value)===factor);
+  if(option)$('compareZoomCustom')?.remove();
+  else{option=$('compareZoomCustom')||document.createElement('option');option.id='compareZoomCustom';option.value=String(factor);option.textContent=Math.round(factor*100)+'%';zoom.append(option);}
+  zoom.value=option.value;return factor;
+}
+function restoreLiveZoomAnchor(key){
+  const a=liveZoomAnchor;liveZoomAnchor=null;if(!a||a.key!==key)return;
+  for(const id of ['After','Before']){const slot=$('compare'+id+'Scroll'),r=$('compare'+id).getBoundingClientRect();slot.scrollLeft+=r.left+r.width*a.nx-a.x;slot.scrollTop+=r.top+r.height*a.ny-a.y;}
+}
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
 function liveContentKey(){
   return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
@@ -13085,6 +13097,7 @@ function liveKey(){
   return JSON.stringify([liveContentKey(),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight,$('compareAfterScroll').clientHeight]);
 }
 function releaseLivePreview(){
+  liveZoomAnchor=null;
   const old=liveDocs;liveDocs=[];liveCache=null;liveOutputSize=null;
   if(old.length)liveQueue=liveQueue.catch(()=>{}).then(()=>Promise.allSettled(old.map(d=>d.destroy())));
   for(const id of ['compareBefore','compareAfter']){$(id).width=0;$(id).height=0;}
@@ -13134,16 +13147,17 @@ function scheduleLivePreview(){
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
   const redraw=liveCache?.key===liveContentKey();
+  if(liveZoomAnchor?.key!==liveContentKey())liveZoomAnchor=null;
   $('compareState').textContent=redraw?'화면 조정 중…':'변경 사항 반영 중…';
   $('proCompare').setAttribute('aria-busy','true');
-  $('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();
-  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},redraw?40:250);
+  if(!redraw){$('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();}
+  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},redraw?80:250);
 }
 async function liveCanvas(pdf,factor,signal){
   const page=await pdf.getPage(1),base=page.getViewport({scale:1}),slot=$('compareAfterScroll');
   const fit=Math.max(.05,Math.min((slot.clientWidth-40)/base.width,(slot.clientHeight-40)/base.height));
-  const dpr=Math.min(devicePixelRatio||1,2),scale=Math.min(8,fit*factor,Math.sqrt(16000000/(base.width*base.height))/dpr);
-  const vp=page.getViewport({scale:scale*dpr}),canvas=document.createElement('canvas');
+  const dpr=Math.min(devicePixelRatio||1,2),scale=Math.min(8,fit*factor),rasterScale=Math.min(scale*dpr,Math.sqrt(16000000/(base.width*base.height)),8192/Math.max(base.width,base.height));
+  const vp=page.getViewport({scale:rasterScale}),canvas=document.createElement('canvas');
   canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
   canvas.style.width=base.width*scale+'px';canvas.style.height=base.height*scale+'px';
   const task=page.render({canvasContext:canvas.getContext('2d'),viewport:vp}),abort=()=>task.cancel();
@@ -13187,6 +13201,7 @@ async function updateLivePreview(seq){
       canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);old.width=old.height=0;
     }
     canvases=[];
+    restoreLiveZoomAnchor(key);
     const old=loaded.length?liveDocs:[];if(loaded.length){liveDocs=loaded;loaded=[];}
     liveCache={key,report};
     const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
@@ -13222,7 +13237,20 @@ async function updateLivePreview(seq){
 $('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('proWorkspace'):$('btnPreview')).focus();};
 $('comparePrev').onclick=()=>{const p=pages[pages.indexOf(livePage())-1];if(p)showPreview(p);};
 $('compareNext').onclick=()=>{const p=pages[pages.indexOf(livePage())+1];if(p)showPreview(p);};
-$('compareZoom').onchange=scheduleLivePreview;
+$('compareZoom').onchange=()=>{liveZoomAnchor=null;setLiveZoomValue(Number($('compareZoom').value));if(document.body.classList.contains('deskew-adjusting'))setDeskewInteraction(false);scheduleLivePreview();};
+$('compareStage').title='Ctrl + 마우스 휠로 확대·축소';
+$('compareStage').addEventListener('wheel',e=>{
+  if(!(e.ctrlKey||e.metaKey)||proMode!=='pro'||!proPreviewOpen||!pages.length||$('proCompare').hidden)return;
+  e.preventDefault();e.stopPropagation();if(proAbort||!Number.isFinite(e.deltaY)||!e.deltaY)return;
+  if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
+  if(typeof cancelReviewStampGesture==='function')cancelReviewStampGesture();
+  const canvas=$($('compareStage').classList.contains('show-original')?'compareBefore':'compareAfter'),r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;
+  const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?$('compareAfterScroll').clientHeight:1),previous=Number($('compareZoom').value);
+  const factor=setLiveZoomValue(previous*Math.exp(-Math.max(-300,Math.min(300,delta))*.002));if(factor===previous)return;
+  liveZoomAnchor={key:liveContentKey(),x:e.clientX,y:e.clientY,nx:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),ny:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
+  if(document.body.classList.contains('deskew-adjusting'))setDeskewInteraction(false);
+  scheduleLivePreview();
+},{passive:false});
 $('compareOriginal').addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){originalHover=true;showOriginal();}});
 $('compareOriginal').addEventListener('pointerleave',()=>{originalHover=false;showOriginal();});
 $('compareOriginal').onclick=()=>{originalPinned=!originalPinned;showOriginal();};
