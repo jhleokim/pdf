@@ -11,3 +11,9 @@ Validation: 309 Node tests passed, including PDF arrow raster parity across four
 ## v5.1.1
 
 Opening an existing stamp for editing now navigates to its captured page before activating the handles. This prevents the page-change completion shortcut from ending a just-opened edit. An eighth browser scenario covers editing page 2 from page 3 and verifies that the stamp count remains unchanged. Future fixes increment the patch version; feature releases increment the minor version.
+
+## v5.1.2
+
+Pro current-page preview supports Ctrl/Command + wheel zoom from 25% to 500% of page fit, with the dropdown reflecting intermediate zoom values. Plain wheel scrolling is unchanged. The pointer anchor is restored after rendering, the processed PDF is reused, original comparison remains visible, and page changes/closing clear stale anchors. Canvas rendering retains the 16MP budget and adds an 8192px side limit while CSS zoom remains independent.
+
+Validation: all 309 Node tests passed. Web and bundled standalone browser fixtures each passed seven zoom scenarios (`tests/create-pro-wheel.cjs`, optionally `--standalone`), including rapid input, wheel units, original comparison, pointer anchoring and close/reopen cancellation.

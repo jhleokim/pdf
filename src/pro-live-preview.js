@@ -4,6 +4,18 @@ let proPreviewOpen=true, liveTimer, liveController=null, liveSequence=0;
 let liveQueue=Promise.resolve(), liveRequestedKey='', liveDocs=[], liveHadPages=false, liveCache=null;
 let originalHover=false, originalPinned=false;
 let liveOutputSize=null;
+let liveZoomAnchor=null;
+function setLiveZoomValue(value){
+  const zoom=$('compareZoom'),factor=Math.round(Math.max(.25,Math.min(5,value))*1000)/1000;
+  let option=[...zoom.options].find(o=>o.id!=='compareZoomCustom'&&Number(o.value)===factor);
+  if(option)$('compareZoomCustom')?.remove();
+  else{option=$('compareZoomCustom')||document.createElement('option');option.id='compareZoomCustom';option.value=String(factor);option.textContent=Math.round(factor*100)+'%';zoom.append(option);}
+  zoom.value=option.value;return factor;
+}
+function restoreLiveZoomAnchor(key){
+  const a=liveZoomAnchor;liveZoomAnchor=null;if(!a||a.key!==key)return;
+  for(const id of ['After','Before']){const slot=$('compare'+id+'Scroll'),r=$('compare'+id).getBoundingClientRect();slot.scrollLeft+=r.left+r.width*a.nx-a.x;slot.scrollTop+=r.top+r.height*a.ny-a.y;}
+}
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
 function liveContentKey(){
   return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
@@ -14,6 +26,7 @@ function liveKey(){
   return JSON.stringify([liveContentKey(),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight,$('compareAfterScroll').clientHeight]);
 }
 function releaseLivePreview(){
+  liveZoomAnchor=null;
   const old=liveDocs;liveDocs=[];liveCache=null;liveOutputSize=null;
   if(old.length)liveQueue=liveQueue.catch(()=>{}).then(()=>Promise.allSettled(old.map(d=>d.destroy())));
   for(const id of ['compareBefore','compareAfter']){$(id).width=0;$(id).height=0;}
@@ -63,16 +76,17 @@ function scheduleLivePreview(){
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
   const redraw=liveCache?.key===liveContentKey();
+  if(liveZoomAnchor?.key!==liveContentKey())liveZoomAnchor=null;
   $('compareState').textContent=redraw?'화면 조정 중…':'변경 사항 반영 중…';
   $('proCompare').setAttribute('aria-busy','true');
-  $('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();
-  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},redraw?40:250);
+  if(!redraw){$('compareOriginal').disabled=true;originalHover=originalPinned=false;showOriginal();}
+  liveTimer=setTimeout(()=>{liveQueue=liveQueue.catch(()=>{}).then(()=>updateLivePreview(seq));},redraw?80:250);
 }
 async function liveCanvas(pdf,factor,signal){
   const page=await pdf.getPage(1),base=page.getViewport({scale:1}),slot=$('compareAfterScroll');
   const fit=Math.max(.05,Math.min((slot.clientWidth-40)/base.width,(slot.clientHeight-40)/base.height));
-  const dpr=Math.min(devicePixelRatio||1,2),scale=Math.min(8,fit*factor,Math.sqrt(16000000/(base.width*base.height))/dpr);
-  const vp=page.getViewport({scale:scale*dpr}),canvas=document.createElement('canvas');
+  const dpr=Math.min(devicePixelRatio||1,2),scale=Math.min(8,fit*factor),rasterScale=Math.min(scale*dpr,Math.sqrt(16000000/(base.width*base.height)),8192/Math.max(base.width,base.height));
+  const vp=page.getViewport({scale:rasterScale}),canvas=document.createElement('canvas');
   canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
   canvas.style.width=base.width*scale+'px';canvas.style.height=base.height*scale+'px';
   const task=page.render({canvasContext:canvas.getContext('2d'),viewport:vp}),abort=()=>task.cancel();
@@ -116,6 +130,7 @@ async function updateLivePreview(seq){
       canvas.id=id;canvas.setAttribute('aria-label',old.getAttribute('aria-label'));old.replaceWith(canvas);old.width=old.height=0;
     }
     canvases=[];
+    restoreLiveZoomAnchor(key);
     const old=loaded.length?liveDocs:[];if(loaded.length){liveDocs=loaded;loaded=[];}
     liveCache={key,report};
     const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
@@ -151,7 +166,20 @@ async function updateLivePreview(seq){
 $('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('proWorkspace'):$('btnPreview')).focus();};
 $('comparePrev').onclick=()=>{const p=pages[pages.indexOf(livePage())-1];if(p)showPreview(p);};
 $('compareNext').onclick=()=>{const p=pages[pages.indexOf(livePage())+1];if(p)showPreview(p);};
-$('compareZoom').onchange=scheduleLivePreview;
+$('compareZoom').onchange=()=>{liveZoomAnchor=null;setLiveZoomValue(Number($('compareZoom').value));if(document.body.classList.contains('deskew-adjusting'))setDeskewInteraction(false);scheduleLivePreview();};
+$('compareStage').title='Ctrl + 마우스 휠로 확대·축소';
+$('compareStage').addEventListener('wheel',e=>{
+  if(!(e.ctrlKey||e.metaKey)||proMode!=='pro'||!proPreviewOpen||!pages.length||$('proCompare').hidden)return;
+  e.preventDefault();e.stopPropagation();if(proAbort||!Number.isFinite(e.deltaY)||!e.deltaY)return;
+  if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
+  if(typeof cancelReviewStampGesture==='function')cancelReviewStampGesture();
+  const canvas=$($('compareStage').classList.contains('show-original')?'compareBefore':'compareAfter'),r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;
+  const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?$('compareAfterScroll').clientHeight:1),previous=Number($('compareZoom').value);
+  const factor=setLiveZoomValue(previous*Math.exp(-Math.max(-300,Math.min(300,delta))*.002));if(factor===previous)return;
+  liveZoomAnchor={key:liveContentKey(),x:e.clientX,y:e.clientY,nx:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),ny:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
+  if(document.body.classList.contains('deskew-adjusting'))setDeskewInteraction(false);
+  scheduleLivePreview();
+},{passive:false});
 $('compareOriginal').addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'){originalHover=true;showOriginal();}});
 $('compareOriginal').addEventListener('pointerleave',()=>{originalHover=false;showOriginal();});
 $('compareOriginal').onclick=()=>{originalPinned=!originalPinned;showOriginal();};

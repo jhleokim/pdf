@@ -1,0 +1,3 @@
+const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..'),standalone=process.argv.includes('--standalone');
+const version=fs.readFileSync(path.join(root,'VERSION'),'utf8').trim(),html=fs.readFileSync(path.join(root,standalone?`dist/PDF-Studio-Standalone-v${version}.html`:'index.html'),'utf8');
+fs.mkdirSync(path.join(__dirname,'fixtures'),{recursive:true});fs.writeFileSync(path.join(__dirname,'fixtures',`pro-wheel${standalone?'-standalone':''}.html`),html.replace('</body>','<output id="proWheelReport" style="position:fixed;bottom:2px;left:8px;z-index:99999;background:white;color:black;font:11px monospace;white-space:pre-wrap">Running</output><script>'+fs.readFileSync(path.join(__dirname,'pro-wheel-browser.js'),'utf8')+'</script></body>'));
