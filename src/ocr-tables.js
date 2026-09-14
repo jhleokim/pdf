@@ -18,7 +18,7 @@
   function cloneTable(table){
     checkGrid(table?.x,table?.y);
     if(!Array.isArray(table.cells)||table.cells.length>LIMITS.maxCells)throw new RangeError('표의 셀 정보가 올바르지 않습니다.');
-    return {...table,x:[...table.x],y:[...table.y],box:[...table.box],cells:table.cells.map(cell=>({...cell,box:[...cell.box],wordIndices:[...cell.wordIndices||[]],reasons:[...cell.reasons||[]]})),unassignedIndices:[...table.unassignedIndices||[]],issues:[...table.issues||[]],resolvedIndices:[...table.resolvedIndices||[]],resolutions:(table.resolutions||[]).map(item=>({...item,box:[...item.box],cellIds:[...item.cellIds],cellTexts:[...item.cellTexts]}))};
+    return {...table,x:[...table.x],y:[...table.y],box:[...table.box],cells:table.cells.map(cell=>({...cell,box:[...cell.box],wordIndices:[...cell.wordIndices||[]],reasons:[...cell.reasons||[]]})),excludedWordIndices:[...table.excludedWordIndices||[]],unassignedIndices:[...table.unassignedIndices||[]],issues:[...table.issues||[]],resolvedIndices:[...table.resolvedIndices||[]],resolutions:(table.resolutions||[]).map(item=>({...item,box:[...item.box],cellIds:[...item.cellIds],cellTexts:[...item.cellTexts]}))};
   }
   function gridMap(table){
     const cols=table.x.length-1,rows=table.y.length-1,map=new Int32Array(cols*rows).fill(-1),ids=new Set();
@@ -71,10 +71,10 @@
   function refresh(table,words=[]){
     checkWords(words);const result=cloneTable(table),{cols,map}=gridMap(result),oldIndices=result.cells.map(cell=>cell.wordIndices.join(','));
     const snapshot=value=>JSON.stringify({x:value.x,y:value.y,cells:value.cells.map(cell=>[cell.id,cell.box,cell.wordIndices,cell.text,cell.reasons]),unassigned:value.unassignedIndices,resolved:value.resolvedIndices||[],resolutions:value.resolutions||[]}),before=snapshot(table);
-    result.unassignedIndices=[];
+    result.unassignedIndices=[];result.excludedWordIndices=unique(result.excludedWordIndices.filter(index=>Number.isInteger(index)&&index>=0&&index<words.length));const excluded=new Set(result.excludedWordIndices);
     for(const cell of result.cells){cell.box=[result.x[cell.col],result.y[cell.row],result.x[cell.col+cell.colSpan],result.y[cell.row+cell.rowSpan]];cell.wordIndices=[];cell.reasons=cell.reasons.filter(reason=>!ASSIGNMENT_REASONS.has(reason));}
     for(let index=0;index<words.length;index++){
-      const word=words[index],b=word?.box;if(!validBox(b)||!overlap(b,result.box))continue;
+      const word=words[index],b=word?.box;if(excluded.has(index)||!validBox(b)||!overlap(b,result.box))continue;
       const wordArea=area(b),tableRatio=overlap(b,result.box)/wordArea;if(tableRatio<.05)continue;
       const c0=interval(result.x,Math.max(b[0],result.box[0])),c1=interval(result.x,Math.min(b[2]-1e-10,result.box[2]-1e-10));
       const r0=interval(result.y,Math.max(b[1],result.box[1])),r1=interval(result.y,Math.min(b[3]-1e-10,result.box[3]-1e-10));
@@ -133,7 +133,7 @@
   }
   function moveBoundary(table,axis,index,value,words=[]){
     const result=cloneTable(table);if(!['x','y'].includes(axis)||!Number.isInteger(index)||index<0||index>=result[axis].length||!Number.isFinite(value)||value<0||value>1)throw new RangeError('옮길 표 경계가 올바르지 않습니다.');
-    result[axis][index]=value;checkGrid(result.x,result.y);result.box=[result.x[0],result.y[0],result.x[result.x.length-1],result.y[result.y.length-1]];result.reviewed=false;result.resolutions=[];result.resolvedIndices=[];return refresh(result,words);
+    result[axis][index]=value;checkGrid(result.x,result.y);result.box=[result.x[0],result.y[0],result.x[result.x.length-1],result.y[result.y.length-1]];delete result.trace;result.reviewed=false;result.resolutions=[];result.resolvedIndices=[];return refresh(result,words);
   }
   function resolveWord(table,index,words=[]){
     const result=refresh(table,words),word=words[index];
@@ -193,22 +193,58 @@
       if(match){match.last=run.coordinate;match.sum+=run.coordinate;match.count++;match.start=Math.min(match.start,run.start);match.end=Math.max(match.end,run.end);}
       else{const group={...run,last:run.coordinate,sum:run.coordinate,count:1};groups.push(group);active.push(group);if(groups.length>2400)throw new RangeError('표 경계 후보가 너무 많습니다. 표 영역을 좁혀 다시 분석하세요.');}
     }
-    return groups.map(g=>({coordinate:g.sum/g.count,start:g.start,end:g.end}));
+    return groups.map(g=>({coordinate:g.sum/g.count,start:g.start,end:g.end,thickness:g.last-g.coordinate+1}));
+  }
+  function suppressGlyphRules(segments,mask,width,height,verticals){
+    // Bilinear PDF rendering can connect the middle bars of a bold heading
+    // into a short horizontal run. Real rules have clear space on at least one
+    // side; a letter stroke has substantial ink both above and below it.
+    // Inspect only short thin candidates. Long/thick table rules are retained.
+    const radius=Math.max(2,Math.round(Math.max(width,height)*.0025)),maximum=Math.max(60,width*.12);
+    return segments.filter(line=>{
+      const span=line.end-line.start+1;if(span>maximum||line.thickness>radius)return true;
+      const attached=point=>verticals.some(rule=>rule.end-rule.start>=Math.max(18,span*.5)&&Math.abs(rule.coordinate-point)<=3&&line.coordinate>=rule.start-3&&line.coordinate<=rule.end+3);
+      if(attached(line.start)&&attached(line.end))return true;
+      const row=Math.round(line.coordinate);let above=0,below=0,samples=0;
+      for(let x=line.start+2;x<line.end-1;x++)for(let offset=radius;offset<=radius+2;offset++){
+        if(row-offset<0||row+offset>=height)continue;
+        above+=mask[(row-offset)*width+x];below+=mask[(row+offset)*width+x];samples++;
+      }
+      return !samples||above/samples<=.18||below/samples<=.18;
+    });
   }
   function cluster(values,tolerance=3){const sorted=[...values].sort((a,b)=>a-b),groups=[];for(const value of sorted){const group=groups[groups.length-1];if(group&&value-group[group.length-1]<=tolerance)group.push(value);else groups.push([value]);}return groups.map(group=>group.reduce((a,b)=>a+b,0)/group.length);}
-  function boundarySupport(segments,coordinate,start,end){
+  function joinRuledSegments(segments,tolerance,maxGap){
+    // A slanted thin vertical rule can jump one pixel midway down the page.
+    // Its two axis-aligned runs then meet end-to-end rather than overlap.
+    // Join only nearby, contiguous pieces, with bounded total perpendicular
+    // drift so text rows or strongly tilted lines cannot chain indefinitely.
+    const result=[];let active=[];
+    for(const line of [...segments].sort((a,b)=>a.coordinate-b.coordinate||a.start-b.start)){
+      active=active.filter(group=>line.coordinate-group.minimum<=tolerance);
+      const matches=active.filter(group=>line.start<=group.end+maxGap&&line.end>=group.start-maxGap);
+      const weight=line.end-line.start+1;
+      if(matches.length){
+        const target=matches[0];target.sum+=line.coordinate*weight;target.weight+=weight;target.start=Math.min(target.start,line.start);target.end=Math.max(target.end,line.end);
+        for(const other of matches.slice(1)){target.sum+=other.sum;target.weight+=other.weight;target.start=Math.min(target.start,other.start);target.end=Math.max(target.end,other.end);target.minimum=Math.min(target.minimum,other.minimum);other.removed=true;}
+        active=active.filter(group=>!group.removed);
+      }else{const group={start:line.start,end:line.end,sum:line.coordinate*weight,weight,minimum:line.coordinate};result.push(group);active.push(group);}
+    }
+    return result.filter(group=>!group.removed).map(group=>({coordinate:group.sum/group.weight,start:group.start,end:group.end}));
+  }
+  function boundarySupport(segments,coordinate,start,end,tolerance=2.5){
     // Text strokes near an absent border are not a border. Require a straight
     // segment touching a cell boundary, or spanning most of its interior.
-    const intervals=segments.filter(line=>Math.abs(line.coordinate-coordinate)<=2.5&&line.end>start+2&&line.start<end-2&&(line.start<=start+3||line.end>=end-3||line.end-line.start>=(end-start)*.45)).map(line=>[Math.max(start,line.start),Math.min(end,line.end)]).sort((a,b)=>a[0]-b[0]);
+    const intervals=segments.filter(line=>Math.abs(line.coordinate-coordinate)<=tolerance&&line.end>start+2&&line.start<end-2&&(line.start<=start+3||line.end>=end-3||line.end-line.start>=(end-start)*.45)).map(line=>[Math.max(start,line.start),Math.min(end,line.end)]).sort((a,b)=>a[0]-b[0]);
     let covered=0,last=start;for(const [a,b] of intervals){if(b>last){covered+=b-Math.max(a,last);last=b;}}
     return covered/Math.max(1,end-start);
   }
-  function componentTable(xs,ys,hs,vs,width,height,words,id){
+  function componentTable(xs,ys,hs,vs,width,height,words,id,tolerance=2.5){
     const x=xs.map(v=>v/width),y=ys.map(v=>v/height);checkGrid(x,y);
     const cols=x.length-1,rows=y.length-1,vertical=Array.from({length:rows},()=>[]),horizontal=Array.from({length:rows+1},()=>[]);
     const state=score=>score>=.86?1:score<=.12?0:2;
-    for(let r=0;r<rows;r++)for(let c=0;c<=cols;c++)vertical[r][c]=state(boundarySupport(vs,xs[c],ys[r],ys[r+1]));
-    for(let r=0;r<=rows;r++)for(let c=0;c<cols;c++)horizontal[r][c]=state(boundarySupport(hs,ys[r],xs[c],xs[c+1]));
+    for(let r=0;r<rows;r++)for(let c=0;c<=cols;c++)vertical[r][c]=state(boundarySupport(vs,xs[c],ys[r],ys[r+1],tolerance));
+    for(let r=0;r<=rows;r++)for(let c=0;c<cols;c++)horizontal[r][c]=state(boundarySupport(hs,ys[r],xs[c],xs[c+1],tolerance));
     if(vertical.some(row=>row[0]!==1||row[cols]!==1)||horizontal[0].some(v=>v!==1)||horizontal[rows].some(v=>v!==1))return null;
     const parents=Array.from({length:rows*cols},(_,index)=>index),find=index=>{while(parents[index]!==index){parents[index]=parents[parents[index]];index=parents[index];}return index;},union=(a,b)=>{parents[find(a)]=find(b);};
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){if(c<cols-1&&vertical[r][c+1]===0)union(r*cols+c,r*cols+c+1);if(r<rows-1&&horizontal[r+1][c]===0)union(r*cols+c,(r+1)*cols+c);}
@@ -224,20 +260,76 @@
     cells.sort((a,b)=>a.row-b.row||a.col-b.col);
     return refresh({id,box:[x[0],y[0],x[x.length-1],y[y.length-1]],x,y,cells,unassignedIndices:[],issues:unique(issues),reviewed:false},words);
   }
-  function fragmentRisk(table,hs,vs,width,height){
+  function fragmentRisk(table,hs,vs,width,height,region){
     const tolerance=Math.max(6,Math.max(width,height)*.006);
-    for(const [points,bounds,segments] of [[table.y.map(v=>v*height),[table.box[0]*width,table.box[2]*width],hs],[table.x.map(v=>v*width),[table.box[1]*height,table.box[3]*height],vs]]){
+    for(const [points,bounds,segments,clip] of [[table.y.map(v=>v*height),[table.box[0]*width,table.box[2]*width],hs,region&&[region[0],region[2]]],[table.x.map(v=>v*width),[table.box[1]*height,table.box[3]*height],vs,region&&[region[1],region[3]]]]){
       let before=0,after=0;
       for(const point of points){
         const matching=segments.filter(line=>Math.abs(line.coordinate-point)<=3&&Math.min(line.end,bounds[1])-Math.max(line.start,bounds[0])>(bounds[1]-bounds[0])*.6);
-        if(matching.some(line=>line.start<bounds[0]-tolerance))before++;
-        if(matching.some(line=>line.end>bounds[1]+tolerance))after++;
+        if(matching.some(line=>line.start<bounds[0]-tolerance&&!(clip&&line.start<=clip[0]+3)))before++;
+        if(matching.some(line=>line.end>bounds[1]+tolerance&&!(clip&&line.end>=clip[1]-3)))after++;
       }
       // Repeated overhanging rules indicate that only part of a larger grid was
       // closed. Do not quietly export the surviving columns and omit the gap.
       if(before>=2||after>=2)return true;
     }
     return false;
+  }
+  function tableBands(xs,ys,hs,vs,tolerance){
+    // A form often joins a four-column information grid to a seven-column
+    // amount grid. Keeping every x coordinate in both grids invents empty
+    // columns. A full-width separator with different rules above and below is
+    // evidence of two sections; the separator title stays with the next one.
+    const signatures=ys.slice(0,-1).map((top,row)=>xs.slice(1,-1).filter(x=>boundarySupport(vs,x,top,ys[row+1],tolerance)>=.65));
+    const cuts=[0];
+    for(let row=1;row<signatures.length-1;row++){
+      if(signatures[row].length||!signatures[row-1].length)continue;
+      let below=row+1;while(below<signatures.length&&!signatures[below].length)below++;
+      if(below>=signatures.length)continue;
+      const before=signatures[row-1],after=signatures[below],same=before.length===after.length&&before.every((value,index)=>Math.abs(value-after[index])<tolerance);
+      if(!same&&boundarySupport(hs,ys[row],xs[0],xs.at(-1),tolerance)>=.86&&boundarySupport(hs,ys[below],xs[0],xs.at(-1),tolerance)>=.86)cuts.push(row);
+    }
+    cuts.push(ys.length-1);
+    return cuts.slice(0,-1).map((start,index)=>{
+      const end=cuts[index+1],active=xs.filter((x,col)=>col===0||col===xs.length-1||ys.slice(start,end).some((top,row)=>boundarySupport(vs,x,top,ys[start+row+1],tolerance)>.12));
+      return {xs:active,ys:ys.slice(start,end+1)};
+    });
+  }
+  function boundaryTrace(points,segments,start,end,horizontal,mask,width,height,tolerance){
+    const result=[],maxGap=Math.max(3,Math.round(Math.max(width,height)*.004)),radius=Math.ceil(tolerance)+1;
+    for(let index=0;index<points.length;index++){
+      const coordinate=points[index],ranges=segments.filter(line=>Math.abs(line.coordinate-coordinate)<=tolerance&&line.end>=start&&line.start<=end).map(line=>[Math.max(start,line.start),Math.min(end,line.end)]).sort((a,b)=>a[0]-b[0]),joined=[];
+      for(const range of ranges){const last=joined.at(-1);if(last&&range[0]<=last[1]+maxGap)last[1]=Math.max(last[1],range[1]);else joined.push([...range]);}
+      for(const [from,to] of joined){
+        if(to-from<6)continue;
+        const samples=Math.max(1,Math.min(48,Math.ceil((to-from)/12))),path=[];
+        for(let at=0;at<=samples;at++){
+          const along=from+(to-from)*at/samples,center=Math.round(coordinate),scores=[];let maximum=0;
+          for(let delta=-radius;delta<=radius;delta++){
+            let score=0;
+            for(let offset=-2;offset<=2;offset++){
+              const across=Math.round(along)+offset,x=horizontal?across:center+delta,y=horizontal?center+delta:across;
+              if(x>=0&&x<width&&y>=0&&y<height)score+=mask[y*width+x];
+            }
+            scores.push(score);if(score>maximum)maximum=score;
+          }
+          let weighted=0,weight=0;
+          for(let slot=0;slot<scores.length;slot++)if(scores[slot]>=Math.max(2,maximum*.75)){weighted+=(center+slot-radius)*scores[slot];weight+=scores[slot];}
+          const cross=weight?weighted/weight:coordinate;path.push(horizontal?[along/width,cross/height]:[cross/width,along/height]);
+        }
+        result.push({index,points:path});
+      }
+    }
+    return result;
+  }
+  function attachTrace(table,hs,vs,mask,width,height,tolerance){
+    table.trace={
+      horizontal:boundaryTrace(table.y.map(value=>value*height),hs,table.box[0]*width,table.box[2]*width,true,mask,width,height,tolerance),
+      vertical:boundaryTrace(table.x.map(value=>value*width),vs,table.box[1]*height,table.box[3]*height,false,mask,width,height,tolerance)
+    };
+    const curvedLine=(line,axis,extent)=>{if(line.points.length<9)return false;const values=line.points.map(point=>point[axis]*extent).sort((a,b)=>a-b),trim=Math.max(1,Math.floor(values.length*.1));return values[values.length-1-trim]-values[trim]>3;};
+    const curved=table.trace.horizontal.some(line=>curvedLine(line,1,height))||table.trace.vertical.some(line=>curvedLine(line,0,width));
+    if(curved)table.issues=unique([...table.issues,'curved-border']);
   }
   function markUnrecognizedInk(table,mask,width,height){
     const inset=Math.max(3,Math.ceil(Math.max(width,height)*.003));
@@ -263,7 +355,9 @@
       if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>LIMITS.maxEdge||height>LIMITS.maxEdge||!data||data.length!==width*height*4)throw new RangeError('표 분석 이미지는 긴 변 1,600픽셀 이하의 RGBA 이미지여야 합니다.');
       if(region&&!validBox(region))throw new RangeError('표 분석 영역이 올바르지 않습니다.');
       const rect=region?[Math.floor(region[0]*width),Math.floor(region[1]*height),Math.ceil(region[2]*width),Math.ceil(region[3]*height)]:[0,0,width,height];
-      const mask=rasterMask(image),hs=runs(mask,width,height,rect,true),vs=runs(mask,width,height,rect,false);metrics.lineCandidates=hs.length+vs.length;
+      const mask=rasterMask(image),ruleTolerance=Math.max(3,Math.min(6,Math.max(width,height)*.004)),joinGap=Math.max(2,Math.round(Math.max(width,height)*.004));
+      const rawHorizontal=runs(mask,width,height,rect,true),rawVertical=runs(mask,width,height,rect,false);
+      const hs=joinRuledSegments(suppressGlyphRules(rawHorizontal,mask,width,height,rawVertical),ruleTolerance,joinGap),vs=joinRuledSegments(rawVertical,ruleTolerance,joinGap);metrics.lineCandidates=hs.length+vs.length;
       if(hs.length*vs.length>2000000)throw new RangeError('표 경계의 교차 후보가 너무 많습니다. 표 영역을 좁혀 다시 분석하세요.');
       const adjacency=Array.from({length:hs.length+vs.length},()=>[]),tolerance=3;
       for(let hi=0;hi<hs.length;hi++)for(let vi=0;vi<vs.length;vi++){const h=hs[hi],v=vs[vi];if(h.coordinate>=v.start-tolerance&&h.coordinate<=v.end+tolerance&&v.coordinate>=h.start-tolerance&&v.coordinate<=h.end+tolerance){adjacency[hi].push(hs.length+vi);adjacency[hs.length+vi].push(hi);}}
@@ -272,21 +366,28 @@
         if(seen.has(first)||adjacency[first].length<2)continue;
         const queue=[first],h=[],v=[];seen.add(first);
         for(let at=0;at<queue.length;at++){const index=queue[at];if(index<hs.length)h.push(hs[index]);else v.push(vs[index-hs.length]);for(const next of adjacency[index])if(!seen.has(next)&&adjacency[next].length>=2){seen.add(next);queue.push(next);}}
-        const xs=cluster(v.map(line=>line.coordinate)),ys=cluster(h.map(line=>line.coordinate));
+        // Curved scans can shift one horizontal rule by four or five pixels
+        // across the sheet. Treat its overlapping slices as one boundary,
+        // rather than reject the whole table for an invented tiny row.
+        const xs=cluster(v.map(line=>line.coordinate),ruleTolerance),ys=cluster(h.map(line=>line.coordinate),ruleTolerance);
         if(xs.length<2||ys.length<2||(xs.length-1)*(ys.length-1)<2)continue;
         if(xs.some((value,i)=>i&&value-xs[i-1]<6)||ys.some((value,i)=>i&&value-ys[i-1]<6)){rejected++;continue;}
-        const table=componentTable(xs,ys,hs,vs,width,height,words,`table-${tables.length+1}`);
-        if(!table){rejected++;continue;}
-        if(fragmentRisk(table,hs,vs,width,height)){rejected++;continue;}
-        markUnrecognizedInk(table,mask,width,height);
-        tables.push(table);metrics.cells+=(xs.length-1)*(ys.length-1);
-        if(tables.length>LIMITS.maxTables)throw new RangeError('한 페이지에서 표 12개까지 분석합니다. 표 영역을 나누세요.');
-        if(metrics.cells>LIMITS.maxCells)throw new RangeError('한 번에 표 600칸까지 분석합니다. 표 영역을 나누세요.');
+        const scope={x:xs.map(value=>value/width),y:ys.map(value=>value/height),box:[xs[0]/width,ys[0]/height,xs.at(-1)/width,ys.at(-1)/height]};
+        if(fragmentRisk(scope,hs,vs,width,height,region&&rect)){rejected++;continue;}
+        for(const band of tableBands(xs,ys,hs,vs,ruleTolerance)){
+          const table=componentTable(band.xs,band.ys,hs,vs,width,height,words,`table-${tables.length+1}`,ruleTolerance);
+          if(!table){rejected++;continue;}
+          attachTrace(table,hs,vs,mask,width,height,ruleTolerance);markUnrecognizedInk(table,mask,width,height);
+          tables.push(table);metrics.cells+=(band.xs.length-1)*(band.ys.length-1);
+          if(tables.length>LIMITS.maxTables)throw new RangeError('한 페이지에서 표 12개까지 분석합니다. 표 영역을 나누세요.');
+          if(metrics.cells>LIMITS.maxCells)throw new RangeError('한 번에 표 600칸까지 분석합니다. 표 영역을 나누세요.');
+        }
       }
       if(!tables.length)warnings.push('수평·수직 테두리가 분명한 표를 찾지 못했습니다. 기울기와 흐린 경계를 확인하거나 표 영역과 행·열을 직접 지정하세요.');
       if(rejected)warnings.push('일부 표 후보의 경계가 끊기거나 기울어져 자동 구성을 보류했습니다. 해당 영역을 직접 지정하세요.');
       const invalid=words.filter(word=>!validBox(word?.box)).length;if(invalid)warnings.push(`위치 정보가 없는 인식 영역 ${invalid}개는 표에 배치하지 않았습니다. 기존 인식 텍스트에서 확인하세요.`);
       if(tables.some(table=>table.unassignedIndices.length))warnings.push('여러 칸에 걸친 인식 영역이 있습니다. 경계를 조정하거나 셀을 병합해야 표로 복사할 수 있습니다.');
+      if(tables.some(table=>table.issues.includes('curved-border')))warnings.push('기울거나 휜 테두리를 추적해 표 초안을 만들었습니다. 원본의 경계와 셀 배치를 확인하세요.');
       return finish(tables.sort((a,b)=>a.box[1]-b.box[1]||a.box[0]-b.box[0]));
     }catch(error){warnings.push(error instanceof RangeError?error.message:'표 구조를 안전하게 분석하지 못했습니다. 표 영역을 좁히거나 직접 지정하세요.');return finish([]);}
   }
