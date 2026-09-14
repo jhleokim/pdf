@@ -7,3 +7,7 @@ Basic previously read the imported source while Pro effects existed only in the 
 The transfer commits existing overlays into PDF content. Original PDF text remains searchable, but to edit the previous overlay objects or Pro settings individually, undo the transfer. New Basic edits remain available normally. Transferring a large scanned document can take time; the existing progress/cancel UI covers processing and thumbnail generation. No cloud service is used for this transfer.
 
 Validation: 309 Node tests passed, including PDF arrow raster parity across four rotations, offset CropBoxes and two UserUnit values. `tests/create-review-workflow.cjs` generates browser fixtures for web and `--standalone`. The seven scenarios exercise six separate stamps on page 2, navigation, proportional resizing, Enter/Escape, PDF page targeting, injected transfer failure, Basic export, undo/redo and repeated mode switches. The standalone fixture serves the actual bundled HTML over localhost; it does not establish compatibility with every browser's `file:` security policy. The v5.0 standalone OCR worker fix is retained.
+
+## v5.1.1
+
+Opening an existing stamp for editing now navigates to its captured page before activating the handles. This prevents the page-change completion shortcut from ending a just-opened edit. An eighth browser scenario covers editing page 2 from page 3 and verifies that the stamp count remains unchanged. Future fixes increment the patch version; feature releases increment the minor version.

@@ -3739,7 +3739,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 5.1">v5.1</span>
+<span class="app-version" aria-label="버전 5.1.1">v5.1.1</span>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -14662,7 +14662,7 @@ function renderStampMarks(){
     const row=document.createElement('div');row.className='stamp-row';const img=document.createElement('img');img.src=mark.data;img.alt='';
     const label=document.createElement('span'),n=mark.scope==='all'?pages.length:mark.targets.filter(uid=>pages.some(p=>p.uid===uid)).length;
     label.textContent=`${mark.name} · ${n}쪽${mark.scope==='all'?' 전체':''}`;
-    const edit=document.createElement('button');edit.className='btn quiet';edit.textContent='수정';edit.onclick=()=>{if(stampAsset){toast('현재 도장을 먼저 확정하거나 닫아 주세요.');return;}stampEditing={mark,index:i};stampMarks.splice(i,1);activateStamp(mark);for(const [id,key] of [['stampScope','scope'],['stampAnchor','anchor'],['stampX','x'],['stampY','y'],['stampWidth','width']])$(id).value=mark[key];$('stampOpacity').value=mark.opacity*100;
+    const edit=document.createElement('button');edit.className='btn quiet';edit.textContent='수정';edit.onclick=async()=>{if(stampAsset){toast('현재 도장을 먼저 확정하거나 닫아 주세요.');return;}const target=mark.scope==='all'?livePage():pages.find(p=>mark.targets.includes(p.uid));if(target&&target.uid!==previewUid)await showPreview(target);if(stampAsset||!stampMarks.includes(mark))return;stampEditing={mark,index:stampMarks.indexOf(mark)};stampMarks.splice(stampEditing.index,1);activateStamp(mark);for(const [id,key] of [['stampScope','scope'],['stampAnchor','anchor'],['stampX','x'],['stampY','y'],['stampWidth','width']])$(id).value=mark[key];$('stampOpacity').value=mark.opacity*100;
       // Re-select the captured pages so editing retains the intended targets.
       if(mark.scope!=='all'){pages.forEach(p=>p.el?.classList.toggle('selected',mark.targets.includes(p.uid)));syncCounts();$('stampScope').value='selected';}toolsChanged();};
     const remove=document.createElement('button');remove.className='btn quiet';remove.textContent='삭제';remove.setAttribute('aria-label',`${mark.name} 배치 삭제`);remove.onclick=()=>{stampMarks.splice(i,1);renderStampMarks();toolsChanged();};row.append(img,label,edit,remove);host.append(row);
