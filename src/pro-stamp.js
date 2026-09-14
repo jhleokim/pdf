@@ -42,7 +42,9 @@
         const b=G.visibleBox(page),r=((page.getRotation().angle%360)+360)%360,u=G.unit(page);
         const w=(r%180?b.height:b.width)*u,h=(r%180?b.width:b.height)*u;
         const box=placement(mark,w,h),[x,y]=G.displayToPdf(box.x/u,(box.y+box.height)/u,b,r);
-        page.drawImage(image,{x,y,width:box.width/u,height:box.height/u,rotate:P.degrees(r),opacity:mark.opacity});count++;
+        page.drawImage(image,{x,y,width:box.width/u,height:box.height/u,rotate:P.degrees(r),opacity:mark.opacity});
+        if(mark.review)root.PDFReviewStamp.drawPdf(page,mark,box,w,h,b,r,u);
+        count++;
       }
     }
     return count;

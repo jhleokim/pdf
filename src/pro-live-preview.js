@@ -27,6 +27,7 @@ function showOriginal(){
   $('compareOriginal').setAttribute('aria-pressed',String(show));
   $('compareBeforeScroll').setAttribute('aria-hidden',String(!show));
   $('compareAfterScroll').setAttribute('aria-hidden',String(show));
+  if(typeof syncReviewStamp==='function')syncReviewStamp();
 }
 function setLivePreviewOpen(open){
   if(!open&&typeof setDeskewInteraction==='function')setDeskewInteraction(false);
@@ -89,6 +90,9 @@ async function updateLivePreview(seq){
   let loaded=[],canvases=[];
   try{
     const p=livePage(),offset=pages.indexOf(p),options=readProOptions(),key=liveContentKey();
+    // Keep the active review label in the interactive overlay. Committed labels
+    // use the normal PDF pipeline; export always includes the active label too.
+    if(typeof stampAsset!=='undefined'&&stampAsset?.review&&options.stamps?.length)options.stamps=options.stamps.slice(0,-1);
     let report=liveCache?.key===key?liveCache.report:null;
     if(!report){
       const edited=await buildEditedDocument([p]);check();
@@ -141,6 +145,7 @@ async function updateLivePreview(seq){
     await Promise.allSettled(loaded.map(d=>d.destroy()));
     if(liveController===controller)liveController=null;
     if(seq===liveSequence){$('proCompare').setAttribute('aria-busy','false');if(typeof syncDeskewControls==='function')syncDeskewControls();}
+    if(typeof syncReviewStamp==='function')syncReviewStamp();
   }
 }
 $('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('proWorkspace'):$('btnPreview')).focus();};

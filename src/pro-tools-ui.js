@@ -54,7 +54,7 @@ function waitForOCR(promise,signal){
 let toolsRevision=0,stampAsset=null,stampMarks=[],stampPositioning=false,stampSource=null,stampOriginal=null,stampPixels=null,stampUndoState=null,stampShowingSource=false;
 let stampShelf=[],stampEditing=null,stampLoadSequence=0,ocrRecords=[],ocrAccepted=false,ocrRunning=false,toolsLastState='';
 const stampControlIds=['stampScope','stampAnchor','stampX','stampY','stampWidth','stampOpacity'];
-function toolsChanged(){toolsRevision++;proInvalidate();syncToolSummaries();scheduleLivePreview();}
+function toolsChanged(){toolsRevision++;proInvalidate();syncToolSummaries();if(typeof syncReviewStamp==='function')syncReviewStamp();scheduleLivePreview();}
 function syncToolSummaries(){
   const marks=stampMarks.length+(stampAsset?1:0),recognized=ocrRecords.filter(ocrHasText).length;
   $('stampSummary').textContent=marks?`도장 ${marks}개 배치`:'사진에서 만들고, 원하는 곳에 찍기';
@@ -71,6 +71,7 @@ function currentStamp(){
 }
 function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
 function readToolOptions(o,strict=false){
+  if(strict&&typeof reviewStampPending==='function'&&reviewStampPending())throw new Error('스탬프 문구·색상을 반영하고 있습니다. 잠시 후 다시 시도하세요.');
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
   const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
   const stale=ocrRecords.some(r=>pages.some(p=>p.uid===r.uid)&&!valid.includes(r));
@@ -78,6 +79,7 @@ function readToolOptions(o,strict=false){
   o.ocr=ocrAccepted?valid.filter(ocrCanEmbed).map(r=>({...r,words:r.words.filter(w=>w.text?.trim())})):[];return o;
 }
 function syncToolsState(){
+  if(typeof syncReviewStamp==='function')syncReviewStamp();
   if(ocrRunning)return;
   const activePages=new Set(pages.map(p=>p.uid));for(const [id,r] of ocrCheckpoints)if(!activePages.has(r.uid))ocrCheckpoints.delete(id);
   syncToolSummaries();
@@ -96,7 +98,7 @@ function syncToolsState(){
   }
 }
 function resetTools(){stampMarks=[];stampAsset=null;stampEditing=null;stampSource=stampOriginal=stampPixels=stampUndoState=null;ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;$('stampActive').hidden=true;$('ocrResults').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();}
-function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning){if(typeof setDeskewInteraction==='function')setDeskewInteraction(false);setLivePreviewOpen(true);}}
+function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning){if(typeof setDeskewInteraction==='function')setDeskewInteraction(false);setLivePreviewOpen(true);}if(typeof syncReviewStamp==='function')syncReviewStamp();}
 function renderStampMarks(){
   const host=$('stampPlacements');host.replaceChildren();
   stampMarks.forEach((mark,i)=>{
@@ -109,7 +111,7 @@ function renderStampMarks(){
     const remove=document.createElement('button');remove.className='btn quiet';remove.textContent='삭제';remove.setAttribute('aria-label',`${mark.name} 배치 삭제`);remove.onclick=()=>{stampMarks.splice(i,1);renderStampMarks();toolsChanged();};row.append(img,label,edit,remove);host.append(row);
   });
 }
-function activateStamp(asset){stampAsset={...asset};$('stampThumb').src=asset.data;$('stampName').value=asset.name||'내 도장';$('stampActive').hidden=false;$('stampSection').open=true;toolsChanged();}
+function activateStamp(asset){stampAsset={...asset,...(asset.review?{review:PDFReviewStamp.normalize(asset.review)}:{})};$('stampThumb').src=asset.data;$('stampName').value=asset.name||'내 도장';$('stampActive').hidden=false;$('stampSection').open=true;toolsChanged();if(asset.review)setStampPositioning(true);}
 function stampSnapshot(){return {source:new ImageData(new Uint8ClampedArray(stampSource.data),stampSource.width,stampSource.height),pixels:new Uint8ClampedArray(stampPixels)};}
 function stampPaint(){
   const c=$('stampCanvas');c.width=stampSource.width;c.height=stampSource.height;
@@ -163,7 +165,7 @@ try{const stored=JSON.parse(localStorage.getItem('pdfstudio-stamps-v1')||'[]');i
 $('stampSave').onclick=()=>{if(!stampAsset)return;try{if(stampShelf.length>=8)throw new Error('최대 8개까지 보관할 수 있습니다. 사용하지 않는 도장을 삭제하세요.');const next=[...stampShelf,{data:stampAsset.data,sourceData:stampAsset.sourceData,strength:stampAsset.strength,color:stampAsset.color,ratio:stampAsset.ratio,name:$('stampName').value||'내 도장'}];localStorage.setItem('pdfstudio-stamps-v1',JSON.stringify(next));stampShelf=next;renderStampShelf();$('stampStatus').textContent='이 브라우저에 도장을 보관했습니다.';}catch(e){toast(e.name==='QuotaExceededError'?'브라우저 보관 용량이 부족합니다. PNG로 저장하세요.':e.message,true);}};
 let placementGesture=null;
 $('compareAfterScroll').addEventListener('pointerdown',e=>{
-  if(!stampPositioning||e.target.id!=='compareAfter'||$('proCompare').getAttribute('aria-busy')==='true')return;
+  if(stampAsset?.review||!stampPositioning||e.target.id!=='compareAfter'||$('proCompare').getAttribute('aria-busy')==='true')return;
   let mark;try{mark=currentStamp();}catch(_){return;}if(!mark||!liveOutputSize)return;
   e.preventDefault();const r=e.target.getBoundingClientRect(),box=PDFStamp.placement(mark,liveOutputSize.width,liveOutputSize.height),x=(e.clientX-r.left)/r.width*liveOutputSize.width,y=(e.clientY-r.top)/r.height*liveOutputSize.height;
   const inside=x>=box.x&&x<=box.x+box.width&&y>=box.y&&y<=box.y+box.height;
