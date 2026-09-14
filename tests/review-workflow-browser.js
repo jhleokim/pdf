@@ -17,6 +17,7 @@
   await preset('typo');key(document.body,'Escape');await ready();assert(stampMarks.length===4&&!stampAsset&&!stampPositioning&&proPreviewOpen,'Esc deleted stamp or closed preview');
   await preset('formula');await preset('add');assert(stampMarks.length===5&&stampAsset.review.preset==='add','Choosing next preset overwrote previous stamp');key(document.body,'Enter');await ready();record('Esc keeps the stamp; changing preset adds a separate placement');
   assert(JSON.stringify(await images((await createProResult({reveal:false})).bytes))==='[0,6,0]','Exported page targeting/count differs');record('PDF contains six stamps on page 2 only');
+  await showPreview(pages[2]);await $('stampPlacements').querySelector('button').onclick();await ready();assert(previewUid===page2&&stampEditing&&stampAsset,'Editing another page did not navigate to its stamp');key(document.body,'Enter');await ready();assert(stampMarks.length===6,'Editing added an extra placement');record('Editing a saved stamp opens its own page without copying it');
   const originalPages=pages.slice();$('proWatermark').value='REVIEWED';$('proNumber').checked=true;
   const thumbnail=renderThumb;renderThumb=async()=>{throw Error('Injected thumbnail failure')};try{assert(await setProMode('basic')===false,'Failure switched mode');assert(pages[1]===originalPages[1]&&stampMarks.length===6&&proMode==='pro','Failure lost edits');}finally{renderThumb=thumbnail;}
   record('Failed Basic transfer keeps the complete Pro editing state');
