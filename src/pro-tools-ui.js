@@ -66,7 +66,9 @@ function toolDownload(data,name,type){const url=URL.createObjectURL(data instanc
 function toolTargets(scope){return scope==='all'?pages:scope==='selected'?selected():[livePage()].filter(Boolean);}
 function currentStamp(){
   if(!stampAsset)return null;
-  return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:toolTargets($('stampScope').value).map(p=>p.uid),anchor:$('stampAnchor').value,
+  // Capture page identities once. Navigating or changing selection is not a move.
+  if(!Array.isArray(stampAsset.targets))stampAsset={...stampAsset,targets:toolTargets($('stampScope').value).map(p=>p.uid)};
+  return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:stampAsset.targets.slice(),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
 function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
@@ -111,7 +113,7 @@ function renderStampMarks(){
     const remove=document.createElement('button');remove.className='btn quiet';remove.textContent='삭제';remove.setAttribute('aria-label',`${mark.name} 배치 삭제`);remove.onclick=()=>{stampMarks.splice(i,1);renderStampMarks();toolsChanged();};row.append(img,label,edit,remove);host.append(row);
   });
 }
-function activateStamp(asset){stampAsset={...asset,...(asset.review?{review:PDFReviewStamp.normalize(asset.review)}:{})};$('stampThumb').src=asset.data;$('stampName').value=asset.name||'내 도장';$('stampActive').hidden=false;$('stampSection').open=true;toolsChanged();if(asset.review)setStampPositioning(true);}
+function activateStamp(asset){stampAsset={...asset,targets:stampEditing?asset.targets.slice():toolTargets($('stampScope').value).map(p=>p.uid),...(asset.review?{review:PDFReviewStamp.normalize(asset.review)}:{})};$('stampThumb').src=asset.data;$('stampName').value=asset.name||'내 도장';$('stampActive').hidden=false;$('stampSection').open=true;toolsChanged();if(asset.review)setStampPositioning(true);}
 function stampSnapshot(){return {source:new ImageData(new Uint8ClampedArray(stampSource.data),stampSource.width,stampSource.height),pixels:new Uint8ClampedArray(stampPixels)};}
 function stampPaint(){
   const c=$('stampCanvas');c.width=stampSource.width;c.height=stampSource.height;
@@ -157,7 +159,7 @@ $('stampEdit').onclick=async()=>{if(!stampAsset)return;try{const asset=stampAsse
 $('stampClear').onclick=()=>{if(stampEditing){stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,stampEditing.mark);stampEditing=null;renderStampMarks();}stampAsset=null;$('stampActive').hidden=true;setStampPositioning(false);toolsChanged();};
 $('stampPlace').onclick=()=>setStampPositioning(!stampPositioning);
 $('stampCommit').onclick=()=>{try{const mark=currentStamp();if(!mark||!mark.targets.length){toast('도장을 배치할 페이지를 선택하세요.');return;}if(stampEditing)stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,mark);else stampMarks.push(mark);stampEditing=null;stampAsset=null;$('stampActive').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();$('stampStatus').textContent='배치를 확정했습니다. 결과 만들기로 PDF에 저장하세요.';}catch(e){toast(e.message,true);}};
-for(const id of stampControlIds)$(id).oninput=()=>{toolsChanged();};
+for(const id of stampControlIds)$(id).oninput=()=>{if(id==='stampScope'&&stampAsset)stampAsset={...stampAsset,targets:toolTargets($('stampScope').value).map(p=>p.uid)};toolsChanged();};
 $('stampPng').onclick=async()=>{if(stampAsset)toolDownload(await (await fetch(stampAsset.data)).blob(),($('stampName').value||'도장')+'.png','image/png');};
 function renderStampShelf(){const host=$('stampLibrary');host.replaceChildren();$('stampLibraryCount').textContent=stampShelf.length;
   stampShelf.forEach((s,i)=>{const row=document.createElement('div');row.className='stamp-row';const image=document.createElement('img');image.src=s.data;image.alt='';const name=document.createElement('span');name.textContent=s.name;const use=document.createElement('button');use.className='btn';use.textContent='사용';use.onclick=()=>activateStamp(s);const del=document.createElement('button');del.className='btn quiet';del.textContent='삭제';del.setAttribute('aria-label',s.name+' 보관 삭제');del.onclick=()=>{try{const next=stampShelf.filter((_,j)=>j!==i);localStorage.setItem('pdfstudio-stamps-v1',JSON.stringify(next));stampShelf=next;renderStampShelf();}catch(_){toast('보관함을 변경하지 못했습니다.',true);}};row.append(image,name,use,del);host.append(row);});}

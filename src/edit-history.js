@@ -109,6 +109,7 @@ async function restoreDocumentHistory(redo){
     clearPreview();pvZoom=view.zoom;docs.clear();for(const [id,d]of state.sources)docs.set(id,d);
     pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;if(typeof r.deskewCrop==='boolean')r.page.deskewCrop=r.deskewCrop;else delete r.page.deskewCrop;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     if(state.stamps&&typeof restoreStampHistory==='function')restoreStampHistory(state.stamps);
+    if(state.proTransfer)restoreProTransferSettings(state.proTransfer);
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;
