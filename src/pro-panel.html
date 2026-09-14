@@ -28,8 +28,16 @@
       <details class="pro-section">
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small id="proPageSummary">사용 안 함</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proDeskew"><span>스캔 기울기 자동 보정</span></label>
-          <p class="pro-hint">글줄을 기준으로 ±7° 이내의 기울기를 바로잡습니다. 판별이 어려운 페이지와 링크·양식이 있는 페이지는 유지합니다.</p>
+          <label class="pro-check"><input type="checkbox" id="proDeskew" checked><span>스캔 기울기 자동 보정</span></label>
+          <p class="pro-hint">글줄의 기울기를 자동으로 확인합니다. 회전한 내용이 잘리지 않도록 페이지 영역을 넓힙니다.</p>
+          <div class="deskew-page-controls" role="group" aria-labelledby="proDeskewPageTitle">
+            <div class="deskew-page-head"><strong id="proDeskewPageTitle">현재 페이지</strong><output id="proDeskewPageNumber">페이지 없음</output></div>
+            <label class="pro-field" for="proDeskewPageMode"><span>보정 방식</span><select id="proDeskewPageMode" disabled><option value="auto">자동 · 기본 설정</option><option value="manual">직접 조절</option></select></label>
+            <div class="pro-field"><label for="proDeskewAngle">보정 각도</label><div class="deskew-angle-field"><input id="proDeskewAngle" type="number" min="-60" max="60" step="0.1" value="0.0" inputmode="decimal" disabled><span aria-hidden="true">°</span><button type="button" class="btn icon quiet" id="proDeskewMinus" aria-label="기울기 0.1도 줄이기" disabled>−</button><button type="button" class="btn icon quiet" id="proDeskewPlus" aria-label="기울기 0.1도 늘리기" disabled>+</button></div></div>
+            <div class="deskew-page-actions"><button type="button" class="btn" id="proDeskewAdjust" disabled>미리보기에서 조절</button><button type="button" class="btn quiet" id="proDeskewResetPage" disabled>자동으로</button></div>
+            <p class="pro-hint" id="proDeskewPageStatus" role="status">왼쪽 목록에서 조절할 페이지를 선택하세요.</p>
+            <p class="deskew-direction">−60°~+60° · + 시계 방향 / − 반시계 방향</p>
+          </div>
           <label class="pro-check"><input type="checkbox" id="proCrop"><span>가장자리 여백 재단</span></label>
           <div id="proCropFields" hidden class="pro-crop-fields" role="group" aria-label="재단할 여백, 밀리미터 단위">
             <label class="pro-field" for="proCropTop"><span>위 <small>mm</small></span><input id="proCropTop" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>

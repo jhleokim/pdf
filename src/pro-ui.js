@@ -4,7 +4,7 @@ let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
 const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
-function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[]]));}
+function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],p.deskewAngle]));}
 function proInvalidate(message){
   if(!proResult) return;
   proResult=null; $('proResult').hidden=true;
@@ -27,6 +27,7 @@ function syncProState(){
   if(proResult && proResult.fingerprint!==proFingerprint()) proInvalidate('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.');
   syncProAction();syncProSummaries();
   syncLivePreview();
+  if(typeof syncDeskewControls==='function')syncDeskewControls();
   if(typeof syncToolsState==='function'&&typeof toolsRevision!=='undefined')syncToolsState();
   if(!any) $('proStatus').textContent='파일을 추가하면 시작할 수 있어요.';
   else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 문서 전체에 적용`;
@@ -75,12 +76,14 @@ function proNumberInput(id,min,max,integer=false){
   return n;
 }
 function readProOptions(strict=false){
+  if(strict&&typeof validateDeskewInput==='function')validateDeskewInput();
   const crop=$('proCrop').checked, number=$('proNumber').checked;
   const options={
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
     blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
     rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
-    deskew:$('proDeskew').checked,crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
+    deskew:$('proDeskew').checked,deskewAngles:Object.fromEntries(pages.filter(p=>Number.isFinite(p.deskewAngle)).map(p=>[p.uid,p.deskewAngle])),
+    crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
     paper:$('proPaper').value,number,startNumber:number?proNumberInput('proStartNumber',1,999999,true):1,
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
     numberPosition:$('proNumberPosition').value,watermark:$('proWatermark').value.trim().slice(0,40)
@@ -113,11 +116,13 @@ function refreshProControls(){
 function syncProSummaries(){
   const set=(id,items)=>{const el=$(id);el.textContent=items.filter(Boolean).join(' · ')||'사용 안 함';el.closest('details').classList.toggle('has-settings',items.some(Boolean));};
   set('proNumberSummary',[$('proNumber').checked&&'페이지 번호',$('proWatermark').value.trim()&&'워터마크']);
-  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
+  const manual=pages.filter(p=>Number.isFinite(p.deskewAngle)).length;
+  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',manual&&`수동 ${manual}쪽`,$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
   set('proScanSummary',[$('proGrayscale').checked?'B&W 흑백':Number($('proContrast').value)>0&&'대비 강화',!$('proGrayscale').checked&&Number($('proWhitePoint').value)<255&&'배경 정리']);
   set('proOptimizeSummary',[$('proOptimize').checked&&($('proCompressionMode').value==='raster'?'페이지 전체 압축':'텍스트 유지'),$('proOptimize').checked&&$('proResolution').value+' px']);
 }
 function resetProOptions(){
+  if(typeof resetPageDeskewAngles==='function')resetPageDeskewAngles();
   if(typeof resetTools==='function')resetTools();
   for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}
   refreshProControls();proInvalidate();syncProState();scheduleLivePreview();toast('Pro 설정을 초기화했습니다');
@@ -132,7 +137,7 @@ function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);p
 async function processProDoc(doc,options,pageOffset){
   const signal=proAbort.signal;
   checkProAbort();
-  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
+  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),...(typeof deskewCallbacks==='function'?deskewCallbacks(pages):{}),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
   checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
 }
 async function verifyProText(before,after,signal,quiet=false){
@@ -166,7 +171,12 @@ function describeProSettings(o,report,deskew,offset){
   if(o.watermark)applied.push('워터마크');
   if(report.stamps)applied.push(`도장 ${report.stamps}곳`);
   if(report.ocr?.pages)applied.push(`검색용 OCR ${report.ocr.pages}쪽 · ${report.ocr.words}단어`);
-  if(o.deskew)applied.push(offset===undefined?`기울기 ${deskew.changed}쪽 보정`:deskew.pages[0]?.angle?`기울기 ${Math.abs(deskew.pages[0].angle).toFixed(1)}° 보정`:`기울기 유지 · ${deskew.pages[0]?.reason||'변경 없음'}`);
+  if(o.deskew||Object.keys(o.deskewAngles||{}).length){
+    const page=deskew?.pages?.[0],angle=Number.isFinite(page?.displayAngle)?page.displayAngle:-(page?.angle||0);
+    if(offset===undefined)applied.push(`기울기 ${deskew?.changed||0}쪽 보정`);
+    else if(page?.angle)applied.push(`${page.mode==='manual'?'수동':'자동'} 기울기 ${angle>0?'+':''}${angle.toFixed(1)}°`);
+    else applied.push(page?.mode==='manual'?'수동 0.0° · 원본 각도 유지':`기울기 유지 · ${page?.reason||'변경 없음'}`);
+  }
   if(o.crop&&o.margins.some(n=>n>0))applied.push('여백 재단');
   if(o.paper==='a4')applied.push('A4 맞춤');
   if(o.rasterize)applied.push('페이지 전체 압축 · 검색·복사 불가');
@@ -186,7 +196,7 @@ function proSummary(report,textCheck){
   if(report.settings)lines.unshift(report.settings);
   if(report.deskew?.pages.length){
     const corrected=report.deskew.pages.filter(p=>p.angle);
-    if(corrected.length)lines.push('기울기 보정: '+corrected.map(p=>`${p.page}쪽 ${Math.abs(p.angle).toFixed(1)}°`).join(', '));
+    if(corrected.length)lines.push('기울기 보정: '+corrected.map(p=>{const angle=Number.isFinite(p.displayAngle)?p.displayAngle:-p.angle;return `${p.page}쪽 ${p.mode==='manual'?'수동':'자동'} ${angle>0?'+':''}${angle.toFixed(1)}°`;}).join(', '));
     const kept=report.deskew.pages.filter(p=>!p.angle);
     if(kept.length)lines.push('기울기 유지: '+kept.map(p=>`${p.page}쪽 (${p.reason})`).join(', '));
   }

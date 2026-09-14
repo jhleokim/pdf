@@ -1077,6 +1077,16 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
  .pro-panel-footer .btn{min-height:44px}
  body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-panel-footer{padding:8px 12px}
 }
+.deskew-page-controls{margin:12px 0 16px;padding:12px;border:1px solid var(--line);border-radius:5px;background:var(--surface-2)}
+.deskew-page-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:12px}.deskew-page-head output{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.deskew-page-controls .pro-field{margin-bottom:10px}.deskew-angle-field{display:flex;align-items:center;gap:2px;border:1px solid var(--line-2);background:var(--surface);border-radius:4px;padding-right:3px}.deskew-angle-field input{min-width:0;width:100%;border:0!important;background:transparent!important;font-variant-numeric:tabular-nums;box-shadow:none!important}.deskew-angle-field>span{color:var(--ink-3);margin-right:5px}.deskew-angle-field .btn{flex:none;width:30px;height:30px;font-size:18px;border:0}.deskew-angle-field:focus-within{outline:2px solid var(--accent-line);outline-offset:1px}.deskew-page-actions{display:flex;align-items:center;gap:5px}.deskew-page-actions .btn{font-size:11px;padding:0 9px;min-height:32px}.deskew-page-controls .pro-hint{margin-top:10px;line-height:1.6;min-height:20px}.deskew-direction{font-size:10px;color:var(--ink-3);margin:5px 0 0}.deskew-page-controls [aria-invalid=true]{color:var(--danger)!important}
+#compareDeskewToggle{font-size:11px;height:30px;padding:0 7px;margin-left:auto;white-space:nowrap}#compareDeskewToggle .ic{width:16px;height:16px}#compareDeskewToggle[aria-pressed=true]{color:var(--accent-ink);background:var(--accent-wash);border-color:var(--accent-line)}
+.deskew-interaction{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}.deskew-interaction[hidden]{display:none}.deskew-guides{position:absolute;inset:20px 20px 72px;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);background:repeating-linear-gradient(0deg,transparent,transparent 31px,color-mix(in srgb,var(--accent) 16%,transparent) 31px,color-mix(in srgb,var(--accent) 16%,transparent) 32px);pointer-events:none}.deskew-rotate-handle{position:absolute;display:flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:38px;padding:0;border-radius:50%;border:1px solid var(--accent);background:var(--surface);color:var(--accent-ink);box-shadow:var(--sh-2);transform:translate(-50%,-50%);pointer-events:auto;touch-action:none;cursor:grab}.deskew-rotate-handle:active{cursor:grabbing}.deskew-rotate-handle:focus-visible,.deskew-drag-strip:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.deskew-drag-strip{position:absolute;left:14px;bottom:14px;width:calc(100% - 124px);max-width:270px;min-height:48px;box-sizing:border-box;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 12px 19px;border:1px solid var(--line-2);border-radius:5px;background:var(--surface);box-shadow:var(--sh-2);font-size:11px;color:var(--ink-2);cursor:ew-resize;pointer-events:auto;touch-action:none;user-select:none}.deskew-drag-strip output{font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent-ink)}.deskew-strip-ticks{position:absolute;left:12px;right:12px;bottom:7px;height:7px;background:repeating-linear-gradient(90deg,var(--line-2) 0,var(--line-2) 1px,transparent 1px,transparent 8px)}.deskew-strip-ticks:after{content:'';position:absolute;left:50%;top:-3px;width:2px;height:13px;background:var(--accent)}
+#deskewFinish{position:absolute;bottom:14px;right:14px;pointer-events:auto;min-height:48px;background:var(--surface);box-shadow:var(--sh-2);font-size:12px}.deskew-adjusting #compareOriginal{visibility:hidden}.deskew-ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--sheet);overflow:hidden;pointer-events:none}.deskew-ghost[hidden]{display:none}.deskew-ghost canvas{display:block;flex:none;margin:0!important;transform-origin:center;box-shadow:0 2px 6px #0002,0 14px 36px -12px #0005;background:white}.deskew-gesture-active{user-select:none}.deskew-gesture-active .deskew-rotate-handle{cursor:grabbing}
+@media(max-width:880px){#compareDeskewToggle{font-size:10px;height:29px}.deskew-rotate-handle{width:44px;height:44px;min-width:44px}.deskew-drag-strip{bottom:9px;left:9px;width:calc(100% - 111px);padding-left:9px;padding-right:9px;min-height:48px;font-size:10px}#deskewFinish{right:9px;bottom:9px;padding:0 10px}.deskew-page-actions .btn{min-height:40px}.deskew-angle-field .btn{width:40px;height:40px}.deskew-angle-field input{font-size:16px}.deskew-guides{inset:16px 16px 70px}}
+@media(prefers-reduced-motion:reduce){.deskew-interaction *{transition:none!important}}
+.deskew-angle-field input{appearance:textfield;-moz-appearance:textfield}.deskew-angle-field input::-webkit-inner-spin-button,.deskew-angle-field input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 /* Document tools: one quiet toolbar and one stable context row. */
 .anno-bar{position:relative;flex:none;border-bottom:1px solid var(--line);background:var(--surface);container-type:inline-size}
 .page-thumbnail{position:absolute;inset:0;pointer-events:none;isolation:isolate}
@@ -1443,8 +1453,16 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 <div id="proRailDivider" class="pro-rail-divider" role="separator" aria-label="페이지 목록 너비" aria-orientation="vertical" aria-controls="boardWrap" tabindex="0" title="드래그하여 목록 넓히기 · 더블클릭 기본 너비 · 방향키로 조절"><span></span></div>
 <section id="proCompare" class="live-preview" aria-labelledby="compareTitle" hidden>
 <header class="compare-head"><div><h2 id="compareTitle">현재 미리보기</h2><p id="comparePageLabel"></p></div><div class="compare-navigation"><button class="btn icon quiet" id="comparePrev" aria-label="이전 페이지">‹</button><button class="btn icon quiet" id="compareNext" aria-label="다음 페이지">›</button><button class="btn icon quiet" id="compareClose" aria-label="미리보기 닫기"><svg class="ic"><use href="#i-x"/></svg></button></div></header>
-<div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
-<div class="compare-stage" id="compareStage"><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter" aria-label="Pro 설정 적용 결과"></canvas></div><div class="compare-scroll compare-original" id="compareBeforeScroll" aria-hidden="true"><canvas id="compareBefore" aria-label="Pro 적용 전 편집본"></canvas></div><button class="btn" id="compareOriginal" aria-pressed="false" title="마우스를 올리거나 눌러 원본 보기" disabled><svg class="ic"><use href="#i-eye"/></svg>원본 보기</button></div>
+<div class="compare-toolbar"><span id="compareState" role="status" aria-live="polite">미리보기 준비 중…</span><button type="button" class="btn quiet" id="compareDeskewToggle" aria-pressed="false" disabled><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m16 3 4 4-4 4M20 7h-8a7 7 0 1 0 7 9"/></svg>기울기 조절</button><label>확대 <select id="compareZoom"><option value="1">페이지 맞춤</option><option value="1.5">150%</option><option value="2">200%</option></select></label></div>
+<div class="compare-stage" id="compareStage"><div class="compare-scroll" id="compareAfterScroll"><canvas id="compareAfter" aria-label="Pro 설정 적용 결과"></canvas></div><div class="compare-scroll compare-original" id="compareBeforeScroll" aria-hidden="true"><canvas id="compareBefore" aria-label="Pro 적용 전 편집본"></canvas></div><button class="btn" id="compareOriginal" aria-pressed="false" title="마우스를 올리거나 눌러 원본 보기" disabled><svg class="ic"><use href="#i-eye"/></svg>원본 보기</button>
+<div id="deskewInteraction" class="deskew-interaction" hidden>
+  <div id="deskewGhost" class="deskew-ghost" hidden><canvas id="deskewGhostCanvas" aria-label="조절 중인 페이지 기울기"></canvas></div>
+  <div class="deskew-guides" aria-hidden="true"></div>
+  <button type="button" id="deskewRotateHandle" class="deskew-rotate-handle" role="slider" aria-label="페이지 기울기 회전 손잡이" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0" title="잡고 돌리기 · 방향키 0.1° · Shift 1° · Esc 취소"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m16 3 4 4-4 4M20 7h-8a7 7 0 1 0 7 9"/></svg></button>
+  <div id="deskewDragStrip" class="deskew-drag-strip" role="slider" tabindex="0" aria-label="좌우로 밀어 페이지 기울기 조절" aria-orientation="horizontal" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0"><span>좌우로 밀어 조절</span><output id="deskewDragValue">0.0°</output><span class="deskew-strip-ticks" aria-hidden="true"></span></div>
+  <button type="button" class="btn" id="deskewFinish">조절 완료</button>
+</div>
+</div>
 <p class="compare-applied" id="compareApplied" role="status"></p>
 <details class="compare-details" id="compareDetails"><summary>미리보기 안내</summary><p class="compare-note" id="compareNote">설정 변경을 자동으로 반영합니다.</p></details>
 </section>
@@ -1545,8 +1563,16 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 <details class="pro-section">
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small id="proPageSummary">사용 안 함</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
-          <label class="pro-check"><input type="checkbox" id="proDeskew"><span>스캔 기울기 자동 보정</span></label>
-          <p class="pro-hint">글줄을 기준으로 ±7° 이내의 기울기를 바로잡습니다. 판별이 어려운 페이지와 링크·양식이 있는 페이지는 유지합니다.</p>
+          <label class="pro-check"><input type="checkbox" id="proDeskew" checked><span>스캔 기울기 자동 보정</span></label>
+          <p class="pro-hint">글줄의 기울기를 자동으로 확인합니다. 회전한 내용이 잘리지 않도록 페이지 영역을 넓힙니다.</p>
+          <div class="deskew-page-controls" role="group" aria-labelledby="proDeskewPageTitle">
+            <div class="deskew-page-head"><strong id="proDeskewPageTitle">현재 페이지</strong><output id="proDeskewPageNumber">페이지 없음</output></div>
+            <label class="pro-field" for="proDeskewPageMode"><span>보정 방식</span><select id="proDeskewPageMode" disabled><option value="auto">자동 · 기본 설정</option><option value="manual">직접 조절</option></select></label>
+            <div class="pro-field"><label for="proDeskewAngle">보정 각도</label><div class="deskew-angle-field"><input id="proDeskewAngle" type="number" min="-60" max="60" step="0.1" value="0.0" inputmode="decimal" disabled><span aria-hidden="true">°</span><button type="button" class="btn icon quiet" id="proDeskewMinus" aria-label="기울기 0.1도 줄이기" disabled>−</button><button type="button" class="btn icon quiet" id="proDeskewPlus" aria-label="기울기 0.1도 늘리기" disabled>+</button></div></div>
+            <div class="deskew-page-actions"><button type="button" class="btn" id="proDeskewAdjust" disabled>미리보기에서 조절</button><button type="button" class="btn quiet" id="proDeskewResetPage" disabled>자동으로</button></div>
+            <p class="pro-hint" id="proDeskewPageStatus" role="status">왼쪽 목록에서 조절할 페이지를 선택하세요.</p>
+            <p class="deskew-direction">−60°~+60° · + 시계 방향 / − 반시계 방향</p>
+          </div>
           <label class="pro-check"><input type="checkbox" id="proCrop"><span>가장자리 여백 재단</span></label>
           <div id="proCropFields" hidden class="pro-crop-fields" role="group" aria-label="재단할 여백, 밀리미터 단위">
             <label class="pro-field" for="proCropTop"><span>위 <small>mm</small></span><input id="proCropTop" type="number" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
@@ -12508,64 +12534,114 @@ globalThis.PDFGemini=createCloudOCRClient();
       return unchanged('영역별 글줄 방향이 달라 원본 유지');
     return {angle:result.angle,confidence:result.peak,reason:''};
   }
-  function matrix(box,angle){
-    const c=Math.cos(angle*rad),s=Math.sin(angle*rad),w=box.width,h=box.height;
-    const scale=Math.min(w/(Math.abs(c)*w+Math.abs(s)*h),h/(Math.abs(s)*w+Math.abs(c)*h));
-    const a=c*scale,b=s*scale,cx=box.x+w/2,cy=box.y+h/2;
-    return [a,b,-b,a,cx-a*cx+b*cy,cy-b*cx-a*cy];
+  function geometry(box,angle){
+    if(!Number.isFinite(angle)||Math.abs(angle)>60)throw new Error('회전 각도는 −60°부터 +60°까지 입력해 주세요.');
+    if(!box||![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width<=0||box.height<=0)
+      throw new Error('페이지의 표시 영역을 읽을 수 없습니다.');
+    const c=Math.cos(angle*rad),s=Math.sin(angle*rad),w=box.width,h=box.height,cx=box.x+w/2,cy=box.y+h/2;
+    const width=Math.abs(c)*w+Math.abs(s)*h,height=Math.abs(s)*w+Math.abs(c)*h;
+    return {matrix:[c,s,-s,c,cx-c*cx+s*cy,cy-s*cx-c*cy],bounds:{x:cx-width/2,y:cy-height/2,width,height}};
   }
+  function matrix(box,angle){return geometry(box,angle).matrix;}
   function apply(page,angle){
-    if(!Number.isFinite(angle)||Math.abs(angle)>7)throw new Error('자동 보정 범위를 벗어난 각도입니다.');
+    if(!Number.isFinite(angle)||Math.abs(angle)>60)throw new Error('회전 각도는 −60°부터 +60°까지 입력해 주세요.');
     if(!angle)return false;
     if(page.node.Annots()?.size())return false;
     const P=PDFLib,box=PDFProDocument.visibleBox(page),ctx=page.doc.context;
+    const transformed=geometry(box,angle),b=transformed.bounds;
     page.node.normalize();
     const start=ctx.register(ctx.contentStream([
-      P.pushGraphicsState(),P.concatTransformationMatrix(...matrix(box,angle)),
-      P.rectangle(box.x,box.y,box.width,box.height),P.clip(),P.endPath()
+      P.pushGraphicsState(),P.concatTransformationMatrix(...transformed.matrix),
+      // Retain the original visible region, including a pre-existing crop. Use
+      // all four vertices: bundled PDF.js clips the rotated `re` rectangle as
+      // though its diagonal were the full bounds, losing the other two corners.
+      P.moveTo(box.x,box.y),P.lineTo(box.x+box.width,box.y),
+      P.lineTo(box.x+box.width,box.y+box.height),P.lineTo(box.x,box.y+box.height),
+      P.closePath(),P.clip(),P.endPath()
     ]));
     const end=ctx.register(ctx.contentStream([P.popGraphicsState()]));
     page.node.wrapContentStreams(start,end);
+    // Do not shrink text or retain a page boundary that can cut off its corners.
+    // /Rotate and /UserUnit stay intact, so display and physical units agree.
+    for(const set of ['setMediaBox','setCropBox','setTrimBox','setBleedBox','setArtBox'])page[set](b.x,b.y,b.width,b.height);
     page.resetPosition();
     return true;
   }
-  async function processDocument(doc,options,{signal,docOptions={},pageOffset=0,onProgress}={}){
+  async function processDocument(doc,options,{signal,docOptions={},pageOffset=0,pageIds=[],deskewCache,deskewKeys=[],onProgress}={}){
     const report={changed:0,pages:[]};
-    if(!options.deskew)return report;
+    const overrides=options.deskewAngles||{},own=(o,k)=>k!==undefined&&Object.prototype.hasOwnProperty.call(o,k);
+    const cache=deskewCache instanceof Map?deskewCache:null;
+    function measured(key){
+      if(!cache||typeof key!=='string'||!key)return null;
+      const item=cache.get(key);
+      if(!item||!Number.isFinite(item.angle)||Math.abs(item.angle)>7||typeof item.reason!=='string')return null;
+      // Refresh LRU order without retaining the document, canvas or pixel data.
+      cache.delete(key);cache.set(key,item);
+      return {angle:item.angle,reason:item.reason,confidence:item.confidence};
+    }
+    function remember(key,result){
+      if(!cache||typeof key!=='string'||!key)return;
+      cache.delete(key);cache.set(key,{angle:result.angle,reason:result.reason,confidence:result.confidence});
+      while(cache.size>128)cache.delete(cache.keys().next().value);
+    }
     const check=()=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
     check();
-    const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
-    const task=pdfjsLib.getDocument({data:bytes,...docOptions});
-    let pdf;
+    // Resolve by stable UID, never by the transient preview/export page index.
+    // Manual 0 means keep this page level as supplied, rather than run detection.
+    const plans=doc.getPages().map((page,i)=>{
+      const pageId=pageIds[i],manual=own(overrides,pageId),angle=manual?overrides[pageId]:undefined;
+      if(manual&&(!Number.isFinite(angle)||Math.abs(angle)>60))throw new Error(`${pageOffset+i+1}페이지: 회전 각도는 −60°부터 +60°까지 입력해 주세요.`);
+      if(manual&&angle&&page.node.Annots()?.size())throw new Error(`${pageOffset+i+1}페이지: 링크·주석·양식이 있어 위치를 보존해야 하므로 기울기를 변경할 수 없습니다. 이 페이지를 자동 또는 0°로 되돌려 주세요.`);
+      return {page,pageId,manual,angle};
+    });
+    if(!options.deskew&&!plans.some(p=>p.manual))return report;
+    let task,pdf;
     try{
-      pdf=await task.promise;check();
-      for(let i=0;i<pdf.numPages;i++){
-        check();const page=doc.getPage(i);let result;
-        if(page.node.Annots()?.size())result={angle:0,reason:'링크·주석·양식 위치 보존을 위해 유지'};
-        else{
-          const source=await pdf.getPage(i+1),base=source.getViewport({scale:1});check();
-          const vp=source.getViewport({scale:Math.min(2,1200/Math.max(base.width,base.height))});
-          const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
-          const context=canvas.getContext('2d',{willReadFrequently:true});
-          let render;
-          const abort=()=>render?.cancel();
-          try{
-            render=source.render({canvasContext:context,viewport:vp,background:'white'});
-            signal?.addEventListener('abort',abort,{once:true});
-            await render.promise;check();
-            result=detect(context.getImageData(0,0,canvas.width,canvas.height));check();
-          }catch(e){check();throw e;}
-          finally{signal?.removeEventListener('abort',abort);canvas.width=canvas.height=0;source.cleanup();}
-          if(result.angle&&apply(page,result.angle))report.changed++;
+      for(let i=0;i<plans.length;i++){
+        check();const {page,pageId,manual,angle}=plans[i];let result;
+        if(manual){
+          // UI angles use the familiar clockwise-positive convention. PDF
+          // matrices and detect() use counterclockwise-positive coordinates.
+          result={mode:'manual',requestedAngle:angle,angle:angle?-angle:0,displayAngle:angle,reason:angle?'':'수동 0° · 원본 각도 유지'};
         }
-        report.pages.push({page:pageOffset+i+1,...result});
-        onProgress?.((i+1)/pdf.numPages);
+        else if(!options.deskew)result={mode:'off',angle:0,displayAngle:0,reason:'자동 보정 사용 안 함'};
+        else if(page.node.Annots()?.size())result={mode:'auto',angle:0,displayAngle:0,reason:'링크·주석·양식 위치 보존을 위해 유지'};
+        else{
+          const cached=measured(deskewKeys[i]);
+          if(cached)result={mode:'auto',...cached};
+          else{
+            // Manual-only work requires no raster render or PDF.js initialization.
+            if(!pdf){
+              const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
+              task=pdfjsLib.getDocument({data:bytes,...docOptions});pdf=await task.promise;check();
+            }
+            const source=await pdf.getPage(i+1),base=source.getViewport({scale:1});check();
+            const vp=source.getViewport({scale:Math.min(2,1200/Math.max(base.width,base.height))});
+            const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
+            const context=canvas.getContext('2d',{willReadFrequently:true});
+            let render;
+            const abort=()=>render?.cancel();
+            try{
+              render=source.render({canvasContext:context,viewport:vp,background:'white'});
+              signal?.addEventListener('abort',abort,{once:true});
+              await render.promise;check();
+              result={mode:'auto',...detect(context.getImageData(0,0,canvas.width,canvas.height))};check();
+              remember(deskewKeys[i],result);
+            }catch(e){check();throw e;}
+            finally{signal?.removeEventListener('abort',abort);canvas.width=canvas.height=0;source.cleanup();}
+          }
+          result.displayAngle=result.angle?-result.angle:0;
+        }
+        result.changed=!!result.angle&&apply(page,result.angle);
+        if(result.changed)report.changed++;
+        report.pages.push({page:pageOffset+i+1,pageId,...result});
+        onProgress?.((i+1)/plans.length);
         await new Promise(resolve=>setTimeout(resolve,0));
       }
-    }finally{await task.destroy();}
+    }finally{await task?.destroy();}
     return report;
   }
-  globalThis.PDFDeskew={detect,matrix,apply,processDocument};
+  globalThis.PDFDeskew={detect,geometry,matrix,apply,processDocument};
   if(typeof module!=='undefined')module.exports=globalThis.PDFDeskew;
 })();
 </script>
@@ -12639,7 +12715,7 @@ globalThis.PDFGemini=createCloudOCRClient();
     return first.libBytes;
   }
   function compressionOnly(o){
-    return o.optimize&&!o.blackWhite&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark&&!o.stamps?.length&&!o.ocr?.length;
+    return o.optimize&&!o.blackWhite&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!Object.values(o.deskewAngles||{}).some(angle=>Number.isFinite(angle)&&angle!==0)&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark&&!o.stamps?.length&&!o.ocr?.length;
   }
   function selectOutput(before,candidate,options,original){
     const reference=original||before;
@@ -12689,11 +12765,13 @@ function showOriginal(){
   $('compareAfterScroll').setAttribute('aria-hidden',String(show));
 }
 function setLivePreviewOpen(open){
+  if(!open&&typeof setDeskewInteraction==='function')setDeskewInteraction(false);
   proPreviewOpen=open;
   syncLivePreview();
 }
 function syncLivePreview(){
   if(!proReady)return;
+  if(typeof syncDeskewControls==='function')syncDeskewControls();
   const any=pages.length>0;
   if(any&&!liveHadPages)proPreviewOpen=true;
   liveHadPages=any;
@@ -12711,10 +12789,12 @@ function syncLivePreview(){
   const index=pages.indexOf(livePage());
   $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
   if(typeof proRailDragging!=='undefined'&&proRailDragging)return;
+  if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
   if(liveKey()!==liveRequestedKey)scheduleLivePreview();
 }
 function scheduleLivePreview(){
   if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort)return;
+  if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
   const redraw=liveCache?.key===liveContentKey();
@@ -12750,7 +12830,7 @@ async function updateLivePreview(seq){
       const edited=await buildEditedDocument([p]);check();
       const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
       const doc=await PDFLib.PDFDocument.load(before);check();
-      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
+      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
       report=result.report;
       const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
       if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
@@ -12783,17 +12863,19 @@ async function updateLivePreview(seq){
     $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
     $('compareDetails').setAttribute('data-warning',String(!!report.skipped||!!options.rasterize));
     $('compareDetails').querySelector('summary').textContent=report.skipped?'원본 유지 내역 보기':options.rasterize?'출력 방식 안내':'미리보기 안내';
+    if(typeof acceptDeskewPreview==='function')acceptDeskewPreview(p.uid,deskew?.pages?.[0]);
   }catch(e){
     if(e.name!=='AbortError'&&seq===liveSequence){
       $('compareState').textContent='미리보기를 업데이트하지 못했습니다';
       $('compareNote').textContent=e.message;$('proCompare').setAttribute('data-error','true');
       $('compareDetails').open=true;$('compareDetails').setAttribute('data-warning','true');
+      if(typeof deskewPreviewFailed==='function')deskewPreviewFailed();
     }
   }finally{
     for(const c of canvases)c.width=c.height=0;
     await Promise.allSettled(loaded.map(d=>d.destroy()));
     if(liveController===controller)liveController=null;
-    if(seq===liveSequence)$('proCompare').setAttribute('aria-busy','false');
+    if(seq===liveSequence){$('proCompare').setAttribute('aria-busy','false');if(typeof syncDeskewControls==='function')syncDeskewControls();}
   }
 }
 $('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('proWorkspace'):$('btnPreview')).focus();};
@@ -12871,7 +12953,7 @@ let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
 const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
-function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[]]));}
+function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],p.deskewAngle]));}
 function proInvalidate(message){
   if(!proResult) return;
   proResult=null; $('proResult').hidden=true;
@@ -12894,6 +12976,7 @@ function syncProState(){
   if(proResult && proResult.fingerprint!==proFingerprint()) proInvalidate('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.');
   syncProAction();syncProSummaries();
   syncLivePreview();
+  if(typeof syncDeskewControls==='function')syncDeskewControls();
   if(typeof syncToolsState==='function'&&typeof toolsRevision!=='undefined')syncToolsState();
   if(!any) $('proStatus').textContent='파일을 추가하면 시작할 수 있어요.';
   else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 문서 전체에 적용`;
@@ -12942,12 +13025,14 @@ function proNumberInput(id,min,max,integer=false){
   return n;
 }
 function readProOptions(strict=false){
+  if(strict&&typeof validateDeskewInput==='function')validateDeskewInput();
   const crop=$('proCrop').checked, number=$('proNumber').checked;
   const options={
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
     blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
     rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
-    deskew:$('proDeskew').checked,crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
+    deskew:$('proDeskew').checked,deskewAngles:Object.fromEntries(pages.filter(p=>Number.isFinite(p.deskewAngle)).map(p=>[p.uid,p.deskewAngle])),
+    crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
     paper:$('proPaper').value,number,startNumber:number?proNumberInput('proStartNumber',1,999999,true):1,
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
     numberPosition:$('proNumberPosition').value,watermark:$('proWatermark').value.trim().slice(0,40)
@@ -12980,11 +13065,13 @@ function refreshProControls(){
 function syncProSummaries(){
   const set=(id,items)=>{const el=$(id);el.textContent=items.filter(Boolean).join(' · ')||'사용 안 함';el.closest('details').classList.toggle('has-settings',items.some(Boolean));};
   set('proNumberSummary',[$('proNumber').checked&&'페이지 번호',$('proWatermark').value.trim()&&'워터마크']);
-  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
+  const manual=pages.filter(p=>Number.isFinite(p.deskewAngle)).length;
+  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',manual&&`수동 ${manual}쪽`,$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
   set('proScanSummary',[$('proGrayscale').checked?'B&W 흑백':Number($('proContrast').value)>0&&'대비 강화',!$('proGrayscale').checked&&Number($('proWhitePoint').value)<255&&'배경 정리']);
   set('proOptimizeSummary',[$('proOptimize').checked&&($('proCompressionMode').value==='raster'?'페이지 전체 압축':'텍스트 유지'),$('proOptimize').checked&&$('proResolution').value+' px']);
 }
 function resetProOptions(){
+  if(typeof resetPageDeskewAngles==='function')resetPageDeskewAngles();
   if(typeof resetTools==='function')resetTools();
   for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}
   refreshProControls();proInvalidate();syncProState();scheduleLivePreview();toast('Pro 설정을 초기화했습니다');
@@ -12999,7 +13086,7 @@ function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);p
 async function processProDoc(doc,options,pageOffset){
   const signal=proAbort.signal;
   checkProAbort();
-  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
+  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),...(typeof deskewCallbacks==='function'?deskewCallbacks(pages):{}),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
   checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
 }
 async function verifyProText(before,after,signal,quiet=false){
@@ -13033,7 +13120,12 @@ function describeProSettings(o,report,deskew,offset){
   if(o.watermark)applied.push('워터마크');
   if(report.stamps)applied.push(`도장 ${report.stamps}곳`);
   if(report.ocr?.pages)applied.push(`검색용 OCR ${report.ocr.pages}쪽 · ${report.ocr.words}단어`);
-  if(o.deskew)applied.push(offset===undefined?`기울기 ${deskew.changed}쪽 보정`:deskew.pages[0]?.angle?`기울기 ${Math.abs(deskew.pages[0].angle).toFixed(1)}° 보정`:`기울기 유지 · ${deskew.pages[0]?.reason||'변경 없음'}`);
+  if(o.deskew||Object.keys(o.deskewAngles||{}).length){
+    const page=deskew?.pages?.[0],angle=Number.isFinite(page?.displayAngle)?page.displayAngle:-(page?.angle||0);
+    if(offset===undefined)applied.push(`기울기 ${deskew?.changed||0}쪽 보정`);
+    else if(page?.angle)applied.push(`${page.mode==='manual'?'수동':'자동'} 기울기 ${angle>0?'+':''}${angle.toFixed(1)}°`);
+    else applied.push(page?.mode==='manual'?'수동 0.0° · 원본 각도 유지':`기울기 유지 · ${page?.reason||'변경 없음'}`);
+  }
   if(o.crop&&o.margins.some(n=>n>0))applied.push('여백 재단');
   if(o.paper==='a4')applied.push('A4 맞춤');
   if(o.rasterize)applied.push('페이지 전체 압축 · 검색·복사 불가');
@@ -13053,7 +13145,7 @@ function proSummary(report,textCheck){
   if(report.settings)lines.unshift(report.settings);
   if(report.deskew?.pages.length){
     const corrected=report.deskew.pages.filter(p=>p.angle);
-    if(corrected.length)lines.push('기울기 보정: '+corrected.map(p=>`${p.page}쪽 ${Math.abs(p.angle).toFixed(1)}°`).join(', '));
+    if(corrected.length)lines.push('기울기 보정: '+corrected.map(p=>{const angle=Number.isFinite(p.displayAngle)?p.displayAngle:-p.angle;return `${p.page}쪽 ${p.mode==='manual'?'수동':'자동'} ${angle>0?'+':''}${angle.toFixed(1)}°`;}).join(', '));
     const kept=report.deskew.pages.filter(p=>!p.angle);
     if(kept.length)lines.push('기울기 유지: '+kept.map(p=>`${p.page}쪽 (${p.reason})`).join(', '));
   }
@@ -14133,7 +14225,7 @@ function currentStamp(){
   return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:toolTargets($('stampScope').value).map(p=>p.uid),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
-function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
+function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
 function readToolOptions(o,strict=false){
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
   const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
@@ -14160,7 +14252,7 @@ function syncToolsState(){
   }
 }
 function resetTools(){stampMarks=[];stampAsset=null;stampEditing=null;stampSource=stampOriginal=stampPixels=stampUndoState=null;ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;$('stampActive').hidden=true;$('ocrResults').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();}
-function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning)setLivePreviewOpen(true);}
+function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning){if(typeof setDeskewInteraction==='function')setDeskewInteraction(false);setLivePreviewOpen(true);}}
 function renderStampMarks(){
   const host=$('stampPlacements');host.replaceChildren();
   stampMarks.forEach((mark,i)=>{
@@ -14280,7 +14372,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
         const doc=await waitForOCR(buildEditedDocument([p],{signal:workSignal}),workSignal);checkProAbort();
-        const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]}),workSignal);checkProAbort();
+        const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),workSignal);checkProAbort();
         pdfTask=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),workSignal),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,workSignal),page=await waitForOCR(pdf.getPage(1),workSignal),base=page.getViewport({scale:1});
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
@@ -14362,7 +14454,7 @@ async function renderOCRCorrectionPage(record,{signal}={}){
   const o={...options,stamps:[],ocr:[],number:false,watermark:''};let task,canvas;
   try{
     const doc=await waitForOCR(buildEditedDocument([p],{signal:currentSignal}),currentSignal);
-    const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:currentSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]}),currentSignal);
+    const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:currentSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),currentSignal);
     task=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),currentSignal),...DOC_OPTS});
     const pdf=await waitForOCR(task.promise,currentSignal),page=await waitForOCR(pdf.getPage(1),currentSignal),base=page.getViewport({scale:1});
     const vp=page.getViewport({scale:Math.min(300/72,2367/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height)))});
@@ -14398,6 +14490,189 @@ $('ocrAccept').onclick=()=>{if($('ocrAccept').disabled||!ocrRecords.some(ocrCanE
 $('ocrClear').onclick=()=>{ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;renderOCRResults();toolsChanged();$('ocrStatus').textContent='인식 결과를 지웠습니다. 원본 문서는 유지됩니다.';};
 $('ocrTxt').onclick=()=>toolDownload('\ufeff'+ocrRecords.map(r=>`[${r.page}쪽]\n${r.text}`).join('\n\n'),'인식한 텍스트.txt','text/plain;charset=utf-8');
 configureLocalOCR();syncToolsState();
+</script>
+<script id="pro-deskew-ui">
+/* Per-page clockwise angles. Pointer previews are temporary; PDF work runs on release. */
+(() => {
+  'use strict';
+  const clamp=value=>Math.round(Math.max(-60,Math.min(60,value))*10)/10;
+  const signed=value=>(value>0?'+':'')+Number(value||0).toFixed(1)+'°';
+  function sourceKey(page){
+    // Keep measurement keys small even when a Basic annotation embeds an image.
+    const value=JSON.stringify(page.annots||[]);let a=2166136261,b=5381;
+    for(let i=0;i<value.length;i++){const n=value.charCodeAt(i);a=Math.imul(a^n,16777619);b=Math.imul(b,33)^n;}
+    return JSON.stringify([page.uid,page.docId,page.srcIndex,page.rotation,value.length,a>>>0,b>>>0]);
+  }
+  function pointerAngle({x,y,cx,cy}){return Math.atan2(y-cy,x-cx)*180/Math.PI;}
+  function gestureAngle(start,point){
+    if(start.kind==='linear')return clamp(start.angle+(point.x-start.x)/Math.max(100,start.width)*120);
+    let delta=pointerAngle({...point,cx:start.cx,cy:start.cy})-start.pointerAngle;
+    delta=((delta+180)%360+360)%360-180;
+    return clamp(start.angle+delta);
+  }
+  function previewFit(width,height,angle,availableWidth,availableHeight){
+    const radians=angle*Math.PI/180,c=Math.abs(Math.cos(radians)),s=Math.abs(Math.sin(radians));
+    return Math.max(.001,Math.min(availableWidth/(width*c+height*s),availableHeight/(width*s+height*c)));
+  }
+  globalThis.PDFDeskewUIModel=Object.freeze({clamp,signed,sourceKey,gestureAngle,previewFit});
+  if(typeof document==='undefined'||!document.getElementById('proDeskewAngle'))return;
+  const $=id=>document.getElementById(id),cache=new Map(),reports=new Map();
+  let active=false,gesture=null,frame=0,ghostUid=null,ghostAngle=0,lastUid=null,invalid=false;
+  const current=()=>typeof livePage==='function'?livePage():null;
+  const manual=p=>Number.isFinite(p?.deskewAngle);
+  const working=()=>!!proAbort||document.body.classList.contains('is-busy');
+  const ready=()=>!!current()&&$('compareAfter').width>0&&$('compareBefore').width>0&&$('proCompare').getAttribute('aria-busy')!=='true'&&!$('proCompare').hasAttribute('data-error');
+  function automaticAngle(p){
+    if(!p||!$('proDeskew').checked)return 0;
+    const measured=cache.get(sourceKey(p)),report=reports.get(p.uid);
+    return measured?-measured.angle:report?.key===sourceKey(p)&&report.result.mode==='auto'?report.result.displayAngle||0:0;
+  }
+  const pageAngle=p=>manual(p)?p.deskewAngle:automaticAngle(p);
+  function clearGhost(){ghostUid=null;$('deskewGhost').hidden=true;$('deskewGhostCanvas').width=$('deskewGhostCanvas').height=0;}
+  function renderGhost(angle){
+    const canvas=$('deskewGhostCanvas'),stage=$('compareStage');if(!canvas.width)return;
+    const fit=previewFit(canvas.width,canvas.height,angle,Math.max(1,stage.clientWidth-48),Math.max(1,stage.clientHeight-96));
+    canvas.style.width=canvas.width+'px';canvas.style.height=canvas.height+'px';
+    canvas.style.transform=`rotate(${angle}deg) scale(${fit})`;
+    ghostAngle=angle;$('deskewGhost').hidden=false;updateHandles(angle);
+  }
+  function prepareGhost(p){
+    const source=$('compareBefore'),canvas=$('deskewGhostCanvas');if(!source.width||!source.height)return false;
+    const factor=Math.min(1,2048/Math.max(source.width,source.height),Math.sqrt(4000000/(source.width*source.height)));
+    canvas.width=Math.max(1,Math.round(source.width*factor));canvas.height=Math.max(1,Math.round(source.height*factor));
+    canvas.getContext('2d',{alpha:false}).drawImage(source,0,0,canvas.width,canvas.height);ghostUid=p.uid;return true;
+  }
+  function updateHandles(angle){
+    const stage=$('compareStage'),cx=stage.clientWidth/2,cy=Math.max(45,(stage.clientHeight-52)/2),radius=Math.max(24,Math.min(stage.clientWidth/2-27,cy-26)),a=angle*Math.PI/180;
+    const handle=$('deskewRotateHandle');handle.style.left=(cx+Math.sin(a)*radius)+'px';handle.style.top=(cy-Math.cos(a)*radius)+'px';
+    for(const id of ['deskewRotateHandle','deskewDragStrip']){$(id).setAttribute('aria-valuenow',String(angle));$(id).setAttribute('aria-valuetext',signed(angle));}
+    $('deskewDragValue').value=signed(angle);
+  }
+  function syncDeskewControls(){
+    const p=current(),changed=p?.uid!==lastUid;
+    if(changed||proMode!=='pro'||!proPreviewOpen||working()){
+      cancelDeskewGesture();if(changed||proMode!=='pro'||!proPreviewOpen){active=false;clearGhost();}else if(working())clearGhost();
+    }
+    if(changed){lastUid=p?.uid||null;invalid=false;$('proDeskewAngle').removeAttribute('aria-invalid');}
+    if(!p){cache.clear();reports.clear();}
+    const has=!!p,isManual=manual(p),angle=gesture?.value??pageAngle(p),busy=working();
+    $('proDeskewPageNumber').value=has?`${pages.indexOf(p)+1} / ${pages.length}쪽`:'페이지 없음';
+    $('proDeskewPageMode').disabled=!has||busy;$('proDeskewPageMode').value=isManual?'manual':'auto';
+    $('proDeskewPageMode').options[0].text=$('proDeskew').checked?'자동 · 기본 설정':'보정 끔 · 기본 설정';
+    if(!invalid&&(document.activeElement!==$('proDeskewAngle')||gesture))$('proDeskewAngle').value=Number(angle).toFixed(1);
+    if(!invalid)$('proDeskewAngle').removeAttribute('aria-invalid');
+    $('proDeskewAngle').disabled=!has||busy||!isManual;
+    $('proDeskewMinus').disabled=$('proDeskewPlus').disabled=!has||busy||!isManual;
+    $('proDeskewMinus').disabled||=angle<=-60;$('proDeskewPlus').disabled||=angle>=60;
+    $('proDeskewAdjust').disabled=$('compareDeskewToggle').disabled=!has||busy;
+    $('proDeskewResetPage').disabled=!has||busy||!isManual;
+    $('compareDeskewToggle').setAttribute('aria-pressed',String(active));$('proDeskewAdjust').setAttribute('aria-pressed',String(active));
+    $('deskewInteraction').hidden=!active;document.body.classList.toggle('deskew-adjusting',active);
+    $('deskewRotateHandle').disabled=!ready()||busy;
+    $('deskewDragStrip').setAttribute('aria-disabled',String(!ready()||busy));
+    const report=p&&reports.get(p.uid),result=p&&report?.key===sourceKey(p)?report.result:null;
+    if(!invalid)$('proDeskewPageStatus').textContent=!has?'왼쪽 목록에서 조절할 페이지를 선택하세요.':isManual?`이 페이지에만 ${signed(p.deskewAngle)} 적용 · 다른 페이지의 각도는 유지됩니다.`:!$('proDeskew').checked?'기본 자동 보정이 꺼져 있습니다. 직접 조절은 사용할 수 있습니다.':result?.mode==='auto'?(result.angle?`자동으로 ${signed(result.displayAngle)} 보정합니다.`:result.reason||'원본 각도를 유지합니다.'):'글줄의 기울기를 확인하고 있습니다.';
+    updateHandles(angle);
+  }
+  function changeAngle(value,{before,key=null,keepGhost=false}={}){
+    const p=current();if(!p||working()||!Number.isFinite(value)||Math.abs(value)>60)return false;
+    const history=before??(typeof captureEditHistory==='function'?captureEditHistory():null);
+    p.deskewAngle=clamp(value);invalid=false;$('proDeskewAngle').removeAttribute('aria-invalid');
+    if(!keepGhost)clearGhost();
+    if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 기울기 조절',key);
+    proInvalidate();syncProState();scheduleLivePreview();return true;
+  }
+  function setDeskewInteraction(on){
+    cancelDeskewGesture();active=!!on&&!!current()&&!working();
+    if(active){
+      if(typeof setStampPositioning==='function')setStampPositioning(false);
+      setLivePreviewOpen(true);
+      originalHover=originalPinned=false;showOriginal();
+    }else clearGhost();
+    syncDeskewControls();
+  }
+  function beginGesture(event,kind){
+    if(event.button!==0||!event.isPrimary||!active||!ready()||working()||gesture)return;
+    event.preventDefault();event.stopPropagation();
+    const p=current(),stage=$('compareStage').getBoundingClientRect(),node=event.currentTarget;
+    if(!prepareGhost(p))return;
+    const cx=stage.left+stage.width/2,cy=stage.top+Math.max(45,(stage.height-52)/2),angle=pageAngle(p);
+    gesture={kind,pointer:event.pointerId,node,uid:p.uid,x:event.clientX,y:event.clientY,cx,cy,angle,value:angle,width:node.clientWidth,pointerAngle:pointerAngle({x:event.clientX,y:event.clientY,cx,cy}),before:typeof captureEditHistory==='function'?captureEditHistory():null,moved:false};
+    node.setPointerCapture(event.pointerId);cancelLivePreview();document.body.classList.add('deskew-gesture-active');renderGhost(angle);
+  }
+  function moveGesture(event){
+    if(!gesture||event.pointerId!==gesture.pointer)return;event.preventDefault();
+    if(current()?.uid!==gesture.uid){cancelDeskewGesture();return;}
+    if(Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)<3&&!gesture.moved)return;
+    gesture.moved=true;gesture.value=gestureAngle(gesture,{x:event.clientX,y:event.clientY});
+    if(!frame)frame=requestAnimationFrame(()=>{frame=0;if(gesture){renderGhost(gesture.value);$('proDeskewAngle').value=gesture.value.toFixed(1);}});
+  }
+  function detachGesture(){
+    const saved=gesture;gesture=null;if(frame){cancelAnimationFrame(frame);frame=0;}
+    if(saved?.node.hasPointerCapture?.(saved.pointer))saved.node.releasePointerCapture(saved.pointer);
+    document.body.classList.remove('deskew-gesture-active');return saved;
+  }
+  function cancelDeskewGesture(){
+    if(!gesture)return false;detachGesture();clearGhost();updateHandles(pageAngle(current()));
+    $('proDeskewAngle').value=pageAngle(current()).toFixed(1);return true;
+  }
+  function endGesture(event){
+    if(!gesture||event.pointerId!==gesture.pointer)return;moveGesture(event);const saved=detachGesture();
+    if(!saved.moved||saved.value===saved.angle||current()?.uid!==saved.uid){clearGhost();syncDeskewControls();scheduleLivePreview();return;}
+    renderGhost(saved.value);changeAngle(saved.value,{before:saved.before,keepGhost:true});
+  }
+  function autoPage(){
+    const p=current();if(!p||working())return;setDeskewInteraction(false);
+    const before=typeof captureEditHistory==='function'?captureEditHistory():null;delete p.deskewAngle;
+    if(typeof commitEditHistory==='function')commitEditHistory(before,'자동 기울기 보정으로 전환');
+    invalid=false;proInvalidate();syncProState();scheduleLivePreview();
+  }
+  function resetPageDeskewAngles(){
+    setDeskewInteraction(false);const before=typeof captureEditHistory==='function'?captureEditHistory():null;
+    for(const p of pages)delete p.deskewAngle;
+    if(typeof commitEditHistory==='function')commitEditHistory(before,'페이지별 기울기 초기화');invalid=false;
+  }
+  function acceptDeskewPreview(uid,result){
+    const p=pages.find(page=>page.uid===uid);if(!p)return;
+    if(result)reports.set(uid,{key:sourceKey(p),result});
+    while(reports.size>128)reports.delete(reports.keys().next().value);
+    if(ghostUid===uid&&!gesture)clearGhost();syncDeskewControls();
+  }
+  function deskewPreviewFailed(){clearGhost();syncDeskewControls();}
+  function deskewCallbacks(subset){return {deskewCache:cache,deskewKeys:subset.map(sourceKey)};}
+  function validateDeskewInput(){if(invalid&&manual(current())){$('proDeskewAngle').focus();throw new RangeError('페이지 기울기는 −60°부터 +60°까지 입력하세요.');}}
+  Object.assign(globalThis,{syncDeskewControls,setDeskewInteraction,cancelDeskewGesture,resetPageDeskewAngles,acceptDeskewPreview,deskewPreviewFailed,deskewCallbacks,validateDeskewInput,deskewGestureActive:()=>!!gesture});
+  $('proDeskewPageMode').addEventListener('change',()=>{$('proDeskewPageMode').value==='auto'?autoPage():changeAngle(pageAngle(current()));});
+  $('proDeskewAngle').addEventListener('input',()=>{
+    const input=$('proDeskewAngle'),value=Number(input.value);
+    if(input.value.trim()===''||!Number.isFinite(value)||Math.abs(value)>60){invalid=true;input.setAttribute('aria-invalid','true');$('proDeskewPageStatus').textContent='−60°부터 +60°까지 입력하세요. 마지막 유효한 각도를 유지합니다.';return;}
+    changeAngle(value,{key:current()?.uid+':deskew-input'});
+  });
+  $('proDeskewAngle').addEventListener('blur',syncDeskewControls);
+  $('proDeskewAngle').addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();invalid=false;$('proDeskewAngle').removeAttribute('aria-invalid');$('proDeskewAngle').blur();syncDeskewControls();}if(event.key==='Enter')$('proDeskewAngle').blur();});
+  for(const [id,step] of [['proDeskewMinus',-.1],['proDeskewPlus',.1]])$(id).addEventListener('click',()=>changeAngle(clamp(pageAngle(current())+step),{key:current()?.uid+':deskew-step'}));
+  $('proDeskewResetPage').addEventListener('click',autoPage);
+  $('proDeskewAdjust').addEventListener('click',()=>{setDeskewInteraction(!active);if(active&&innerWidth<=880)$('proCompare').scrollIntoView({behavior:'smooth',block:'center'});});
+  $('compareDeskewToggle').addEventListener('click',()=>setDeskewInteraction(!active));
+  $('deskewFinish').addEventListener('click',()=>{setDeskewInteraction(false);$('compareDeskewToggle').focus();});
+  for(const [id,kind] of [['deskewRotateHandle','rotate'],['deskewDragStrip','linear']]){
+    const node=$(id);node.addEventListener('pointerdown',event=>beginGesture(event,kind));node.addEventListener('pointermove',moveGesture);node.addEventListener('pointerup',endGesture);
+    node.addEventListener('pointercancel',()=>{if(cancelDeskewGesture()){syncDeskewControls();scheduleLivePreview();}});
+    node.addEventListener('lostpointercapture',()=>{if(gesture?.node===node){cancelDeskewGesture();syncDeskewControls();scheduleLivePreview();}});
+    node.addEventListener('keydown',event=>{
+      if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home'].includes(event.key)||!ready()||working())return;
+      event.preventDefault();const step=event.shiftKey?1:.1,value=event.key==='Home'?0:pageAngle(current())+(['ArrowRight','ArrowUp'].includes(event.key)?step:-step);
+      changeAngle(clamp(value),{key:current()?.uid+':deskew-key'});
+    });
+  }
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||!active||document.querySelector('dialog[open]'))return;
+    event.preventDefault();event.stopImmediatePropagation();if(cancelDeskewGesture()){syncDeskewControls();scheduleLivePreview();}else setDeskewInteraction(false);
+  },true);
+  $('proDeskew').addEventListener('input',()=>{invalid=false;syncDeskewControls();});
+  new ResizeObserver(()=>{if(gesture)cancelDeskewGesture();if(ghostUid)clearGhost();syncDeskewControls();}).observe($('compareStage'));
+  syncDeskewControls();
+})();
 </script>
 <script id="pro-vision-unlock">
 'use strict';
@@ -15197,11 +15472,11 @@ function captureEditHistory(){
   const rows=pages.map(page=>{
     const signature=JSON.stringify(page.annots||[]);let annotations=historyAnnotationCache.get(page);
     if(annotations?.signature!==signature){annotations={signature,value:structuredClone(page.annots||[])};historyAnnotationCache.set(page,annotations);}
-    return {page,rotation:page.rotation,annots:annotations.value,signature};
+    return {page,rotation:page.rotation,deskewAngle:page.deskewAngle,annots:annotations.value,signature};
   });
   const sources=[...docs];for(const [,d]of sources)historyDocuments.add(d);
   return {rows,sources,origCount,selected:selected().map(p=>p.uid),previewUid,selAnno,
-    signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature]),sources.map(([id])=>id),origCount])};
+    signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature,r.deskewAngle]),sources.map(([id])=>id),origCount])};
 }
 function collectHistoryDocuments(){
   const retained=new Set(docs.values());
@@ -15281,7 +15556,7 @@ async function restoreDocumentHistory(redo){
   historyApplying=true;busy(true,redo?'편집을 다시 적용하는 중…':'편집을 되돌리는 중…');
   try{
     clearPreview();pvZoom=view.zoom;docs.clear();for(const [id,d]of state.sources)docs.set(id,d);
-    pages=state.rows.map(r=>{r.page.rotation=r.rotation;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
+    pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;
@@ -15293,6 +15568,7 @@ async function restoreDocumentHistory(redo){
 function requestEditUndo(redo=false){
   if(textComposing||textOpening||document.querySelector('dialog[open]')||$('modal').classList.contains('open')||(document.body.classList.contains('is-busy')&&!historyApplying))return Promise.resolve(false);
   if(drag){cancelAnnotationDrag();return Promise.resolve(true);}
+  if(typeof cancelDeskewGesture==='function'&&cancelDeskewGesture())return Promise.resolve(true);
   if(blankPointer){endBlankDrag(false);return Promise.resolve(true);}
   if(tdrag?.active){endTouchDrag(false);return Promise.resolve(true);}
   if(dragUids.length){dragUids=[];removeBoardMarker();board.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));return Promise.resolve(true);}

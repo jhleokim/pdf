@@ -22,11 +22,11 @@ function captureEditHistory(){
   const rows=pages.map(page=>{
     const signature=JSON.stringify(page.annots||[]);let annotations=historyAnnotationCache.get(page);
     if(annotations?.signature!==signature){annotations={signature,value:structuredClone(page.annots||[])};historyAnnotationCache.set(page,annotations);}
-    return {page,rotation:page.rotation,annots:annotations.value,signature};
+    return {page,rotation:page.rotation,deskewAngle:page.deskewAngle,annots:annotations.value,signature};
   });
   const sources=[...docs];for(const [,d]of sources)historyDocuments.add(d);
   return {rows,sources,origCount,selected:selected().map(p=>p.uid),previewUid,selAnno,
-    signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature]),sources.map(([id])=>id),origCount])};
+    signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature,r.deskewAngle]),sources.map(([id])=>id),origCount])};
 }
 function collectHistoryDocuments(){
   const retained=new Set(docs.values());
@@ -106,7 +106,7 @@ async function restoreDocumentHistory(redo){
   historyApplying=true;busy(true,redo?'편집을 다시 적용하는 중…':'편집을 되돌리는 중…');
   try{
     clearPreview();pvZoom=view.zoom;docs.clear();for(const [id,d]of state.sources)docs.set(id,d);
-    pages=state.rows.map(r=>{r.page.rotation=r.rotation;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
+    pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;
@@ -118,6 +118,7 @@ async function restoreDocumentHistory(redo){
 function requestEditUndo(redo=false){
   if(textComposing||textOpening||document.querySelector('dialog[open]')||$('modal').classList.contains('open')||(document.body.classList.contains('is-busy')&&!historyApplying))return Promise.resolve(false);
   if(drag){cancelAnnotationDrag();return Promise.resolve(true);}
+  if(typeof cancelDeskewGesture==='function'&&cancelDeskewGesture())return Promise.resolve(true);
   if(blankPointer){endBlankDrag(false);return Promise.resolve(true);}
   if(tdrag?.active){endTouchDrag(false);return Promise.resolve(true);}
   if(dragUids.length){dragUids=[];removeBoardMarker();board.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));return Promise.resolve(true);}
