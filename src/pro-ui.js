@@ -4,7 +4,7 @@ let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
 const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
-function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],p.deskewAngle]));}
+function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],p.deskewAngle,p.deskewCrop===true]));}
 function proInvalidate(message){
   if(!proResult) return;
   proResult=null; $('proResult').hidden=true;
@@ -33,6 +33,7 @@ function syncProState(){
   else if(!working && !proResult) $('proStatus').textContent=`${pages.length}페이지 · 문서 전체에 적용`;
 }
 function setProView(view){
+  if(view==='settings'&&typeof setDeskewInteraction==='function')setDeskewInteraction(false);
   document.body.dataset.proView=view;
   $('proWorkspace').setAttribute('aria-pressed',String(view==='workspace'));
   $('proSettings').setAttribute('aria-pressed',String(view==='settings'));
@@ -83,6 +84,7 @@ function readProOptions(strict=false){
     blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
     rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
     deskew:$('proDeskew').checked,deskewAngles:Object.fromEntries(pages.filter(p=>Number.isFinite(p.deskewAngle)).map(p=>[p.uid,p.deskewAngle])),
+    deskewCropByPage:Object.fromEntries(pages.filter(p=>p.deskewCrop===true).map(p=>[p.uid,true])),
     crop,margins:crop ? ['Top','Right','Bottom','Left'].map(s=>proNumberInput('proCrop'+s,0,100)) : [0,0,0,0],
     paper:$('proPaper').value,number,startNumber:number?proNumberInput('proStartNumber',1,999999,true):1,
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
@@ -116,8 +118,8 @@ function refreshProControls(){
 function syncProSummaries(){
   const set=(id,items)=>{const el=$(id);el.textContent=items.filter(Boolean).join(' · ')||'사용 안 함';el.closest('details').classList.toggle('has-settings',items.some(Boolean));};
   set('proNumberSummary',[$('proNumber').checked&&'페이지 번호',$('proWatermark').value.trim()&&'워터마크']);
-  const manual=pages.filter(p=>Number.isFinite(p.deskewAngle)).length;
-  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',manual&&`수동 ${manual}쪽`,$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
+  const manual=pages.filter(p=>Number.isFinite(p.deskewAngle)).length,cropCorners=pages.filter(p=>p.deskewCrop===true).length;
+  set('proPageSummary',[$('proDeskew').checked&&'자동 기울기',manual&&`수동 ${manual}쪽`,cropCorners&&`모서리 자르기 ${cropCorners}쪽`,$('proCrop').checked&&'여백 재단',$('proPaper').value==='a4'&&'A4']);
   set('proScanSummary',[$('proGrayscale').checked?'B&W 흑백':Number($('proContrast').value)>0&&'대비 강화',!$('proGrayscale').checked&&Number($('proWhitePoint').value)<255&&'배경 정리']);
   set('proOptimizeSummary',[$('proOptimize').checked&&($('proCompressionMode').value==='raster'?'페이지 전체 압축':'텍스트 유지'),$('proOptimize').checked&&$('proResolution').value+' px']);
 }
@@ -140,26 +142,38 @@ async function processProDoc(doc,options,pageOffset){
   const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),...(typeof deskewCallbacks==='function'?deskewCallbacks(pages):{}),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
   checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
 }
-async function verifyProText(before,after,signal,quiet=false){
+async function verifyProText(before,after,signal,quiet=false,verification={}){
   let a,b;
   try{
     a=await pdfjsLib.getDocument({data:before.slice(),...DOC_OPTS}).promise;
     b=await pdfjsLib.getDocument({data:after.slice(),...DOC_OPTS}).promise;
     if(a.numPages!==b.numPages)throw new Error('결과의 페이지 수가 달라졌습니다.');
-    let characters=0, checked=0;
+    let characters=0,checked=0,excludedItems=0,excludedCharacters=0,uncheckedPages=0,sourceCharacters=0;
     for(let i=1;i<=a.numPages;i++){
       if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');
       const [ap,bp]=await Promise.all([a.getPage(i),b.getPage(i)]);
       const [at,bt]=await Promise.all([ap.getTextContent(),bp.getTextContent()]);
       // Include invisible OCR; an added page number may append text.
       const original=at.items.map(x=>x.str||'').join('').replace(/\s/g,'');
-      const result=bt.items.map(x=>x.str||'').join('').replace(/\s/g,'');
-      if(original && !result.includes(original))throw new Error(`${i}페이지의 기존 텍스트 보존을 확인하지 못했습니다. 페이지 재단을 줄이거나 원래 크기로 다시 시도해 주세요.`);
-      characters+=original.length;checked++;
+      sourceCharacters+=original.length;
+      // Preview reports retain the original document's page number. Match by
+      // array position so a one-page preview verifies its own crop geometry.
+      const pageReport=verification.deskew?.pages?.[i-1];
+      if(pageReport?.cropped===true){
+        const check=PDFProTextVerification.verify(at,bt,pageReport,verification.options);
+        if(!check.ok)throw new Error(`${i}페이지의 재단 영역 안에서 텍스트 보존을 확인하지 못했습니다. 재단을 끄거나 각도를 줄여 다시 시도해 주세요.`);
+        characters+=check.characters;excludedItems+=check.excludedItems;excludedCharacters+=check.excludedCharacters||0;
+        if(check.unchecked&&original)uncheckedPages++;
+      }else{
+        const result=bt.items.map(x=>x.str||'').join('').replace(/\s/g,'');
+        if(original && !result.includes(original))throw new Error(`${i}페이지의 기존 텍스트 보존을 확인하지 못했습니다. 페이지 재단을 줄이거나 원래 크기로 다시 시도해 주세요.`);
+        characters+=original.length;
+      }
+      checked++;
       if(!quiet){busy(true,`기존 텍스트 확인 중… ${i}/${a.numPages}`);progress(80+i/a.numPages*18);}
       await idle();
     }
-    return {characters,checked};
+    return {characters,checked,excludedItems,excludedCharacters,uncheckedPages,sourceCharacters};
   }finally{await Promise.allSettled([a?.destroy(),b?.destroy()]);}
 }
 function describeProSettings(o,report,deskew,offset){
@@ -177,6 +191,8 @@ function describeProSettings(o,report,deskew,offset){
     else if(page?.angle)applied.push(`${page.mode==='manual'?'수동':'자동'} 기울기 ${angle>0?'+':''}${angle.toFixed(1)}°`);
     else applied.push(page?.mode==='manual'?'수동 0.0° · 원본 각도 유지':`기울기 유지 · ${page?.reason||'변경 없음'}`);
   }
+  const cornerPages=deskew?.pages?.filter(p=>p.cropCorners===true)||[],cropped=cornerPages.filter(p=>p.cropped===true);
+  if(cornerPages.length)applied.push(offset===undefined?(cropped.length?`빈 모서리 ${cropped.length}쪽 자르기`:'빈 모서리 자르기 · 변경 없음'):(cropped.length?'빈 모서리 자르기':'빈 모서리 유지'));
   if(o.crop&&o.margins.some(n=>n>0))applied.push('여백 재단');
   if(o.paper==='a4')applied.push('A4 맞춤');
   if(o.rasterize)applied.push('페이지 전체 압축 · 검색·복사 불가');
@@ -191,14 +207,19 @@ function describeProSettings(o,report,deskew,offset){
 function proSummary(report,textCheck){
   const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
   if(textCheck.rasterized)lines.push(report.ocr?.pages?'페이지를 이미지로 저장한 뒤 확인한 OCR을 추가했습니다. 원래 텍스트·링크·양식은 유지되지 않습니다.':'페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
-  else if(textCheck.characters)lines.push(`기존 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
+  else if(textCheck.characters)lines.push(`${textCheck.excludedItems?'재단 영역 안의':'기존'} 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
+  else if(textCheck.sourceCharacters)lines.push('재단 영역 안에서 검증할 텍스트가 없습니다.');
   else lines.push('원래 검색 가능한 텍스트가 없는 문서입니다.');
+  if(textCheck.excludedItems)lines.push(`재단 경계·영역 밖 또는 위치를 확인할 수 없는 텍스트 ${textCheck.excludedItems.toLocaleString()}개 항목은 보존 검증에서 제외했습니다. 원본과 비교해 주세요.`);
+  if(textCheck.uncheckedPages&&textCheck.characters)lines.push(`${textCheck.uncheckedPages}쪽은 재단 영역 안에서 검증할 텍스트가 없습니다.`);
   if(report.settings)lines.unshift(report.settings);
   if(report.deskew?.pages.length){
     const corrected=report.deskew.pages.filter(p=>p.angle);
     if(corrected.length)lines.push('기울기 보정: '+corrected.map(p=>{const angle=Number.isFinite(p.displayAngle)?p.displayAngle:-p.angle;return `${p.page}쪽 ${p.mode==='manual'?'수동':'자동'} ${angle>0?'+':''}${angle.toFixed(1)}°`;}).join(', '));
     const kept=report.deskew.pages.filter(p=>!p.angle);
     if(kept.length)lines.push('기울기 유지: '+kept.map(p=>`${p.page}쪽 (${p.reason})`).join(', '));
+    const cropped=report.deskew.pages.filter(p=>p.cropped===true);
+    if(cropped.length)lines.push('빈 모서리 자르기: '+cropped.map(p=>`${p.page}쪽`).join(', '));
   }
   if(report.notes?.length)lines.push(...report.notes);
   return lines.join('\n');
@@ -219,7 +240,7 @@ async function createProResult({reveal=true}={}){
     const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
     const result=PDFProResult.selectOutput(before,candidate,options,original);
     const bytes=result.bytes;
-    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal);checkProAbort();
+    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
     proResult={bytes,fingerprint};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
