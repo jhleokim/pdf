@@ -1025,7 +1025,6 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 /* v4 workspace refinements; the existing Hana/charcoal palette is unchanged. */
 .topbar{row-gap:9px;padding-top:calc(12px + var(--safe-t));padding-bottom:10px}
 .tools{padding-top:9px}
-body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 .pro-add-files{display:none}
 .pro-panel-head{padding:14px 16px 12px}
 .pro-panel-head h2{font-size:17px}
@@ -1060,6 +1059,9 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
 .btn:focus-visible,summary:focus-visible,.pro-field input:focus-visible,.pro-field select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:880px){
  .topbar{padding:calc(8px + var(--safe-t)) 12px 8px;row-gap:5px}
+ .tools .page-actions{display:flex;flex:none}
+ .tools #btnBlank{width:44px;height:44px}
+ .tools::before{content:"내 기기에서 처리"}
  .pro-mobile-switch{padding:4px 0;border-bottom:0}
  .pro-mobile-switch button{min-height:40px}
  body[data-mode=pro] .tools{padding-top:5px}
@@ -1085,6 +1087,11 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
  .pro-check{min-height:40px;font-size:14px}
  .pro-panel-footer .btn{min-height:44px}
  body[data-mode=pro].pro-preview-open[data-pro-view=settings] .pro-panel-footer{padding:8px 12px}
+}
+
+@media(max-width:440px){
+ body[data-mode=pro] .tools .pro-add-files{width:44px;min-width:44px;padding:0;flex:none;justify-content:center}
+ body[data-mode=pro] .pro-add-files span{display:none}
 }
 .deskew-page-controls{margin:12px 0 16px;padding:12px;border:1px solid var(--line);border-radius:5px;background:var(--surface-2)}
 .deskew-page-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:12px}.deskew-page-head output{color:var(--ink-3);font-variant-numeric:tabular-nums}
@@ -1348,12 +1355,12 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
     </div>
 
     <span class="sep desktop-only"></span>
-    <div class="tgroup desktop-only">
-      <button class="btn" id="btnAll" disabled><svg class="ic"><use href="#i-selectall"/></svg>전체 선택</button>
-      <button class="btn icon" id="btnRotL" disabled title="왼쪽으로 90° 회전"><svg class="ic"><use href="#i-rot-l"/></svg></button>
-      <button class="btn icon" id="btnRotR" disabled title="오른쪽으로 90° 회전"><svg class="ic"><use href="#i-rot-r"/></svg></button>
+    <div class="tgroup page-actions">
+      <button class="btn desktop-only" id="btnAll" disabled><svg class="ic"><use href="#i-selectall"/></svg>전체 선택</button>
+      <button class="btn icon desktop-only" id="btnRotL" disabled title="왼쪽으로 90° 회전"><svg class="ic"><use href="#i-rot-l"/></svg></button>
+      <button class="btn icon desktop-only" id="btnRotR" disabled title="오른쪽으로 90° 회전"><svg class="ic"><use href="#i-rot-r"/></svg></button>
       <button class="btn icon" id="btnBlank" title="빈 페이지 추가 · 끌어서 원하는 위치에 삽입" aria-label="빈 페이지 추가"><svg class="ic" aria-hidden="true"><use href="#i-blank-page"/></svg></button>
-      <button class="btn danger icon" id="btnDel" disabled title="선택 페이지 삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
+      <button class="btn danger icon desktop-only" id="btnDel" disabled title="선택 페이지 삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
     </div>
 
     <span class="sep desktop-only"></span>
@@ -1737,7 +1744,7 @@ body[data-mode=pro] #btnBlank,body[data-mode=pro] #mbBlank{display:none}
     <button class="ab-btn accent" id="mbImg"><svg class="ic"><use href="#i-photo"/></svg>사진</button>
     <button class="ab-btn" id="mbRotL" disabled><svg class="ic"><use href="#i-rot-l"/></svg>왼쪽</button>
     <button class="ab-btn" id="mbRotR" disabled><svg class="ic"><use href="#i-rot-r"/></svg>오른쪽</button>
-    <button class="ab-btn" id="mbBlank" title="빈 페이지 추가 · 끌어서 원하는 위치에 삽입"><svg class="ic" aria-hidden="true"><use href="#i-blank-page"/></svg>빈 페이지</button>
+    <button class="ab-btn" id="mbBlank" aria-label="빈 페이지 추가" title="빈 페이지 추가 · 끌어서 원하는 위치에 삽입"><svg class="ic" aria-hidden="true"><use href="#i-blank-page"/></svg>빈 페이지</button>
     <button class="ab-btn warn" id="mbDel" disabled><svg class="ic"><use href="#i-trash"/></svg>삭제</button>
     <!-- mobile-print-button:start -->
 <button class="ab-btn" id="mbPrint" title="인쇄" aria-label="현재 문서 인쇄" disabled><svg class="ic" aria-hidden="true"><use href="#i-printer"/></svg></button>
@@ -13457,7 +13464,7 @@ function downloadProResult(){
   downloadPdf(proResult.bytes,name+'.pdf');toast('Pro 결과 PDF 다운로드를 시작했습니다');
 }
 $('proDownload').onclick=downloadProResult;
-const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.textContent='+ 파일 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
+const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>파일 추가</span>';proAddFiles.setAttribute('aria-label','PDF 또는 사진 추가');proAddFiles.title='PDF 또는 사진 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
 $('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';globalThis.PDFWorkProgress?.cancel();};
 proReady=true;refreshProControls();

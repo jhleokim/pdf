@@ -279,7 +279,7 @@ function downloadProResult(){
   downloadPdf(proResult.bytes,name+'.pdf');toast('Pro 결과 PDF 다운로드를 시작했습니다');
 }
 $('proDownload').onclick=downloadProResult;
-const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.textContent='+ 파일 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
+const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>파일 추가</span>';proAddFiles.setAttribute('aria-label','PDF 또는 사진 추가');proAddFiles.title='PDF 또는 사진 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
 $('proDiscard').onclick=()=>{proInvalidate();syncProState();};
 $('busyCancel').onclick=()=>{proAbort?.abort();$('busyCancel').disabled=true;$('busyText').textContent='작업을 취소하는 중…';globalThis.PDFWorkProgress?.cancel();};
 proReady=true;refreshProControls();
