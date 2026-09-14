@@ -1,10 +1,17 @@
 <details class="pro-section" id="stampSection">
   <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg></span><span>도장·서명 <small id="stampSummary">사진에서 만들고, 원하는 곳에 찍기</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
   <div class="pro-section-body">
+    <details class="review-stamp-picker" open><summary>검토 스탬프 <span>문구를 골라 바로 배치</span></summary><div id="reviewStampPresets" class="review-stamp-presets" aria-label="검토 스탬프 문구"></div></details>
     <label class="stamp-drop" id="stampDrop"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>도장·서명 이미지 놓기<small>또는 클릭해 사진 선택 · PNG, JPG, WEBP</small></span><input type="file" id="stampFile" accept="image/png,image/jpeg,image/webp" aria-label="도장·서명 이미지 선택"></label>
     <div id="stampActive" hidden>
       <div class="stamp-active-preview"><img id="stampThumb" alt="배경을 제거한 도장"><button class="btn quiet" id="stampEdit">배경·자르기</button><button class="btn quiet" id="stampClear">배치 취소</button></div>
       <label class="pro-field" for="stampName"><span>도장 이름</span><input id="stampName" value="내 도장" maxlength="30"></label>
+      <div id="reviewStampControls" class="review-stamp-controls" hidden>
+        <label class="pro-field" for="reviewStampText"><span>스탬프 문구</span><input id="reviewStampText" type="text" maxlength="30" value="수정해주세요"></label>
+        <div class="review-stamp-ink"><label for="reviewStampColor">잉크 색상</label><input id="reviewStampColor" type="color" value="#e60012"><input id="reviewStampHex" type="text" class="review-stamp-hex" aria-label="잉크 색상 코드" value="#e60012" maxlength="7" spellcheck="false"><button type="button" class="btn quiet" id="reviewStampRed">기본 빨강</button></div>
+        <label class="review-stamp-arrow-option"><input id="reviewStampArrow" type="checkbox" checked>화살표 표시</label>
+        <p class="pro-hint">미리보기의 원형 손잡이를 끌어 화살표 방향과 길이를 조절하세요. 글자 상자는 따로 이동할 수 있습니다.</p>
+      </div>
       <label class="pro-field" for="stampScope"><span>적용 범위</span><select id="stampScope"><option value="current">현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label>
       <label class="pro-field" for="stampAnchor"><span>배치 기준</span><select id="stampAnchor"><option value="bottom-right">오른쪽 아래</option><option value="bottom-left">왼쪽 아래</option><option value="top-right">오른쪽 위</option><option value="top-left">왼쪽 위</option></select></label>
       <div class="pro-two-fields"><label class="pro-field" for="stampX"><span>가로 여백 <small>mm</small></span><input id="stampX" type="number" min="0" max="2000" step="1" value="15"></label><label class="pro-field" for="stampY"><span>세로 여백 <small>mm</small></span><input id="stampY" type="number" min="0" max="2000" step="1" value="15"></label></div>

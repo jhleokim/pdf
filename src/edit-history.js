@@ -25,8 +25,9 @@ function captureEditHistory(){
     return {page,rotation:page.rotation,deskewAngle:page.deskewAngle,deskewCrop:typeof page.deskewCrop==='boolean'?page.deskewCrop:undefined,annots:annotations.value,signature};
   });
   const sources=[...docs];for(const [,d]of sources)historyDocuments.add(d);
-  return {rows,sources,origCount,selected:selected().map(p=>p.uid),previewUid,selAnno,
-    signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature,r.deskewAngle,r.deskewCrop]),sources.map(([id])=>id),origCount])};
+  const stamps=typeof captureStampHistory==='function'?captureStampHistory():null;
+  return {rows,sources,origCount,selected:selected().map(p=>p.uid),previewUid,selAnno,stamps,
+    signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature,r.deskewAngle,r.deskewCrop]),sources.map(([id])=>id),origCount,stamps?.signature])};
 }
 function collectHistoryDocuments(){
   const retained=new Set(docs.values());
@@ -107,6 +108,7 @@ async function restoreDocumentHistory(redo){
   try{
     clearPreview();pvZoom=view.zoom;docs.clear();for(const [id,d]of state.sources)docs.set(id,d);
     pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;if(typeof r.deskewCrop==='boolean')r.page.deskewCrop=r.deskewCrop;else delete r.page.deskewCrop;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
+    if(state.stamps&&typeof restoreStampHistory==='function')restoreStampHistory(state.stamps);
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;
@@ -119,6 +121,7 @@ function requestEditUndo(redo=false){
   if(textComposing||textOpening||document.querySelector('dialog[open]')||$('modal').classList.contains('open')||(document.body.classList.contains('is-busy')&&!historyApplying))return Promise.resolve(false);
   if(drag){cancelAnnotationDrag();return Promise.resolve(true);}
   if(typeof cancelDeskewGesture==='function'&&cancelDeskewGesture())return Promise.resolve(true);
+  if(typeof cancelReviewStampGesture==='function'&&cancelReviewStampGesture())return Promise.resolve(true);
   if(blankPointer){endBlankDrag(false);return Promise.resolve(true);}
   if(tdrag?.active){endTouchDrag(false);return Promise.resolve(true);}
   if(dragUids.length){dragUids=[];removeBoardMarker();board.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));return Promise.resolve(true);}
