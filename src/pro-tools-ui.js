@@ -69,7 +69,7 @@ function currentStamp(){
   return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:toolTargets($('stampScope').value).map(p=>p.uid),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
-function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
+function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
 function readToolOptions(o,strict=false){
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
   const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
@@ -96,7 +96,7 @@ function syncToolsState(){
   }
 }
 function resetTools(){stampMarks=[];stampAsset=null;stampEditing=null;stampSource=stampOriginal=stampPixels=stampUndoState=null;ocrRecords=[];ocrCheckpoints.clear();ocrAccepted=false;$('stampActive').hidden=true;$('ocrResults').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();}
-function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning)setLivePreviewOpen(true);}
+function setStampPositioning(on){stampPositioning=on&&!!stampAsset;document.body.classList.toggle('stamp-positioning',stampPositioning);$('stampPlace').setAttribute('aria-pressed',String(stampPositioning));if(stampPositioning){if(typeof setDeskewInteraction==='function')setDeskewInteraction(false);setLivePreviewOpen(true);}}
 function renderStampMarks(){
   const host=$('stampPlacements');host.replaceChildren();
   stampMarks.forEach((mark,i)=>{
@@ -216,7 +216,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
         const doc=await waitForOCR(buildEditedDocument([p],{signal:workSignal}),workSignal);checkProAbort();
-        const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]}),workSignal);checkProAbort();
+        const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),workSignal);checkProAbort();
         pdfTask=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),workSignal),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,workSignal),page=await waitForOCR(pdf.getPage(1),workSignal),base=page.getViewport({scale:1});
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
@@ -298,7 +298,7 @@ async function renderOCRCorrectionPage(record,{signal}={}){
   const o={...options,stamps:[],ocr:[],number:false,watermark:''};let task,canvas;
   try{
     const doc=await waitForOCR(buildEditedDocument([p],{signal:currentSignal}),currentSignal);
-    const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:currentSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid]}),currentSignal);
+    const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:currentSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),currentSignal);
     task=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),currentSignal),...DOC_OPTS});
     const pdf=await waitForOCR(task.promise,currentSignal),page=await waitForOCR(pdf.getPage(1),currentSignal),base=page.getViewport({scale:1});
     const vp=page.getViewport({scale:Math.min(300/72,2367/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height)))});

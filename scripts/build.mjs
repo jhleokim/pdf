@@ -34,7 +34,7 @@ const appStart = '<script id="editor-code">';
 const a = html.indexOf(appStart), b = html.indexOf('</script>', a);
 if (a < 0 || b < 0) throw new Error('Missing editor-code block');
 html = html.slice(0, a + appStart.length) + '\n' + read('src/editor.js') + '\n' + html.slice(b);
-block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/ocr-correction.css')}\n${read('src/pro-workspace.css')}\n${read('src/markup.css')}\n${read('src/text-save.css')}\n</style>`, '</head>');
+block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/ocr-correction.css')}\n${read('src/pro-workspace.css')}\n${read('src/pro-deskew-ui.css')}\n${read('src/markup.css')}\n${read('src/text-save.css')}\n</style>`, '</head>');
 const toolbarStart=html.indexOf('<div class="anno-bar" id="annoBar"'),toolbarEnd=html.indexOf('<div class="pv-body"',toolbarStart);
 if(toolbarStart<0||toolbarEnd<0)throw new Error('Missing markup toolbar');
 html=html.slice(0,toolbarStart)+read('src/markup-toolbar.html')+'\n'+html.slice(toolbarEnd);
@@ -66,7 +66,7 @@ if(standalone)block('ocr-assets',Object.entries(assets).map(([id,file])=>`<scrip
 else html=html.replace(/<!-- ocr-assets:start -->[\s\S]*?<!-- ocr-assets:end -->\s*/,'');
 block('ocr-licenses','<details hidden><summary>OCR licenses</summary><pre>'+['LICENSE-tesseract.js','LICENSE-tesseract.js-core','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt','NOTICE.txt'].map(f=>read('vendor/ocr/'+f).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('\n')+'</pre></details>','</body>');
 html=html.replace(/<!-- pro-runtime:start -->[\s\S]*?<!-- pro-runtime:end -->\s*/, '');
-block('pro-runtime', ['work-progress.js','pro-tesseract-assets.js','pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js','pro-vision.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','ocr-tables.js','ocr-table-edit.js','ocr-table-analysis.js','ocr-correction-lines.js','ocr-correction.js','pro-tools-ui.js','pro-vision-unlock.js','pro-vision-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')&&!f.startsWith('pro-vision')&&f!=='pro-tesseract-assets.js').map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
+block('pro-runtime', ['work-progress.js','pro-tesseract-assets.js','pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js','pro-vision.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','ocr-tables.js','ocr-table-edit.js','ocr-table-analysis.js','ocr-correction-lines.js','ocr-correction.js','pro-tools-ui.js','pro-deskew-ui.js','pro-vision-unlock.js','pro-vision-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')&&!f.startsWith('pro-vision')&&f!=='pro-tesseract-assets.js').map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
 block('paddle-bootstrap',`<script id="paddle-bootstrap">${standalone?'':`globalThis.PDFTesseractManifest=${JSON.stringify(tesseractWebAssets)};`}\n${getPPOCRV5Bootstrap({standalone})}</script>`,'<!-- pro-runtime:start -->');
 block('ppocr-v5-licenses','<details hidden><summary>PP-OCRv5 licenses</summary><pre>'+getPPOCRV5Licenses().replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</pre></details>','</body>');
 if(!standalone)html=html.replace('네트워크 0건','기기에서 인식');

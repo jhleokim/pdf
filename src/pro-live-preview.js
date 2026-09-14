@@ -29,11 +29,13 @@ function showOriginal(){
   $('compareAfterScroll').setAttribute('aria-hidden',String(show));
 }
 function setLivePreviewOpen(open){
+  if(!open&&typeof setDeskewInteraction==='function')setDeskewInteraction(false);
   proPreviewOpen=open;
   syncLivePreview();
 }
 function syncLivePreview(){
   if(!proReady)return;
+  if(typeof syncDeskewControls==='function')syncDeskewControls();
   const any=pages.length>0;
   if(any&&!liveHadPages)proPreviewOpen=true;
   liveHadPages=any;
@@ -51,10 +53,12 @@ function syncLivePreview(){
   const index=pages.indexOf(livePage());
   $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
   if(typeof proRailDragging!=='undefined'&&proRailDragging)return;
+  if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
   if(liveKey()!==liveRequestedKey)scheduleLivePreview();
 }
 function scheduleLivePreview(){
   if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort)return;
+  if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
   const redraw=liveCache?.key===liveContentKey();
@@ -90,7 +94,7 @@ async function updateLivePreview(seq){
       const edited=await buildEditedDocument([p]);check();
       const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
       const doc=await PDFLib.PDFDocument.load(before);check();
-      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid]});check();
+      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
       report=result.report;
       const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
       if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
@@ -123,17 +127,19 @@ async function updateLivePreview(seq){
     $('compareNote').textContent=note;$('proCompare').removeAttribute('data-error');
     $('compareDetails').setAttribute('data-warning',String(!!report.skipped||!!options.rasterize));
     $('compareDetails').querySelector('summary').textContent=report.skipped?'원본 유지 내역 보기':options.rasterize?'출력 방식 안내':'미리보기 안내';
+    if(typeof acceptDeskewPreview==='function')acceptDeskewPreview(p.uid,deskew?.pages?.[0]);
   }catch(e){
     if(e.name!=='AbortError'&&seq===liveSequence){
       $('compareState').textContent='미리보기를 업데이트하지 못했습니다';
       $('compareNote').textContent=e.message;$('proCompare').setAttribute('data-error','true');
       $('compareDetails').open=true;$('compareDetails').setAttribute('data-warning','true');
+      if(typeof deskewPreviewFailed==='function')deskewPreviewFailed();
     }
   }finally{
     for(const c of canvases)c.width=c.height=0;
     await Promise.allSettled(loaded.map(d=>d.destroy()));
     if(liveController===controller)liveController=null;
-    if(seq===liveSequence)$('proCompare').setAttribute('aria-busy','false');
+    if(seq===liveSequence){$('proCompare').setAttribute('aria-busy','false');if(typeof syncDeskewControls==='function')syncDeskewControls();}
   }
 }
 $('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('proWorkspace'):$('btnPreview')).focus();};
