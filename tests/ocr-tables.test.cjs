@@ -61,6 +61,53 @@ test('adjacent narrow columns remain separate and text rows retain Korean separa
   assert.equal(table.cells[0].text,'이름\n😀');assert.equal(table.cells[1].text,'값');assert.deepEqual(plain(table.unassignedIndices),[]);
 });
 
+test('Vision comma and decimal ink boxes stay inside amounts through table copy and refresh',()=>{
+  const words=[
+    word('1',[.1,.1,.11,.12],{separator:''}),word(',',[.111,.119,.114,.125],{separator:''}),
+    word('250',[.115,.1,.145,.12],{separator:''}),word(',',[.146,.119,.149,.125],{separator:''}),
+    word('000',[.150,.1,.180,.12],{separator:'\n'}),
+    word('3',[.1,.15,.11,.17],{separator:''}),word('.',[.111,.169,.114,.172],{separator:''}),
+    word('50',[.115,.15,.135,.17],{separator:'\n'})
+  ],before=structuredClone(words),table=api.fromGrid({x:[.05,.3],y:[.05,.2],words});
+  assert.equal(table.cells[0].text,'1,250,000\n3.50');assert.deepEqual(plain(table.unassignedIndices),[]);
+  assert.equal(api.toTSV(table),'"1,250,000\n3.50"');assert.match(api.toHTML(table),/>1,250,000<br>3\.50<\/td>/);
+  assert.equal(api.refresh(table,words).cells[0].text,table.cells[0].text);assert.deepEqual(words,before);
+});
+
+test('Vision small negative signs and date hyphens preserve exact values and independent columns',()=>{
+  const words=[
+    word('-',[.105,.110,.112,.113],{separator:''}),word('50',[.114,.1,.134,.12],{separator:''}),
+    word(',',[.135,.119,.138,.125],{separator:''}),word('000',[.14,.1,.17,.12],{separator:'\n'}),
+    word('2026',[.36,.1,.40,.12],{separator:''}),word('-',[.401,.11,.408,.113],{separator:''}),
+    word('09',[.409,.1,.429,.12],{separator:''}),word('-',[.430,.11,.437,.113],{separator:''}),
+    word('14',[.438,.1,.458,.12],{separator:'\n'})
+  ],table=api.fromGrid({x:[.05,.3,.6],y:[.05,.2],words});
+  assert.deepEqual(plain(table.cells.map(cell=>cell.text)),['-50,000','2026-09-14']);
+  assert.equal(api.toTSV(table),'-50,000\t2026-09-14');assert.deepEqual(plain(table.unassignedIndices),[]);
+});
+
+test('punctuation anchors retain parentheses, currency and Korean punctuation without combining actual rows',()=>{
+  const words=[
+    word('(',[.10,.1,.105,.12],{separator:''}),word('₩',[.106,.1,.113,.12],{separator:''}),
+    word('100',[.114,.1,.144,.12],{separator:''}),word(')',[.145,.1,.15,.12],{separator:'\n'}),
+    word('내용',[.1,.13,.14,.15],{separator:''}),word(',',[.1402,.147,.142,.152],{separator:' '}),
+    word('다음',[.15,.131,.18,.151],{separator:''}),word('.',[.181,.150,.183,.154],{separator:'\n'}),
+    word('둘째',[.1,.16,.14,.18],{separator:''}),word('!',[.141,.161,.145,.181],{separator:'\n'})
+  ],table=api.fromGrid({x:[.05,.3],y:[.05,.2],words});
+  assert.equal(table.cells[0].text,'(₩100)\n내용, 다음.\n둘째!');
+  assert.equal(api.textForWords(words,[...words.keys()].reverse()),table.cells[0].text,'Selection iteration must not reorder the source punctuation');
+});
+
+test('standalone symbols and distant punctuation stay separate from nearby text rows',()=>{
+  const words=[word('첫째',[.1,.1,.14,.12],{separator:'\n'}),word(',',[.4,.118,.403,.124],{separator:'\n'}),word('둘째',[.1,.14,.14,.16],{separator:'\n'}),word('*',[.1,.20,.11,.21],{separator:''}),word('*',[.112,.20,.122,.21],{separator:'\n'})];
+  assert.equal(api.textForWords(words,[0,1,2,3,4]),'첫째\n,\n둘째\n**');
+});
+
+test('the maximum all-punctuation input keeps every symbol without a pairwise anchor search',()=>{
+  const words=Array.from({length:20000},(_,i)=>word(i%2?',':'.',[.1+(i%100)*.001,.05+Math.floor(i/100)*.004,.1005+(i%100)*.001,.052+Math.floor(i/100)*.004],{separator:''}));
+  const text=api.textForWords(words,[...words.keys()]);assert.equal(text.replace(/\n/g,'').length,20000);assert.equal(text.split('\n').length,200);
+});
+
 test('manual boundary adjustment retains merged topology and explicit edits with invalidated review',()=>{
   const words=[word('원본',[.15,.2,.25,.3]),word('이동',[.52,.2,.59,.3])],initial=api.fromGrid({x:[.1,.5,.9],y:[.1,.5,.9],words});
   let table=api.merge(initial,['r1c0','r1c1'],words);table.cells[0].text='교정한 성명';table.cells[0].edited=true;table.reviewed=true;
