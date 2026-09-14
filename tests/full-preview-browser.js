@@ -31,6 +31,27 @@
   }record('Text remains visible and fitted at 90/180/270 degrees with CropBox and UserUnit=2');
   await insertBlankPage({beforeUid:null});plain=pages.at(-1);await preview(plain);const original=docs.get(plain.docId).pdfjsDoc;closeFullPreview();assert((await original.getPage(1)).view.length===4,'closing destroyed the source');record('Unedited preview closes without destroying the source PDF');
   await Promise.all([preview(first),preview(plain)]);assert($('modal').classList.contains('open')&&ink($('modalCanvas'),{nx:0,ny:0,nw:1,nh:1})===0,'older preview replaced the latest page');closeFullPreview();record('Rapid opens publish only the most recently requested page');
+  await preview(first);const fitted=$('modalCanvas').getBoundingClientRect().width;
+  const center=()=>{const r=$('modalCanvas').getBoundingClientRect();return{clientX:r.left+Math.min(r.width/2,100),clientY:r.top+Math.min(r.height/2,100)}};
+  const wheel=(dy,ctrl=true)=>{const e=new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:ctrl,deltaY:dy,...center()});$('modalCanvas').dispatchEvent(e);return e.defaultPrevented;};
+  assert(!wheel(-200,false)&&modalZoom===1,'ordinary wheel is intercepted');
+  assert(wheel(-200)&&modalZoom>1,'Ctrl+wheel does not zoom or suppress browser zoom');
+  await wait(500);assert($('modalCanvas').getBoundingClientRect().width>fitted*1.4,'canvas does not expand');
+  assert($('modalCanvas').width*$('modalCanvas').height<=16020000,'zoom exceeds pixel budget');
+  const zoom=modalZoom;await navigateFullPreview(1);assert(modalPageUid===pages[1].uid&&modalZoom===zoom,'navigation loses zoom or document order');
+  await navigateFullPreview(-1);assert(modalPageUid===first.uid&&$('modalPrev').disabled,'first-page boundary incorrect');
+  await navigateFullPreview(-1);assert(modalPageUid===first.uid,'previous wraps past first page');
+  $('modalClose').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
+  for(let i=0;i<200&&$('modal').getAttribute('aria-busy')!=='false';i++)await wait(20);
+  assert(modalPageUid===pages[1].uid,'keyboard right did not navigate');
+  $('modalZoom').click();await wait(500);assert(modalZoom===1,'fit button does not reset zoom');
+  wheel(200);await wait(500);assert(modalZoom<1,'Ctrl+wheel down does not zoom out');
+  zoomFullPreview(500);await wait(500);assert(modalZoom===5&&$('modalCanvas').width*$('modalCanvas').height<=16020000,'maximum zoom is unbounded');
+  zoomFullPreview(.001);await wait(500);assert(modalZoom===.25,'minimum zoom is unbounded');
+  await preview(plain);assert($('modalNext').disabled&&modalZoom===1,'last boundary or fresh-open fit incorrect');
+  await navigateFullPreview(1);assert(modalPageUid===plain.uid,'next wraps past last page');
+  zoomFullPreview(2);closeFullPreview();await wait(250);assert(!modalSource&&!modalZoomTimer&&!modalRenderTask&&$('modalCanvas').width===0,'zoom repaint survives close');
+  record('Ctrl+wheel zoom, fit reset, capped rendering, keyboard/page controls, zoom retention, boundaries and close cleanup');
   const build=buildEditedDocument;let release,entered;const gate=new Promise(r=>release=r),started=new Promise(r=>entered=r);
   buildEditedDocument=async(...args)=>{entered();await gate;return build(...args)};
   try{const pending=preview(first);await started;closeFullPreview();release();await pending;assert(!$('modal').classList.contains('open')&&$('modalCanvas').width===0&&!modalRenderTask,'closed preview reopened or retained its canvas')}finally{buildEditedDocument=build}

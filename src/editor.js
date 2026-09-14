@@ -943,26 +943,87 @@ document.addEventListener('drop', e => {
 
 /* ── 전체화면 보기 ── */
 let modalSequence=0,modalRenderTask=null,modalReturnFocus=null;
+let modalPageUid=null,modalZoom=1,modalSource=null,modalZoomTimer=null,modalPaintSequence=0;
+const modalFrame=$('modal').querySelector('.frame');
 const modalStatus=document.createElement('p');
 modalStatus.id='modalStatus';modalStatus.setAttribute('role','status');modalStatus.style.cssText='padding:12px;color:var(--ink);font-size:13px';modalStatus.hidden=true;
 $('modal').querySelector('.frame').appendChild(modalStatus);
 $('modal').setAttribute('role','dialog');$('modal').setAttribute('aria-modal','true');$('modal').setAttribute('aria-label','페이지 전체 미리보기');
 function closeFullPreview(restoreFocus=true){
   modalSequence++;modalRenderTask?.cancel();modalRenderTask=null;
+  modalPaintSequence++;clearTimeout(modalZoomTimer);modalZoomTimer=null;
+  modalSource?.owned?.destroy().catch(()=>{});modalSource=null;modalPageUid=null;
   $('modal').classList.remove('open');$('modal').removeAttribute('aria-busy');modalStatus.hidden=true;
   $('modalCanvas').width=$('modalCanvas').height=0;
   if(restoreFocus&&modalReturnFocus?.isConnected)modalReturnFocus.focus({preventScroll:true});
 }
-async function preview(p){
+function syncFullPreviewControls(){
+  const at=pages.findIndex(p=>p.uid===modalPageUid);
+  $('modalPrev').disabled=at<=0;$('modalNext').disabled=at<0||at>=pages.length-1;
+  $('modalPageCount').textContent=`${at+1} / ${pages.length}페이지`;
+  $('modalZoom').textContent=`${Math.round(modalZoom*100)}%${modalZoom===1?' · 맞춤':''}`;
+  $('modalZoom').setAttribute('aria-label',`확대 ${Math.round(modalZoom*100)}%, 페이지 맞춤으로 돌아가기`);
+}
+function fullPreviewFit(base){
+  return Math.max(.01,Math.min((modalFrame.clientWidth-24)/base.width,(modalFrame.clientHeight-24)/base.height,3));
+}
+function sizeFullPreviewCanvas(canvas){
+  if(!modalSource)return;
+  canvas.style.width=(modalSource.base.width*modalSource.fit*modalZoom)+'px';
+  canvas.style.height=(modalSource.base.height*modalSource.fit*modalZoom)+'px';
+}
+async function paintFullPreview(){
+  const source=modalSource;if(!source)return;
+  const seq=++modalPaintSequence;modalRenderTask?.cancel();
+  const dpr=Math.min(window.devicePixelRatio||1,2),base=source.base;
+  // Keep only the current page; high zoom is capped at 16 MP / 8192 px per side.
+  const scale=Math.min(source.fit*modalZoom*dpr,Math.sqrt(16000000/(base.width*base.height)),8192/Math.max(base.width,base.height));
+  const vp=source.page.getViewport({scale,rotation:base.rotation});
+  let canvas=document.createElement('canvas'),task=null;
+  canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);sizeFullPreviewCanvas(canvas);
+  try{
+    task=source.page.render({canvasContext:canvas.getContext('2d'),viewport:vp});modalRenderTask=task;
+    await task.promise;if(seq!==modalPaintSequence||source!==modalSource)return;
+    sizeFullPreviewCanvas(canvas);
+    const old=$('modalCanvas');canvas.id='modalCanvas';canvas.setAttribute('aria-label','편집 내용이 포함된 페이지');old.replaceWith(canvas);old.width=old.height=0;canvas=null;
+    modalStatus.hidden=true;
+  }catch(e){
+    if(seq===modalPaintSequence&&source===modalSource&&e.name!=='RenderingCancelledException')throw e;
+  }finally{
+    if(modalRenderTask===task)modalRenderTask=null;
+    if(canvas)canvas.width=canvas.height=0;
+  }
+}
+function zoomFullPreview(value,point){
+  if(!modalSource)return;
+  const next=Math.max(.25,Math.min(5,value));if(Math.abs(next-modalZoom)<.0001)return;
+  const canvas=$('modalCanvas'),r=canvas.getBoundingClientRect(),frame=modalFrame.getBoundingClientRect();
+  const x=point?.x??frame.left+frame.width/2,y=point?.y??frame.top+frame.height/2;
+  const nx=r.width?(x-r.left)/r.width:.5,ny=r.height?(y-r.top)/r.height:.5;
+  modalZoom=next;sizeFullPreviewCanvas(canvas);syncFullPreviewControls();
+  const after=canvas.getBoundingClientRect();
+  if(r.width&&r.height){modalFrame.scrollLeft+=after.left+nx*after.width-x;modalFrame.scrollTop+=after.top+ny*after.height-y;}
+  clearTimeout(modalZoomTimer);
+  modalZoomTimer=setTimeout(()=>{modalZoomTimer=null;paintFullPreview().catch(()=>{modalStatus.textContent='선명한 미리보기를 불러오지 못했습니다. 배율을 다시 조절해 주세요.';modalStatus.hidden=false;});},120);
+}
+function navigateFullPreview(delta){
+  const at=pages.findIndex(p=>p.uid===modalPageUid),next=pages[at+delta];
+  if(at>=0&&next)return preview(next,{keepZoom:true});
+}
+async function preview(p,{keepZoom=false}={}){
+  const continuing=keepZoom&&$('modal').classList.contains('open'),focus=modalReturnFocus;
   closeFullPreview(false);const seq=modalSequence;
   if(typeof textUpdate!=='undefined')await textUpdate;
   if(seq!==modalSequence||!pages.includes(p)||(typeof finishTextEdit==='function'&&!finishTextEdit(true)))return;
   if(document.body.dataset.mode === 'pro'){ previewUid=p.uid;setLivePreviewOpen(true);return; }
-  modalReturnFocus=document.activeElement.getClientRects().length?document.activeElement:p.el;
+  if(!continuing)modalZoom=1;
+  modalPageUid=p.uid;syncFullPreviewControls();
+  modalReturnFocus=continuing?focus:(document.activeElement.getClientRects().length?document.activeElement:p.el);
   $('modal').classList.add('open');$('modal').setAttribute('aria-busy','true');$('modalClose').focus({preventScroll:true});
   $('modalCanvas').style.display='none';modalStatus.textContent='편집 내용을 불러오는 중…';modalStatus.hidden=false;
   const current=()=>seq===modalSequence&&pages.includes(p);
-  let loaded=null,loading=null,canvas=null,task=null;
+  modalFrame.scrollLeft=modalFrame.scrollTop=0;
+  let loaded=null,loading=null;
   try{
     let pdf=docs.get(p.docId).pdfjsDoc,pageNumber=p.srcIndex+1,rotation=p.rotation;
     if(p.annots?.length){
@@ -975,27 +1036,36 @@ async function preview(p){
     }
     const page=await pdf.getPage(pageNumber);if(!current())return;
     const base=page.getViewport({scale:1,rotation:(page.rotate+rotation)%360});
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    const fit=Math.max(.05,Math.min((innerWidth-60)/base.width,(innerHeight-90)/base.height,3,Math.sqrt(16000000/(base.width*base.height))/dpr));
-    const vp=page.getViewport({scale:fit*dpr,rotation:base.rotation});
-    canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
-    canvas.style.width=(vp.width/dpr)+'px';canvas.style.height=(vp.height/dpr)+'px';
-    task=page.render({canvasContext:canvas.getContext('2d'),viewport:vp});modalRenderTask=task;
-    await task.promise;if(!current())return;
-    const old=$('modalCanvas');canvas.id='modalCanvas';canvas.setAttribute('aria-label','편집 내용이 포함된 페이지');old.replaceWith(canvas);old.width=old.height=0;canvas=null;
-    modalStatus.hidden=true;
+    modalSource={page,base,fit:fullPreviewFit(base),owned:loaded};loaded=null;loading=null;
+    await paintFullPreview();
   }catch(e){
     if(current()&&e.name!=='RenderingCancelledException'){modalStatus.textContent='미리보기를 열지 못했습니다. 닫고 다시 시도해 주세요.';modalStatus.hidden=false;}
   }finally{
-    if(modalRenderTask===task)modalRenderTask=null;
-    if(canvas)canvas.width=canvas.height=0;
     if(loaded)await loaded.destroy().catch(()=>{});else if(loading)await loading.destroy().catch(()=>{});
     if(current())$('modal').setAttribute('aria-busy','false');
   }
 }
 $('modalClose').onclick = () => closeFullPreview();
-$('modal').onclick = e => { if(e.target.id === 'modal') closeFullPreview(); };
-$('modal').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();$('modalClose').focus();}});
+$('modalPrev').onclick=()=>navigateFullPreview(-1);$('modalNext').onclick=()=>navigateFullPreview(1);
+$('modalZoom').onclick=()=>zoomFullPreview(1);
+$('modal').onclick = e => { if(e.target.id === 'modal'||e.target===modalFrame||e.target.classList.contains('page-stage')) closeFullPreview(); };
+$('modal').addEventListener('wheel',e=>{
+  if(!e.ctrlKey||!$('modal').classList.contains('open'))return;
+  e.preventDefault();
+  const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?modalFrame.clientHeight:1);
+  zoomFullPreview(modalZoom*Math.exp(-Math.max(-300,Math.min(300,delta))*.002),{x:e.clientX,y:e.clientY});
+},{passive:false});
+$('modal').addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();navigateFullPreview(e.key==='ArrowLeft'?-1:1);}
+  if(e.key==='Tab'){
+    const buttons=[...$('modal').querySelectorAll('button:not(:disabled)')],at=buttons.indexOf(document.activeElement);
+    e.preventDefault();buttons[(at+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();
+  }
+});
+window.addEventListener('resize',()=>{
+  if(!modalSource)return;modalSource.fit=fullPreviewFit(modalSource.base);sizeFullPreviewCanvas($('modalCanvas'));
+  clearTimeout(modalZoomTimer);modalZoomTimer=setTimeout(()=>paintFullPreview().catch(()=>{}),120);
+});
 
 /* ════════════════════════════════════════════════════════════
    저장 — 화면의 강조·사진을 PDF에 벡터/이미지로 실제로 굽는다
