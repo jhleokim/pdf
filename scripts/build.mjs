@@ -58,6 +58,7 @@ const panelSplit=panel.indexOf('<details class="pro-section">',panel.indexOf('</
 block('pro-panel',panel.slice(0,panelSplit)+toolPanel+'\n'+panel.slice(panelSplit), '</main>');
 block('stamp-dialog',read('src/stamp-dialog.html'),'</body>');
 block('ocr-correction-dialog',read('src/ocr-correction.html'),'</body>');
+block('ocr-table-worker-source',`<script type="text/plain" id="ocr-table-worker-source">\n${read('src/ocr-tables.js').replace(/<\/script/gi,'<\\/script')}\n</script>`,'</body>');
 html=html.replace(/<!-- pro-dialog:start -->[\s\S]*?<!-- pro-dialog:end -->\s*/, '');
 block('pro-dialog', read('src/pro-dialog.html'), '<!-- pro-panel:start -->');
 const assets={'ocr-client':'tesseract.min.js','ocr-core':'tesseract-core-lstm.wasm.js','ocr-core-fast':'tesseract-core-relaxedsimd-lstm.wasm.js','ocr-worker':'worker.min.js','ocr-lang-kor':'lang/kor.traineddata.gz','ocr-lang-eng':'lang/eng.traineddata.gz'};
@@ -65,7 +66,7 @@ if(standalone)block('ocr-assets',Object.entries(assets).map(([id,file])=>`<scrip
 else html=html.replace(/<!-- ocr-assets:start -->[\s\S]*?<!-- ocr-assets:end -->\s*/,'');
 block('ocr-licenses','<details hidden><summary>OCR licenses</summary><pre>'+['LICENSE-tesseract.js','LICENSE-tesseract.js-core','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt','NOTICE.txt'].map(f=>read('vendor/ocr/'+f).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('\n')+'</pre></details>','</body>');
 html=html.replace(/<!-- pro-runtime:start -->[\s\S]*?<!-- pro-runtime:end -->\s*/, '');
-block('pro-runtime', ['work-progress.js','pro-tesseract-assets.js','pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js','pro-vision.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','ocr-correction-lines.js','ocr-correction.js','pro-tools-ui.js','pro-vision-unlock.js','pro-vision-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')&&!f.startsWith('pro-vision')&&f!=='pro-tesseract-assets.js').map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
+block('pro-runtime', ['work-progress.js','pro-tesseract-assets.js','pro-engine.js', 'pro-document.js', 'pro-stamp.js', 'pro-ocr.js', 'pro-gemini.js','pro-vision.js', 'pro-deskew.js', 'pro-pipeline.js', 'pro-result.js', 'pro-live-preview.js', 'pro-rail.js', 'pro-ui.js','ocr-tables.js','ocr-table-analysis.js','ocr-correction-lines.js','ocr-correction.js','pro-tools-ui.js','pro-vision-unlock.js','pro-vision-ui.js'].filter(f=>!standalone||!f.startsWith('pro-gemini')&&!f.startsWith('pro-vision')&&f!=='pro-tesseract-assets.js').map(f => `<script id="${f.replace('.js','')}">\n${read('src/' + f)}\n</script>`).join('\n'), '</body>');
 block('paddle-bootstrap',`<script id="paddle-bootstrap">${standalone?'':`globalThis.PDFTesseractManifest=${JSON.stringify(tesseractWebAssets)};`}\n${getPPOCRV5Bootstrap({standalone})}</script>`,'<!-- pro-runtime:start -->');
 block('ppocr-v5-licenses','<details hidden><summary>PP-OCRv5 licenses</summary><pre>'+getPPOCRV5Licenses().replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</pre></details>','</body>');
 if(!standalone)html=html.replace('네트워크 0건','기기에서 인식');

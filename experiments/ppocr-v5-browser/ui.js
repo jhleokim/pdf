@@ -20,11 +20,13 @@ el('theme').onclick=()=>{const dark=document.documentElement.dataset.theme!=='da
 el('files').onchange=()=>{if(!running){el('status').dataset.state='';el('status').textContent=el('files').files.length?el('files').files.length+'개 파일 선택 · 인식을 시작하세요.':'PDF나 이미지를 선택하세요.';}};
 el('correct').onclick=async()=>{
  if(running||correcting||!results.length)return;correcting=true;syncActions();const before=results;
+ const cellReader=PDFOCRTableAnalysis.createCellReader(async(record,signal)=>{const session=await createPPV5({signal,onProgress:()=>{}});return {recognize:canvas=>session.recognize(canvas,{size:Number(el('size').value)}),close:()=>session.close()};});
  try{await PDFOCRCorrection.open({initialIndex:Number(el('page').value)||0,
   records:before.map((r,i)=>({...r,uid:r.uid||'lab-'+runId+'-'+i,page:i+1,source:'paddle-v5',granularity:'line',words:r.words.map(w=>({...w,confidence:Number.isFinite(w.confidence)?w.confidence*100:null,separator:w.separator??'\n'}))})),
   renderPage:async(record,{signal})=>{signal.throwIfAborted();const source=canvases[record.page-1];if(!source?.width)throw Error('원본 페이지가 변경되었습니다. 교정 창을 다시 열어 주세요.');return source;},
+  recognizeRegion:cellReader.recognizeRegion,
   onApply:records=>{if(results!==before||running)throw Error('인식 결과가 변경되었습니다. 교정 창을 다시 열어 주세요.');results=records.map((record,i)=>({...record,source:before[i].source,words:record.words.map(w=>({...w,confidence:Number.isFinite(w.confidence)?w.confidence/100:null}))}));updateMetrics();show();el('status').dataset.state='';el('status').textContent='교정 내용을 적용했습니다. 텍스트와 JSON 내보내기에 반영됩니다.';}
- });}catch(error){el('status').dataset.state='error';el('status').textContent=error.message||'교정 창을 열지 못했습니다.';}finally{correcting=false;syncActions();}
+ });}catch(error){el('status').dataset.state='error';el('status').textContent=error.message||'교정 창을 열지 못했습니다.';}finally{await cellReader.close();correcting=false;syncActions();}
 };
 el('run').onclick=async()=>{
  if(running||correcting)return;const files=[...el('files').files];if(!files.length){el('status').textContent='먼저 PDF나 이미지를 선택하세요.';el('files').focus();return;}abort=new AbortController();running=true;runId++;for(const canvas of canvases)canvas.width=canvas.height=0;results=[];canvases=[];el('text').textContent='';el('preview').width=0;el('preview').height=0;setProgress(0);el('metrics').textContent='';el('page').textContent='';el('status').dataset.state='';el('resultSummary').textContent='원본과 인식 결과';el('textCount').textContent='확인 후 교정할 수 있습니다';show();syncActions();let engine;const documents=[],items=[];const total=performance.now();

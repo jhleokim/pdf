@@ -314,18 +314,19 @@ async function renderOCRCorrectionPage(record,{signal}={}){
 }
 $('ocrCorrect').onclick=async()=>{
   if($('ocrCorrect').disabled||ocrRunning||proAbort)return;
+  const cellReader=PDFOCRTableAnalysis.createCellReader((record,signal)=>record.source==='paddle-v5'?startPaddleSession(record.language||'kor+eng',signal,()=>{},'6'):PDFOCR.session(record.language||'kor+eng',signal,()=>{},'6'));
   try{
     const original=ocrRecords;
-    await PDFOCRCorrection.open({records:original,initialIndex:Number($('ocrResultPage').value)||0,renderPage:renderOCRCorrectionPage,onApply:edited=>{
+    await PDFOCRCorrection.open({records:original,initialIndex:Number($('ocrResultPage').value)||0,renderPage:renderOCRCorrectionPage,releasePage:canvas=>{canvas.width=canvas.height=0;},recognizeRegion:cellReader.recognizeRegion,onApply:edited=>{
       const options=readProOptions();
       if(ocrRecords!==original||edited.some(r=>!ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),options)))throw new Error('문서 또는 인식 결과가 바뀌었습니다. 교정 창을 다시 열어 주세요.');
       ocrRecords=edited;
       for(const record of edited)if(!record.skipped)ocrCheckpoints.set(record.source+':'+record.uid,record);
       ocrAccepted=false;const index=$('ocrResultPage').value;
       renderOCRResults();$('ocrResultPage').value=index;renderOCRText();toolsChanged();syncToolsState();
-      $('ocrStatus').textContent='교정한 결과를 반영했습니다. 확인 후 PDF에 포함해 주세요.';
+      $('ocrStatus').textContent='교정 내용을 반영했습니다. 글줄 수정은 PDF 검색 텍스트에, 표 수정은 표 복사·저장에 반영됩니다.';
     }});
-  }catch(e){toast(e.message||'인식 교정 화면을 열지 못했습니다.',true);}
+  }catch(e){toast(e.message||'인식 교정 화면을 열지 못했습니다.',true);}finally{await cellReader.close();}
 };
 $('ocrProvider').onchange=()=>{configureLocalOCR();};
 $('ocrSample').onclick=()=>ocrDefaultProvider()==='vision'?requestVisionOCR(true):runOCR(true);$('ocrRun').onclick=()=>ocrDefaultProvider()==='vision'?requestVisionOCR(false):runOCR(false);$('ocrResultPage').onchange=renderOCRText;
