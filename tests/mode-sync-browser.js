@@ -35,7 +35,7 @@
   setProMode('pro');await ready();await createProResult();await ready();const rows=await pdfText(proResult.bytes),output=await PDFDocument.load(proResult.bytes);
   assert(rows.length===3&&rows[0].includes('SOURCE THREE')&&!rows[1].trim()&&rows[2].includes('SOURCE ONE')&&!rows.join().includes('SOURCE TWO'),'Pro lost Basic page order/insertion/deletion');
   assert(output.getPage(2).getRotation().angle===90&&pages[1]===blank,'Pro lost Basic page rotation');record('Pro export preserves Basic page order, deletion, blank insertion and rotation');
-  setProMode('basic');await showPreview(first);selAnno=text.id;renderAnnots();$('annoDel').click();assert(!first.el.querySelector('.thumbnail-markup')?.textContent.includes(text.text),'Removed text remains on thumbnail');
+  await setProMode('basic');await showPreview(first);selAnno=text.id;renderAnnots();$('annoDel').click();assert(!first.el.querySelector('.thumbnail-markup')?.textContent.includes(text.text),'Removed text remains on thumbnail');
   await requestEditUndo();assert(first.el.querySelector('.thumbnail-markup')?.textContent.includes(text.text),'Undo did not refresh thumbnail');record('Markup deletion and Undo refresh the page thumbnail');
   setProMode('pro');await ready();setLivePreviewOpen(false);setLivePreviewOpen(true);await ready();assert(colorCount($('compareAfter'),'red')>10,'Reopened preview omitted restored markup');record('Closing and reopening Pro preview uses the restored editing state');
   const network=performance.getEntriesByType('resource').filter(e=>/^https?:/.test(e.name)&&new URL(e.name).origin!==location.origin);assert(!network.length,'External dependency');

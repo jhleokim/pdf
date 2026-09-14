@@ -927,6 +927,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .pro-section .review-stamp-picker>summary{min-height:36px;padding:4px 0 10px}.review-stamp-picker:not([open]) #reviewStampPresets{display:none}
 
 .review-stamp-finish{position:absolute;left:12px;bottom:12px;z-index:4;min-height:40px;box-shadow:0 2px 8px #0002;background:var(--surface)}.review-stamp-finish[hidden]{display:none}@media(max-width:650px){.review-stamp-finish{min-height:44px}}
+.review-stamp-more{position:absolute;left:112px;bottom:12px;z-index:4;min-height:44px;background:var(--surface);box-shadow:0 2px 8px #0002}.review-stamp-more[hidden]{display:none}.review-stamp-overlay [data-review-handle=resize]{cursor:nwse-resize}
 /* The correction desk shares PDF Studio's light/charcoal tokens. */
 .ocr-correction{position:fixed;inset:0;box-sizing:border-box;margin:auto;width:min(1320px,calc(100vw - 48px));height:min(900px,calc(100dvh - 48px));max-width:none;max-height:none;padding:0;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:var(--sh-3);overflow:hidden}
 .ocr-correction[open]{display:flex;flex-direction:column;animation:ocr-correction-enter .16s ease-out}.ocr-correction::backdrop{background:rgba(20,24,28,.4)}.ocr-correction [hidden]{display:none!important}.ocr-correction *{box-sizing:border-box}
@@ -1618,7 +1619,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
         <label class="pro-field" for="reviewStampText"><span>스탬프 문구</span><input id="reviewStampText" type="text" maxlength="30" value="수정해주세요"></label>
         <div class="review-stamp-ink"><label for="reviewStampColor">잉크 색상</label><input id="reviewStampColor" type="color" value="#e60012"><input id="reviewStampHex" type="text" class="review-stamp-hex" aria-label="잉크 색상 코드" value="#e60012" maxlength="7" spellcheck="false"><button type="button" class="btn quiet" id="reviewStampRed">기본 빨강</button></div>
         <label class="review-stamp-arrow-option"><input id="reviewStampArrow" type="checkbox" checked>화살표 표시</label>
-        <p class="pro-hint">미리보기의 원형 손잡이를 끌어 화살표 방향과 길이를 조절하세요. 글자 상자는 따로 이동할 수 있습니다.</p>
+        <p class="pro-hint">네모 손잡이로 글자와 도장 크기를 함께 조절하고, 원형 손잡이로 화살표를 움직이세요. ‘하나 더 찍기’로 복제 · Enter 또는 Esc로 배치 완료.</p>
       </div>
       <label class="pro-field" for="stampScope"><span>적용 범위</span><select id="stampScope"><option value="current">현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label>
       <label class="pro-field" for="stampAnchor"><span>배치 기준</span><select id="stampAnchor"><option value="bottom-right">오른쪽 아래</option><option value="bottom-left">왼쪽 아래</option><option value="top-right">오른쪽 위</option><option value="top-left">왼쪽 위</option></select></label>
@@ -2228,6 +2229,7 @@ async function showPreview(p){
     if(my!==pvToken)return;
     if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
     selAnno=null;
+    if(typeof finishReviewStampForNavigation==='function')finishReviewStampForNavigation();
   }
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));
@@ -3737,7 +3739,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 5.0">v5.0</span>
+<span class="app-version" aria-label="버전 5.1">v5.1</span>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -12345,9 +12347,14 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   if(!r.arrow||t>=1)return {end,curves:[],head:[],width:0};
   const start={x:cx+dx*t,y:cy+dy*t},distance=Math.hypot(end.x-start.x,end.y-start.y),u={x:(end.x-start.x)/distance,y:(end.y-start.y)/distance},v={x:-u.y,y:u.x};
   const bend=Math.min(box.width*.35,distance*.65),at=(along,across)=>({x:clamp(start.x+u.x*along+v.x*across,pad,pageWidth-pad),y:clamp(start.y+u.y*along+v.y*across,pad,pageHeight-pad)});
-  const middle=at(distance*.48,bend*.12),c1=at(distance*.15,bend*.95),c2=at(distance*.7,bend*.85),c3=at(distance*.22,-bend*.55),c4=at(distance*.55,bend*.55);
+  // A two-turn trochoid with matching tangents gives smooth open spring coils.
+  const curves=[],omega=4*Math.PI,reach=distance*.82,a0=Math.min(box.width*.13,distance*.11),b0=bend*.6;
+  const position=t=>[reach*t+a0*Math.sin(omega*t),b0*(1-Math.cos(omega*t))],tangent=t=>[reach+a0*omega*Math.cos(omega*t),b0*omega*Math.sin(omega*t)];
+  for(let i=0;i<8;i++){const t=i/8,q=(i+1)/8,p=position(t),n=position(q),d=tangent(t),v=tangent(q);curves.push([at(...p),at(p[0]+d[0]/24,p[1]+d[1]/24),at(n[0]-v[0]/24,n[1]-v[1]/24),at(...n)]);}
+  curves.push([at(reach,0),at(distance*.9,0),at(distance*.95,0),end]);
+  const c4=curves.at(-1)[2];
   const a=Math.atan2(end.y-c4.y,end.x-c4.x),headLength=Math.min(box.width*.105,distance*.32),point=sign=>({x:clamp(end.x-headLength*Math.cos(a+sign*.55),pad,pageWidth-pad),y:clamp(end.y-headLength*Math.sin(a+sign*.55),pad,pageHeight-pad)});
-  return {end,curves:[[start,c1,c2,middle],[middle,c3,c4,end]],head:[point(-1),end,point(1)],width:Math.max(.7,box.width*.018)};
+  return {end,curves,head:[point(-1),end,point(1)],width:Math.max(.7,box.width*.018)};
  }
  const point=p=>`${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
  function path(g){return {curve:g.curves.map((c,i)=>`${i?'':`M ${point(c[0])} `}C ${c.slice(1).map(point).join(' ')}`).join(' '),head:g.head.length?`M ${g.head.map(point).join(' L ')}`:''};}
@@ -13326,6 +13333,7 @@ function setProView(view){
 let proModeRequest=0;
 function setProMode(mode){
   const request=++proModeRequest;
+  if(typeof proTransferPending!=='undefined'&&proTransferPending)return proTransferPending.then(()=>request===proModeRequest?applyProMode(mode):false);
   if(typeof textEditPending!=='undefined'&&textEditPending){
     // A mode click must finish the newest layout, even if another keystroke or
     // formatting change supersedes the promise while it is being awaited.
@@ -13339,6 +13347,10 @@ function setProMode(mode){
 }
 function applyProMode(mode){
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return false;
+  if(mode==='basic'&&proMode==='pro'&&proReady&&pages.length){try{if(hasProEdits())return transferProToBasic(proModeRequest);}catch(e){toast(e.message,true);return false;}}
+  return displayProMode(mode);
+}
+function displayProMode(mode){
   proMode=mode; document.body.dataset.mode=mode;
   $('modeBasic').setAttribute('aria-pressed',String(mode==='basic'));
   $('modePro').setAttribute('aria-pressed',String(mode==='pro'));
@@ -13351,6 +13363,37 @@ function applyProMode(mode){
   if(mode==='basic'){syncPreviewVisible();$('btnPreview').title='미리보기 표시 / 숨기기';}
   syncProState();
   return true;
+}
+function hasProEdits(){
+  const o=readProOptions();
+  return o.optimize||o.deskew||o.blackWhite||o.contrast>0||o.whitePoint<255||o.crop||o.paper!=='original'||o.number||!!o.watermark||o.stamps?.length||o.ocr?.length||Object.keys(o.deskewAngles).length;
+}
+function captureProTransferSettings(){return {fields:Object.fromEntries(proControlIds.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),records:ocrRecords.slice(),accepted:ocrAccepted,mode:proMode};}
+function restoreProTransferSettings(state){for(const[id,v]of Object.entries(state.fields)){if($(id).type==='checkbox')$(id).checked=v;else $(id).value=v;}ocrRecords=state.records.slice();ocrAccepted=state.accepted;refreshProControls();proInvalidate();displayProMode(state.mode);}
+let proTransferPending=null;
+function transferProToBasic(request){
+  if(proTransferPending)return proTransferPending;
+  if(document.body.classList.contains('is-busy'))return false;
+  proTransferPending=(async()=>{
+   if(typeof reviewStampPending==='function'&&reviewStampPending()){toast('스탬프 문구 반영 후 다시 전환해 주세요.');return false;}
+   const snapshot=captureEditHistory(),settings=captureProTransferSettings(),shown=previewUid,picked=new Set(selected().map(p=>p.uid));let pdf;
+   const result=await createProResult({reveal:false});if(!result||request!==proModeRequest)return false;
+   if(result.hasPageEffects===false)return displayProMode('basic');
+   startProWork('Pro 편집 내용을 Basic에 반영하는 중…');
+   try{
+    pdf=await pdfjsLib.getDocument({data:result.bytes.slice(),...DOC_OPTS}).promise;checkProAbort();
+    const next=[];for(let i=0;i<pages.length;i++){const canvas=await renderThumb(pdf,i+1);checkProAbort();next.push({uid:pages[i].uid,docId:'',srcIndex:i,rotation:0,annots:[],canvas});progress((i+1)/pages.length*100);await idle();}
+    if(request!==proModeRequest)return false;
+    const docId='d'+(++docSeq),name=docs.get(pages[0].docId)?.name||'편집본.pdf';for(const p of next)p.docId=docId;
+    // Publish only after every page succeeds. Original pages remain in undo history.
+    clearPreview();docs.clear();docs.set(docId,{name,libBytes:result.bytes.slice(),pdfjsDoc:pdf,kind:'pdf',color:SWATCH[(docSeq-1)%SWATCH.length],count:next.length});pdf=null;pages=next;
+    resetTools();for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=false;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}refreshProControls();
+    proInvalidate();displayProMode('basic');render();for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));previewUid=shown;syncCounts();await showPreview(pages.find(p=>p.uid===shown)||pages[0]);
+    const after=captureEditHistory();snapshot.proTransfer=settings;after.proTransfer=captureProTransferSettings();editHistory.push(snapshot,after,'Pro 편집을 Basic에 반영');collectHistoryDocuments();syncHistoryControls();
+    toast('Pro 편집을 반영했습니다. Ctrl+Z로 전환 전 편집 상태를 복원할 수 있습니다.');return true;
+   }catch(e){if(e.name!=='AbortError'){console.error(e);toast('Basic으로 전환하지 못했습니다. Pro 편집 내용은 유지됩니다.',true);}return false;}
+   finally{if(pdf)await pdf.destroy().catch(()=>{});finishProWork();}
+  })().finally(()=>{proTransferPending=null;});return proTransferPending;
 }
 function proNumberInput(id,min,max,integer=false){
   const el=$(id), n=Number(el.value);
@@ -13524,7 +13567,8 @@ async function createProResult({reveal=true}={}){
     const result=PDFProResult.selectOutput(before,candidate,options,original);
     const bytes=result.bytes;
     const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
-    proResult={bytes,fingerprint};
+    const hasPageEffects=!result.retained&&!!(report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
+    proResult={bytes,fingerprint,hasPageEffects};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
     const change=result.reduction;
@@ -14577,7 +14621,9 @@ function toolDownload(data,name,type){const url=URL.createObjectURL(data instanc
 function toolTargets(scope){return scope==='all'?pages:scope==='selected'?selected():[livePage()].filter(Boolean);}
 function currentStamp(){
   if(!stampAsset)return null;
-  return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:toolTargets($('stampScope').value).map(p=>p.uid),anchor:$('stampAnchor').value,
+  // Capture page identities once. Navigating or changing selection is not a move.
+  if(!Array.isArray(stampAsset.targets))stampAsset={...stampAsset,targets:toolTargets($('stampScope').value).map(p=>p.uid)};
+  return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:stampAsset.targets.slice(),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
 function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
@@ -14622,7 +14668,7 @@ function renderStampMarks(){
     const remove=document.createElement('button');remove.className='btn quiet';remove.textContent='삭제';remove.setAttribute('aria-label',`${mark.name} 배치 삭제`);remove.onclick=()=>{stampMarks.splice(i,1);renderStampMarks();toolsChanged();};row.append(img,label,edit,remove);host.append(row);
   });
 }
-function activateStamp(asset){stampAsset={...asset,...(asset.review?{review:PDFReviewStamp.normalize(asset.review)}:{})};$('stampThumb').src=asset.data;$('stampName').value=asset.name||'내 도장';$('stampActive').hidden=false;$('stampSection').open=true;toolsChanged();if(asset.review)setStampPositioning(true);}
+function activateStamp(asset){stampAsset={...asset,targets:stampEditing?asset.targets.slice():toolTargets($('stampScope').value).map(p=>p.uid),...(asset.review?{review:PDFReviewStamp.normalize(asset.review)}:{})};$('stampThumb').src=asset.data;$('stampName').value=asset.name||'내 도장';$('stampActive').hidden=false;$('stampSection').open=true;toolsChanged();if(asset.review)setStampPositioning(true);}
 function stampSnapshot(){return {source:new ImageData(new Uint8ClampedArray(stampSource.data),stampSource.width,stampSource.height),pixels:new Uint8ClampedArray(stampPixels)};}
 function stampPaint(){
   const c=$('stampCanvas');c.width=stampSource.width;c.height=stampSource.height;
@@ -14668,7 +14714,7 @@ $('stampEdit').onclick=async()=>{if(!stampAsset)return;try{const asset=stampAsse
 $('stampClear').onclick=()=>{if(stampEditing){stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,stampEditing.mark);stampEditing=null;renderStampMarks();}stampAsset=null;$('stampActive').hidden=true;setStampPositioning(false);toolsChanged();};
 $('stampPlace').onclick=()=>setStampPositioning(!stampPositioning);
 $('stampCommit').onclick=()=>{try{const mark=currentStamp();if(!mark||!mark.targets.length){toast('도장을 배치할 페이지를 선택하세요.');return;}if(stampEditing)stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,mark);else stampMarks.push(mark);stampEditing=null;stampAsset=null;$('stampActive').hidden=true;setStampPositioning(false);renderStampMarks();toolsChanged();$('stampStatus').textContent='배치를 확정했습니다. 결과 만들기로 PDF에 저장하세요.';}catch(e){toast(e.message,true);}};
-for(const id of stampControlIds)$(id).oninput=()=>{toolsChanged();};
+for(const id of stampControlIds)$(id).oninput=()=>{if(id==='stampScope'&&stampAsset)stampAsset={...stampAsset,targets:toolTargets($('stampScope').value).map(p=>p.uid)};toolsChanged();};
 $('stampPng').onclick=async()=>{if(stampAsset)toolDownload(await (await fetch(stampAsset.data)).blob(),($('stampName').value||'도장')+'.png','image/png');};
 function renderStampShelf(){const host=$('stampLibrary');host.replaceChildren();$('stampLibraryCount').textContent=stampShelf.length;
   stampShelf.forEach((s,i)=>{const row=document.createElement('div');row.className='stamp-row';const image=document.createElement('img');image.src=s.data;image.alt='';const name=document.createElement('span');name.textContent=s.name;const use=document.createElement('button');use.className='btn';use.textContent='사용';use.onclick=()=>activateStamp(s);const del=document.createElement('button');del.className='btn quiet';del.textContent='삭제';del.setAttribute('aria-label',s.name+' 보관 삭제');del.onclick=()=>{try{const next=stampShelf.filter((_,j)=>j!==i);localStorage.setItem('pdfstudio-stamps-v1',JSON.stringify(next));stampShelf=next;renderStampShelf();}catch(_){toast('보관함을 변경하지 못했습니다.',true);}};row.append(image,name,use,del);host.append(row);});}
@@ -14860,8 +14906,11 @@ configureLocalOCR();syncToolsState();
  const outline=make('rect',{fill:'none',stroke:'var(--action)','stroke-dasharray':'4 3','pointer-events':'none'});
  const tip=make('circle',{'data-review-handle':'tip',fill:'transparent',role:'button',tabindex:'0','aria-label':'화살표 끝점 조절 · 드래그하거나 방향키 사용'});
  const dot=make('circle',{fill:'#fff',stroke:'var(--action)','pointer-events':'none'});
+ const resize=make('rect',{'data-review-handle':'resize',fill:'transparent',role:'button',tabindex:'0','aria-label':'스탬프 크기 조절 · 드래그 또는 방향키'});
+ const resizeDot=make('rect',{fill:'#fff',stroke:'var(--action)','pointer-events':'none'});
  $('compareStage').append(svg);
  const doneButton=document.createElement('button');doneButton.id='reviewStampFinish';doneButton.type='button';doneButton.className='btn review-stamp-finish';doneButton.textContent='배치 완료';doneButton.setAttribute('aria-label','스탬프 배치 확정');doneButton.hidden=true;doneButton.onclick=()=>$('stampCommit').click();$('compareStage').append(doneButton);
+ const moreButton=document.createElement('button');moreButton.id='reviewStampMore';moreButton.type='button';moreButton.className='btn review-stamp-more';moreButton.textContent='하나 더 찍기';moreButton.hidden=true;$('compareStage').append(moreButton);
  let gesture=null,frame=0,renderSequence=0,pending=false,lastAsset=null;
  const before=()=>typeof captureEditHistory==='function'?captureEditHistory():null;
  const history=(state,title,key)=>{if(typeof commitEditHistory==='function')commitEditHistory(state,title,key);};
@@ -14869,7 +14918,9 @@ configureLocalOCR();syncToolsState();
  const attrs=(n,values)=>{for(const[k,v]of Object.entries(values))n.setAttribute(k,String(v));};
  function controls(){
   const r=stampAsset?.review;$('reviewStampControls').hidden=!r;$('stampEdit').hidden=!!r;
-  doneButton.hidden=!valid()||!stampPositioning||$('proCompare').hidden||$('compareStage').classList.contains('show-original');doneButton.disabled=pending;
+  const onPage=r&&($('stampScope').value==='all'||stampAsset.targets?.includes(livePage()?.uid));
+  doneButton.hidden=!valid()||!onPage||!stampPositioning||$('proCompare').hidden||$('compareStage').classList.contains('show-original');doneButton.disabled=pending;
+  moreButton.hidden=doneButton.hidden;moreButton.disabled=pending;
   // A review label has its own visible text field; its name follows that text.
   $('stampName').closest('label').hidden=!!r;
   for(const b of $('reviewStampPresets').querySelectorAll('button'))b.setAttribute('aria-pressed',String(r?.preset===b.dataset.preset));
@@ -14889,6 +14940,9 @@ configureLocalOCR();syncToolsState();
   tip.style.display=dot.style.display=editable&&mark.review.arrow?'':'none';
   label.style.pointerEvents=editable?'all':'none';tip.style.pointerEvents=editable?'all':'none';
   label.style.cursor=editable?'move':'default';
+  attrs(resize,{x:box.x+box.width-22/scale,y:box.y+box.height-22/scale,width:44/scale,height:44/scale,'aria-valuetext':`${mark.width.toFixed(1)} mm`});
+  attrs(resizeDot,{x:box.x+box.width-4/scale,y:box.y+box.height-4/scale,width:8/scale,height:8/scale,'stroke-width':1.6/scale});
+  resize.style.display=resizeDot.style.display=editable?'':'none';resize.style.pointerEvents=editable?'all':'none';
  }
  function syncReviewStamp(){
   controls();
@@ -14905,10 +14959,11 @@ configureLocalOCR();syncToolsState();
   pending=true;controls();$('stampStatus').textContent='스탬프 준비 중…';
   try{
    const asset=await S.render(next);if(token!==renderSequence||old!==stampAsset)return;
+   if(create&&old){storePlacement(currentStamp());stampAsset=null;}
    stampAsset={...stampAsset,...asset};$('stampThumb').src=asset.data;$('stampName').value=asset.name;$('stampActive').hidden=false;
-   if(create&&!old){$('stampScope').value='current';$('stampAnchor').value='top-left';$('stampX').value='20';$('stampY').value='20';$('stampWidth').value='50';$('stampOpacity').value='100';}
+   if(create){$('stampScope').value='current';$('stampAnchor').value='top-left';$('stampX').value=String(20+(stampMarks.length%6)*8);$('stampY').value=String(20+(stampMarks.length%6)*12);if(!old){$('stampWidth').value='50';$('stampOpacity').value='100';}stampAsset.targets=toolTargets('current').map(p=>p.uid);}
    pending=false;$('reviewStampPresets').closest('details').open=false;toolsChanged();setStampPositioning(true);history(snapshot,old?'검토 스탬프 수정':'검토 스탬프 추가',old?'review-style':null);
-   $('stampStatus').textContent=pages.length?'글자 상자는 이동, 원형 손잡이는 화살표 방향 조절입니다.':'PDF를 열면 미리보기에서 배치할 수 있습니다.';
+   $('stampStatus').textContent=pages.length?'네모 손잡이로 크기, 원형 손잡이로 화살표를 조절하세요. Enter · Esc로 배치를 마칩니다.':'PDF를 열면 미리보기에서 배치할 수 있습니다.';
   }catch(e){if(token===renderSequence){$('stampStatus').textContent='스탬프를 만들지 못했습니다. '+e.message;}}
   finally{if(token===renderSequence){pending=false;syncReviewStamp();}}
  }
@@ -14919,10 +14974,19 @@ configureLocalOCR();syncToolsState();
  $('reviewStampHex').onblur=()=>{if(stampAsset?.review){$('reviewStampHex').value=stampAsset.review.color;$('reviewStampHex').removeAttribute('aria-invalid');}};
  $('reviewStampRed').onclick=()=>changeReview({...stampAsset?.review,color:S.DEFAULT_COLOR});
  $('reviewStampArrow').onchange=()=>changeReview({...stampAsset?.review,arrow:$('reviewStampArrow').checked});
+ function storePlacement(mark){if(!mark?.targets.length)return;if(stampEditing)stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,mark);else stampMarks.push(mark);stampEditing=null;renderStampMarks();}
+ moreButton.onclick=()=>{
+  if(!valid()||pending)return;cancel();const snapshot=before(),mark=currentStamp();storePlacement(mark);
+  const box=PDFStamp.placement(mark,liveOutputSize.width,liveOutputSize.height);
+  stampAsset={...mark,review:S.normalize(mark.review),targets:toolTargets('current').map(p=>p.uid)};$('stampScope').value='current';
+  applyDraft({...mark,anchor:'top-left',x:Math.max(0,Math.min(liveOutputSize.width-box.width,box.x+24))*25.4/72,y:Math.max(0,Math.min(liveOutputSize.height-box.height,box.y+36))*25.4/72});
+  history(snapshot,'검토 스탬프 복제');setStampPositioning(true);$('stampStatus').textContent='같은 스탬프를 추가했습니다. 원하는 위치로 옮기세요.';
+ };
  function pagePoint(e,g){return {x:(e.clientX-g.rect.left)/g.rect.width*g.size.width,y:(e.clientY-g.rect.top)/g.rect.height*g.size.height};}
  function start(e,kind){
   if(e.button!==0||!e.isPrimary||!valid()||!stampPositioning||pending||$('proCompare').getAttribute('aria-busy')==='true')return;
   const mark=currentStamp(),size={...liveOutputSize},rect=$('compareAfter').getBoundingClientRect(),box=PDFStamp.placement(mark,size.width,size.height);
+  if(mark.scope!=='all'&&!mark.targets.includes(livePage()?.uid))return;
   e.preventDefault();e.stopPropagation();gesture={id:e.pointerId,uid:livePage().uid,kind,mark,size,rect,box,before:before(),start:{x:e.clientX,y:e.clientY},draft:mark,moved:false};
   const p=pagePoint(e,gesture);gesture.offset={x:p.x-box.x,y:p.y-box.y};
   if(kind==='new'){gesture.offset={x:box.width/2,y:box.height/2};gesture.moved=true;}
@@ -14932,11 +14996,16 @@ configureLocalOCR();syncToolsState();
   if(Math.hypot(e.clientX-g.start.x,e.clientY-g.start.y)>=3)g.moved=true;
   if(!g.moved)return;const p=pagePoint(e,g);
   if(g.kind==='tip')g.draft={...g.mark,review:{...g.mark.review,tip:S.tipAt(g.box,p.x,p.y,g.size.width,g.size.height)}};
+  else if(g.kind==='resize'){
+   const ratio=g.mark.ratio,dx=p.x-g.box.x,dy=p.y-g.box.y,w=(dx+dy/ratio)/(1+1/(ratio*ratio));
+   const limit=Math.min(300*72/25.4,g.size.width-g.box.x,(g.size.height-g.box.y)*ratio);
+   g.draft={...g.mark,anchor:'top-left',x:g.box.x*25.4/72,y:g.box.y*25.4/72,width:Math.max(3,Math.min(limit,Math.max(3*72/25.4,w))*25.4/72)};
+  }
   else{const x=Math.max(0,Math.min(g.size.width-g.box.width,p.x-g.offset.x)),y=Math.max(0,Math.min(g.size.height-g.box.height,p.y-g.offset.y));g.draft={...g.mark,anchor:'top-left',x:x*25.4/72,y:y*25.4/72};}
   if(!frame)frame=requestAnimationFrame(()=>{frame=0;if(gesture)paint(gesture.draft);});
  }
  function detach(){const g=gesture;gesture=null;if(frame){cancelAnimationFrame(frame);frame=0;}if(g&&svg.hasPointerCapture(g.id))svg.releasePointerCapture(g.id);return g;}
- function applyDraft(mark){stampAsset={...stampAsset,review:S.normalize(mark.review)};$('stampAnchor').value=mark.anchor;$('stampX').value=mark.x.toFixed(2);$('stampY').value=mark.y.toFixed(2);toolsChanged();}
+ function applyDraft(mark){stampAsset={...stampAsset,review:S.normalize(mark.review)};$('stampAnchor').value=mark.anchor;$('stampX').value=mark.x.toFixed(2);$('stampY').value=mark.y.toFixed(2);$('stampWidth').value=mark.width.toFixed(2);toolsChanged();}
  function finish(e){if(!gesture||e.pointerId!==gesture.id)return;move(e);const g=detach();if(g.moved&&valid()&&livePage()?.uid===g.uid){applyDraft(g.draft);history(g.before,g.kind==='tip'?'스탬프 화살표 조절':'스탬프 위치 이동');}else{syncReviewStamp();scheduleLivePreview();}}
  function cancel(){if(!gesture)return false;detach();syncReviewStamp();scheduleLivePreview();return true;}
  svg.addEventListener('pointerdown',e=>{const kind=e.target.getAttribute('data-review-handle');if(kind)start(e,kind);});
@@ -14947,10 +15016,17 @@ configureLocalOCR();syncToolsState();
   const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!d||!valid()||!stampPositioning||pending)return;
   e.preventDefault();e.stopPropagation();const mark=currentStamp(),box=PDFStamp.placement(mark,liveOutputSize.width,liveOutputSize.height),step=e.shiftKey?10:1,snapshot=before();
   if(e.target===tip){const end=S.arrow(mark,box,liveOutputSize.width,liveOutputSize.height).end;mark.review={...mark.review,tip:S.tipAt(box,end.x+d[0]*step,end.y+d[1]*step,liveOutputSize.width,liveOutputSize.height)};}
+  else if(e.target===resize){mark.width=Math.max(3,Math.min(300,mark.width+(d[0]||d[1])*step));}
   else{mark.anchor='top-left';mark.x=Math.max(0,Math.min(liveOutputSize.width-box.width,box.x+d[0]*step))*25.4/72;mark.y=Math.max(0,Math.min(liveOutputSize.height-box.height,box.y+d[1]*step))*25.4/72;}
   applyDraft(mark);history(snapshot,'검토 스탬프 조절','review-keyboard');
  });
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gesture){e.preventDefault();e.stopPropagation();cancel();}},true);
+ document.addEventListener('keydown',e=>{
+  if(!['Enter','Escape'].includes(e.key)||e.isComposing||!stampAsset?.review||!stampPositioning||proMode!=='pro'||document.querySelector('dialog[open]'))return;
+  if(e.key==='Enter'&&e.target.closest('button,select')&&!e.target.closest('#reviewStampOverlay,#stampActive,#compareStage'))return;
+  e.preventDefault();e.stopImmediatePropagation();if(gesture)cancel();
+  if(pending){$('stampStatus').textContent='문구 반영 중입니다. 반영 후 배치를 완료해 주세요.';return;}
+  $('stampCommit').click();
+ },true);
  $('compareAfterScroll').addEventListener('scroll',()=>{cancel();syncReviewStamp();});
  new ResizeObserver(()=>{cancel();syncReviewStamp();}).observe($('compareStage'));
  // Existing stamp actions keep their library/export behavior. Include editable
@@ -14959,6 +15035,7 @@ configureLocalOCR();syncToolsState();
  const oldPng=$('stampPng').onclick;$('stampPng').onclick=async()=>{if(!stampAsset?.review)return oldPng();try{toolDownload(await S.png(currentStamp()),(stampAsset.name||'검토 스탬프')+'.png','image/png');}catch(e){toast(e.message,true);}};
  for(const id of ['stampClear','stampCommit']){const action=$(id).onclick;$(id).onclick=()=>{if(pending&&id==='stampCommit')return;const snapshot=before();++renderSequence;pending=false;cancel();action();history(snapshot,id==='stampCommit'?'도장 배치 확정':'도장 배치 취소');syncReviewStamp();};}
  globalThis.syncReviewStamp=syncReviewStamp;globalThis.cancelReviewStampGesture=cancel;globalThis.reviewStampPending=()=>pending;
+ globalThis.finishReviewStampForNavigation=()=>{if(stampAsset?.review&&!pending){cancel();$('stampCommit').click();}};
  const clone=m=>m?{...m,targets:m.targets?.slice(),...(m.review?{review:S.normalize(m.review)}:{})}:null;
  const hashes=new WeakMap();function stampSignature(m){if(!m)return null;if(!hashes.has(m)){let a=2166136261,b=5381;for(const s of [m.data||'',m.sourceData||''])for(let i=0;i<s.length;i++){a=Math.imul(a^s.charCodeAt(i),16777619);b=Math.imul(b,33)^s.charCodeAt(i);}hashes.set(m,[a>>>0,b>>>0,(m.data||'').length]);}const{data,sourceData,...rest}=m;return {...rest,image:hashes.get(m)};}
  globalThis.captureStampHistory=()=>{const fields=Object.fromEntries([...stampControlIds,'stampName'].map(id=>[id,$(id).value]));return {asset:clone(stampAsset),marks:stampMarks.map(clone),editing:stampEditing?{...stampEditing,mark:clone(stampEditing.mark)}:null,fields,signature:JSON.stringify([stampSignature(stampAsset),stampMarks.map(stampSignature),stampEditing?{index:stampEditing.index,mark:stampSignature(stampEditing.mark)}:null,fields])};};
@@ -16075,6 +16152,7 @@ async function restoreDocumentHistory(redo){
     clearPreview();pvZoom=view.zoom;docs.clear();for(const [id,d]of state.sources)docs.set(id,d);
     pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;if(typeof r.deskewCrop==='boolean')r.page.deskewCrop=r.deskewCrop;else delete r.page.deskewCrop;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     if(state.stamps&&typeof restoreStampHistory==='function')restoreStampHistory(state.stamps);
+    if(state.proTransfer)restoreProTransferSettings(state.proTransfer);
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;

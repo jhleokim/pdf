@@ -346,6 +346,7 @@ async function showPreview(p){
     if(my!==pvToken)return;
     if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
     selAnno=null;
+    if(typeof finishReviewStampForNavigation==='function')finishReviewStampForNavigation();
   }
   previewUid = p.uid;
   pages.forEach(x => x.el && x.el.classList.toggle('previewing', x.uid === p.uid));

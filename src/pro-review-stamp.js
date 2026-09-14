@@ -12,9 +12,14 @@
   if(!r.arrow||t>=1)return {end,curves:[],head:[],width:0};
   const start={x:cx+dx*t,y:cy+dy*t},distance=Math.hypot(end.x-start.x,end.y-start.y),u={x:(end.x-start.x)/distance,y:(end.y-start.y)/distance},v={x:-u.y,y:u.x};
   const bend=Math.min(box.width*.35,distance*.65),at=(along,across)=>({x:clamp(start.x+u.x*along+v.x*across,pad,pageWidth-pad),y:clamp(start.y+u.y*along+v.y*across,pad,pageHeight-pad)});
-  const middle=at(distance*.48,bend*.12),c1=at(distance*.15,bend*.95),c2=at(distance*.7,bend*.85),c3=at(distance*.22,-bend*.55),c4=at(distance*.55,bend*.55);
+  // A two-turn trochoid with matching tangents gives smooth open spring coils.
+  const curves=[],omega=4*Math.PI,reach=distance*.82,a0=Math.min(box.width*.13,distance*.11),b0=bend*.6;
+  const position=t=>[reach*t+a0*Math.sin(omega*t),b0*(1-Math.cos(omega*t))],tangent=t=>[reach+a0*omega*Math.cos(omega*t),b0*omega*Math.sin(omega*t)];
+  for(let i=0;i<8;i++){const t=i/8,q=(i+1)/8,p=position(t),n=position(q),d=tangent(t),v=tangent(q);curves.push([at(...p),at(p[0]+d[0]/24,p[1]+d[1]/24),at(n[0]-v[0]/24,n[1]-v[1]/24),at(...n)]);}
+  curves.push([at(reach,0),at(distance*.9,0),at(distance*.95,0),end]);
+  const c4=curves.at(-1)[2];
   const a=Math.atan2(end.y-c4.y,end.x-c4.x),headLength=Math.min(box.width*.105,distance*.32),point=sign=>({x:clamp(end.x-headLength*Math.cos(a+sign*.55),pad,pageWidth-pad),y:clamp(end.y-headLength*Math.sin(a+sign*.55),pad,pageHeight-pad)});
-  return {end,curves:[[start,c1,c2,middle],[middle,c3,c4,end]],head:[point(-1),end,point(1)],width:Math.max(.7,box.width*.018)};
+  return {end,curves,head:[point(-1),end,point(1)],width:Math.max(.7,box.width*.018)};
  }
  const point=p=>`${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
  function path(g){return {curve:g.curves.map((c,i)=>`${i?'':`M ${point(c[0])} `}C ${c.slice(1).map(point).join(' ')}`).join(' '),head:g.head.length?`M ${g.head.map(point).join(' L ')}`:''};}

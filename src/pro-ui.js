@@ -43,6 +43,7 @@ function setProView(view){
 let proModeRequest=0;
 function setProMode(mode){
   const request=++proModeRequest;
+  if(typeof proTransferPending!=='undefined'&&proTransferPending)return proTransferPending.then(()=>request===proModeRequest?applyProMode(mode):false);
   if(typeof textEditPending!=='undefined'&&textEditPending){
     // A mode click must finish the newest layout, even if another keystroke or
     // formatting change supersedes the promise while it is being awaited.
@@ -56,6 +57,10 @@ function setProMode(mode){
 }
 function applyProMode(mode){
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return false;
+  if(mode==='basic'&&proMode==='pro'&&proReady&&pages.length){try{if(hasProEdits())return transferProToBasic(proModeRequest);}catch(e){toast(e.message,true);return false;}}
+  return displayProMode(mode);
+}
+function displayProMode(mode){
   proMode=mode; document.body.dataset.mode=mode;
   $('modeBasic').setAttribute('aria-pressed',String(mode==='basic'));
   $('modePro').setAttribute('aria-pressed',String(mode==='pro'));
@@ -68,6 +73,37 @@ function applyProMode(mode){
   if(mode==='basic'){syncPreviewVisible();$('btnPreview').title='미리보기 표시 / 숨기기';}
   syncProState();
   return true;
+}
+function hasProEdits(){
+  const o=readProOptions();
+  return o.optimize||o.deskew||o.blackWhite||o.contrast>0||o.whitePoint<255||o.crop||o.paper!=='original'||o.number||!!o.watermark||o.stamps?.length||o.ocr?.length||Object.keys(o.deskewAngles).length;
+}
+function captureProTransferSettings(){return {fields:Object.fromEntries(proControlIds.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),records:ocrRecords.slice(),accepted:ocrAccepted,mode:proMode};}
+function restoreProTransferSettings(state){for(const[id,v]of Object.entries(state.fields)){if($(id).type==='checkbox')$(id).checked=v;else $(id).value=v;}ocrRecords=state.records.slice();ocrAccepted=state.accepted;refreshProControls();proInvalidate();displayProMode(state.mode);}
+let proTransferPending=null;
+function transferProToBasic(request){
+  if(proTransferPending)return proTransferPending;
+  if(document.body.classList.contains('is-busy'))return false;
+  proTransferPending=(async()=>{
+   if(typeof reviewStampPending==='function'&&reviewStampPending()){toast('스탬프 문구 반영 후 다시 전환해 주세요.');return false;}
+   const snapshot=captureEditHistory(),settings=captureProTransferSettings(),shown=previewUid,picked=new Set(selected().map(p=>p.uid));let pdf;
+   const result=await createProResult({reveal:false});if(!result||request!==proModeRequest)return false;
+   if(result.hasPageEffects===false)return displayProMode('basic');
+   startProWork('Pro 편집 내용을 Basic에 반영하는 중…');
+   try{
+    pdf=await pdfjsLib.getDocument({data:result.bytes.slice(),...DOC_OPTS}).promise;checkProAbort();
+    const next=[];for(let i=0;i<pages.length;i++){const canvas=await renderThumb(pdf,i+1);checkProAbort();next.push({uid:pages[i].uid,docId:'',srcIndex:i,rotation:0,annots:[],canvas});progress((i+1)/pages.length*100);await idle();}
+    if(request!==proModeRequest)return false;
+    const docId='d'+(++docSeq),name=docs.get(pages[0].docId)?.name||'편집본.pdf';for(const p of next)p.docId=docId;
+    // Publish only after every page succeeds. Original pages remain in undo history.
+    clearPreview();docs.clear();docs.set(docId,{name,libBytes:result.bytes.slice(),pdfjsDoc:pdf,kind:'pdf',color:SWATCH[(docSeq-1)%SWATCH.length],count:next.length});pdf=null;pages=next;
+    resetTools();for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=false;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}refreshProControls();
+    proInvalidate();displayProMode('basic');render();for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));previewUid=shown;syncCounts();await showPreview(pages.find(p=>p.uid===shown)||pages[0]);
+    const after=captureEditHistory();snapshot.proTransfer=settings;after.proTransfer=captureProTransferSettings();editHistory.push(snapshot,after,'Pro 편집을 Basic에 반영');collectHistoryDocuments();syncHistoryControls();
+    toast('Pro 편집을 반영했습니다. Ctrl+Z로 전환 전 편집 상태를 복원할 수 있습니다.');return true;
+   }catch(e){if(e.name!=='AbortError'){console.error(e);toast('Basic으로 전환하지 못했습니다. Pro 편집 내용은 유지됩니다.',true);}return false;}
+   finally{if(pdf)await pdf.destroy().catch(()=>{});finishProWork();}
+  })().finally(()=>{proTransferPending=null;});return proTransferPending;
 }
 function proNumberInput(id,min,max,integer=false){
   const el=$(id), n=Number(el.value);
@@ -241,7 +277,8 @@ async function createProResult({reveal=true}={}){
     const result=PDFProResult.selectOutput(before,candidate,options,original);
     const bytes=result.bytes;
     const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
-    proResult={bytes,fingerprint};
+    const hasPageEffects=!result.retained&&!!(report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
+    proResult={bytes,fingerprint,hasPageEffects};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
     const change=result.reduction;
