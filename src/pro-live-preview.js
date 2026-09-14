@@ -11,7 +11,7 @@ function liveContentKey(){
   })]);
 }
 function liveKey(){
-  return JSON.stringify([liveContentKey(),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight]);
+  return JSON.stringify([liveContentKey(),$('compareZoom').value,$('compareStage').clientWidth,$('compareStage').clientHeight,$('compareAfterScroll').clientHeight]);
 }
 function releaseLivePreview(){
   const old=liveDocs;liveDocs=[];liveCache=null;liveOutputSize=null;
@@ -97,14 +97,15 @@ async function updateLivePreview(seq){
       const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
       report=result.report;
       const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
-      if(!options.rasterize){await verifyProText(before,after,signal,true);check();}
+      if(!options.rasterize){await verifyProText(before,after,signal,true,{deskew:report.deskew,options});check();}
       for(const data of [before,after]){
         const task=pdfjsLib.getDocument({data,...DOC_OPTS});
         try{loaded.push(await task.promise);}catch(e){await task.destroy();throw e;}check();
       }
     }
     const renderDocs=loaded.length?loaded:liveDocs,deskew=report.deskew;
-    for(const pdf of renderDocs){canvases.push(await liveCanvas(pdf,Number($('compareZoom').value),signal));check();}
+    const factor=document.body.classList.contains('deskew-adjusting')?1:Number($('compareZoom').value);
+    for(const pdf of renderDocs){canvases.push(await liveCanvas(pdf,factor,signal));check();}
     // Publish both detached canvases together, after all cancellation checks.
     for(let i=0;i<2;i++){
       const id=i?'compareAfter':'compareBefore',old=$(id),canvas=canvases[i];

@@ -65,21 +65,28 @@
       return unchanged('영역별 글줄 방향이 달라 원본 유지');
     return {angle:result.angle,confidence:result.peak,reason:''};
   }
-  function geometry(box,angle){
+  function geometry(box,angle,{cropCorners=false}={}){
     if(!Number.isFinite(angle)||Math.abs(angle)>60)throw new Error('회전 각도는 −60°부터 +60°까지 입력해 주세요.');
     if(!box||![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width<=0||box.height<=0)
       throw new Error('페이지의 표시 영역을 읽을 수 없습니다.');
     const c=Math.cos(angle*rad),s=Math.sin(angle*rad),w=box.width,h=box.height,cx=box.x+w/2,cy=box.y+h/2;
     const width=Math.abs(c)*w+Math.abs(s)*h,height=Math.abs(s)*w+Math.abs(c)*h;
-    return {matrix:[c,s,-s,c,cx-c*cx+s*cy,cy-s*cx-c*cy],bounds:{x:cx-width/2,y:cy-height/2,width,height}};
+    const expandedBounds={x:cx-width/2,y:cy-height/2,width,height};
+    // The inverse-rotated corners must fit inside the original W × H. Keeping
+    // its aspect ratio gives k(cW+sH) <= W and k(sW+cH) <= H.
+    // This shrinks the chosen page region only; the content matrix stays 1:1.
+    const k=Math.min(1,w/width,h/height),cw=k*w,ch=k*h;
+    const cropBounds={x:cx-cw/2,y:cy-ch/2,width:cw,height:ch};
+    return {matrix:[c,s,-s,c,cx-c*cx+s*cy,cy-s*cx-c*cy],expandedBounds,cropBounds,
+      bounds:cropCorners?cropBounds:expandedBounds,retainedAreaRatio:cropCorners?k*k:1,sourceRatio:w/h};
   }
   function matrix(box,angle){return geometry(box,angle).matrix;}
-  function apply(page,angle){
+  function apply(page,angle,{cropCorners=false}={}){
     if(!Number.isFinite(angle)||Math.abs(angle)>60)throw new Error('회전 각도는 −60°부터 +60°까지 입력해 주세요.');
     if(!angle)return false;
     if(page.node.Annots()?.size())return false;
     const P=PDFLib,box=PDFProDocument.visibleBox(page),ctx=page.doc.context;
-    const transformed=geometry(box,angle),b=transformed.bounds;
+    const transformed=geometry(box,angle,{cropCorners}),b=transformed.bounds;
     page.node.normalize();
     const start=ctx.register(ctx.contentStream([
       P.pushGraphicsState(),P.concatTransformationMatrix(...transformed.matrix),
@@ -92,8 +99,8 @@
     ]));
     const end=ctx.register(ctx.contentStream([P.popGraphicsState()]));
     page.node.wrapContentStreams(start,end);
-    // Do not shrink text or retain a page boundary that can cut off its corners.
-    // /Rotate and /UserUnit stay intact, so display and physical units agree.
+    // Default: expand so every corner survives. Optional crop trims the selected
+    // visible region without scaling content. /Rotate and /UserUnit stay intact.
     for(const set of ['setMediaBox','setCropBox','setTrimBox','setBleedBox','setArtBox'])page[set](b.x,b.y,b.width,b.height);
     page.resetPosition();
     return true;
@@ -163,7 +170,13 @@
           }
           result.displayAngle=result.angle?-result.angle:0;
         }
-        result.changed=!!result.angle&&apply(page,result.angle);
+        const cropFlags=options.deskewCropByPage||{},cropCorners=own(cropFlags,pageId)&&cropFlags[pageId]===true,sourceBox=PDFProDocument.visibleBox(page);
+        const g=geometry(sourceBox,result.angle,{cropCorners}),r=((page.getRotation().angle%360)+360)%360;
+        Object.assign(result,{cropCorners,cropped:!!result.angle&&cropCorners&&g.retainedAreaRatio<1,
+          retainedAreaRatio:g.retainedAreaRatio,sourceRatio:r%180?sourceBox.height/sourceBox.width:g.sourceRatio,
+          expandedBounds:g.expandedBounds,cropBounds:g.cropBounds,sourceBox,matrix:g.matrix,
+          rotation:r,userUnit:PDFProDocument.unit(page)});
+        result.changed=!!result.angle&&apply(page,result.angle,{cropCorners});
         if(result.changed)report.changed++;
         report.pages.push({page:pageOffset+i+1,pageId,...result});
         onProgress?.((i+1)/plans.length);

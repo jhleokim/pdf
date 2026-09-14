@@ -29,6 +29,23 @@ test('deskew expands offset bounds for every corner without shrinking or changin
  }
  for(const angle of [-60.1,60.1,NaN,Infinity,'2'])assert.throws(()=>deskew.geometry(box,angle),/60/);
 });
+test('optional corner crop is the largest centered rectangle of the original ratio, with an unchanged content transform',()=>{
+ for(const [width,height]of[[210,297],[297,210],[100,100],[100,600]])for(let a=-600;a<=600;a+=5){
+  const angle=a/10,box={x:32,y:-17,width,height},keep=deskew.geometry(box,angle),trim=deskew.geometry(box,angle,{cropCorners:true}),b=trim.bounds;
+  assert.deepEqual(trim.matrix,keep.matrix);assert.deepEqual(trim.expandedBounds,keep.bounds);assert.deepEqual(trim.bounds,trim.cropBounds);
+  assert.ok(Math.abs(b.width/b.height-width/height)<1e-10);assert.ok(trim.retainedAreaRatio>0&&trim.retainedAreaRatio<=1);assert.equal(keep.retainedAreaRatio,1);
+  const c=Math.cos(angle*Math.PI/180),s=Math.sin(angle*Math.PI/180),cx=box.x+width/2,cy=box.y+height/2;
+  for(const x of[b.x,b.x+b.width])for(const y of[b.y,b.y+b.height]){
+   const ox=c*(x-cx)+s*(y-cy)+cx,oy=-s*(x-cx)+c*(y-cy)+cy;
+   assert.ok(ox>=box.x-1e-8&&ox<=box.x+width+1e-8);assert.ok(oy>=box.y-1e-8&&oy<=box.y+height+1e-8);
+  }
+  const grow=1+1e-6;
+  assert.ok(grow*(Math.abs(c)*b.width+Math.abs(s)*b.height)>width||grow*(Math.abs(s)*b.width+Math.abs(c)*b.height)>height,'A larger centered crop must no longer fit');
+  assert.ok(Math.abs(trim.retainedAreaRatio-b.width*b.height/(width*height))<1e-12);
+ }
+ const a4=deskew.geometry({x:0,y:0,width:210,height:297},60,{cropCorners:true});
+ assert.ok(Math.abs(a4.retainedAreaRatio-.336139)<.00001,'Report the substantial original area removed at large angles');
+});
 
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),child=require('node:child_process'),os=require('node:os');
 const root=path.resolve(__dirname,'..'),scripts=[...fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
@@ -37,10 +54,11 @@ for(const marker of ['sourceMappingURL=pdf-lib.min.js.map','pdfjs-dist/build/pdf
 for(const name of ['pro-engine','pro-document','pro-deskew','pro-ocr','pro-pipeline'])vm.runInContext(fs.readFileSync(path.join(root,'src',name+'.js'),'utf8'),ctx);
 const run=code=>vm.runInContext(code,ctx);
 run(`
-async function fixture({angle=0,userUnit=1,annot=false}={}){
+async function fixture({angle=0,userUnit=1,annot=false,coloredPaper=false}={}){
  const P=PDFLib,doc=await P.PDFDocument.create(),font=await doc.embedFont(P.StandardFonts.Helvetica),page=doc.addPage([400,600]);
  page.setMediaBox(-20,40,400,600);page.setCropBox(5,65,350,535);page.setRotation(P.degrees(angle));
  page.node.set(P.PDFName.of('UserUnit'),P.PDFNumber.of(userUnit));
+ if(coloredPaper)page.drawRectangle({x:5,y:65,width:350,height:535,color:P.rgb(.8,.88,.96)});
  for(const [x,y,color]of[[7,67,[1,0,0]],[341,67,[0,1,0]],[7,586,[0,0,1]],[341,586,[1,0,1]]])page.drawRectangle({x,y,width:12,height:12,color:P.rgb(...color)});
  page.drawRectangle({x:-18,y:100,width:20,height:100,color:P.rgb(1,1,0)});
  for(const [text,x,y]of[['TOP EDGE TEXT',25,588],['BOTTOM EDGE TEXT',25,68],['LEFT',6,330],['RIGHT',320,330]])page.drawText(text,{x,y,size:8,font});
@@ -97,12 +115,28 @@ test('manual selected-page preview has the same geometry and content transform a
  await run(`(async()=>{
   const source=await fixture({angle:270}),full=await PDFLib.PDFDocument.create();full.addPage([200,300]);full.addPage((await full.copyPages(source,[0]))[0]);
   const preview=await PDFLib.PDFDocument.create();preview.addPage((await preview.copyPages(source,[0]))[0]);
-  const options={deskew:false,deskewAngles:{target:-33.5}};
+  const options={deskew:false,deskewAngles:{target:-33.5},deskewCropByPage:{target:true}};
   await PDFDeskew.processDocument(full,options,{pageIds:['other','target']});await PDFDeskew.processDocument(preview,options,{pageIds:['target'],pageOffset:1});
   const a=full.getPage(1),b=preview.getPage(0);assert.deepEqual(a.getCropBox(),b.getCropBox());assert.equal(a.getRotation().angle,b.getRotation().angle);
   const operators=p=>p.node.Contents().asArray().map(ref=>p.doc.context.lookup(ref)).filter(s=>s.getContentsString).map(s=>s.getContentsString()).join('');
   assert.equal(operators(a),operators(b));
   const stopped=new AbortController();stopped.abort();await assert.rejects(PDFDeskew.processDocument(preview,options,{pageIds:['target'],signal:stopped.signal}),e=>e.name==='AbortError');
+ })()`);
+});
+test('corner crop is opt-in by stable UID, reports actual cropping, and preserves physical and rotated page metadata',async()=>{
+ await run(`(async()=>{
+  const P=PDFLib,doc=await P.PDFDocument.create(),ids=['keep','trim','zero','invalid'];
+  for(const uid of ids){const source=await fixture({angle:90,userUnit:2});doc.addPage((await doc.copyPages(source,[0]))[0]);}
+  const original=doc.getPages().map(p=>PDFProDocument.visibleBox(p));
+  const report=await PDFDeskew.processDocument(doc,{deskew:false,deskewAngles:{keep:15,trim:15,zero:0,invalid:15},deskewCropByPage:{trim:true,zero:true,invalid:'true',undefined:true}},{pageIds:ids});
+  assert.equal(report.changed,3);assert.equal(report.pages[0].cropCorners,false);assert.equal(report.pages[0].cropped,false);assert.equal(report.pages[0].retainedAreaRatio,1);
+  assert.equal(report.pages[1].cropCorners,true);assert.equal(report.pages[1].cropped,true);assert.ok(report.pages[1].retainedAreaRatio<1);
+  assert.equal(report.pages[2].cropCorners,true);assert.equal(report.pages[2].cropped,false);assert.equal(report.pages[2].retainedAreaRatio,1);assert.equal(report.pages[2].changed,false);assert.deepEqual(doc.getPage(2).getCropBox(),original[2]);
+  assert.equal(report.pages[3].cropCorners,false);assert.deepEqual(doc.getPage(0).getCropBox(),doc.getPage(3).getCropBox());
+  for(let i=0;i<ids.length;i++){assert.equal(doc.getPage(i).getRotation().angle,90);assert.equal(PDFProDocument.unit(doc.getPage(i)),2);assert.equal(report.pages[i].sourceRatio,535/350);}
+  for(const key of['x','y','width','height']){assert.ok(Math.abs(doc.getPage(1).getCropBox()[key]-report.pages[1].cropBounds[key])<1e-8);assert.ok(Math.abs(doc.getPage(0).getCropBox()[key]-report.pages[0].expandedBounds[key])<1e-8);}
+  const annotated=await fixture({annot:true}),guarded=await PDFDeskew.processDocument(annotated,{deskew:true,deskewCropByPage:{a:true}},{pageIds:['a']});
+  assert.equal(guarded.pages[0].cropCorners,true);assert.equal(guarded.pages[0].cropped,false);assert.equal(guarded.pages[0].retainedAreaRatio,1);
  })()`);
 });
 
@@ -114,8 +148,9 @@ test('auto measurements reuse bounded UID content-key cache and never cache abor
   globalThis.pdfjsLib={getDocument(){return{promise:Promise.resolve({getPage:async()=>({getViewport(){return{width:800,height:1000};},render(){renders++;abortDuringRender?.abort();return{promise:Promise.resolve(),cancel(){}};},cleanup(){}})}),async destroy(){}};}};
   const fresh=async()=>{const d=await PDFLib.PDFDocument.create();d.addPage([800,1000]);return d;},cache=new Map(),callbacks={pageIds:['uid'],deskewKeys:['uid:original'],deskewCache:cache};
   try{
-   const first=await PDFDeskew.processDocument(await fresh(),{deskew:true},callbacks),second=await PDFDeskew.processDocument(await fresh(),{deskew:true},callbacks);
+   const first=await PDFDeskew.processDocument(await fresh(),{deskew:true},callbacks),second=await PDFDeskew.processDocument(await fresh(),{deskew:true,deskewCropByPage:{uid:true}},callbacks);
    assert.equal(renders,1);assert.equal(first.pages[0].angle,second.pages[0].angle);assert.equal(first.changed,1);assert.equal(cache.size,1);
+   assert.equal(first.pages[0].cropped,false);assert.equal(second.pages[0].cropped,true);assert.ok(second.pages[0].retainedAreaRatio<1);
    assert.deepEqual(Object.keys(cache.get('uid:original')).sort(),['angle','confidence','reason']);
    cache.set('uid:original',{angle:60,reason:''});await PDFDeskew.processDocument(await fresh(),{deskew:true},callbacks);assert.equal(renders,2,'Manual-range angles must not be accepted as cached automatic detections');
    for(let i=0;i<128;i++)cache.set('old:'+i,{angle:0,reason:'level'});
@@ -150,6 +185,23 @@ test('bundled PDF.js preserves the four rotated clipping corners, including auto
     const counts=deskewCornerCounts(c);
     for(const color of ['red','green','blue','magenta'])assert.ok(counts[color]>=115,JSON.stringify({rotation,angle,a4,color,counts}));
     assert.equal(counts.yellow,0,'PDF.js must retain the original crop rather than expose hidden content');
+   }finally{await task.destroy();}
+  }
+ })()`);}finally{Object.assign(ctx,prior);delete ctx.makeDeskewCanvas;delete ctx.deskewCornerCounts;}
+});
+test('opt-in corner crop renders without blank triangles in PDF.js, without revealing the original hidden crop',{skip:canvasModule?false:'@napi-rs/canvas is not installed'},async()=>{
+ const prior={document:ctx.document,DOMMatrix:ctx.DOMMatrix,Path2D:ctx.Path2D,ImageData:ctx.ImageData};
+ Object.assign(ctx,{DOMMatrix:canvasModule.DOMMatrix,Path2D:canvasModule.Path2D,ImageData:canvasModule.ImageData,document:{createElement(){return canvasModule.createCanvas(1,1);}},makeDeskewCanvas:canvasModule.createCanvas,deskewCornerCounts:canvas=>colorCounts(canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height),4)});
+ try{await run(`(async()=>{
+  for(const rotation of [0,90,180,270])for(const angle of [-60,-3,3,60]){
+   const doc=await fixture({angle:rotation,coloredPaper:true}),source=PDFProDocument.visibleBox(doc.getPage(0));
+   const g=PDFDeskew.geometry(source,angle,{cropCorners:true});assert.ok(PDFDeskew.apply(doc.getPage(0),angle,{cropCorners:true}));
+   assert.ok(Math.abs(doc.getPage(0).getCropBox().width/doc.getPage(0).getCropBox().height-source.width/source.height)<1e-10);
+   const task=pdfjsLib.getDocument({data:await doc.save(),disableFontFace:true,isEvalSupported:false,verbosity:0});
+   try{const pdf=await task.promise,p=await pdf.getPage(1),vp=p.getViewport({scale:1}),c=makeDeskewCanvas(Math.ceil(vp.width),Math.ceil(vp.height));
+    await p.render({canvasContext:c.getContext('2d'),viewport:vp,background:'white'}).promise;
+    assert.equal(deskewCornerCounts(c).yellow,0,'The existing source crop must stay hidden');
+    for(const x of[2,c.width-3])for(const y of[2,c.height-3]){const color=c.getContext('2d').getImageData(x,y,1,1).data;assert.ok(Math.min(...color.slice(0,3))<250,JSON.stringify({rotation,angle,x,y,color:[...color],g}));}
    }finally{await task.destroy();}
   }
  })()`);}finally{Object.assign(ctx,prior);delete ctx.makeDeskewCanvas;delete ctx.deskewCornerCounts;}
