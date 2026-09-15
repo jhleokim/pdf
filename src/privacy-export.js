@@ -38,7 +38,7 @@
     // One bounded cache of the sanitized document only. Never cache source
     // pixels, rendering canvases, PDF instances or results of Pro settings here.
     cache=sources&&result.bytes.length<=24*1024*1024?{key,bytes:result.bytes}:null;
-    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.1; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);return clean;
+    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.2; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);return clean;
   }
   async function flatten(doc,{signal,docOptions={},onProgress,onText,pageSources=[],ocr=[],ocrApplied=false}={}){
     signal?.throwIfAborted();if(pageSources.length!==doc.getPageCount())throw Error('마스킹 문서의 페이지 대응을 확인하지 못했습니다.');
@@ -46,7 +46,7 @@
     const accepted=ocr.filter(r=>pageSources.some(p=>currentOCR(r,p)));
     if(!ocrApplied&&accepted.length)await PDFOCR.apply(doc,accepted,{signal,pageIds:pageSources.map(p=>p.uid)});
     const result=await PDFPrivacyNative.run(await doc.save({useObjectStreams:true,updateFieldAppearances:false}),pageSources.map(()=>[]),{signal,onProgress});signal?.throwIfAborted();
-    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.1; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);
+    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.2; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);
     if(onText){
       let searchable=0,pendingOCR=0;
       const task=pdfjsLib.getDocument({data:result.bytes.slice(),...docOptions});

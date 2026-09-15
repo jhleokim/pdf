@@ -12,7 +12,9 @@ let proRailDragging=false;
   function apply(value=preferred??defaultWidth()){
     const {min,max}=limits(),width=Math.max(min,Math.min(max,value));
     main.style.setProperty('--pro-rail-width',width+'px');
-    main.style.setProperty('--pro-thumb-columns',Math.max(1,Math.floor((width-8)/154)));
+    const columns=Math.max(1,Math.floor((width-8)/154));
+    main.style.setProperty('--pro-thumb-columns',columns);
+    main.dataset.thumbnailColumns=String(columns);
     handle.setAttribute('aria-valuemin',min);handle.setAttribute('aria-valuemax',max);handle.setAttribute('aria-valuenow',Math.round(width));
     return width;
   }
