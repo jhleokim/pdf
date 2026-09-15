@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const check=signal=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
+  const searchPrograms=new WeakMap();
   function bytes(id){const cached=globalThis.PDFTesseractAssets?.get(id);if(cached)return cached;const data=document.getElementById(id).textContent.trim();if(Uint8Array.fromBase64)return Uint8Array.fromBase64(data);const raw=atob(data),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
   function fastCore(){try{return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,15,1,13,0,65,1,253,15,65,2,253,15,253,128,2,11]));}catch(_){return false;}}
   function bounded(promise,signal,ms=120000){
@@ -94,9 +95,15 @@
     let cmap='/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /PDFStudioOCR def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n';
     for(let i=0;i<chars.length;i+=100){const part=chars.slice(i,i+100);cmap+=`${part.length} beginbfchar\n`+part.map(ch=>`<${hex(map.get(ch))}> <${unicode(ch)}>`).join('\n')+'\nendbfchar\n';}
     cmap+='endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend';
-    const descriptor=c.register(c.obj({Type:'FontDescriptor',FontName:'PDFStudioOCR',Flags:4,FontBBox:[0,-200,1000,1000],ItalicAngle:0,Ascent:800,Descent:-200,CapHeight:800,StemV:80}));
-    const descendant=c.register(c.obj({Type:'Font',Subtype:'CIDFontType2',BaseFont:'PDFStudioOCR',CIDSystemInfo:{Registry:P.PDFString.of('Adobe'),Ordering:P.PDFString.of('Identity'),Supplement:0},FontDescriptor:descriptor,DW:600,W:[1,widths],CIDToGIDMap:'Identity'}));
-    const ref=c.register(c.obj({Type:'Font',Subtype:'Type0',BaseFont:'PDFStudioOCR',Encoding:'Identity-H',DescendantFonts:[descendant],ToUnicode:c.register(c.flateStream(cmap))}));
+    // Invisible text still needs a valid embedded font in Acrobat. Tesseract's
+    // tiny glyphless TTF has two glyphs; every CID uses its blank glyph 1.
+    // ToUnicode and the per-run widths retain the actual text and geometry.
+    let program=searchPrograms.get(doc);
+    if(!program){const data=bytes('ocr-search-font');program=c.register(c.flateStream(data,{Length1:data.length}));searchPrograms.set(doc,program);}
+    const gids=new Uint8Array((chars.length+1)*2);for(let i=1;i<gids.length;i+=2)gids[i]=1;
+    const descriptor=c.register(c.obj({Type:'FontDescriptor',FontName:'GlyphLessFont',Flags:5,FontBBox:[0,0,500,1000],ItalicAngle:0,Ascent:1000,Descent:-1,CapHeight:1000,StemV:80,FontFile2:program}));
+    const descendant=c.register(c.obj({Type:'Font',Subtype:'CIDFontType2',BaseFont:'GlyphLessFont',CIDSystemInfo:{Registry:P.PDFString.of('Adobe'),Ordering:P.PDFString.of('Identity'),Supplement:0},FontDescriptor:descriptor,DW:600,W:[1,widths],CIDToGIDMap:c.register(c.flateStream(gids))}));
+    const ref=c.register(c.obj({Type:'Font',Subtype:'Type0',BaseFont:'GlyphLessFont',Encoding:'Identity-H',DescendantFonts:[descendant],ToUnicode:c.register(c.flateStream(cmap))}));
     return {ref,measure:text=>[...text].reduce((sum,ch)=>sum+widthMap.get(ch),0)/1000,encode:text=>P.PDFHexString.of([...text].map(ch=>hex(map.get(ch))).join(''))};
   }
   function correctionWords(record){
