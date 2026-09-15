@@ -64,7 +64,10 @@ block('mode-switch', '<div class="mode-switch" role="group" aria-label="작업 �
 const panel=read('src/pro-panel.html');
 const toolPanel=read('src/pro-tools.html').replace('<!-- cloud-ocr-tools -->','').replace('<!-- cloud-ocr-dialog -->',standalone?'':read('src/pro-vision-dialog.html')).replace('<!-- paddle-model-option -->','<option value="paddle-v5" selected>Paddle OCR · 기본</option><option value="tesseract">Tesseract</option>').replace('<!-- vision-model-option -->',standalone?'':'<option value="vision">Google Vision · 클라우드</option>');
 const panelSplit=panel.indexOf('<details class="pro-section">',panel.indexOf('</details>'));
-block('pro-panel',panel.slice(0,panelSplit)+toolPanel+'\n'+read('src/privacy-ui.html')+'\n'+panel.slice(panelSplit), '</main>');
+const ocrSplit=toolPanel.indexOf('<details class="pro-section" id="ocrSection">');
+if(ocrSplit<0||!panel.includes('<div class="pro-save-name">'))throw new Error('Missing OCR section insertion point');
+const panelTail=panel.slice(panelSplit).replace('<div class="pro-save-name">',toolPanel.slice(ocrSplit)+'\n<div class="pro-save-name">');
+block('pro-panel',panel.slice(0,panelSplit)+toolPanel.slice(0,ocrSplit)+'\n'+read('src/privacy-ui.html')+'\n'+panelTail, '</main>');
 block('stamp-dialog',read('src/stamp-dialog.html'),'</body>');
 block('ocr-correction-dialog',read('src/ocr-correction.html'),'</body>');
 block('ocr-table-worker-source',`<script type="text/plain" id="ocr-table-worker-source">\n${read('src/ocr-tables.js').replace(/<\/script/gi,'<\\/script')}\n</script>`,'</body>');
