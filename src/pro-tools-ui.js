@@ -217,10 +217,10 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
         const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
         const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
-        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:PDFPrivacy.isMasked([p])});
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:false});
         const existing=policy.action==='skip';
         checkProAbort();update(.05);
-        if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
+        if(existing){fresh.push({uid:p.uid,key,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
         const doc=await waitForOCR(buildEditedDocument([p],{signal:workSignal}),workSignal);checkProAbort();
         const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),workSignal);checkProAbort();

@@ -333,7 +333,7 @@ function select(idx, e){
 /* ════════════════════════════════════════════════════════════
    미리보기
    ════════════════════════════════════════════════════════════ */
-let pvToken = 0, pvZoom = 1, pvFitScale = 1, pvScale = 1, pvRenderTask=null;
+let pvToken = 0, pvZoom = 1, pvFitScale = 1, pvScale = 1, pvPointWidth=595, pvRenderTask=null;
 const PV_ZOOM_MIN = 0.4, PV_ZOOM_MAX = 8;
 const previewVisible = () => !$('previewPanel').hidden &&
   !(mainEl.classList.contains('preview-off')) &&
@@ -394,6 +394,7 @@ async function showPreview(p){
   $('pvZoomVal').textContent = Math.round(pvZoom * 100) + '%';
   $('annoBar').hidden = false;
   pvScale = cssScale;                         // pt → CSS px
+  pvPointWidth=probe.width*(page.userUnit||1);
   layoutOverlay(c.width, c.height);
   renderAnnots();
   if(typeof renderHighlightLayer==='function')await renderHighlightLayer(page,page.getViewport({scale:c.clientWidth/probe.width,rotation:rot}),my);
@@ -470,6 +471,7 @@ function fixAspect(a, w, h){
 }
 
 function annoToSVG(a, w, h){
+  if(a.shape==='arrow')return PDFArrow.svg(a,w,h);
   if(a.shape==='highlight'&&a.quads)return highlightToSVG(a,w,h);
   if(a.shape==='text')return PDFMarkupText.svg(a,w,h);
   const x = a.nx*w, y = a.ny*h, bw = a.nw*w, bh = a.nh*h;
@@ -533,9 +535,13 @@ function renderAnnots(){
       const box = document.createElementNS(SVGNS,'rect');
       box.setAttribute('x', Math.min(x,x+bw)); box.setAttribute('y', Math.min(y,y+bh));
       box.setAttribute('width', Math.abs(bw)); box.setAttribute('height', Math.abs(bh));
-      box.setAttribute('class','selbox'); nodes.push(box);
+      box.setAttribute('class','selbox'); if(a.shape!=='arrow')nodes.push(box);
       const hs = (isMobile()?6:4) * (c.width / (c.clientWidth || c.width));
-      if(a.shape!=='text')[[x,y,'nw'],[x+bw,y,'ne'],[x+bw,y+bh,'se'],[x,y+bh,'sw']].forEach(([hx,hy,pos]) => {
+      if(a.shape==='arrow')[[x,y,'start'],[x+bw,y+bh,'end']].forEach(([hx,hy,pos])=>{
+        for(const hit of [true,false]){const hd=document.createElementNS(SVGNS,'circle');hd.setAttribute('cx',hx);hd.setAttribute('cy',hy);hd.setAttribute('r',hit?22*w/(c.clientWidth||w):hs);hd.dataset.h=pos;
+          if(hit){hd.setAttribute('fill','transparent');hd.style.pointerEvents='all';}else hd.setAttribute('class','handle arrow-handle');nodes.push(hd);}
+      });
+      else if(a.shape!=='text')[[x,y,'nw'],[x+bw,y,'ne'],[x+bw,y+bh,'se'],[x,y+bh,'sw']].forEach(([hx,hy,pos]) => {
         const hd = document.createElementNS(SVGNS,'rect');
         hd.setAttribute('x', hx-hs); hd.setAttribute('y', hy-hs);
         hd.setAttribute('width', hs*2); hd.setAttribute('height', hs*2);
@@ -594,6 +600,7 @@ $('pvOverlay').addEventListener('pointerdown', e => {
       stroke: annoStyle.stroke, fill: annoStyle.fill, lineWidth: annoStyle.lineWidth,
       dash: annoStyle.dash, opacity: annoStyle.opacity };
     if(a.shape==='highlight'){a.stroke='none';a.lineWidth=0;a.fill||='#ffe082';}
+    if(a.shape==='arrow'){a.fill=null;a.opacity=1;a.pageWidth=pvPointWidth;}
     curAnnots().push(a); selAnno = a.id;
     drag = { mode:'create', a, sx: pt.x, sy: pt.y };
   }
@@ -606,6 +613,7 @@ $('pvOverlay').addEventListener('pointermove', e => {
   if(drag.mode === 'create'){
     a.nx = Math.min(drag.sx, pt.x)/w; a.ny = Math.min(drag.sy, pt.y)/h;
     a.nw = Math.abs(pt.x - drag.sx)/w; a.nh = Math.abs(pt.y - drag.sy)/h;
+    if(a.shape==='arrow'){a.nx=drag.sx/w;a.ny=drag.sy/h;a.nw=clamp(pt.x/w,0,1)-a.nx;a.nh=clamp(pt.y/h,0,1)-a.ny;}
     if(a.shape === 'image') fixAspect(a, w, h);
   }else if(drag.mode === 'move'){
     if(a.shape==='text'&&!drag.moving){
@@ -613,8 +621,10 @@ $('pvOverlay').addEventListener('pointermove', e => {
       drag.moving=true;try{$('pvOverlay').setPointerCapture(e.pointerId);}catch(_){}
     }
     a.nx = (pt.x - drag.ox)/w; a.ny = (pt.y - drag.oy)/h;
+    if(a.shape==='arrow'){a.nx=clamp(a.nx,Math.max(0,-a.nw),Math.min(1,1-a.nw));a.ny=clamp(a.ny,Math.max(0,-a.nh),Math.min(1,1-a.nh));}
   }else if(drag.mode === 'resize'){
     if(a.shape==='text')return;
+    if(a.shape==='arrow'){PDFArrow.endpoint(a,drag.pos,clamp(pt.x/w,0,1),clamp(pt.y/h,0,1));renderAnnots();return;}
     let x1 = a.nx*w, y1 = a.ny*h, x2 = x1 + a.nw*w, y2 = y1 + a.nh*h;
     if(drag.pos.includes('w')) x1 = pt.x;
     if(drag.pos.includes('e')) x2 = pt.x;
@@ -634,7 +644,7 @@ function endDrag(){
     if(a.shape === 'image' && (a.nw < 0.02 || a.nh < 0.02)){
       a.nw = 0.34; fixAspect(a, w, h);                    // 탭 한 번 = 기본 크기로 배치
       a.nx = clamp(a.nx, 0, 1 - a.nw); a.ny = clamp(a.ny, 0, Math.max(0, 1 - a.nh));
-    }else if(a.shape !== 'image' && (a.nw < 0.008 || a.nh < 0.008)){
+    }else if(a.shape !== 'image' && (a.shape==='arrow'?Math.hypot(a.nw*w,a.nh*h)<8*w/(c.clientWidth||w):(a.nw < 0.008 || a.nh < 0.008))){
       const arr = curAnnots(); const i = arr.indexOf(a); if(i >= 0) arr.splice(i,1);
       selAnno = null;
     }
@@ -951,7 +961,7 @@ document.addEventListener('drop', e => {
 });
 
 /* ── 전체화면 보기 ── */
-let modalSequence=0,modalRenderTask=null,modalReturnFocus=null;
+let modalSequence=0,modalRenderTask=null,modalReturnFocus=null,modalController=null;
 let modalPageUid=null,modalZoom=1,modalSource=null,modalZoomTimer=null,modalPaintSequence=0;
 const modalFrame=$('modal').querySelector('.frame');
 const modalStatus=document.createElement('p');
@@ -959,6 +969,7 @@ modalStatus.id='modalStatus';modalStatus.setAttribute('role','status');modalStat
 $('modal').querySelector('.frame').appendChild(modalStatus);
 $('modal').setAttribute('role','dialog');$('modal').setAttribute('aria-modal','true');$('modal').setAttribute('aria-label','페이지 전체 미리보기');
 function closeFullPreview(restoreFocus=true){
+  modalController?.abort();modalController=null;
   modalSequence++;modalRenderTask?.cancel();modalRenderTask=null;
   modalPaintSequence++;clearTimeout(modalZoomTimer);modalZoomTimer=null;
   modalSource?.owned?.destroy().catch(()=>{});modalSource=null;modalPageUid=null;
@@ -1031,6 +1042,7 @@ async function preview(p,{keepZoom=false}={}){
   $('modal').classList.add('open');$('modal').setAttribute('aria-busy','true');$('modalClose').focus({preventScroll:true});
   $('modalCanvas').style.display='none';modalStatus.textContent='편집 내용을 불러오는 중…';modalStatus.hidden=false;
   const current=()=>seq===modalSequence&&pages.includes(p);
+  const controller=new AbortController();modalController=controller;
   modalFrame.scrollLeft=modalFrame.scrollTop=0;
   let loaded=null,loading=null;
   try{
@@ -1038,7 +1050,7 @@ async function preview(p,{keepZoom=false}={}){
     if(p.annots?.length){
       // Use the export path so text, highlights, shapes and images agree with
       // the saved PDF, including font metrics, CropBox and page rotation.
-      const edited=await buildEditedDocument([p]);if(!current())return;
+      const edited=await buildEditedDocument([p],{signal:controller.signal});if(!current())return;
       const data=await edited.save({useObjectStreams:true,updateFieldAppearances:false});if(!current())return;
       loading=pdfjsLib.getDocument({data,...DOC_OPTS});loaded=await loading.promise;if(!current())return;
       pdf=loaded;pageNumber=1;rotation=0;
@@ -1091,13 +1103,13 @@ async function bakeAnnots(outDoc, pg, p, imgCache, signal){
   const R = (pjPage.getViewport({ scale:1 }).rotation + p.rotation) % 360;
   const vp = pjPage.getViewport({ scale:1, rotation:R });   // 표시공간(회전 반영) 치수
 
-  if(p.annots.some(a=>a.shape==='redaction'))await PDFPrivacy.preparePage(outDoc,pg,pjPage,signal);
   for(const a of [...p.annots.filter(a=>a.shape!=='redaction'),...p.annots.filter(a=>a.shape==='redaction')]){
+    if(a.shape==='arrow'){PDFArrow.bake(pg,a,vp);continue;}
     const dx = a.nx*vp.width, dy = a.ny*vp.height, dw = a.nw*vp.width, dh = a.nh*vp.height;
     const cs = [[dx,dy],[dx+dw,dy],[dx+dw,dy+dh],[dx,dy+dh]].map(([x,y]) => vp.convertToPdfPoint(x,y));
     const xs = cs.map(c => c[0]), ys = cs.map(c => c[1]);
     const X = Math.min(...xs), Y = Math.min(...ys), W = Math.max(...xs)-X, H = Math.max(...ys)-Y;
-    if(a.shape==='redaction'){if(W>0&&H>0)pg.drawRectangle({x:X,y:Y,width:W,height:H,color:rgb(0,0,0),opacity:1,borderWidth:0});continue;}
+    if(a.shape==='redaction')continue;
     if(W < 1 || H < 1) continue;
     if(a.shape==='text'){await PDFMarkupText.bake(outDoc,pg,a,vp,R,imgCache);continue;}
     if(a.shape==='highlight'){
@@ -1149,6 +1161,8 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
   if(typeof textUpdate!=='undefined')await textUpdate;
   signal?.throwIfAborted();
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))throw new Error('텍스트 입력을 먼저 완료해 주세요.');
+  if(PDFPrivacy.isMasked(list)){const cached=await PDFPrivacy.cached(list,docs,signal);if(cached)return cached;}
+  else PDFPrivacy.clearCache();
   const first = list.length && docs.get(list[0].docId);
   const complete = first && list.length === first.count && list.every(p=>p.docId===list[0].docId) && new Set(list.map(p=>p.srcIndex)).size===first.count;
   // Keep catalog-level forms/bookmarks when the complete source remains intact.
@@ -1177,7 +1191,7 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     if(onProgress){onProgress(n+1,list.length);await idle();}
   }
   signal?.throwIfAborted();
-  return out;
+  return PDFPrivacy.redact(out,list,{signal,onProgress,sources:docs});
 }
 
 function downloadPdf(bytes,name){
@@ -1294,6 +1308,7 @@ function syncAnnotationControls(){
   const imageSelected=shape==='image';
   $('annoProperties').hidden=!shape||imageSelected||shape==='text'||shape==='highlight';
   $('annoStrokeGroup').hidden=shape==='highlight';
+  $('annoFillGroup').hidden=shape==='arrow'||shape==='redaction';
   $('annoNoFill').hidden=shape==='highlight';
   $('annoImageHint').hidden=!imageSelected;
   $('annoStroke').value=annoStyle.stroke;
@@ -1306,6 +1321,7 @@ function syncAnnotationControls(){
   $('annoOpacity').disabled=!annoStyle.fill;
   $('annoOpacityVal').textContent=Math.round(annoStyle.opacity*100)+'%';
   document.querySelectorAll('.ab-dbtn').forEach(b=>b.classList.toggle('active',b.dataset.dash===annoStyle.dash));
+  $('annoDash').value=annoStyle.dash;
   document.querySelectorAll('.ab-tool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===annoStyle.tool)));
   if(typeof syncTextControls==='function')syncTextControls();
   $('markupIdle').hidden=!!shape;
@@ -1330,11 +1346,10 @@ document.querySelectorAll('.ab-tool').forEach(b => b.onclick = async () => {
   setTool(t);
   if((t==='text'||t==='highlight')&&annoStyle.tool===t&&typeof setEditingFocus==='function'&&!isMobile())await setEditingFocus(true);
 });
-document.querySelectorAll('.ab-dbtn').forEach(b => b.onclick = () => {
-  annoStyle.dash = b.dataset.dash;
-  document.querySelectorAll('.ab-dbtn').forEach(x => x.classList.toggle('active', x === b));
+$('annoDash').onchange=e=>{
+  annoStyle.dash = e.target.value;
   applyStyleToSelected();
-});
+};
 $('annoStroke').oninput = e => { annoStyle.stroke = e.target.value; applyStyleToSelected(); };
 $('annoFill').oninput = e => {
   annoStyle.fill = e.target.value;
@@ -1362,6 +1377,7 @@ function applyStyleToSelected(){
   const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   a.stroke = a.shape==='highlight'?'none':annoStyle.stroke; a.fill = annoStyle.fill; a.lineWidth = a.shape==='highlight'?0:annoStyle.lineWidth;
   a.dash = annoStyle.dash; a.opacity = annoStyle.opacity;
+  if(a.shape==='arrow'){a.fill=null;a.opacity=1;}
   renderAnnots();
   if(typeof commitEditHistory==='function')commitEditHistory(history,'마크업 서식',document.activeElement?.matches('input')?a.id+':'+document.activeElement.id:null);
 }

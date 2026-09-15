@@ -11,6 +11,10 @@
   function compressionOnly(o){
     return o.optimize&&!o.blackWhite&&!o.grayscale&&!o.contrast&&o.whitePoint===255&&!o.deskew&&!Object.values(o.deskewAngles||{}).some(angle=>Number.isFinite(angle)&&angle!==0)&&!Object.values(o.deskewCropByPage||{}).some(enabled=>enabled===true)&&!o.crop&&o.paper==='original'&&!o.number&&!o.watermark&&!o.stamps?.length&&!o.ocr?.length;
   }
+  function sourceReference(pages,docs){
+    if(!pages.length)return null;const first=docs.get(pages[0].docId);
+    return first?.kind==='pdf'&&pages.length===first.count&&pages.every((p,i)=>p.docId===pages[0].docId&&p.srcIndex===i)?first.libBytes:null;
+  }
   function selectOutput(before,candidate,options,original){
     const reference=original||before;
     let bytes=candidate,retained=false;
@@ -22,7 +26,7 @@
       reduction:(1-bytes.length/reference.length)*100,
       structureSaved:original?Math.max(0,original.length-before.length):0};
   }
-  const api=Object.freeze({unchangedSource,compressionOnly,selectOutput});
+  const api=Object.freeze({unchangedSource,sourceReference,compressionOnly,selectOutput});
   root.PDFProResult=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

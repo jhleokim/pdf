@@ -23,4 +23,6 @@ writeFileSync(new URL('../.deploy/_headers',import.meta.url),`/*
   Cache-Control: public, max-age=31536000, immutable
 /ocr/ppocr-v5/manifest.json
   Cache-Control: no-cache
+/privacy/*
+  Cache-Control: public, max-age=31536000, immutable
 `);

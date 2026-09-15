@@ -32,3 +32,9 @@ test('whole-page compression also retains the baseline if it is smaller, unless 
  assert.equal(r.bytes,original);assert.equal(r.retained,true);
  assert.equal(R.selectOutput(bytes(900),candidate,{...opts,rasterize:true,blackWhite:true},original).bytes,candidate);
 });
+test('redaction compares with the input file but can never restore it to save bytes',()=>{
+ const original=bytes(100),docs=new Map([['d',{count:1,kind:'pdf',libBytes:original}]]),pages=[{srcIndex:0,docId:'d',annots:[{shape:'redaction'}]}];
+ assert.equal(R.sourceReference(pages,docs),original);assert.equal(R.unchangedSource(pages,docs),null);
+ const candidate=bytes(200),r=R.selectOutput(bytes(500),candidate,{...opts,optimize:false},R.sourceReference(pages,docs));assert.equal(r.reference,original);assert.equal(r.bytes,candidate);assert.equal(r.retained,false);
+ assert.equal(R.sourceReference([...pages,...pages],docs),null);
+});

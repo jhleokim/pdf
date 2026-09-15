@@ -1,11 +1,17 @@
 /* Keep visible thumbnails plus a small LRU. Document metadata stays available. */
 let thumbObserver=null,thumbQueue=[],thumbRunning=false;
 const thumbLRU=new Map(),thumbVisible=new Set(),THUMB_LIMIT=24;
+function syncThumbnailRatio(p){
+  const natural=p.thumbRatio||(p.canvas?.height?p.canvas.width/p.canvas.height:Math.SQRT1_2);
+  const ratio=p.rotation%180?1/natural:natural;
+  p.el?.style.setProperty('--page-ratio',String(ratio));
+}
 function resetThumbnailObserver(){thumbObserver?.disconnect();thumbVisible.clear();thumbQueue=[];trimThumbnails();}
 function releaseThumbnail(p){if(p.canvas){p.canvas.width=p.canvas.height=0;p.canvas=null;}const c=p.el?.querySelector('.page-thumbnail canvas');if(c)c.width=c.height=1;thumbLRU.delete(p);}
 function trimThumbnails(){for(const [p]of thumbLRU){if(!pages.includes(p)||thumbLRU.size>THUMB_LIMIT&&!thumbVisible.has(p))releaseThumbnail(p);}}
 function paintThumbnail(p){
   const canvas=p.el?.querySelector('.page-thumbnail canvas');if(!canvas||!p.canvas)return;
+  p.thumbRatio=p.canvas.width/p.canvas.height;syncThumbnailRatio(p);
   const swap=p.rotation%180;canvas.width=swap?p.canvas.height:p.canvas.width;canvas.height=swap?p.canvas.width:p.canvas.height;
   const ctx=canvas.getContext('2d');ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(p.rotation*Math.PI/180);ctx.drawImage(p.canvas,-p.canvas.width/2,-p.canvas.height/2);
   const overlay=p.el.querySelector('.thumbnail-markup');overlay.setAttribute('viewBox',`0 0 ${canvas.width} ${canvas.height}`);thumbnailSignatures.delete(overlay);syncPageThumbnail(p);p.el.classList.remove('thumb-placeholder');
@@ -19,7 +25,7 @@ async function drainThumbnails(){
   }}finally{thumbRunning=false;trimThumbnails();}
 }
 function observeThumbnail(p){
-  p.el.classList.add('thumb-placeholder');const thumb=p.el.querySelector('.page-thumbnail');const ratio=p.thumbRatio||.7071;thumb.style.aspectRatio=String(p.rotation%180?1/ratio:ratio);
+  p.el.classList.add('thumb-placeholder');syncThumbnailRatio(p);
   if(p.canvas)paintThumbnail(p);
   if(typeof IntersectionObserver==='undefined'){thumbVisible.add(p);thumbQueue.push(p);void drainThumbnails();return;}
   if(!thumbObserver)thumbObserver=new IntersectionObserver(entries=>{for(const e of entries){const page=pages.find(p=>p.el===e.target);if(!page)continue;if(e.isIntersecting){thumbVisible.add(page);if(page.canvas)paintThumbnail(page);else if(!thumbQueue.includes(page))thumbQueue.push(page);}else thumbVisible.delete(page);}trimThumbnails();void drainThumbnails();},{rootMargin:'240px'});

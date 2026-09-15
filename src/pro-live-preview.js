@@ -109,7 +109,7 @@ async function updateLivePreview(seq){
     if(typeof stampAsset!=='undefined'&&stampAsset?.review&&options.stamps?.length)options.stamps=options.stamps.slice(0,-1);
     let report=liveCache?.key===key?liveCache.report:null;
     if(!report){
-      const edited=await buildEditedDocument([p]);check();
+      const edited=await buildEditedDocument([p],{signal});check();
       const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
       const doc=await PDFLib.PDFDocument.load(before);check();
       const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
