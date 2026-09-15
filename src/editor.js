@@ -136,8 +136,9 @@ async function loadFiles(fileList){
         color: SWATCH[(docSeq - 1) % SWATCH.length], count: pdf.numPages });
 
       for(let i = 1; i <= pdf.numPages; i++){
-        const canvas = await renderThumb(pdf, i);
-        pages.push({ uid: 'p' + (++uidSeq), docId, srcIndex: i - 1, rotation: 0, canvas });
+        const sourcePage=await pdf.getPage(i),size=sourcePage.getViewport({scale:1});
+        const canvas=null,thumbRatio=size.width/size.height;
+        pages.push({ thumbRatio, uid: 'p' + (++uidSeq), docId, srcIndex: i - 1, rotation: 0, canvas });
         origCount++;
         if(pdf.numPages > 1) busy(true, `${file.name} — ${i}/${pdf.numPages}페이지`);
         progress(i / pdf.numPages * 100);
@@ -158,11 +159,11 @@ async function loadFiles(fileList){
   if(typeof commitEditHistory==='function')commitEditHistory(history,'파일 추가');
 }
 
-async function renderThumb(pdf, pageNo){
+async function renderThumb(pdf, pageNo, maxWidth=300){
   const page = await pdf.getPage(pageNo);
   const base = page.getViewport({ scale: 1 });
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const scale = Math.min(300 / base.width, 380 / base.height) * dpr;
+  const scale = Math.min(maxWidth / base.width, maxWidth*380/300 / base.height) * dpr;
   const vp = page.getViewport({ scale });
   const canvas = document.createElement('canvas');
   canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
@@ -191,6 +192,7 @@ function render(){
 
   if(previewUid && !pages.some(p => p.uid === previewUid)) previewUid = null;
 
+  if(typeof resetThumbnailObserver==='function')resetThumbnailObserver();
   board.innerHTML = '';
   const frag = document.createDocumentFragment();
   pages.forEach((p, idx) => frag.appendChild(makeCard(p, idx)));
@@ -248,6 +250,8 @@ function syncCounts(){
   const stat2 = $('infoMobile').querySelectorAll('.stat-row b')[2];
   if(stat2) stat2.textContent = n;
   if(typeof syncProState === 'function') syncProState();
+  if(typeof syncPrivacy==='function')syncPrivacy();
+  if(typeof scheduleCompressionDiagnosis==='function')scheduleCompressionDiagnosis();
 }
 
 // 하단 액션바가 가리는 높이를 CSS 변수로 알려 미리보기 맞춤 배율이 어긋나지 않게 한다
@@ -280,11 +284,14 @@ function makeCard(p, idx){
   // current markup over it in the same fitted page coordinates in both modes.
   const thumb=document.createElement('div');thumb.className='page-thumbnail';
   const c=document.createElement('canvas'),swap=p.rotation%180;
+  if(p.canvas){
   c.width=swap?p.canvas.height:p.canvas.width;c.height=swap?p.canvas.width:p.canvas.height;
   const ctx=c.getContext('2d');ctx.translate(c.width/2,c.height/2);ctx.rotate(p.rotation*Math.PI/180);ctx.drawImage(p.canvas,-p.canvas.width/2,-p.canvas.height/2);
+  }else c.width=c.height=1;
   const overlay=document.createElementNS(SVGNS,'svg');overlay.setAttribute('class','thumbnail-markup');overlay.setAttribute('viewBox',`0 0 ${c.width} ${c.height}`);overlay.setAttribute('aria-hidden','true');
   thumb.append(c,overlay);el.querySelector('.sheet').appendChild(thumb);
   p.el = el;
+  if(typeof observeThumbnail==='function')observeThumbnail(p);
   syncPageThumbnail(p);
   if(p.uid === previewUid) el.classList.add('previewing');
 
@@ -493,6 +500,7 @@ function annoToSVG(a, w, h){
     el.setAttribute('x', Math.min(x, x+bw)); el.setAttribute('y', Math.min(y, y+bh));
     el.setAttribute('width', Math.abs(bw)); el.setAttribute('height', Math.abs(bh));
   }
+  if(a.shape==='redaction')a={...a,fill:'#111111',opacity:1,stroke:'none',lineWidth:0};
   el.setAttribute('fill', a.fill || 'none');
   el.setAttribute('fill-opacity', a.fill ? a.opacity : 0);
   el.setAttribute('stroke', a.stroke);
@@ -1078,16 +1086,18 @@ async function embedStamp(outDoc, st, cache){
   return emb;
 }
 
-async function bakeAnnots(outDoc, pg, p, imgCache){
+async function bakeAnnots(outDoc, pg, p, imgCache, signal){
   const pjPage = await docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex + 1);
   const R = (pjPage.getViewport({ scale:1 }).rotation + p.rotation) % 360;
   const vp = pjPage.getViewport({ scale:1, rotation:R });   // 표시공간(회전 반영) 치수
 
-  for(const a of p.annots){
+  if(p.annots.some(a=>a.shape==='redaction'))await PDFPrivacy.preparePage(outDoc,pg,pjPage,signal);
+  for(const a of [...p.annots.filter(a=>a.shape!=='redaction'),...p.annots.filter(a=>a.shape==='redaction')]){
     const dx = a.nx*vp.width, dy = a.ny*vp.height, dw = a.nw*vp.width, dh = a.nh*vp.height;
     const cs = [[dx,dy],[dx+dw,dy],[dx+dw,dy+dh],[dx,dy+dh]].map(([x,y]) => vp.convertToPdfPoint(x,y));
     const xs = cs.map(c => c[0]), ys = cs.map(c => c[1]);
     const X = Math.min(...xs), Y = Math.min(...ys), W = Math.max(...xs)-X, H = Math.max(...ys)-Y;
+    if(a.shape==='redaction'){if(W>0&&H>0)pg.drawRectangle({x:X,y:Y,width:W,height:H,color:rgb(0,0,0),opacity:1,borderWidth:0});continue;}
     if(W < 1 || H < 1) continue;
     if(a.shape==='text'){await PDFMarkupText.bake(outDoc,pg,a,vp,R,imgCache);continue;}
     if(a.shape==='highlight'){
@@ -1140,9 +1150,10 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
   signal?.throwIfAborted();
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))throw new Error('텍스트 입력을 먼저 완료해 주세요.');
   const first = list.length && docs.get(list[0].docId);
-  const complete = first && list.length === first.count && list.every((p,i)=>p.docId===list[0].docId && p.srcIndex===i);
+  const complete = first && list.length === first.count && list.every(p=>p.docId===list[0].docId) && new Set(list.map(p=>p.srcIndex)).size===first.count;
   // Keep catalog-level forms/bookmarks when the complete source remains intact.
   const out = complete ? await PDFDocument.load(first.libBytes) : await PDFDocument.create();
+  if(complete&&list.some((p,i)=>p.srcIndex!==i)){const originalPages=out.getPages().slice();while(out.getPageCount())out.removePage(0);for(const p of list)out.addPage(originalPages[p.srcIndex]);}
   const imgCache = new Map(), copied = new Map();
   if(!complete){
     const need = new Map();
@@ -1161,7 +1172,7 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     cursor.set(p.docId,i+1);
     const pg=complete ? out.getPage(n) : copied.get(p.docId)[i];
     if(p.rotation) pg.setRotation(degrees((pg.getRotation().angle+p.rotation)%360));
-    if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache);
+    if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache,signal);
     if(!complete) out.addPage(pg);
     if(onProgress){onProgress(n+1,list.length);await idle();}
   }

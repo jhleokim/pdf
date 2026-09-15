@@ -6,7 +6,7 @@ async function requestVisionOCR(sample){
   let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
   visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
   visionReady=false;$('visionConsent').checked=false;$('visionConfirm').disabled=true;
-  $('visionConfirmScope').textContent=`${list.length}페이지를 확인합니다. 검색 가능한 텍스트가 있거나 이미 인식한 페이지는 전송하지 않습니다.`;
+  $('visionConfirmScope').textContent=`${list.length}페이지를 확인합니다. 이미 완료한 페이지는 재사용합니다. 혼합 문서는 기존 텍스트 영역을 제외하고 전송합니다.`;
   $('visionAvailability').textContent='서버 연결을 확인하는 중…';$('visionDialog').showModal();
   const ctrl=new AbortController();visionCheck?.abort();visionCheck=ctrl;const timer=setTimeout(()=>ctrl.abort(),10000);
   try{const status=await PDFVision.available(ctrl.signal);if(visionCheck!==ctrl||!$('visionDialog').open)return;

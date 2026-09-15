@@ -394,6 +394,36 @@
     }
   }
 
+  async function analyzeDocument(doc){
+    const lib=root.PDFLib;if(doc.flush)await doc.flush();const masks=maskImages(doc,lib);
+    const result={images:0,eligible:0,totalBytes:0,eligibleBytes:0,reasons:{}};
+    for(const [,stream]of doc.context.enumerateIndirectObjects()){
+      if(!(stream instanceof lib.PDFRawStream)||nameValue(pdfValue(stream.dict,'Subtype',lib))!=='/Image')continue;
+      result.images++;const size=stream.getContents().length;result.totalBytes+=size;
+      try{if(masks.has(stream))throw failure('maskSource');imageSpec(stream,lib);result.eligible++;result.eligibleBytes+=size;}
+      catch(e){const key=e.reasonCode||'decodeFailed';result.reasons[key]=(result.reasons[key]||0)+1;}
+    }
+    return result;
+  }
+  async function deduplicateImages(doc,signal){
+    const lib=root.PDFLib,groups=new Map(),aliases=new Map();let saved=0;
+    for(const [ref,stream]of doc.context.enumerateIndirectObjects()){
+      abortIfNeeded(signal);if(!(stream instanceof lib.PDFRawStream)||nameValue(pdfValue(stream.dict,'Subtype',lib))!=='/Image')continue;
+      const data=stream.getContents(),key=stream.dict.toString()+'|'+data.length,list=groups.get(key)||[];
+      const prior=list.find(item=>item.data.length===data.length&&item.data.every((b,i)=>b===data[i]));
+      if(prior){aliases.set(ref,prior.ref);saved+=data.length;}else{list.push({ref,data});groups.set(key,list);}await pause();
+    }
+    if(!aliases.size)return {count:0,bytes:0};
+    const seen=new Set();function replace(object){
+      if(!object||seen.has(object))return;seen.add(object);
+      const dict=object instanceof lib.PDFRawStream?object.dict:object;
+      if(dict instanceof lib.PDFDict){for(const [key,value]of dict.entries()){if(aliases.has(value))dict.set(key,aliases.get(value));else if(!(value instanceof lib.PDFRef))replace(value);}}
+      else if(dict instanceof lib.PDFArray)for(let i=0;i<dict.size();i++){const value=dict.get(i);if(aliases.has(value))dict.set(i,aliases.get(value));else if(!(value instanceof lib.PDFRef))replace(value);}
+    }
+    for(const [,object]of doc.context.enumerateIndirectObjects())replace(object);
+    for(const ref of aliases.keys())doc.context.delete(ref);
+    return {count:aliases.size,bytes:saved};
+  }
   async function processDocument(doc, options, callbacks) {
     const lib = root.PDFLib;
     if (!lib || !doc || !doc.context) throw new Error('PDFLib and a loaded PDFDocument are required.');
@@ -454,15 +484,17 @@
       await pause();
     }
     abortIfNeeded(signal);
+    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
     report.notes = Object.keys(report.skipReasons).map(code => REASONS[code] || REASONS.decodeFailed);
+    if(report.duplicates)report.notes.push('동일한 이미지 '+report.duplicates+'개를 공유하여 중복 데이터를 제거했습니다.');
     if (!images.length) report.notes.push('처리할 이미지가 없습니다. 텍스트와 벡터는 원본을 유지했습니다.');
     if (isEnhanced(settings) && report.changed) report.notes.push('보정 후 용량이 늘어날 수 있습니다. 기존 텍스트·OCR 레이어는 유지했습니다.');
     return report;
   }
 
-  root.PDFPro = Object.freeze({ processDocument, encodeCanvas });
+  root.PDFPro = Object.freeze({ processDocument, encodeCanvas,analyzeDocument,deduplicateImages });
   // Pure helpers are exported only in Node for focused regression tests.
   if (typeof module !== 'undefined' && module.exports) module.exports = {
-    processDocument, normalizeOptions, maskImages, bitonal, imageSpec, inspectJpeg, undoPredictor, inflateBounded
+    processDocument, normalizeOptions, maskImages, bitonal, imageSpec, inspectJpeg, undoPredictor, inflateBounded,analyzeDocument,deduplicateImages
   };
 })(globalThis);

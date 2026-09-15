@@ -1293,6 +1293,13 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
  .pdf-filename input{font-size:16px;height:44px}.pdf-save-dialog{width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 }
 @media(prefers-reduced-motion:reduce){.pdf-save-dialog[open],.pdf-save-result::after{animation:none!important}.pdf-save-result[data-phase=preparing]::after{width:100%;opacity:.35}}
+.help-source{display:none!important}.help-dot{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:7px;padding:0;border:1px solid #b6b9bc;border-radius:50%;background:transparent;color:#8b9095;font:500 12px/1 system-ui;vertical-align:middle;cursor:help;flex:none;touch-action:pan-y}.help-dot:focus-visible{outline:2px solid var(--accent,#008779);outline-offset:3px}.context-help{position:fixed;z-index:100000;max-width:min(300px,calc(100vw - 24px));padding:11px 13px;background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:6px;font:12px/1.65 system-ui;box-shadow:0 5px 20px #0002;pointer-events:none}.pro-eyebrow{display:none}.pro-section:not(.has-settings)>summary small{display:none}.pro-range-scale{font-size:10px}.privacy-dialog{width:min(1080px,96vw);height:min(860px,94dvh);max-width:96vw;max-height:94dvh;padding:0;border:1px solid var(--line,#ddd);border-radius:8px;background:var(--surface,#fff);color:var(--ink,#222)}.privacy-dialog[open]{display:flex;flex-direction:column}.privacy-dialog header,.privacy-dialog footer,.privacy-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line,#ddd)}.privacy-dialog h2,.document-check-dialog h2{font-size:17px;margin:0 0 4px}.privacy-dialog header span,.privacy-dialog footer span{font-size:12px;color:var(--ink-3,#777)}.privacy-toolbar{font-size:12px;padding:8px 14px}.privacy-scroll{overflow:auto;flex:1;min-height:0;padding:24px;background:var(--paper,#eee)}#privacyPaper{position:relative;width:min(100%,720px);margin:0 auto;background:#fff;box-shadow:0 3px 16px #0002}#privacyCanvas{display:block;width:100%;height:auto}#privacyOverlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}.privacy-dialog footer{border-top:1px solid var(--line,#ddd);border-bottom:0}.document-check-dialog{width:min(490px,92vw);padding:24px;border:1px solid var(--line,#ddd);border-radius:8px;background:var(--surface,#fff);color:var(--ink,#222)}.document-check-dialog p{font-size:14px;line-height:1.7}.document-check-dialog label{display:flex;gap:9px;align-items:center;font-size:13px}.document-check-dialog footer{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}.page-thumbnail{aspect-ratio:var(--thumb-ratio,0.7071)}.page-thumbnail canvas{max-width:100%;height:auto}.thumb-placeholder{background:var(--surface,#fff);min-height:120px}.compression-diagnosis{font-size:12px;line-height:1.55;padding:9px 0;color:var(--ink,#333)}
+@media(max-width:700px){.help-dot{position:relative}.help-dot:after{content:'';position:absolute;inset:-10px}.privacy-scroll{padding:12px}.privacy-toolbar{gap:7px;flex-wrap:wrap}.privacy-dialog footer{padding:10px}.context-help{font-size:13px}}
+
+.context-help{white-space:pre-line;max-height:55vh;overflow:auto}.privacy-dialog::backdrop,.document-check-dialog::backdrop{background:#0005}
+.privacy-dialog,.document-check-dialog{margin:auto}
+@media(min-width:961px){.pro-footer-actions{display:none}}
+#ocrStatus:empty,#privacyStatus:empty{display:none}
 </style>
 <!-- pro-styles:end -->
 <!-- full-preview-styles:start -->
@@ -1639,16 +1646,13 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
   <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 8h10M12 8v9m-3 0h6"/></svg></span><span><span class="pro-tool-title">텍스트 인식 <span class="pro-beta">BETA</span></span><small id="ocrSummary">스캔을 검색·복사 가능한 PDF로</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
   <div class="pro-section-body">
     <p id="ocrDescription" class="pro-hint">원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.</p>
-    <label class="pro-field" for="ocrProvider"><span>인식 모델</span><select id="ocrProvider"><option value="tesseract" selected>Tesseract · 기본</option><option value="paddle-v5">PP-OCRv5 · 경량 한국어</option></select></label>
+    <label class="pro-field" for="ocrProvider"><span>인식 모델</span><select id="ocrProvider"><option value="paddle-v5" selected>Paddle OCR · 기본</option><option value="tesseract">Tesseract</option><option value="vision">Google Vision · 클라우드</option></select></label>
       <label class="pro-field" for="ocrLanguage"><span>인식 언어</span><select id="ocrLanguage"><option value="kor+eng">한국어 + 영어</option><option value="eng">영어</option></select></label>
     <label class="pro-field" for="ocrLayout"><span>문서 구성</span><select id="ocrLayout"><option value="auto">자동</option><option value="6">본문 위주 · 한 단</option><option value="11">흩어진 글자 · 서식과 영수증</option></select></label>
-    <button class="btn" id="ocrSample">현재 페이지 시험 인식</button>
-    <div class="pro-two-fields"><label class="pro-field" for="ocrScope"><span>여러 페이지 인식</span><select id="ocrScope"><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label><button class="btn" id="ocrRun">범위 인식</button></div>
-      <p id="ocrProcessingNote" class="pro-hint">검색 가능한 텍스트가 있는 페이지는 건너뜁니다. 기본 인식은 Tesseract로 처리하며 문서를 외부로 전송하지 않습니다.</p>
-    <div id="visionTools" class="gemini-tools" hidden>
-  <button class="btn" id="visionRun">Google Vision으로 인식하기</button>
-  <p class="pro-hint">위에서 선택한 인식 범위를 사용합니다. 문서 전송에 동의한 뒤 시작합니다.</p>
-</div>
+    <button class="btn" id="ocrSample" hidden>현재 페이지 인식</button>
+    <div class="pro-two-fields"><label class="pro-field" for="ocrScope"><span>인식 범위</span><select id="ocrScope"><option value="current" selected>현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label><button class="btn" id="ocrRun">텍스트 인식</button></div>
+      <p id="ocrProcessingNote" class="pro-hint">기존 글자를 유지하면서 스캔 영역을 추가 인식합니다. Paddle OCR은 기기에서 처리합니다.</p>
+
     <p id="ocrStatus" class="pro-hint" role="status" aria-live="polite">인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.</p>
     <div id="ocrResults" hidden>
       <label class="pro-field" for="ocrResultPage"><span>인식 결과</span><select id="ocrResultPage"></select></label>
@@ -1660,14 +1664,6 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
     </div>
   </div>
 </details>
-<dialog id="visionUnlockDialog" class="gemini-dialog" aria-labelledby="visionUnlockTitle">
-  <form id="visionUnlockForm">
-    <h2 id="visionUnlockTitle">Google Vision 활성화</h2>
-    <label class="pro-field" for="visionUnlockPassword"><span>활성화 비밀번호</span><input id="visionUnlockPassword" type="password" autocomplete="off" spellcheck="false" maxlength="64" autofocus required aria-describedby="visionUnlockError"></label>
-    <p id="visionUnlockError" class="pro-hint" role="status"></p>
-    <div class="stamp-actions"><button class="btn" id="visionUnlockCancel" type="button">취소</button><button class="btn primary" type="submit">활성화</button></div>
-  </form>
-</dialog>
 <dialog id="visionDialog" class="gemini-dialog" aria-labelledby="visionTitle">
   <form method="dialog">
     <h2 id="visionTitle">Google Vision으로 인식</h2>
@@ -1679,6 +1675,17 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
     <div class="stamp-actions"><button class="btn" value="cancel">취소</button><button class="btn primary" id="visionConfirm" type="button" disabled>확인하고 인식</button></div>
   </form>
 </dialog>
+<details class="pro-section" id="privacySection">
+  <summary><span class="pro-section-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="M8 12h8"/></svg></span><span>개인정보 마스킹<small id="privacySummary">사용 안 함</small></span><svg class="ic pro-chevron"><use href="#i-chev-up"/></svg></summary>
+  <div class="pro-section-body"><button type="button" class="btn" id="privacyOpen" disabled>가릴 영역 지정</button><p class="pro-hint">영역을 드래그해 지정합니다. 저장 시 원래 정보를 제거한 이미지 PDF를 만듭니다. 일반 사각형 주석과 달리 검색 텍스트와 첨부정보도 남기지 않습니다.</p><p id="privacyStatus" role="status" class="pro-hint"></p></div>
+</details>
+<dialog id="privacyDialog" class="privacy-dialog" aria-labelledby="privacyTitle">
+  <header><div><h2 id="privacyTitle">개인정보 마스킹</h2><span id="privacyPageLabel"></span></div><button type="button" id="privacyClose" class="btn quiet icon" aria-label="마스킹 창 닫기">×</button></header>
+  <div class="privacy-toolbar"><div><button type="button" class="btn quiet icon" id="privacyPrev" aria-label="이전 페이지">‹</button><button type="button" class="btn quiet icon" id="privacyNext" aria-label="다음 페이지">›</button></div><span>드래그해서 가릴 영역 지정</span><button type="button" class="btn quiet" id="privacyDelete" disabled>선택 영역 삭제</button></div>
+  <div class="privacy-scroll" id="privacyScroll"><div id="privacyPaper"><canvas id="privacyCanvas"></canvas><svg id="privacyOverlay" aria-label="드래그하여 개인정보 영역 지정"></svg></div></div>
+  <footer><span id="privacyEditStatus" role="status"></span><button type="button" class="btn primary" id="privacyDone">완료</button></footer>
+</dialog>
+<dialog id="documentCheckDialog" class="document-check-dialog" aria-labelledby="documentCheckTitle"><h2 id="documentCheckTitle">저장 전 확인</h2><div id="documentCheckWarnings"></div><label><input type="checkbox" id="documentCheckAccept">변경 사항을 확인했습니다</label><footer><button type="button" class="btn" id="documentCheckCancel">돌아가기</button><button type="button" class="btn primary" id="documentCheckContinue" disabled>계속</button></footer></dialog>
 <details class="pro-section">
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-rect"/></svg></span><span>페이지 규격<small id="proPageSummary">사용 안 함</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
@@ -1716,9 +1723,10 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
         </div>
       </details>
 
-      <details class="pro-section">
+      <details class="pro-section" id="compressionSection">
         <summary><span class="pro-section-icon"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg></span><span>용량 최적화<small id="proOptimizeSummary">텍스트 유지 · 2400 px</small></span><svg class="ic pro-chevron" aria-hidden="true"><use href="#i-chev-up"/></svg></summary>
         <div class="pro-section-body">
+          <p id="compressionDiagnosis" class="compression-diagnosis" role="status"></p>
           <label class="pro-check"><input type="checkbox" id="proOptimize" checked><span>이미지 최적화 사용</span></label>
           <label class="pro-field" for="proCompressionMode"><span>압축 방식</span><select id="proCompressionMode"><option value="preserve" selected>텍스트 유지 · 이미지 압축</option><option value="raster">페이지 전체 압축 · 이미지 PDF</option></select></label>
           <p id="proRasterWarning" class="pro-warning" hidden>페이지를 이미지로 바꿉니다. 결과 PDF의 텍스트 검색·복사, 링크·양식은 유지되지 않습니다. 원본 파일은 그대로입니다. 보정 없이 압축만 할 때 더 커지면 변경 전 파일을 유지합니다.</p>
@@ -1738,8 +1746,8 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
         <div class="pro-size-comparison"><div><span id="proBeforeLabel">최적화 전</span><strong id="proBeforeSize">—</strong></div><span class="pro-size-arrow" aria-hidden="true">→</span><div><span>Pro 결과</span><strong id="proAfterSize">—</strong></div></div>
         <p class="pro-reduction" id="proReduction"></p>
         <details class="pro-report-details"><summary>처리 내역 보기</summary><p class="pro-composition" id="proComposition"></p><p class="pro-report" id="proReport"></p></details>
-        <button class="btn primary" id="proDownload"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>결과 PDF 다운로드</button>
-        <button class="btn quiet" id="proDiscard">결과 닫기</button>
+        <button class="btn primary" id="proDownload" hidden><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>결과 PDF 다운로드</button>
+        <button class="btn quiet" id="proDiscard" hidden>결과 닫기</button>
       </section>
     </div>
 
@@ -2019,8 +2027,9 @@ async function loadFiles(fileList){
         color: SWATCH[(docSeq - 1) % SWATCH.length], count: pdf.numPages });
 
       for(let i = 1; i <= pdf.numPages; i++){
-        const canvas = await renderThumb(pdf, i);
-        pages.push({ uid: 'p' + (++uidSeq), docId, srcIndex: i - 1, rotation: 0, canvas });
+        const sourcePage=await pdf.getPage(i),size=sourcePage.getViewport({scale:1});
+        const canvas=null,thumbRatio=size.width/size.height;
+        pages.push({ thumbRatio, uid: 'p' + (++uidSeq), docId, srcIndex: i - 1, rotation: 0, canvas });
         origCount++;
         if(pdf.numPages > 1) busy(true, `${file.name} — ${i}/${pdf.numPages}페이지`);
         progress(i / pdf.numPages * 100);
@@ -2041,11 +2050,11 @@ async function loadFiles(fileList){
   if(typeof commitEditHistory==='function')commitEditHistory(history,'파일 추가');
 }
 
-async function renderThumb(pdf, pageNo){
+async function renderThumb(pdf, pageNo, maxWidth=300){
   const page = await pdf.getPage(pageNo);
   const base = page.getViewport({ scale: 1 });
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const scale = Math.min(300 / base.width, 380 / base.height) * dpr;
+  const scale = Math.min(maxWidth / base.width, maxWidth*380/300 / base.height) * dpr;
   const vp = page.getViewport({ scale });
   const canvas = document.createElement('canvas');
   canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
@@ -2074,6 +2083,7 @@ function render(){
 
   if(previewUid && !pages.some(p => p.uid === previewUid)) previewUid = null;
 
+  if(typeof resetThumbnailObserver==='function')resetThumbnailObserver();
   board.innerHTML = '';
   const frag = document.createDocumentFragment();
   pages.forEach((p, idx) => frag.appendChild(makeCard(p, idx)));
@@ -2131,6 +2141,8 @@ function syncCounts(){
   const stat2 = $('infoMobile').querySelectorAll('.stat-row b')[2];
   if(stat2) stat2.textContent = n;
   if(typeof syncProState === 'function') syncProState();
+  if(typeof syncPrivacy==='function')syncPrivacy();
+  if(typeof scheduleCompressionDiagnosis==='function')scheduleCompressionDiagnosis();
 }
 
 // 하단 액션바가 가리는 높이를 CSS 변수로 알려 미리보기 맞춤 배율이 어긋나지 않게 한다
@@ -2163,11 +2175,14 @@ function makeCard(p, idx){
   // current markup over it in the same fitted page coordinates in both modes.
   const thumb=document.createElement('div');thumb.className='page-thumbnail';
   const c=document.createElement('canvas'),swap=p.rotation%180;
+  if(p.canvas){
   c.width=swap?p.canvas.height:p.canvas.width;c.height=swap?p.canvas.width:p.canvas.height;
   const ctx=c.getContext('2d');ctx.translate(c.width/2,c.height/2);ctx.rotate(p.rotation*Math.PI/180);ctx.drawImage(p.canvas,-p.canvas.width/2,-p.canvas.height/2);
+  }else c.width=c.height=1;
   const overlay=document.createElementNS(SVGNS,'svg');overlay.setAttribute('class','thumbnail-markup');overlay.setAttribute('viewBox',`0 0 ${c.width} ${c.height}`);overlay.setAttribute('aria-hidden','true');
   thumb.append(c,overlay);el.querySelector('.sheet').appendChild(thumb);
   p.el = el;
+  if(typeof observeThumbnail==='function')observeThumbnail(p);
   syncPageThumbnail(p);
   if(p.uid === previewUid) el.classList.add('previewing');
 
@@ -2376,6 +2391,7 @@ function annoToSVG(a, w, h){
     el.setAttribute('x', Math.min(x, x+bw)); el.setAttribute('y', Math.min(y, y+bh));
     el.setAttribute('width', Math.abs(bw)); el.setAttribute('height', Math.abs(bh));
   }
+  if(a.shape==='redaction')a={...a,fill:'#111111',opacity:1,stroke:'none',lineWidth:0};
   el.setAttribute('fill', a.fill || 'none');
   el.setAttribute('fill-opacity', a.fill ? a.opacity : 0);
   el.setAttribute('stroke', a.stroke);
@@ -2961,16 +2977,18 @@ async function embedStamp(outDoc, st, cache){
   return emb;
 }
 
-async function bakeAnnots(outDoc, pg, p, imgCache){
+async function bakeAnnots(outDoc, pg, p, imgCache, signal){
   const pjPage = await docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex + 1);
   const R = (pjPage.getViewport({ scale:1 }).rotation + p.rotation) % 360;
   const vp = pjPage.getViewport({ scale:1, rotation:R });   // 표시공간(회전 반영) 치수
 
-  for(const a of p.annots){
+  if(p.annots.some(a=>a.shape==='redaction'))await PDFPrivacy.preparePage(outDoc,pg,pjPage,signal);
+  for(const a of [...p.annots.filter(a=>a.shape!=='redaction'),...p.annots.filter(a=>a.shape==='redaction')]){
     const dx = a.nx*vp.width, dy = a.ny*vp.height, dw = a.nw*vp.width, dh = a.nh*vp.height;
     const cs = [[dx,dy],[dx+dw,dy],[dx+dw,dy+dh],[dx,dy+dh]].map(([x,y]) => vp.convertToPdfPoint(x,y));
     const xs = cs.map(c => c[0]), ys = cs.map(c => c[1]);
     const X = Math.min(...xs), Y = Math.min(...ys), W = Math.max(...xs)-X, H = Math.max(...ys)-Y;
+    if(a.shape==='redaction'){if(W>0&&H>0)pg.drawRectangle({x:X,y:Y,width:W,height:H,color:rgb(0,0,0),opacity:1,borderWidth:0});continue;}
     if(W < 1 || H < 1) continue;
     if(a.shape==='text'){await PDFMarkupText.bake(outDoc,pg,a,vp,R,imgCache);continue;}
     if(a.shape==='highlight'){
@@ -3023,9 +3041,10 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
   signal?.throwIfAborted();
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))throw new Error('텍스트 입력을 먼저 완료해 주세요.');
   const first = list.length && docs.get(list[0].docId);
-  const complete = first && list.length === first.count && list.every((p,i)=>p.docId===list[0].docId && p.srcIndex===i);
+  const complete = first && list.length === first.count && list.every(p=>p.docId===list[0].docId) && new Set(list.map(p=>p.srcIndex)).size===first.count;
   // Keep catalog-level forms/bookmarks when the complete source remains intact.
   const out = complete ? await PDFDocument.load(first.libBytes) : await PDFDocument.create();
+  if(complete&&list.some((p,i)=>p.srcIndex!==i)){const originalPages=out.getPages().slice();while(out.getPageCount())out.removePage(0);for(const p of list)out.addPage(originalPages[p.srcIndex]);}
   const imgCache = new Map(), copied = new Map();
   if(!complete){
     const need = new Map();
@@ -3044,7 +3063,7 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     cursor.set(p.docId,i+1);
     const pg=complete ? out.getPage(n) : copied.get(p.docId)[i];
     if(p.rotation) pg.setRotation(degrees((pg.getRotation().angle+p.rotation)%360));
-    if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache);
+    if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache,signal);
     if(!complete) out.addPage(pg);
     if(onProgress){onProgress(n+1,list.length);await idle();}
   }
@@ -3739,7 +3758,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 5.1.2">v5.1.2</span>
+<span class="app-version" aria-label="버전 5.2.0">v5.2.0</span>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -11699,6 +11718,154 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   };
 })();
 </script>
+<script id="thumbnail-cache">
+/* Keep visible thumbnails plus a small LRU. Document metadata stays available. */
+let thumbObserver=null,thumbQueue=[],thumbRunning=false;
+const thumbLRU=new Map(),thumbVisible=new Set(),THUMB_LIMIT=24;
+function resetThumbnailObserver(){thumbObserver?.disconnect();thumbVisible.clear();thumbQueue=[];trimThumbnails();}
+function releaseThumbnail(p){if(p.canvas){p.canvas.width=p.canvas.height=0;p.canvas=null;}const c=p.el?.querySelector('.page-thumbnail canvas');if(c)c.width=c.height=1;thumbLRU.delete(p);}
+function trimThumbnails(){for(const [p]of thumbLRU){if(!pages.includes(p)||thumbLRU.size>THUMB_LIMIT&&!thumbVisible.has(p))releaseThumbnail(p);}}
+function paintThumbnail(p){
+  const canvas=p.el?.querySelector('.page-thumbnail canvas');if(!canvas||!p.canvas)return;
+  const swap=p.rotation%180;canvas.width=swap?p.canvas.height:p.canvas.width;canvas.height=swap?p.canvas.width:p.canvas.height;
+  const ctx=canvas.getContext('2d');ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(p.rotation*Math.PI/180);ctx.drawImage(p.canvas,-p.canvas.width/2,-p.canvas.height/2);
+  const overlay=p.el.querySelector('.thumbnail-markup');overlay.setAttribute('viewBox',`0 0 ${canvas.width} ${canvas.height}`);thumbnailSignatures.delete(overlay);syncPageThumbnail(p);p.el.classList.remove('thumb-placeholder');
+  thumbLRU.delete(p);thumbLRU.set(p,true);trimThumbnails();
+}
+async function drainThumbnails(){
+  if(thumbRunning)return;thumbRunning=true;
+  try{while(thumbQueue.length){const p=thumbQueue.shift();if(!pages.includes(p)||!thumbVisible.has(p))continue;
+    try{if(!p.canvas){const source=docs.get(p.docId);if(!source)continue;const c=await renderThumb(source.pdfjsDoc,p.srcIndex+1,Math.min(300,Math.max(56,p.el.getBoundingClientRect().width)));if(!pages.includes(p)){c.width=c.height=0;continue;}p.canvas=c;}paintThumbnail(p);}catch(_){p.el?.classList.add('thumb-placeholder');}
+    await idle();
+  }}finally{thumbRunning=false;trimThumbnails();}
+}
+function observeThumbnail(p){
+  p.el.classList.add('thumb-placeholder');const thumb=p.el.querySelector('.page-thumbnail');const ratio=p.thumbRatio||.7071;thumb.style.aspectRatio=String(p.rotation%180?1/ratio:ratio);
+  if(p.canvas)paintThumbnail(p);
+  if(typeof IntersectionObserver==='undefined'){thumbVisible.add(p);thumbQueue.push(p);void drainThumbnails();return;}
+  if(!thumbObserver)thumbObserver=new IntersectionObserver(entries=>{for(const e of entries){const page=pages.find(p=>p.el===e.target);if(!page)continue;if(e.isIntersecting){thumbVisible.add(page);if(page.canvas)paintThumbnail(page);else if(!thumbQueue.includes(page))thumbQueue.push(page);}else thumbVisible.delete(page);}trimThumbnails();void drainThumbnails();},{rootMargin:'240px'});
+  thumbObserver.observe(p.el);
+}
+</script>
+<script id="document-integrity">
+/* Read-only preflight. PDF signatures are detected, never claimed to be verified. */
+(function(root){
+  'use strict';
+  function inspect(doc){
+    const P=root.PDFLib,N=P.PDFName.of,seen=new Set();
+    const report={signatures:0,forms:0,bookmarks:0,attachments:0,actions:0,metadata:false};
+    const resolve=v=>v instanceof P.PDFRef?doc.context.lookup(v):v;
+    function visit(value){
+      const v=resolve(value);if(!v||seen.has(v))return;seen.add(v);
+      if(v instanceof P.PDFArray){for(let i=0;i<v.size();i++)visit(v.get(i));return;}
+      const d=v instanceof P.PDFRawStream?v.dict:v;if(!(d instanceof P.PDFDict))return;
+      if(String(d.get(N('FT')))==='/Sig'||d.has(N('ByteRange')))report.signatures++;
+      if(String(d.get(N('Subtype')))==='/Widget')report.forms++;
+      if(d.has(N('Title'))&&(d.has(N('Dest'))||d.has(N('A'))))report.bookmarks++;
+      if(String(d.get(N('Type')))==='/Filespec'||String(d.get(N('Subtype')))==='/FileAttachment')report.attachments++;
+      if(d.has(N('JS'))||['/JavaScript','/Launch','/SubmitForm','/ImportData'].includes(String(d.get(N('S')))))report.actions++;
+      for(const [,child]of d.entries())visit(child);
+    }
+    visit(doc.catalog);report.metadata=doc.catalog.has(N('Metadata'))||!!doc.context.trailerInfo.Info;
+    return report;
+  }
+  function warnings(report,{restructured=false,redacted=false}={}){
+    const result=[];
+    if(report.signatures)result.push('전자서명이 포함되어 있습니다. 편집본은 기존 서명의 유효성을 유지하지 못합니다. 원본을 별도로 보관하세요.');
+    if(restructured&&(report.forms||report.bookmarks))result.push('페이지 삭제·병합 시 입력 양식 또는 북마크가 유지되지 않을 수 있습니다. 저장 후 확인하세요.');
+    if(redacted)result.push('개인정보를 영구 삭제하기 위해 전체 문서를 이미지 PDF로 저장합니다. 검색·복사·입력 양식·링크와 첨부파일은 제거됩니다.');
+    return result;
+  }
+  root.PDFDocumentIntegrity={inspect,warnings};
+  if(typeof module!=='undefined')module.exports=root.PDFDocumentIntegrity;
+})(globalThis);
+</script>
+<script id="privacy-export">
+/* A private export starts a NEW document and imports only burned-in page pixels.
+   Never copy source PDF objects, hidden OCR, annotations, metadata or attachments. */
+(function(root){
+  'use strict';
+  const isMasked=pages=>pages.some(p=>p.annots?.some(a=>a.shape==='redaction'));
+  async function preparePage(doc,target,source,signal){
+    signal?.throwIfAborted();const base=source.getViewport({scale:1,rotation:0});
+    const scale=Math.min(200/72,Math.sqrt(12000000/(base.width*base.height)),12000/Math.max(base.width,base.height));
+    const viewport=source.getViewport({scale,rotation:0}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+    let render;const abort=()=>render?.cancel();
+    try{
+      render=source.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport,background:'white',intent:'print'});signal?.addEventListener('abort',abort,{once:true});await render.promise;signal?.throwIfAborted();
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('마스킹 페이지를 준비하지 못했습니다.');
+      const image=await doc.embedPng(await blob.arrayBuffer()),P=PDFLib,N=P.PDFName.of,box=source.view;
+      // Flatten widgets BEFORE drawing masks: an annotation appearance must never
+      // be painted over a mask by the PDF viewer during the final render.
+      target.node.set(N('Contents'),doc.context.obj([]));target.node.set(N('Resources'),doc.context.obj({}));target.node.set(N('Annots'),doc.context.obj([]));
+      target.drawImage(image,{x:box[0],y:box[1],width:box[2]-box[0],height:box[3]-box[1]});
+    }finally{signal?.removeEventListener('abort',abort);canvas.width=canvas.height=0;}
+  }
+  async function flatten(doc,{signal,docOptions={},onProgress,dpi=200}={}){
+    const check=()=>signal?.throwIfAborted();check();
+    const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
+    const task=pdfjsLib.getDocument({data:bytes,...docOptions}),output=await PDFLib.PDFDocument.create();
+    try{
+      const pdf=await task.promise;check();
+      for(let n=1;n<=pdf.numPages;n++){
+        check();const source=await pdf.getPage(n),base=source.getViewport({scale:1});
+        const scale=Math.min(dpi/72,Math.sqrt(12000000/(base.width*base.height)),12000/Math.max(base.width,base.height));
+        const vp=source.getViewport({scale}),canvas=document.createElement('canvas');
+        canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);let render;
+        const abort=()=>render?.cancel();
+        try{
+          render=source.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white',intent:'print'});
+          signal?.addEventListener('abort',abort,{once:true});await render.promise;check();
+          const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));check();
+          if(!blob)throw Error('개인정보 마스킹 이미지를 만들지 못했습니다.');
+          const image=await output.embedPng(await blob.arrayBuffer());check();
+          const unit=source.userUnit||1,page=output.addPage([base.width*unit,base.height*unit]);
+          page.drawImage(image,{x:0,y:0,width:page.getWidth(),height:page.getHeight()});
+        }finally{signal?.removeEventListener('abort',abort);canvas.width=canvas.height=0;source.cleanup();}
+        onProgress?.(n,pdf.numPages);await new Promise(r=>setTimeout(r,0));
+      }
+      // PDF-lib's default producer/dates are not source document metadata.
+      output.setTitle('');output.setAuthor('');output.setSubject('');output.setKeywords([]);
+      return output;
+    }finally{await task.destroy();}
+  }
+  root.PDFPrivacy={isMasked,flatten,preparePage};
+  if(typeof module!=='undefined')module.exports={isMasked};
+})(globalThis);
+</script>
+<script id="ocr-page-policy">
+/* Decide locally whether OCR should fill missing text or replace a text layer. */
+(function(root){
+  'use strict';
+  function textBoxes(items,viewport){
+    const t=viewport.transform;
+    return items.filter(i=>i.str?.trim()&&i.transform).map(i=>{
+      const m=i.transform,x=t[0]*m[4]+t[2]*m[5]+t[4],y=t[1]*m[4]+t[3]*m[5]+t[5];
+      const height=Math.max(1,Math.hypot(m[2],m[3])*viewport.scale),width=Math.max(1,i.width*viewport.scale);
+      const angle=Math.atan2(t[1]*m[0]+t[3]*m[1],t[0]*m[0]+t[2]*m[1]);
+      return {x,y,width,height,angle};
+    });
+  }
+  function decide({items=[],hasImages=false,force=false}={}){
+    const count=items.reduce((n,i)=>n+(i.str?.trim().length||0),0);
+    if(force)return {action:'recognize',preserveExisting:false};
+    if(!count)return {action:'recognize',preserveExisting:false};
+    // A page number or header never proves that a scan body is searchable.
+    if(hasImages)return {action:'fill-gaps',preserveExisting:true};
+    return {action:'skip',preserveExisting:true};
+  }
+  function coverExisting(context,items,viewport){
+    context.save();context.fillStyle='#fff';
+    for(const box of textBoxes(items,viewport)){
+      context.save();context.translate(box.x,box.y);context.rotate(box.angle);
+      context.fillRect(-1,-box.height*1.05-1,box.width+2,box.height*1.35+2);context.restore();
+    }
+    context.restore();
+  }
+  root.PDFOCRPolicy={decide,textBoxes,coverExisting};
+  if(typeof module!=='undefined')module.exports=root.PDFOCRPolicy;
+})(globalThis);
+</script>
 <script id="pro-tesseract-assets">
 /* Web-only public engine assets. No document is passed to this loader. */
 (() => {
@@ -12126,6 +12293,36 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     }
   }
 
+  async function analyzeDocument(doc){
+    const lib=root.PDFLib;if(doc.flush)await doc.flush();const masks=maskImages(doc,lib);
+    const result={images:0,eligible:0,totalBytes:0,eligibleBytes:0,reasons:{}};
+    for(const [,stream]of doc.context.enumerateIndirectObjects()){
+      if(!(stream instanceof lib.PDFRawStream)||nameValue(pdfValue(stream.dict,'Subtype',lib))!=='/Image')continue;
+      result.images++;const size=stream.getContents().length;result.totalBytes+=size;
+      try{if(masks.has(stream))throw failure('maskSource');imageSpec(stream,lib);result.eligible++;result.eligibleBytes+=size;}
+      catch(e){const key=e.reasonCode||'decodeFailed';result.reasons[key]=(result.reasons[key]||0)+1;}
+    }
+    return result;
+  }
+  async function deduplicateImages(doc,signal){
+    const lib=root.PDFLib,groups=new Map(),aliases=new Map();let saved=0;
+    for(const [ref,stream]of doc.context.enumerateIndirectObjects()){
+      abortIfNeeded(signal);if(!(stream instanceof lib.PDFRawStream)||nameValue(pdfValue(stream.dict,'Subtype',lib))!=='/Image')continue;
+      const data=stream.getContents(),key=stream.dict.toString()+'|'+data.length,list=groups.get(key)||[];
+      const prior=list.find(item=>item.data.length===data.length&&item.data.every((b,i)=>b===data[i]));
+      if(prior){aliases.set(ref,prior.ref);saved+=data.length;}else{list.push({ref,data});groups.set(key,list);}await pause();
+    }
+    if(!aliases.size)return {count:0,bytes:0};
+    const seen=new Set();function replace(object){
+      if(!object||seen.has(object))return;seen.add(object);
+      const dict=object instanceof lib.PDFRawStream?object.dict:object;
+      if(dict instanceof lib.PDFDict){for(const [key,value]of dict.entries()){if(aliases.has(value))dict.set(key,aliases.get(value));else if(!(value instanceof lib.PDFRef))replace(value);}}
+      else if(dict instanceof lib.PDFArray)for(let i=0;i<dict.size();i++){const value=dict.get(i);if(aliases.has(value))dict.set(i,aliases.get(value));else if(!(value instanceof lib.PDFRef))replace(value);}
+    }
+    for(const [,object]of doc.context.enumerateIndirectObjects())replace(object);
+    for(const ref of aliases.keys())doc.context.delete(ref);
+    return {count:aliases.size,bytes:saved};
+  }
   async function processDocument(doc, options, callbacks) {
     const lib = root.PDFLib;
     if (!lib || !doc || !doc.context) throw new Error('PDFLib and a loaded PDFDocument are required.');
@@ -12186,16 +12383,18 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       await pause();
     }
     abortIfNeeded(signal);
+    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
     report.notes = Object.keys(report.skipReasons).map(code => REASONS[code] || REASONS.decodeFailed);
+    if(report.duplicates)report.notes.push('동일한 이미지 '+report.duplicates+'개를 공유하여 중복 데이터를 제거했습니다.');
     if (!images.length) report.notes.push('처리할 이미지가 없습니다. 텍스트와 벡터는 원본을 유지했습니다.');
     if (isEnhanced(settings) && report.changed) report.notes.push('보정 후 용량이 늘어날 수 있습니다. 기존 텍스트·OCR 레이어는 유지했습니다.');
     return report;
   }
 
-  root.PDFPro = Object.freeze({ processDocument, encodeCanvas });
+  root.PDFPro = Object.freeze({ processDocument, encodeCanvas,analyzeDocument,deduplicateImages });
   // Pure helpers are exported only in Node for focused regression tests.
   if (typeof module !== 'undefined' && module.exports) module.exports = {
-    processDocument, normalizeOptions, maskImages, bitonal, imageSpec, inspectJpeg, undoPredictor, inflateBounded
+    processDocument, normalizeOptions, maskImages, bitonal, imageSpec, inspectJpeg, undoPredictor, inflateBounded,analyzeDocument,deduplicateImages
   };
 })(globalThis);
 </script>
@@ -13410,7 +13609,7 @@ function transferProToBasic(request){
    startProWork('Pro 편집 내용을 Basic에 반영하는 중…');
    try{
     pdf=await pdfjsLib.getDocument({data:result.bytes.slice(),...DOC_OPTS}).promise;checkProAbort();
-    const next=[];for(let i=0;i<pages.length;i++){const canvas=await renderThumb(pdf,i+1);checkProAbort();next.push({uid:pages[i].uid,docId:'',srcIndex:i,rotation:0,annots:[],canvas});progress((i+1)/pages.length*100);await idle();}
+    const next=[];for(let i=0;i<pages.length;i++){const page=await pdf.getPage(i+1),size=page.getViewport({scale:1}),canvas=null,thumbRatio=size.width/size.height;checkProAbort();next.push({thumbRatio,uid:pages[i].uid,docId:'',srcIndex:i,rotation:0,annots:[],canvas});progress((i+1)/pages.length*100);await idle();}
     if(request!==proModeRequest)return false;
     const docId='d'+(++docSeq),name=docs.get(pages[0].docId)?.name||'편집본.pdf';for(const p of next)p.docId=docId;
     // Publish only after every page succeeds. Original pages remain in undo history.
@@ -13559,6 +13758,7 @@ function describeProSettings(o,report,deskew,offset){
   return applied.join(' · ')||'원본 설정';
 }
 function proSummary(report,textCheck){
+  if(report.privateExport)return '개인정보 마스킹 적용 · 전체 '+pages.length+'페이지를 이미지 PDF로 저장\n가린 내용과 원본의 숨은 텍스트·첨부파일·메타데이터를 제거했습니다. 검색·복사·링크·입력 양식은 유지되지 않습니다.';
   const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
   if(textCheck.rasterized)lines.push(report.ocr?.pages?'페이지를 이미지로 저장한 뒤 확인한 OCR을 추가했습니다. 원래 텍스트·링크·양식은 유지되지 않습니다.':'페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
   else if(textCheck.characters)lines.push(`${textCheck.excludedItems?'재단 영역 안의':'기존'} 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
@@ -13581,6 +13781,7 @@ function proSummary(report,textCheck){
 async function createProResult({reveal=true}={}){
   if(!pages.length||document.body.classList.contains('is-busy'))return;
   let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
+  if(typeof confirmDocumentExport==='function'&&!await confirmDocumentExport())return;
   proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
   try{
     const edited=await buildEditedDocument();checkProAbort();
@@ -13591,11 +13792,13 @@ async function createProResult({reveal=true}={}){
     // content streams created while baking the user's Basic annotations.
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
+    const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(pages);
+    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.rasterized=true;report.privateExport=true;report.ocr=null;}
     const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
-    const result=PDFProResult.selectOutput(before,candidate,options,original);
+    const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,original);
     const bytes=result.bytes;
     const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
-    const hasPageEffects=!result.retained&&!!(report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
+    const hasPageEffects=!result.retained&&!!(masked||report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
     proResult={bytes,fingerprint,hasPageEffects};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
@@ -14582,7 +14785,7 @@ setProMode(savedProMode);
 </script>
 <script id="pro-tools-ui">
 'use strict';
-// Tesseract remains the default; PP-OCRv5 is a local, explicit choice in both builds.
+// PP-OCRv5 is the default local engine; Tesseract and web-only Vision remain explicit choices.
 const PADDLE_EXPECTED_MODEL='PP-OCRv5/korean-mobile/5c6f574b8e2230adf4287b33e736d71b9fabd28e/det-e6f4fa85/browser-v1';
 const PADDLE_MODEL_CACHE_TAG=PADDLE_EXPECTED_MODEL+'/spotting';
 const OCR_LINE_POSITION_NOTE='줄 단위 위치라 단어 선택 영역은 실제 글자와 다를 수 있습니다. 원본 글꼴을 알 수 없어 내장 글꼴의 문자 폭으로 추정합니다.';
@@ -14594,15 +14797,15 @@ function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='p
 function configureLocalOCR(){
   const paddle=ocrDefaultProvider()==='paddle-v5';
   $('ocrDescription').innerHTML='<strong>'+(paddle?'PP-OCRv5 · 경량 한국어':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
-  $('ocrProcessingNote').textContent=paddle?'한국어·영어를 기기에서 인식합니다. 경량 모델 약 18MB를 사용하며 GPU는 필요하지 않습니다. 인식 후 고급옵션에서 원문과 대조해 수정할 수 있습니다.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
-  if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
+  $('ocrProcessingNote').textContent=paddle?'한국어·영어를 기기에서 인식합니다. 경량 모델 약 18MB를 사용하며 GPU는 필요하지 않습니다. 인식 후 고급옵션에서 원문과 대조해 수정할 수 있습니다.':'한국어와 영어를 기기에서 인식합니다. 기존 텍스트를 유지하면서 스캔 영역을 추가 인식합니다.';
+  if(!ocrRecords.length)$('ocrStatus').textContent='';
   $('ocrLanguage').closest('label').hidden=paddle;
   $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;
   if(ocrDefaultProvider()==='vision'){
     $('ocrDescription').innerHTML='<strong>Google Cloud Vision</strong><br>문서 전용 OCR로 글자와 단어 위치를 인식합니다.';
     $('ocrProcessingNote').textContent='Google 서버에서 처리합니다. 실행 전 문서 전송에 동의해야 하며, 프로젝트 사용량에 따라 요금이 발생할 수 있습니다.';
     $('ocrLayout').closest('label').hidden=true;$('ocrLayout').disabled=true;
-    if(!ocrRecords.length)$('ocrStatus').textContent='최신 모델 채널 · 실행 전에 서버 연결을 확인합니다.';
+    if(!ocrRecords.length)$('ocrStatus').textContent='Google 서버로 전송 · 실행 전 동의 필요';
   }
 }
 async function startPaddleSession(language,signal,onProgress,layout){
@@ -14654,7 +14857,7 @@ function currentStamp(){
   return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:stampAsset.targets.slice(),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
-function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
+function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
 function readToolOptions(o,strict=false){
   if(strict&&typeof reviewStampPending==='function'&&reviewStampPending())throw new Error('스탬프 문구·색상을 반영하고 있습니다. 잠시 후 다시 시도하세요.');
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
@@ -14798,7 +15001,10 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         // Preserve the existing searchable-text skip policy without serializing/reopening the PDF.
         // Shared PDF.js source reads can be cancelled without destroying the document being edited.
         const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
-        const existing=p.annots?.some(a=>a.shape==='text'&&a.text?.trim())||(await waitForOCR(source.getTextContent(),proAbort.signal)).items.some(t=>t.str?.trim());
+        const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
+        const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn))});
+        const existing=policy.action==='skip';
         checkProAbort();update(.05);
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
@@ -14808,6 +15014,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
+          if(policy.preserveExisting){const content=await waitForOCR(page.getTextContent(),workSignal);PDFOCRPolicy.coverExisting(canvas.getContext('2d'),content.items,vp);}
           update(.12);
           if(!engine){
             const recognitionSignal=proAbort.signal;
@@ -15295,39 +15502,6 @@ configureLocalOCR();syncToolsState();
   syncDeskewControls();
 })();
 </script>
-<script id="pro-vision-unlock">
-'use strict';
-// This is an Easter egg, intentionally not an authorization boundary.
-let visionClicks=0,visionLastClick=0,visionUnlocked=false;
-ocrActionIds.push('visionRun');
-$('modePro').addEventListener('click',()=>{
-  if(visionUnlocked||ocrRunning||proAbort)return;
-  const now=Date.now();visionClicks=now-visionLastClick>2000?1:visionClicks+1;visionLastClick=now;
-  if(visionClicks<8)return;
-  visionClicks=0;$('visionUnlockError').textContent='';$('visionUnlockPassword').value='';
-  if(!$('visionUnlockDialog').open)$('visionUnlockDialog').showModal();
-});
-$('visionUnlockCancel').onclick=()=>$('visionUnlockDialog').close();
-$('visionUnlockDialog').addEventListener('close',()=>{$('visionUnlockPassword').value='';$('visionUnlockError').textContent='';visionClicks=0;});
-$('visionUnlockPassword').addEventListener('input',()=>{$('visionUnlockError').textContent='';});
-$('visionUnlockForm').addEventListener('submit',event=>{
-  event.preventDefault();
-  if($('visionUnlockPassword').value!=='rltnfchlrh'){
-    $('visionUnlockError').textContent='비밀번호가 맞지 않습니다.';$('visionUnlockPassword').select();return;
-  }
-  if(ocrRunning||proAbort){$('visionUnlockError').textContent='현재 작업이 끝난 뒤 다시 시도하세요.';return;}
-  visionUnlocked=true;
-  const option=document.createElement('option');option.value='vision';option.textContent='Google Vision · 클라우드';$('ocrProvider').append(option);
-  $('visionTools').hidden=false;$('ocrSection').open=true;$('ocrProvider').value='vision';configureLocalOCR();
-  $('visionUnlockDialog').close();syncToolsState();$('visionRun').scrollIntoView({block:'nearest',behavior:'smooth'});
-  toast('Google Vision이 활성화되었습니다.');
-});
-$('visionRun').onclick=()=>{
-  if(!visionUnlocked||ocrRunning||proAbort)return;
-  $('ocrProvider').value='vision';configureLocalOCR();void requestVisionOCR(false);
-};
-syncToolsState();
-</script>
 <script id="pro-vision-ui">
 'use strict';
 let visionCheck=null,visionPending=null,visionReady=false;
@@ -15337,7 +15511,7 @@ async function requestVisionOCR(sample){
   let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
   visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
   visionReady=false;$('visionConsent').checked=false;$('visionConfirm').disabled=true;
-  $('visionConfirmScope').textContent=`${list.length}페이지를 확인합니다. 검색 가능한 텍스트가 있거나 이미 인식한 페이지는 전송하지 않습니다.`;
+  $('visionConfirmScope').textContent=`${list.length}페이지를 확인합니다. 이미 완료한 페이지는 재사용합니다. 혼합 문서는 기존 텍스트 영역을 제외하고 전송합니다.`;
   $('visionAvailability').textContent='서버 연결을 확인하는 중…';$('visionDialog').showModal();
   const ctrl=new AbortController();visionCheck?.abort();visionCheck=ctrl;const timer=setTimeout(()=>ctrl.abort(),10000);
   try{const status=await PDFVision.available(ctrl.signal);if(visionCheck!==ctrl||!$('visionDialog').open)return;
@@ -16018,9 +16192,10 @@ async function prepareBasicSave(state){
   $('basicSaveStatus').textContent='PDF 준비 중…';$('basicSaveDetail').textContent='모든 페이지와 편집 내용을 포함합니다.';syncBasicSaveAction();
   const active=()=>basicSaveState===state&&!state.controller.signal.aborted;
   try{
-    const out=await buildEditedDocument(state.pages,{signal:state.controller.signal,onProgress:(done,total)=>{if(active())$('basicSaveDetail').textContent=done+' / '+total+'페이지 반영';}});
+    let out=await buildEditedDocument(state.pages,{signal:state.controller.signal,onProgress:(done,total)=>{if(active())$('basicSaveDetail').textContent=done+' / '+total+'페이지 반영';}});
     if(!active())return;
     $('basicSaveStatus').textContent='글꼴과 편집 내용을 저장하는 중…';await idle();
+    out=await finalizePrivateExport(out,state.pages,{signal:state.controller.signal,onProgress:(n,total)=>{if(active())$('basicSaveDetail').textContent='개인정보 영구 삭제 '+n+' / '+total+'페이지';}});
     const bytes=await out.save({useObjectStreams:true,updateFieldAppearances:false});
     if(!active())return;
     state.bytes=bytes;state.phase='ready';
@@ -16033,8 +16208,9 @@ async function prepareBasicSave(state){
     console.error(e);
   }finally{if(active())syncBasicSaveAction();}
 }
-function openBasicSaveDialog(){
+async function openBasicSaveDialog(){
   const dialog=$('basicSaveDialog');if(dialog.open)return basicSaveState?.pending;
+  if(!await confirmDocumentExport())return;
   const list=pages.map(p=>({...p,annots:structuredClone(p.annots||[])}));
   const textCount=list.reduce((n,p)=>n+p.annots.filter(a=>a.shape==='text').length,0);
   const state={pages:list,controller:new AbortController(),phase:'preparing',bytes:null,pending:null};basicSaveState=state;
@@ -16220,6 +16396,111 @@ document.addEventListener('keydown',e=>{
 },true);
 syncHistoryControls();
 </script>
+<script id="privacy-ui">
+'use strict';
+let privacyPage=null,privacyGesture=null,privacySelection=null,privacyRenderToken=0,privacyRenderTask=null;
+const documentChecks=new WeakMap();
+let documentConfirmationPending=false;
+async function documentPreflight(list=pages){
+  const reports=[];
+  for(const id of new Set(list.map(p=>p.docId))){
+    const source=docs.get(id);if(!source)continue;
+    let result=documentChecks.get(source);
+    if(!result){result=PDFDocumentIntegrity.inspect(await PDFLib.PDFDocument.load(source.libBytes));documentChecks.set(source,result);}
+    reports.push(result);
+  }
+  const combined=reports.reduce((a,r)=>{for(const k of ['signatures','forms','bookmarks','attachments','actions'])a[k]=(a[k]||0)+r[k];return a;},{});
+  const same=list.length&&list.every(p=>p.docId===list[0].docId),source=same&&docs.get(list[0].docId);
+  return PDFDocumentIntegrity.warnings(combined,{redacted:PDFPrivacy.isMasked(list),restructured:!same||list.length!==source.count||new Set(list.map(p=>p.srcIndex)).size!==source.count});
+}
+async function confirmDocumentExport(list=pages){
+  if(documentConfirmationPending)return false;
+  documentConfirmationPending=true;
+  try{
+  const warnings=await documentPreflight(list);if(!warnings.length)return true;
+  const dialog=$('documentCheckDialog'),host=$('documentCheckWarnings');host.replaceChildren();
+  for(const warning of warnings){const p=document.createElement('p');p.textContent=warning;host.append(p);}
+  $('documentCheckAccept').checked=false;$('documentCheckContinue').disabled=true;
+  return await new Promise(resolve=>{
+    let accepted=false;const close=()=>{dialog.removeEventListener('close',close);resolve(accepted);};
+    dialog.addEventListener('close',close);$('documentCheckContinue').onclick=()=>{if($('documentCheckAccept').checked){accepted=true;dialog.close();}};
+    $('documentCheckCancel').onclick=()=>dialog.close();dialog.showModal();
+  });
+  }catch(e){console.error(e);toast('문서 구조를 확인하지 못했습니다. 다시 시도해 주세요.',true);return false;}
+  finally{documentConfirmationPending=false;}
+}
+$('documentCheckAccept').onchange=()=>{$('documentCheckContinue').disabled=!$('documentCheckAccept').checked;};
+async function finalizePrivateExport(doc,list,callbacks={}){return PDFPrivacy.isMasked(list)?PDFPrivacy.flatten(doc,{...callbacks,docOptions:DOC_OPTS}):doc;}
+function syncPrivacy(){
+  const count=pages.reduce((n,p)=>n+(p.annots||[]).filter(a=>a.shape==='redaction').length,0);
+  $('privacyOpen').disabled=!pages.length||!!proAbort;$('privacySummary').textContent=count?count+'개 영역':'사용 안 함';
+  $('privacySection').classList.toggle('has-settings',!!count);$('privacyStatus').textContent=count?'저장 시 마스킹 영역을 영구 삭제합니다.':'';
+}
+function renderPrivacyOverlay(){
+  const svg=$('privacyOverlay');svg.replaceChildren();if(!privacyPage)return;
+  for(const a of privacyPage.annots||[]){if(a.shape!=='redaction')continue;
+    const rect=document.createElementNS(SVGNS,'rect');rect.setAttribute('x',a.nx*1000);rect.setAttribute('y',a.ny*1000);rect.setAttribute('width',a.nw*1000);rect.setAttribute('height',a.nh*1000);rect.setAttribute('fill','#111');rect.dataset.maskId=a.id;
+    if(a.id===privacySelection){rect.setAttribute('stroke','#009b8a');rect.setAttribute('stroke-width','3');}svg.append(rect);
+    if(a.id===privacySelection){const bounds=svg.getBoundingClientRect();for(const [x,y,pos]of [[a.nx,a.ny,'nw'],[a.nx+a.nw,a.ny,'ne'],[a.nx+a.nw,a.ny+a.nh,'se'],[a.nx,a.ny+a.nh,'sw']])for(const size of [44,10]){const w=size*1000/Math.max(1,bounds.width),h=size*1000/Math.max(1,bounds.height),handle=document.createElementNS(SVGNS,'rect');handle.setAttribute('x',x*1000-w/2);handle.setAttribute('y',y*1000-h/2);handle.setAttribute('width',w);handle.setAttribute('height',h);handle.setAttribute('fill',size===44?'transparent':'#fff');if(size===10)handle.setAttribute('stroke','#008779');handle.dataset.maskHandle=pos;svg.append(handle);}}
+  }
+  $('privacyDelete').disabled=!privacySelection;$('privacyEditStatus').textContent=(privacyPage.annots||[]).filter(a=>a.shape==='redaction').length+'개 영역 · 원본 파일은 유지됩니다';syncPrivacy();
+}
+async function showPrivacyPage(p){
+  finishPrivacyGesture(true);
+  const token=++privacyRenderToken;privacyRenderTask?.cancel();privacyPage=p;privacySelection=null;
+  const index=pages.indexOf(p);$('privacyPageLabel').textContent=(index+1)+' / '+pages.length+'페이지';$('privacyPrev').disabled=index<=0;$('privacyNext').disabled=index>=pages.length-1;
+  $('privacyEditStatus').textContent='페이지 준비 중…';$('privacyOverlay').style.pointerEvents='none';let task;
+  try{
+    const doc=await buildEditedDocument([{...p,annots:(p.annots||[]).filter(a=>a.shape!=='redaction')}]);if(token!==privacyRenderToken)return;
+    task=pdfjsLib.getDocument({data:await doc.save(),...DOC_OPTS});const pdf=await task.promise,page=await pdf.getPage(1),base=page.getViewport({scale:1});
+    const vp=page.getViewport({scale:Math.min(2,1600/Math.max(base.width,base.height))});if(token!==privacyRenderToken)return;
+    const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);canvas.id='privacyCanvas';
+    privacyRenderTask=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'});await privacyRenderTask.promise;if(token!==privacyRenderToken)return;
+    const old=$('privacyCanvas');old.replaceWith(canvas);old.width=old.height=0;$('privacyPaper').style.aspectRatio=base.width+'/'+base.height;
+    $('privacyOverlay').setAttribute('viewBox','0 0 1000 1000');$('privacyOverlay').setAttribute('preserveAspectRatio','none');renderPrivacyOverlay();
+  }catch(e){if(token===privacyRenderToken&&e.name!=='RenderingCancelledException')$('privacyEditStatus').textContent='페이지를 열지 못했습니다. 다시 시도해 주세요.';}
+  finally{if(task)await task.destroy();if(token===privacyRenderToken)$('privacyOverlay').style.pointerEvents='';}
+}
+$('privacyOpen').onclick=()=>{if(!pages.length)return;$('privacyDialog').showModal();void showPrivacyPage(pages.find(p=>p.uid===previewUid)||pages[0]);};
+$('privacyClose').onclick=$('privacyDone').onclick=()=>$('privacyDialog').close();
+$('privacyDialog').addEventListener('close',()=>{finishPrivacyGesture(true);privacyRenderToken++;privacyRenderTask?.cancel();$('privacyCanvas').width=$('privacyCanvas').height=0;renderAnnots();toolsChanged();syncCounts();});
+for(const [id,step]of [['privacyPrev',-1],['privacyNext',1]])$(id).onclick=()=>{const p=pages[pages.indexOf(privacyPage)+step];if(p)void showPrivacyPage(p);};
+const privacyPoint=e=>{const r=$('privacyOverlay').getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};};
+$('privacyOverlay').addEventListener('pointerdown',e=>{
+  if(!privacyPage||e.button>0)return;const point=privacyPoint(e),handle=e.target.dataset.maskHandle,hit=e.target.dataset.maskId;
+  if(hit||handle){privacySelection=hit||privacySelection;const a=privacyPage.annots.find(a=>a.id===privacySelection);if(!a)return;e.preventDefault();privacyGesture={a,point,mode:handle?'resize':'move',handle,snapshot:{...a},before:captureEditHistory(),pointer:e.pointerId,page:privacyPage};$('privacyOverlay').setPointerCapture(e.pointerId);renderPrivacyOverlay();return;}
+  e.preventDefault();const a={id:'a'+(++annoUidSeq),shape:'redaction',nx:point.x,ny:point.y,nw:0,nh:0,fill:'#111111',stroke:'none',lineWidth:0,opacity:1};
+  privacyGesture={a,point,before:captureEditHistory(),pointer:e.pointerId,page:privacyPage};(privacyPage.annots||=[]).push(a);privacySelection=a.id;$('privacyOverlay').setPointerCapture(e.pointerId);renderPrivacyOverlay();
+});
+$('privacyOverlay').addEventListener('pointermove',e=>{const g=privacyGesture;if(!g||g.pointer!==e.pointerId)return;const p=privacyPoint(e);
+  if(g.mode==='move')Object.assign(g.a,{nx:Math.max(0,Math.min(1-g.a.nw,g.snapshot.nx+p.x-g.point.x)),ny:Math.max(0,Math.min(1-g.a.nh,g.snapshot.ny+p.y-g.point.y))});
+  else if(g.mode==='resize'){const s=g.snapshot,x1=g.handle.includes('w')?p.x:s.nx,x2=g.handle.includes('e')?p.x:s.nx+s.nw,y1=g.handle.includes('n')?p.y:s.ny,y2=g.handle.includes('s')?p.y:s.ny+s.nh;Object.assign(g.a,{nx:Math.min(x1,x2),ny:Math.min(y1,y2),nw:Math.abs(x2-x1),nh:Math.abs(y2-y1)});}
+  else Object.assign(g.a,{nx:Math.min(p.x,g.point.x),ny:Math.min(p.y,g.point.y),nw:Math.abs(p.x-g.point.x),nh:Math.abs(p.y-g.point.y)});renderPrivacyOverlay();});
+function finishPrivacyGesture(cancel){const g=privacyGesture;if(!g)return;privacyGesture=null;if(cancel||g.a.nw<.003||g.a.nh<.003){if(g.snapshot)Object.assign(g.a,g.snapshot);else g.page.annots=g.page.annots.filter(a=>a!==g.a);privacySelection=null;}else commitEditHistory(g.before,'개인정보 마스킹');renderPrivacyOverlay();proInvalidate();}
+$('privacyOverlay').addEventListener('pointerup',()=>finishPrivacyGesture(false));$('privacyOverlay').addEventListener('pointercancel',()=>finishPrivacyGesture(true));
+$('privacyDelete').onclick=()=>{if(!privacyPage||!privacySelection)return;const before=captureEditHistory();privacyPage.annots=privacyPage.annots.filter(a=>a.id!==privacySelection);privacySelection=null;commitEditHistory(before,'마스킹 영역 삭제');renderPrivacyOverlay();proInvalidate();};
+$('privacyDialog').addEventListener('keydown',e=>{if(e.key==='Delete'&&!e.target.matches('input,textarea')){e.preventDefault();$('privacyDelete').click();}});
+syncPrivacy();
+</script>
+<script id="compression-diagnosis">
+'use strict';
+let compressionCheckToken=0;
+let compressionSources='';
+function scheduleCompressionDiagnosis(){const key=[...docs.keys()].join(',');if($('compressionSection').open&&key!==compressionSources){compressionSources=key;void diagnoseCompression();}}
+async function diagnoseCompression(){
+  const host=$('compressionDiagnosis'),token=++compressionCheckToken;if(!pages.length){host.textContent='';return;}
+  host.textContent='압축 가능한 이미지 확인 중…';
+  try{
+    let images=0,eligible=0,total=0,bytes=0;
+    for(const id of new Set(pages.map(p=>p.docId))){const source=docs.get(id);if(!source)continue;
+      const report=source.compressionAnalysis||await PDFPro.analyzeDocument(await PDFLib.PDFDocument.load(source.libBytes));source.compressionAnalysis=report;
+      if(token!==compressionCheckToken)return;images+=report.images;eligible+=report.eligible;total+=report.totalBytes;bytes+=report.eligibleBytes;
+    }
+    host.textContent=!images?'이미지가 없는 문서입니다. 이미지 압축으로 줄일 용량이 없습니다.':!eligible?'원본 이미지 '+images+'개 · 이 형식은 화질 보존 압축 대상이 아닙니다.':`원본 이미지 ${images}개 중 ${eligible}개 압축 가능 · 이미지 데이터의 ${Math.round(bytes/Math.max(1,total)*100)}%`;
+  }catch(_){if(token===compressionCheckToken)host.textContent='압축 가능 범위는 결과를 만들 때 확인합니다.';}
+}
+$('compressionSection').addEventListener('toggle',()=>{if($('compressionSection').open)void diagnoseCompression();});
+</script>
 <script id="print-ui">
 /* Print the edited PDF with the browser's PDF viewer, preserving vector output.
    Only one local PDF/frame is retained; no upload or temporary disk file. */
@@ -16293,10 +16574,12 @@ async function printCurrentDocument(){
       if(!active()||!result)return;
       bytes=result.bytes;
     }else{
+      if(!await confirmDocumentExport())return;
       startProWork('인쇄할 편집본을 준비하는 중…');job.controller=proAbort;
       try{
-        const doc=await buildEditedDocument(pages,{signal:job.controller.signal,onProgress:(done,total)=>{busy(true,`인쇄 준비 중… ${done}/${total}페이지`);progress(done/total*100);}});
+        let doc=await buildEditedDocument(pages,{signal:job.controller.signal,onProgress:(done,total)=>{busy(true,`인쇄 준비 중… ${done}/${total}페이지`);progress(done/total*100);}});
         job.controller.signal.throwIfAborted();
+        doc=await finalizePrivateExport(doc,pages,{signal:job.controller.signal});
         bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});
       }finally{finishProWork();}
     }
@@ -16322,6 +16605,30 @@ document.addEventListener('keydown',e=>{
   e.preventDefault();e.stopImmediatePropagation();
   if(dialog)printPreparedDocument();else void printCurrentDocument();
 },true);
+</script>
+<script id="ui-help">
+/* Context help: mouse hover, keyboard focus, or touch and hold. No network. */
+(() => {
+  const tooltip=document.createElement('div');tooltip.id='contextHelp';tooltip.className='context-help';tooltip.role='tooltip';tooltip.hidden=true;document.body.append(tooltip);
+  let active=null,timer=null,origin=null;
+  const hide=()=>{clearTimeout(timer);if(active)active.removeAttribute('aria-describedby');active=null;tooltip.hidden=true;};
+  const show=button=>{hide();const text=button.dataset.helpFor.split(' ').map(id=>document.getElementById(id)).filter(source=>source&&!source.hidden).map(source=>source.textContent.trim()).filter(Boolean).join('\n\n');if(!text)return;active=button;tooltip.textContent=text;tooltip.hidden=false;button.setAttribute('aria-describedby',tooltip.id);const r=button.getBoundingClientRect(),w=tooltip.offsetWidth,h=tooltip.offsetHeight;tooltip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left-8))+'px';tooltip.style.top=(r.bottom+h+14<innerHeight?r.bottom+8:Math.max(8,r.top-h-8))+'px';};
+  let seq=0;
+  for(const source of document.querySelectorAll('.pro-hint:not([role]),.pro-panel-head p,.pdf-save-note,.compare-details,.deskew-direction')){
+    if(!source.textContent.trim()||source.closest('.gemini-dialog')||['privacyStatus','ocrConfidence'].includes(source.id))continue;
+    source.id||='help-source-'+(++seq);source.classList.add('help-source');let anchor=source.previousElementSibling;
+    if(anchor?.matches('label'))anchor=anchor.querySelector('span')||anchor;
+    else{const summary=source.closest('details')?.querySelector(':scope > summary');anchor=summary?.querySelector(':scope > span:nth-child(2)')||summary||source.parentElement.querySelector('h2,label')||source.parentElement;}
+    const previous=anchor.querySelector(':scope > .help-dot');if(previous){previous.dataset.helpFor+=' '+source.id;continue;}
+    const button=document.createElement('button');button.type='button';button.className='help-dot';button.textContent='?';button.setAttribute('aria-label','도움말');button.dataset.helpFor=source.id;anchor.append(button);
+    button.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')show(button);});button.addEventListener('pointerleave',hide);
+    button.addEventListener('focus',()=>{if(!matchMedia('(pointer:coarse)').matches)show(button);});button.addEventListener('blur',hide);
+    button.addEventListener('pointerdown',e=>{e.stopPropagation();if(e.pointerType==='touch'){origin={x:e.clientX,y:e.clientY};timer=setTimeout(()=>show(button),320);}});
+    button.addEventListener('pointermove',e=>{if(origin&&Math.hypot(e.clientX-origin.x,e.clientY-origin.y)>8)hide();});
+    button.addEventListener('pointerup',e=>{if(e.pointerType==='touch')hide();origin=null;});button.addEventListener('pointercancel',hide);button.addEventListener('contextmenu',e=>e.preventDefault());button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+  }
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')hide();});window.addEventListener('resize',hide);document.addEventListener('scroll',hide,true);
+})();
 </script>
 <!-- markup-runtime:end -->
 </body>

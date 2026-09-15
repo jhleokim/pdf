@@ -1,0 +1,11 @@
+<details class="pro-section" id="privacySection">
+  <summary><span class="pro-section-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="M8 12h8"/></svg></span><span>개인정보 마스킹<small id="privacySummary">사용 안 함</small></span><svg class="ic pro-chevron"><use href="#i-chev-up"/></svg></summary>
+  <div class="pro-section-body"><button type="button" class="btn" id="privacyOpen" disabled>가릴 영역 지정</button><p class="pro-hint">영역을 드래그해 지정합니다. 저장 시 원래 정보를 제거한 이미지 PDF를 만듭니다. 일반 사각형 주석과 달리 검색 텍스트와 첨부정보도 남기지 않습니다.</p><p id="privacyStatus" role="status" class="pro-hint"></p></div>
+</details>
+<dialog id="privacyDialog" class="privacy-dialog" aria-labelledby="privacyTitle">
+  <header><div><h2 id="privacyTitle">개인정보 마스킹</h2><span id="privacyPageLabel"></span></div><button type="button" id="privacyClose" class="btn quiet icon" aria-label="마스킹 창 닫기">×</button></header>
+  <div class="privacy-toolbar"><div><button type="button" class="btn quiet icon" id="privacyPrev" aria-label="이전 페이지">‹</button><button type="button" class="btn quiet icon" id="privacyNext" aria-label="다음 페이지">›</button></div><span>드래그해서 가릴 영역 지정</span><button type="button" class="btn quiet" id="privacyDelete" disabled>선택 영역 삭제</button></div>
+  <div class="privacy-scroll" id="privacyScroll"><div id="privacyPaper"><canvas id="privacyCanvas"></canvas><svg id="privacyOverlay" aria-label="드래그하여 개인정보 영역 지정"></svg></div></div>
+  <footer><span id="privacyEditStatus" role="status"></span><button type="button" class="btn primary" id="privacyDone">완료</button></footer>
+</dialog>
+<dialog id="documentCheckDialog" class="document-check-dialog" aria-labelledby="documentCheckTitle"><h2 id="documentCheckTitle">저장 전 확인</h2><div id="documentCheckWarnings"></div><label><input type="checkbox" id="documentCheckAccept">변경 사항을 확인했습니다</label><footer><button type="button" class="btn" id="documentCheckCancel">돌아가기</button><button type="button" class="btn primary" id="documentCheckContinue" disabled>계속</button></footer></dialog>
