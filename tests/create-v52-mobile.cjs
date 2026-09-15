@@ -1,0 +1,6 @@
+const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');
+const setup=`(async()=>{await insertBlankPage();await setProMode('pro');$('privacySection').open=true;$('privacyOpen').click();setTimeout(()=>{const d=$('privacyDialog').getBoundingClientRect();parent.document.getElementById('mobileChecks').textContent=JSON.stringify({viewport:innerWidth,dialogWidth:d.width,dialogHeight:d.height,pageScroll:document.documentElement.scrollWidth,blankButton:!!$('mbBlank')&&getComputedStyle($('mbBlank')).display!=='none',helpButtons:document.querySelectorAll('.help-dot').length});},800);})();`;
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('<head>',`<head><meta http-equiv="Content-Security-Policy" content="connect-src blob: data:">`);
+fs.writeFileSync(path.join(root,'v52-mobile-app-check.html'),html.replace('</body>','<script>'+setup+'</script></body>'));
+fs.writeFileSync(path.join(root,'v52-mobile-check.html'),'<!doctype html><html><head><title>Mobile UI check</title></head><body style="margin:0;background:#ddd"><iframe title="390px mobile PDF Studio" src="v52-mobile-app-check.html" style="width:390px;height:844px;border:0;display:block"></iframe><pre id="mobileChecks">Running</pre></body></html>');
+console.log('Created mobile viewport fixture');

@@ -70,10 +70,12 @@ async function printCurrentDocument(){
       if(!active()||!result)return;
       bytes=result.bytes;
     }else{
+      if(!await confirmDocumentExport())return;
       startProWork('인쇄할 편집본을 준비하는 중…');job.controller=proAbort;
       try{
-        const doc=await buildEditedDocument(pages,{signal:job.controller.signal,onProgress:(done,total)=>{busy(true,`인쇄 준비 중… ${done}/${total}페이지`);progress(done/total*100);}});
+        let doc=await buildEditedDocument(pages,{signal:job.controller.signal,onProgress:(done,total)=>{busy(true,`인쇄 준비 중… ${done}/${total}페이지`);progress(done/total*100);}});
         job.controller.signal.throwIfAborted();
+        doc=await finalizePrivateExport(doc,pages,{signal:job.controller.signal});
         bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});
       }finally{finishProWork();}
     }

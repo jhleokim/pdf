@@ -1,5 +1,5 @@
 'use strict';
-// Tesseract remains the default; PP-OCRv5 is a local, explicit choice in both builds.
+// PP-OCRv5 is the default local engine; Tesseract and web-only Vision remain explicit choices.
 const PADDLE_EXPECTED_MODEL='PP-OCRv5/korean-mobile/5c6f574b8e2230adf4287b33e736d71b9fabd28e/det-e6f4fa85/browser-v1';
 const PADDLE_MODEL_CACHE_TAG=PADDLE_EXPECTED_MODEL+'/spotting';
 const OCR_LINE_POSITION_NOTE='줄 단위 위치라 단어 선택 영역은 실제 글자와 다를 수 있습니다. 원본 글꼴을 알 수 없어 내장 글꼴의 문자 폭으로 추정합니다.';
@@ -11,15 +11,15 @@ function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='p
 function configureLocalOCR(){
   const paddle=ocrDefaultProvider()==='paddle-v5';
   $('ocrDescription').innerHTML='<strong>'+(paddle?'PP-OCRv5 · 경량 한국어':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
-  $('ocrProcessingNote').textContent=paddle?'한국어·영어를 기기에서 인식합니다. 경량 모델 약 18MB를 사용하며 GPU는 필요하지 않습니다. 인식 후 고급옵션에서 원문과 대조해 수정할 수 있습니다.':'한국어와 영어를 기기에서 인식합니다. 검색 가능한 텍스트가 있는 페이지는 건너뜁니다.';
-  if(!ocrRecords.length)$('ocrStatus').textContent=paddle?'모델 준비와 인식에 시간이 걸릴 수 있습니다.':globalThis.PDFTesseractLoad?'처음 인식할 때 필요한 엔진 데이터를 준비합니다.':'인식 엔진과 한글·영어 데이터가 포함되어 오프라인에서도 사용할 수 있습니다.';
+  $('ocrProcessingNote').textContent=paddle?'한국어·영어를 기기에서 인식합니다. 경량 모델 약 18MB를 사용하며 GPU는 필요하지 않습니다. 인식 후 고급옵션에서 원문과 대조해 수정할 수 있습니다.':'한국어와 영어를 기기에서 인식합니다. 기존 텍스트를 유지하면서 스캔 영역을 추가 인식합니다.';
+  if(!ocrRecords.length)$('ocrStatus').textContent='';
   $('ocrLanguage').closest('label').hidden=paddle;
   $('ocrLayout').closest('label').hidden=paddle;$('ocrLayout').disabled=paddle;
   if(ocrDefaultProvider()==='vision'){
     $('ocrDescription').innerHTML='<strong>Google Cloud Vision</strong><br>문서 전용 OCR로 글자와 단어 위치를 인식합니다.';
     $('ocrProcessingNote').textContent='Google 서버에서 처리합니다. 실행 전 문서 전송에 동의해야 하며, 프로젝트 사용량에 따라 요금이 발생할 수 있습니다.';
     $('ocrLayout').closest('label').hidden=true;$('ocrLayout').disabled=true;
-    if(!ocrRecords.length)$('ocrStatus').textContent='최신 모델 채널 · 실행 전에 서버 연결을 확인합니다.';
+    if(!ocrRecords.length)$('ocrStatus').textContent='Google 서버로 전송 · 실행 전 동의 필요';
   }
 }
 async function startPaddleSession(language,signal,onProgress,layout){
@@ -71,7 +71,7 @@ function currentStamp(){
   return {...stampAsset,name:$('stampName').value.trim()||'내 도장',scope:$('stampScope').value,targets:stampAsset.targets.slice(),anchor:$('stampAnchor').value,
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
-function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots,o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
+function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
 function readToolOptions(o,strict=false){
   if(strict&&typeof reviewStampPending==='function'&&reviewStampPending())throw new Error('스탬프 문구·색상을 반영하고 있습니다. 잠시 후 다시 시도하세요.');
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
@@ -215,7 +215,10 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         // Preserve the existing searchable-text skip policy without serializing/reopening the PDF.
         // Shared PDF.js source reads can be cancelled without destroying the document being edited.
         const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
-        const existing=p.annots?.some(a=>a.shape==='text'&&a.text?.trim())||(await waitForOCR(source.getTextContent(),proAbort.signal)).items.some(t=>t.str?.trim());
+        const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
+        const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn))});
+        const existing=policy.action==='skip';
         checkProAbort();update(.05);
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
@@ -225,6 +228,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
+          if(policy.preserveExisting){const content=await waitForOCR(page.getTextContent(),workSignal);PDFOCRPolicy.coverExisting(canvas.getContext('2d'),content.items,vp);}
           update(.12);
           if(!engine){
             const recognitionSignal=proAbort.signal;

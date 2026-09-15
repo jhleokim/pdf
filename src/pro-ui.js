@@ -92,7 +92,7 @@ function transferProToBasic(request){
    startProWork('Pro 편집 내용을 Basic에 반영하는 중…');
    try{
     pdf=await pdfjsLib.getDocument({data:result.bytes.slice(),...DOC_OPTS}).promise;checkProAbort();
-    const next=[];for(let i=0;i<pages.length;i++){const canvas=await renderThumb(pdf,i+1);checkProAbort();next.push({uid:pages[i].uid,docId:'',srcIndex:i,rotation:0,annots:[],canvas});progress((i+1)/pages.length*100);await idle();}
+    const next=[];for(let i=0;i<pages.length;i++){const page=await pdf.getPage(i+1),size=page.getViewport({scale:1}),canvas=null,thumbRatio=size.width/size.height;checkProAbort();next.push({thumbRatio,uid:pages[i].uid,docId:'',srcIndex:i,rotation:0,annots:[],canvas});progress((i+1)/pages.length*100);await idle();}
     if(request!==proModeRequest)return false;
     const docId='d'+(++docSeq),name=docs.get(pages[0].docId)?.name||'편집본.pdf';for(const p of next)p.docId=docId;
     // Publish only after every page succeeds. Original pages remain in undo history.
@@ -241,6 +241,7 @@ function describeProSettings(o,report,deskew,offset){
   return applied.join(' · ')||'원본 설정';
 }
 function proSummary(report,textCheck){
+  if(report.privateExport)return '개인정보 마스킹 적용 · 전체 '+pages.length+'페이지를 이미지 PDF로 저장\n가린 내용과 원본의 숨은 텍스트·첨부파일·메타데이터를 제거했습니다. 검색·복사·링크·입력 양식은 유지되지 않습니다.';
   const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
   if(textCheck.rasterized)lines.push(report.ocr?.pages?'페이지를 이미지로 저장한 뒤 확인한 OCR을 추가했습니다. 원래 텍스트·링크·양식은 유지되지 않습니다.':'페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
   else if(textCheck.characters)lines.push(`${textCheck.excludedItems?'재단 영역 안의':'기존'} 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
@@ -263,6 +264,7 @@ function proSummary(report,textCheck){
 async function createProResult({reveal=true}={}){
   if(!pages.length||document.body.classList.contains('is-busy'))return;
   let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
+  if(typeof confirmDocumentExport==='function'&&!await confirmDocumentExport())return;
   proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
   try{
     const edited=await buildEditedDocument();checkProAbort();
@@ -273,11 +275,13 @@ async function createProResult({reveal=true}={}){
     // content streams created while baking the user's Basic annotations.
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
+    const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(pages);
+    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.rasterized=true;report.privateExport=true;report.ocr=null;}
     const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
-    const result=PDFProResult.selectOutput(before,candidate,options,original);
+    const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,original);
     const bytes=result.bytes;
     const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
-    const hasPageEffects=!result.retained&&!!(report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
+    const hasPageEffects=!result.retained&&!!(masked||report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
     proResult={bytes,fingerprint,hasPageEffects};
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);

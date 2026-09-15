@@ -26,12 +26,12 @@ test('web bootstrap and common inline application scripts remain parseable',()=>
 });
 
 test('both builds have unique control ids and embed the current common application sources',async()=>{
-  const common=['editor','pro-engine','pro-document','pro-deskew','pro-pipeline','pro-rail','pro-result','pro-live-preview','pro-ui','pro-stamp','pro-ocr','pro-tools-ui','ocr-correction-lines','ocr-correction','markup-text','markup-editor','text-editor-ui','markup-highlight','save-ui','edit-history','print-ui'];
+  const common=['editor','pro-engine','pro-document','pro-deskew','pro-pipeline','pro-rail','pro-result','pro-live-preview','pro-ui','pro-stamp','pro-ocr','pro-tools-ui','ocr-correction-lines','ocr-correction','markup-text','markup-editor','text-editor-ui','markup-highlight','save-ui','edit-history','print-ui','ocr-page-policy','document-integrity','privacy-export','privacy-ui','thumbnail-cache','ui-help'];
   for(const [kind,html] of [['web',web],['offline',await offlineHTML()]]){
     const markup=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
     const ids=[...markup.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
     assert.equal(new Set(ids).size,ids.length,kind+': duplicate ids break UI event bindings');
-    for(const name of [...common,...(kind==='web'?['pro-gemini','pro-vision','pro-vision-ui','pro-vision-unlock']:[])]){
+    for(const name of [...common,...(kind==='web'?['pro-gemini','pro-vision','pro-vision-ui']:[])]){
       const id=name==='editor'?'editor-code':name;
       const match=html.match(new RegExp(`<script id="${id}">([\\s\\S]*?)<\\/script>`));
       assert.ok(match,`${kind}: ${id} embedded`);

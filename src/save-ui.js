@@ -26,9 +26,10 @@ async function prepareBasicSave(state){
   $('basicSaveStatus').textContent='PDF 준비 중…';$('basicSaveDetail').textContent='모든 페이지와 편집 내용을 포함합니다.';syncBasicSaveAction();
   const active=()=>basicSaveState===state&&!state.controller.signal.aborted;
   try{
-    const out=await buildEditedDocument(state.pages,{signal:state.controller.signal,onProgress:(done,total)=>{if(active())$('basicSaveDetail').textContent=done+' / '+total+'페이지 반영';}});
+    let out=await buildEditedDocument(state.pages,{signal:state.controller.signal,onProgress:(done,total)=>{if(active())$('basicSaveDetail').textContent=done+' / '+total+'페이지 반영';}});
     if(!active())return;
     $('basicSaveStatus').textContent='글꼴과 편집 내용을 저장하는 중…';await idle();
+    out=await finalizePrivateExport(out,state.pages,{signal:state.controller.signal,onProgress:(n,total)=>{if(active())$('basicSaveDetail').textContent='개인정보 영구 삭제 '+n+' / '+total+'페이지';}});
     const bytes=await out.save({useObjectStreams:true,updateFieldAppearances:false});
     if(!active())return;
     state.bytes=bytes;state.phase='ready';
@@ -41,8 +42,9 @@ async function prepareBasicSave(state){
     console.error(e);
   }finally{if(active())syncBasicSaveAction();}
 }
-function openBasicSaveDialog(){
+async function openBasicSaveDialog(){
   const dialog=$('basicSaveDialog');if(dialog.open)return basicSaveState?.pending;
+  if(!await confirmDocumentExport())return;
   const list=pages.map(p=>({...p,annots:structuredClone(p.annots||[])}));
   const textCount=list.reduce((n,p)=>n+p.annots.filter(a=>a.shape==='text').length,0);
   const state={pages:list,controller:new AbortController(),phase:'preparing',bytes:null,pending:null};basicSaveState=state;

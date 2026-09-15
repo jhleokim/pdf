@@ -5,17 +5,17 @@ const normalized=text=>text.replace(/\r\n/g,'\n');
 
 test('standalone embeds both local OCR engines and excludes cloud entry points',async()=>{
   const {buildHTML}=await import('../scripts/build.mjs'),offline=buildHTML({standalone:true});
-  for(const id of ['visionTools','visionDialog','visionUnlockDialog','pro-gemini','pro-vision-unlock'])assert.match(web,new RegExp(`id="${id}"`),id+' remains web-only');
+  for(const id of ['visionDialog','pro-vision','pro-vision-ui'])assert.match(web,new RegExp(`id="${id}"`),id+' remains web-only');
   assert.doesNotMatch(offline,/id="(?:gemini\w*|pro-gemini(?:-ui)?)"|geminiClicks|\/api\/ocr\/gemini|generativelanguage\.googleapis\.com/);
   assert.doesNotMatch(offline,/<script\b[^>]*\bsrc\s*=/i);
   assert.ok(script(offline,'paddle-bootstrap')?.includes('const embedded='),'offline includes its local Paddle assets');
   assert.doesNotMatch(offline,/\/ocr\/paddle\/runtime-[a-f0-9]+\.mjs/);
   assert.doesNotMatch(offline,/id="pro-tesseract-assets"|value="paddle-vl15"/);
   assert.doesNotMatch(offline,/id="(?:vision\w*|pro-vision(?:-ui)?)"|value="vision"|\/api\/ocr\/vision|vision\.googleapis\.com/);
-  assert.doesNotMatch(web,/<option value="vision">/);
+  assert.match(web,/<option value="vision">/);
   assert.doesNotMatch(web,/id="geminiTools"|id="geminiDialog"|id="pro-gemini-ui"/);
   assert.doesNotMatch(offline,/visionUnlock|rltnfchlrh/);
-  assert.match(web,/value="tesseract" selected/);
+  assert.match(web,/value="paddle-v5" selected/);
   assert.match(web,/value="paddle-v5"/);assert.match(offline,/value="paddle-v5"/);assert.doesNotMatch(web,/value="paddle-vl15"/);
   const assets={'ocr-client':'tesseract.min.js','ocr-core':'tesseract-core-lstm.wasm.js','ocr-core-fast':'tesseract-core-relaxedsimd-lstm.wasm.js','ocr-worker':'worker.min.js','ocr-lang-kor':'lang/kor.traineddata.gz','ocr-lang-eng':'lang/eng.traineddata.gz'};
   for(const [id,file] of Object.entries(assets)){
