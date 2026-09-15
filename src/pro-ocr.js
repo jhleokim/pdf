@@ -140,7 +140,10 @@
         const sx=(rt-l)*w/measured,sy=(bt-t)*h;
         const [x,y]=G.displayToPdf(l*w,(bt-(bt-t)*.18)*h,b,r);
         if(selectedFont!==outputFont){if(!names.has(outputFont))names.set(outputFont,page.node.newFontDictionary('OCR',outputFont.ref));ops.push(P.setFontAndSize(names.get(outputFont),1));selectedFont=outputFont;}
-        ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(outputFont.encode(text)));words++;
+        if(Array.isArray(word.nativeBasis)&&word.nativeBasis.length===6&&word.nativeBasis.every(Number.isFinite)){
+          const [ox,oy,ax,ay,ux,uy]=word.nativeBasis,origin=G.displayToPdf(ox*w,oy*h,b,r),advance=G.displayToPdf((ox+ax)*w,(oy+ay)*h,b,r),up=G.displayToPdf((ox+ux)*w,(oy+uy)*h,b,r);
+          ops.push(P.setTextMatrix((advance[0]-origin[0])/measured,(advance[1]-origin[1])/measured,up[0]-origin[0],up[1]-origin[1],...origin),P.showText(outputFont.encode(text)));
+        }else ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(outputFont.encode(text)));words++;
       }
       ops.push(P.endText(),P.popGraphicsState());page.pushOperators(...ops);pages++;
     }

@@ -13,7 +13,7 @@
   const baseline=await buildEditedDocument(),output=await finalizePrivateExport(baseline,pages),bytes=await output.save();
   const clean=await PDFDocument.load(bytes),inspection=PDFDocumentIntegrity.inspect(clean);ok(!inspection.forms&&!inspection.attachments&&!inspection.actions&&!inspection.signatures,'Private PDF removes forms / attachments / actions');ok(clean.getAuthor()!=='PRIVATE-AUTHOR','Source author removed');
   const t=pdfjsLib.getDocument({data:bytes.slice(),...DOC_OPTS}),pdf=await t.promise;ok(pdf.numPages===2,'Private export keeps both pages');
-  let extracted='';for(let n=1;n<=pdf.numPages;n++)extracted+=(await(await pdf.getPage(n)).getTextContent()).items.map(i=>i.str).join('');ok(!extracted.includes('SECRET')&&!extracted.includes('ACCOUNT'),'Secret text absent from extractable PDF text');
+  let extracted='';for(let n=1;n<=pdf.numPages;n++)extracted+=(await(await pdf.getPage(n)).getTextContent()).items.map(i=>i.str).join('');ok(!extracted.includes('SECRET')&&!extracted.includes('ACCOUNT'),'Secret text absent from extractable PDF text');ok(extracted.includes('SECOND PAGE'),'Unmasked page retains native searchable text without OCR');
   const renderPage=await pdf.getPage(1),canvas=document.createElement('canvas'),vp=renderPage.getViewport({scale:1});canvas.width=vp.width;canvas.height=vp.height;await renderPage.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
   const pixel=(x,y)=>canvas.getContext('2d').getImageData(x,y,1,1).data;ok(pixel(50,100)[0]<20&&pixel(50,240)[0]<20,'Mask covers original text AND form appearance');ok(pixel(10,550)[0]>240,'Unmasked page background preserved');
   const visible=document.createElement('canvas');visible.id='qaPrivateResult';visible.width=canvas.width;visible.height=canvas.height;visible.getContext('2d').drawImage(canvas,0,0);visible.style='position:fixed;right:10px;bottom:10px;width:200px;z-index:99998;border:1px solid #aaa';document.body.append(visible);await t.destroy();
@@ -26,6 +26,14 @@
   const rotationBytes=await rotationDoc.save(),rotationTask=pdfjsLib.getDocument({data:rotationBytes.slice(),...DOC_OPTS}),rotationPdf=await rotationTask.promise,rotationId='qa-rotation-source';docs.set(rotationId,{libBytes:rotationBytes,pdfjsDoc:rotationPdf,count:3});
   try{const rotationPages=[0,1,2].map(srcIndex=>({docId:rotationId,srcIndex,rotation:0,annots:[{shape:'redaction',nx:.1,ny:.15,nw:.45,nh:.2}]}));const burned=await finalizePrivateExport(await buildEditedDocument(rotationPages),rotationPages),rt=pdfjsLib.getDocument({data:await burned.save(),...DOC_OPTS}),rp=await rt.promise;
    try{for(let n=1;n<=3;n++){const p=await rp.getPage(n),vp=p.getViewport({scale:.5}),c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);await p.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;ok(c.getContext('2d').getImageData(Math.floor(c.width*.3),Math.floor(c.height*.25),1,1).data[0]<20,'Mask geometry survives '+[90,180,270][n-1]+' degree rotation / crop / UserUnit');c.width=c.height=0;}}finally{await rt.destroy();}
+   // Add one masked copy so all three rotated originals take the unmasked-text path.
+   const mixed=[rotationPages[0],...rotationPages.map((p,i)=>({...p,uid:'rotation-public-'+i,annots:[]}))],withText=await finalizePrivateExport(await buildEditedDocument(mixed),mixed),tt=pdfjsLib.getDocument({data:await withText.save(),...DOC_OPTS});
+   try{const result=await tt.promise;for(let n=1;n<=3;n++){
+    const source=await rotationPdf.getPage(n),target=await result.getPage(n+1),old=(await source.getTextContent()).items.find(i=>i.str.includes('ROTATED')),now=(await target.getTextContent()).items.find(i=>i.str.includes('ROTATED'));
+    ok(!!now,'Native text retained at '+[90,180,270][n-1]+' degrees');
+    const a=pdfjsLib.Util.transform(source.getViewport({scale:source.userUnit||1}).transform,old.transform),b=pdfjsLib.Util.transform(target.getViewport({scale:1}).transform,now.transform);
+    ok(Math.hypot(a[4]-b[4],a[5]-b[5])<.02,'Search baseline aligned after rotation / CropBox / UserUnit '+[90,180,270][n-1]);
+   }}finally{await tt.destroy();}
   }finally{docs.delete(rotationId);await rotationTask.destroy();}
   first.annots=[];proInvalidate();await showPreview(first);$('ocrSection').open=true;$('privacySection').open=true;syncCounts();
   ok(!document.querySelector('#visionUnlockDialog'),'Hidden password gate removed');

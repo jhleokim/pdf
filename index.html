@@ -1677,7 +1677,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 </dialog>
 <details class="pro-section" id="privacySection">
   <summary><span class="pro-section-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="M8 12h8"/></svg></span><span>개인정보 마스킹<small id="privacySummary">사용 안 함</small></span><svg class="ic pro-chevron"><use href="#i-chev-up"/></svg></summary>
-  <div class="pro-section-body"><button type="button" class="btn" id="privacyOpen" disabled>가릴 영역 지정</button><p class="pro-hint">영역을 드래그해 지정합니다. 저장 시 원래 정보를 제거한 이미지 PDF를 만듭니다. 일반 사각형 주석과 달리 검색 텍스트와 첨부정보도 남기지 않습니다.</p><p id="privacyStatus" role="status" class="pro-hint"></p></div>
+  <div class="pro-section-body"><button type="button" class="btn" id="privacyOpen" disabled>가릴 영역 지정</button><p class="pro-hint">영역을 지정한 뒤 텍스트 인식을 실행하고 결과를 PDF에 포함하세요. 가린 내용은 제거하고, 마스킹 후 확인한 OCR 텍스트는 검색·복사할 수 있게 저장합니다.</p><p id="privacyStatus" role="status" class="pro-hint"></p></div>
 </details>
 <dialog id="privacyDialog" class="privacy-dialog" aria-labelledby="privacyTitle">
   <header><div><h2 id="privacyTitle">개인정보 마스킹</h2><span id="privacyPageLabel"></span></div><button type="button" id="privacyClose" class="btn quiet icon" aria-label="마스킹 창 닫기">×</button></header>
@@ -3758,7 +3758,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<span class="app-version" aria-label="버전 5.2.0">v5.2.0</span>
+<span class="app-version" aria-label="버전 5.2.1">v5.2.1</span>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -11773,7 +11773,7 @@ function observeThumbnail(p){
     const result=[];
     if(report.signatures)result.push('전자서명이 포함되어 있습니다. 편집본은 기존 서명의 유효성을 유지하지 못합니다. 원본을 별도로 보관하세요.');
     if(restructured&&(report.forms||report.bookmarks))result.push('페이지 삭제·병합 시 입력 양식 또는 북마크가 유지되지 않을 수 있습니다. 저장 후 확인하세요.');
-    if(redacted)result.push('개인정보를 영구 삭제하기 위해 전체 문서를 이미지 PDF로 저장합니다. 검색·복사·입력 양식·링크와 첨부파일은 제거됩니다.');
+    if(redacted)result.push('가린 내용을 제거하고, 마스킹 후 인식·확인한 OCR 텍스트는 검색·복사할 수 있도록 저장합니다. 가리지 않은 페이지의 기존 검색 텍스트도 유지합니다. 링크·입력 양식은 일반 페이지로 저장되며 첨부파일은 제거됩니다.');
     return result;
   }
   root.PDFDocumentIntegrity={inspect,warnings};
@@ -11781,11 +11781,28 @@ function observeThumbnail(p){
 })(globalThis);
 </script>
 <script id="privacy-export">
-/* A private export starts a NEW document and imports only burned-in page pixels.
-   Never copy source PDF objects, hidden OCR, annotations, metadata or attachments. */
+/* Rebuild page pixels, then add only current OCR from the masked rendering.
+   Unmasked pages retain text through fresh Unicode streams, never source objects. */
 (function(root){
   'use strict';
   const isMasked=pages=>pages.some(p=>p.annots?.some(a=>a.shape==='redaction'));
+  const maskKey=p=>JSON.stringify([p.docId,p.srcIndex,p.rotation,(p.annots||[]).filter(a=>a.shape==='redaction').map(a=>[a.nx,a.ny,a.nw,a.nh])]);
+  const currentOCR=(record,page)=>page.uid!=null&&record.uid===page.uid&&record.privacyKey===maskKey(page)&&record.words?.some(w=>w.text?.trim());
+  function nativeRecord(content,viewport,uid){
+    const v=viewport.transform,w=viewport.width,h=viewport.height,words=[];
+    for(const item of content.items||[]){
+      const m=item.transform;if(!item.str?.trim()||!Array.isArray(m)||m.length!==6||!m.every(Number.isFinite)||!(item.width>0))continue;
+      const length=Math.hypot(m[0],m[1]);if(!length)continue;
+      const x=v[0]*m[4]+v[2]*m[5]+v[4],y=v[1]*m[4]+v[3]*m[5]+v[5];
+      const dx=(v[0]*m[0]+v[2]*m[1])*item.width/length,dy=(v[1]*m[0]+v[3]*m[1])*item.width/length;
+      const ux=v[0]*m[2]+v[2]*m[3],uy=v[1]*m[2]+v[3]*m[3];
+      const xs=[x,x+dx,x+ux,x+dx+ux],ys=[y,y+dy,y+uy,y+dy+uy];
+      const box=[Math.max(0,Math.min(...xs)/w),Math.max(0,Math.min(...ys)/h),Math.min(1,Math.max(...xs)/w),Math.min(1,Math.max(...ys)/h)];
+      if(!box.every(Number.isFinite)||box[2]<=box[0]||box[3]<=box[1])continue;
+      words.push({text:item.str,separator:'',box,nativeBasis:[x/w,y/h,dx/w,dy/h,ux/w,uy/h]});
+    }
+    return {uid,words,granularity:'line'};
+  }
   async function preparePage(doc,target,source,signal){
     signal?.throwIfAborted();const base=source.getViewport({scale:1,rotation:0});
     const scale=Math.min(200/72,Math.sqrt(12000000/(base.width*base.height)),12000/Math.max(base.width,base.height));
@@ -11801,14 +11818,26 @@ function observeThumbnail(p){
       target.drawImage(image,{x:box[0],y:box[1],width:box[2]-box[0],height:box[3]-box[1]});
     }finally{signal?.removeEventListener('abort',abort);canvas.width=canvas.height=0;}
   }
-  async function flatten(doc,{signal,docOptions={},onProgress,dpi=200}={}){
+  async function flatten(doc,{signal,docOptions={},onProgress,onText,dpi=200,pageSources=[],ocr=[]}={}){
     const check=()=>signal?.throwIfAborted();check();
     const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
     const task=pdfjsLib.getDocument({data:bytes,...docOptions}),output=await PDFLib.PDFDocument.create();
     try{
       const pdf=await task.promise;check();
+      if(pageSources.length!==pdf.numPages)throw Error('마스킹 문서의 페이지 대응을 확인하지 못했습니다.');
+      const records=[],pageIds=pageSources.map((p,i)=>p.uid??'private-page-'+i);let ocrPages=0,nativePages=0,pendingOCR=0;
       for(let n=1;n<=pdf.numPages;n++){
         check();const source=await pdf.getPage(n),base=source.getViewport({scale:1});
+        const input=pageSources[n-1],uid=pageIds[n-1];
+        if(isMasked([input])){
+          // Never recover text from this PDF page: it can include hidden text
+          // under a mask. Only the explicitly accepted masked-image OCR is safe.
+          const record=ocr.find(r=>currentOCR(r,input));
+          if(record){records.push({...record,uid});ocrPages++;}else pendingOCR++;
+        }else{
+          const record=nativeRecord(await source.getTextContent(),base,uid);check();
+          if(record.words.length){records.push(record);nativePages++;}
+        }
         const scale=Math.min(dpi/72,Math.sqrt(12000000/(base.width*base.height)),12000/Math.max(base.width,base.height));
         const vp=source.getViewport({scale}),canvas=document.createElement('canvas');
         canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);let render;
@@ -11826,11 +11855,13 @@ function observeThumbnail(p){
       }
       // PDF-lib's default producer/dates are not source document metadata.
       output.setTitle('');output.setAuthor('');output.setSubject('');output.setKeywords([]);
+      const text=await PDFOCR.apply(output,records,{pageIds,signal});check();
+      onText?.({...text,ocrPages,nativePages,pendingOCR});
       return output;
     }finally{await task.destroy();}
   }
-  root.PDFPrivacy={isMasked,flatten,preparePage};
-  if(typeof module!=='undefined')module.exports={isMasked};
+  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,preparePage};
+  if(typeof module!=='undefined')module.exports={isMasked,maskKey,nativeRecord,currentOCR};
 })(globalThis);
 </script>
 <script id="ocr-page-policy">
@@ -12790,7 +12821,10 @@ function observeThumbnail(p){
         const sx=(rt-l)*w/measured,sy=(bt-t)*h;
         const [x,y]=G.displayToPdf(l*w,(bt-(bt-t)*.18)*h,b,r);
         if(selectedFont!==outputFont){if(!names.has(outputFont))names.set(outputFont,page.node.newFontDictionary('OCR',outputFont.ref));ops.push(P.setFontAndSize(names.get(outputFont),1));selectedFont=outputFont;}
-        ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(outputFont.encode(text)));words++;
+        if(Array.isArray(word.nativeBasis)&&word.nativeBasis.length===6&&word.nativeBasis.every(Number.isFinite)){
+          const [ox,oy,ax,ay,ux,uy]=word.nativeBasis,origin=G.displayToPdf(ox*w,oy*h,b,r),advance=G.displayToPdf((ox+ax)*w,(oy+ay)*h,b,r),up=G.displayToPdf((ox+ux)*w,(oy+uy)*h,b,r);
+          ops.push(P.setTextMatrix((advance[0]-origin[0])/measured,(advance[1]-origin[1])/measured,up[0]-origin[0],up[1]-origin[1],...origin),P.showText(outputFont.encode(text)));
+        }else ops.push(P.setTextMatrix(sx*cos,sx*sin,-sy*sin,sy*cos,x,y),P.showText(outputFont.encode(text)));words++;
       }
       ops.push(P.endText(),P.popGraphicsState());page.pushOperators(...ops);pages++;
     }
@@ -13758,7 +13792,7 @@ function describeProSettings(o,report,deskew,offset){
   return applied.join(' · ')||'원본 설정';
 }
 function proSummary(report,textCheck){
-  if(report.privateExport)return '개인정보 마스킹 적용 · 전체 '+pages.length+'페이지를 이미지 PDF로 저장\n가린 내용과 원본의 숨은 텍스트·첨부파일·메타데이터를 제거했습니다. 검색·복사·링크·입력 양식은 유지되지 않습니다.';
+  if(report.privateExport){const t=report.privateText||{};return '개인정보 마스킹 적용'+(t.pages?' · 검색·복사 가능 '+t.pages+'페이지':'')+'\n'+(t.ocrPages?'마스킹 후 확인한 OCR '+t.ocrPages+'쪽을 포함했습니다. ':'')+(t.nativePages?'가리지 않은 '+t.nativePages+'쪽의 기존 검색 텍스트를 보존했습니다. ':'')+'첨부파일과 원본 메타데이터는 제거했습니다.'+(t.pendingOCR?'\n가린 페이지 '+t.pendingOCR+'쪽은 아직 검색 텍스트가 없습니다. 마스킹 후 텍스트 인식 → 확인한 결과를 PDF에 포함을 눌러 주세요.':'');}
   const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
   if(textCheck.rasterized)lines.push(report.ocr?.pages?'페이지를 이미지로 저장한 뒤 확인한 OCR을 추가했습니다. 원래 텍스트·링크·양식은 유지되지 않습니다.':'페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
   else if(textCheck.characters)lines.push(`${textCheck.excludedItems?'재단 영역 안의':'기존'} 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
@@ -13793,7 +13827,7 @@ async function createProResult({reveal=true}={}){
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
     const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(pages);
-    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.rasterized=true;report.privateExport=true;report.ocr=null;}
+    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,ocr:options.ocr,onText:text=>{report.privateText=text;},onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.rasterized=true;report.privateExport=true;}
     const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
     const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,original);
     const bytes=result.bytes;
@@ -14793,7 +14827,7 @@ function ocrDefaultProvider(){return globalThis.PDFVision&&$('ocrProvider')?.val
 function ocrValidWord(word){const b=word?.box;return typeof word?.text==='string'&&!!word.text.trim()&&Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1];}
 function ocrCanEmbed(r){return !!r&&!r.skipped&&Array.isArray(r.words)&&r.words.some(w=>w.text?.trim())&&r.words.filter(w=>w.text?.trim()).every(ocrValidWord)&&(r.source!=='paddle-v5'||r.canEmbed===true&&r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>w.text?.trim()));}
-function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='paddle-v5'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
+function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(!PDFPrivacy.isMasked([p])||r.privacyKey===PDFPrivacy.maskKey(p))&&(r.source!=='paddle-v5'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function configureLocalOCR(){
   const paddle=ocrDefaultProvider()==='paddle-v5';
   $('ocrDescription').innerHTML='<strong>'+(paddle?'PP-OCRv5 · 경량 한국어':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
@@ -14991,7 +15025,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
-      const matches=r=>r&&r.uid===p.uid&&r.key===key&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&!r.skipped&&(provider!=='paddle-v5'||ocrCanEmbed(r));
+      const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&!r.skipped&&(provider!=='paddle-v5'||ocrCanEmbed(r));
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask;
@@ -15003,7 +15037,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
         const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
         const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
-        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn))});
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:PDFPrivacy.isMasked([p])});
         const existing=policy.action==='skip';
         checkProAbort();update(.05);
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
@@ -15051,7 +15085,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
           const result=await waitForOCR(engine.recognize(canvas),workSignal);checkProAbort();
           recognizedMs+=performance.now()-recognizedAt;measuredPages++;
           globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
-          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
+          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});}
       progress((i+1)/list.length*95);await idle();
@@ -16430,7 +16464,7 @@ async function confirmDocumentExport(list=pages){
   finally{documentConfirmationPending=false;}
 }
 $('documentCheckAccept').onchange=()=>{$('documentCheckContinue').disabled=!$('documentCheckAccept').checked;};
-async function finalizePrivateExport(doc,list,callbacks={}){return PDFPrivacy.isMasked(list)?PDFPrivacy.flatten(doc,{...callbacks,docOptions:DOC_OPTS}):doc;}
+async function finalizePrivateExport(doc,list,callbacks={}){return PDFPrivacy.isMasked(list)?PDFPrivacy.flatten(doc,{...callbacks,pageSources:list,docOptions:DOC_OPTS}):doc;}
 function syncPrivacy(){
   const count=pages.reduce((n,p)=>n+(p.annots||[]).filter(a=>a.shape==='redaction').length,0);
   $('privacyOpen').disabled=!pages.length||!!proAbort;$('privacySummary').textContent=count?count+'개 영역':'사용 안 함';

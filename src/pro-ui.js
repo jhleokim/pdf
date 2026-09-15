@@ -241,7 +241,7 @@ function describeProSettings(o,report,deskew,offset){
   return applied.join(' · ')||'원본 설정';
 }
 function proSummary(report,textCheck){
-  if(report.privateExport)return '개인정보 마스킹 적용 · 전체 '+pages.length+'페이지를 이미지 PDF로 저장\n가린 내용과 원본의 숨은 텍스트·첨부파일·메타데이터를 제거했습니다. 검색·복사·링크·입력 양식은 유지되지 않습니다.';
+  if(report.privateExport){const t=report.privateText||{};return '개인정보 마스킹 적용'+(t.pages?' · 검색·복사 가능 '+t.pages+'페이지':'')+'\n'+(t.ocrPages?'마스킹 후 확인한 OCR '+t.ocrPages+'쪽을 포함했습니다. ':'')+(t.nativePages?'가리지 않은 '+t.nativePages+'쪽의 기존 검색 텍스트를 보존했습니다. ':'')+'첨부파일과 원본 메타데이터는 제거했습니다.'+(t.pendingOCR?'\n가린 페이지 '+t.pendingOCR+'쪽은 아직 검색 텍스트가 없습니다. 마스킹 후 텍스트 인식 → 확인한 결과를 PDF에 포함을 눌러 주세요.':'');}
   const lines=[report.rasterized?`${report.changed}쪽을 이미지 PDF로 압축`:`이미지 ${report.changed}개 변경 · ${report.skipped}개 원본 유지`];
   if(textCheck.rasterized)lines.push(report.ocr?.pages?'페이지를 이미지로 저장한 뒤 확인한 OCR을 추가했습니다. 원래 텍스트·링크·양식은 유지되지 않습니다.':'페이지를 이미지로 저장했습니다. 검색·복사·링크·양식은 유지되지 않습니다.');
   else if(textCheck.characters)lines.push(`${textCheck.excludedItems?'재단 영역 안의':'기존'} 텍스트 ${textCheck.characters.toLocaleString()}자 보존 확인`);
@@ -276,7 +276,7 @@ async function createProResult({reveal=true}={}){
     const doc=await PDFLib.PDFDocument.load(before);checkProAbort();
     const report=await processProDoc(doc,options,0);
     const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(pages);
-    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.rasterized=true;report.privateExport=true;report.ocr=null;}
+    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,ocr:options.ocr,onText:text=>{report.privateText=text;},onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.rasterized=true;report.privateExport=true;}
     const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
     const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,original);
     const bytes=result.bytes;

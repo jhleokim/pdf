@@ -23,7 +23,7 @@
     const result=[];
     if(report.signatures)result.push('전자서명이 포함되어 있습니다. 편집본은 기존 서명의 유효성을 유지하지 못합니다. 원본을 별도로 보관하세요.');
     if(restructured&&(report.forms||report.bookmarks))result.push('페이지 삭제·병합 시 입력 양식 또는 북마크가 유지되지 않을 수 있습니다. 저장 후 확인하세요.');
-    if(redacted)result.push('개인정보를 영구 삭제하기 위해 전체 문서를 이미지 PDF로 저장합니다. 검색·복사·입력 양식·링크와 첨부파일은 제거됩니다.');
+    if(redacted)result.push('가린 내용을 제거하고, 마스킹 후 인식·확인한 OCR 텍스트는 검색·복사할 수 있도록 저장합니다. 가리지 않은 페이지의 기존 검색 텍스트도 유지합니다. 링크·입력 양식은 일반 페이지로 저장되며 첨부파일은 제거됩니다.');
     return result;
   }
   root.PDFDocumentIntegrity={inspect,warnings};

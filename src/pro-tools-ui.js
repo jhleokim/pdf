@@ -7,7 +7,7 @@ function ocrDefaultProvider(){return globalThis.PDFVision&&$('ocrProvider')?.val
 function ocrValidWord(word){const b=word?.box;return typeof word?.text==='string'&&!!word.text.trim()&&Array.isArray(b)&&b.length===4&&b.every(Number.isFinite)&&b[0]>=0&&b[1]>=0&&b[2]<=1&&b[3]<=1&&b[2]>b[0]&&b[3]>b[1];}
 function ocrCanEmbed(r){return !!r&&!r.skipped&&Array.isArray(r.words)&&r.words.some(w=>w.text?.trim())&&r.words.filter(w=>w.text?.trim()).every(ocrValidWord)&&(r.source!=='paddle-v5'||r.canEmbed===true&&r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function ocrHasText(r){return !r.skipped&&(!!r.text?.trim()||!!r.words?.some(w=>w.text?.trim()));}
-function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(r.source!=='paddle-v5'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
+function ocrRecordCurrent(r,p,o){return !!p&&r.key===ocrKey(p,o)&&(!PDFPrivacy.isMasked([p])||r.privacyKey===PDFPrivacy.maskKey(p))&&(r.source!=='paddle-v5'||r.skipped||r.modelCacheTag===PADDLE_MODEL_CACHE_TAG);}
 function configureLocalOCR(){
   const paddle=ocrDefaultProvider()==='paddle-v5';
   $('ocrDescription').innerHTML='<strong>'+(paddle?'PP-OCRv5 · 경량 한국어':'Tesseract')+'</strong><br>원래 페이지 모습은 유지하고 검색용 텍스트를 추가합니다. 먼저 한 페이지를 인식해 품질을 확인하세요.';
@@ -205,7 +205,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
-      const matches=r=>r&&r.uid===p.uid&&r.key===key&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&!r.skipped&&(provider!=='paddle-v5'||ocrCanEmbed(r));
+      const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&!r.skipped&&(provider!=='paddle-v5'||ocrCanEmbed(r));
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask;
@@ -217,7 +217,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
         const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
         const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
-        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn))});
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:PDFPrivacy.isMasked([p])});
         const existing=policy.action==='skip';
         checkProAbort();update(.05);
         if(existing){fresh.push({uid:p.uid,key,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
@@ -265,7 +265,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
           const result=await waitForOCR(engine.recognize(canvas),workSignal);checkProAbort();
           recognizedMs+=performance.now()-recognizedAt;measuredPages++;
           globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
-          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1};fresh.push(record);remember(p,record);completed++;
+          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});}
       progress((i+1)/list.length*95);await idle();
