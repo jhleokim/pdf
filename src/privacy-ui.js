@@ -34,6 +34,7 @@ $('documentCheckAccept').onchange=()=>{$('documentCheckContinue').disabled=!$('d
 async function finalizePrivateExport(doc,list,callbacks={}){return PDFPrivacy.isMasked(list)?PDFPrivacy.flatten(doc,{...callbacks,pageSources:list,docOptions:DOC_OPTS}):doc;}
 function syncPrivacy(){
   const count=pages.reduce((n,p)=>n+(p.annots||[]).filter(a=>a.shape==='redaction').length,0);
+  if(!count)PDFPrivacy.clearCache();
   $('privacyOpen').disabled=!pages.length||!!proAbort;$('privacySummary').textContent=count?count+'개 영역':'사용 안 함';
   $('privacySection').classList.toggle('has-settings',!!count);$('privacyStatus').textContent=count?'저장 시 마스킹 영역을 영구 삭제합니다.':'';
 }

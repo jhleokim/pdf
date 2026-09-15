@@ -1,15 +1,17 @@
-/* Document tools: one quiet toolbar and one stable context row. */
+/* Compact tools; properties belong only to the active editing tool. */
 .anno-bar{position:relative;flex:none;border-bottom:1px solid var(--line);background:var(--surface);container-type:inline-size}
-.page-thumbnail{position:absolute;inset:0;pointer-events:none;isolation:isolate}
+.page .sheet{aspect-ratio:var(--page-ratio,0.70710678)}
+#board{align-items:start}
+.page-thumbnail{position:absolute;inset:0;pointer-events:none;isolation:isolate;aspect-ratio:auto}
 .sheet .page-thumbnail canvas,.thumbnail-markup{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:100%;max-height:100%;background:transparent;object-fit:contain}
 .thumbnail-markup{letter-spacing:0;word-spacing:0;overflow:hidden}
-.annotation-tools{display:flex;align-items:center;flex-wrap:nowrap;gap:5px;padding:6px 10px;min-height:46px;border-bottom:1px solid var(--line);overflow:visible}
+.annotation-tools{display:flex;align-items:center;flex-wrap:nowrap;justify-content:flex-start;gap:5px;padding:5px 10px;min-height:44px;overflow:visible;border-bottom:0}
 .annotation-tools .ab-group{display:flex;gap:2px;flex:none;padding:0;border:0;background:none;box-shadow:none}
-.annotation-tools .ab-tool{display:flex;align-items:center;justify-content:center;gap:5px;width:30px;height:32px;min-width:0;padding:5px;border:1px solid transparent;border-radius:3px;background:transparent;color:var(--ink-2);box-shadow:none}
+.annotation-tools .ab-tool{display:flex;align-items:center;justify-content:center;gap:5px;width:34px;height:34px;min-width:0;padding:7px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--ink-2);box-shadow:none}
 .annotation-tools .ab-tool.named-tool{width:auto;padding:5px 7px;font-size:11px;white-space:nowrap}
 .annotation-tools .ab-tool .ic{width:17px;height:17px;stroke-width:1.7;flex:none}
 .annotation-tools .ab-tool:hover{background:var(--surface-2);color:var(--ink)}
-.annotation-tools .ab-tool.active{background:var(--accent-wash);color:var(--accent-ink);border-color:var(--accent-line);box-shadow:none}
+.annotation-tools .ab-tool.active{background:var(--accent-wash);color:var(--accent-ink);border-color:transparent;box-shadow:inset 0 0 0 1px var(--accent-line)}
 .markup-separator{width:1px;height:18px;background:var(--line);margin:0 2px;flex:none}
 .annotation-actions{margin-left:auto;display:flex;align-items:center;gap:0;padding:0;background:none;border:0}
 .annotation-actions>.btn{height:30px;width:28px;padding:5px;border:0;box-shadow:none}
@@ -17,9 +19,22 @@
 .markup-menu>div{position:absolute;right:0;top:35px;z-index:30;width:185px;padding:4px;border:1px solid var(--line-2);border-radius:4px;background:var(--surface);box-shadow:0 6px 18px #0002}
 .markup-menu>div .btn{width:100%;font-size:11px;justify-content:flex-start}
 .markup-menu>div .history-action{justify-content:space-between}.history-action small{font-size:9px;color:var(--ink-3)}
-.markup-context{position:relative;display:flex;align-items:center;min-height:48px;padding:0 11px;background:var(--surface)}
+.markup-context{position:relative;display:flex;align-items:center;min-height:38px;padding:0 12px;background:var(--surface);border-top:1px solid var(--line)}
+.markup-context[data-kind=none],.markup-context[data-kind=image]{display:none}
 .markup-context [hidden],.inline-text-actions[hidden],#textEdit[hidden]{display:none!important}
-.markup-context .annotation-properties{padding:6px 0;border:0;background:none;box-shadow:none;min-height:48px;gap:8px 12px}
+.markup-context .annotation-properties{padding:4px 0;border:0;background:none;box-shadow:none;min-height:38px;gap:6px 16px}
+.markup-context .annotation-property-group{gap:7px;min-height:28px}
+.markup-context .property-label{min-width:0;font-size:11px;font-weight:500;color:var(--ink-3);margin-right:1px}
+.markup-context .stroke-width{height:28px;padding-right:5px;background:var(--surface);border-color:var(--line);border-radius:4px}
+.markup-context .stroke-width #annoWidth{width:38px;height:26px;text-align:center;padding:0 2px;font-variant-numeric:tabular-nums;appearance:textfield}
+#annoWidth::-webkit-inner-spin-button,#annoWidth::-webkit-outer-spin-button{appearance:none;margin:0}
+.stroke-pattern{height:28px;width:66px;padding:0 4px;background:var(--surface);border:1px solid var(--line);border-radius:4px;color:var(--ink-2);font-family:inherit;font-size:12px}
+.markup-context .swatch{width:24px;height:24px;border-radius:4px;border-color:var(--line)}
+.markup-context .swatch input[type=color]{inset:0;width:100%;height:100%;padding:3px}
+.markup-context .ab-nofill{width:28px;height:28px;padding:5px;background:transparent;border-color:transparent;border-radius:4px;color:var(--ink-3)}
+.markup-context .ab-nofill.on{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.markup-context .fill-opacity{gap:5px;font-size:11px}.markup-context .fill-opacity #annoOpacity{width:58px}.markup-context .fill-opacity output{min-width:28px;font-size:11px}
+.markup-context .fill-opacity:has(input:disabled){opacity:.45}
 .markup-context .annotation-hint,.markup-idle{margin:0;padding:0;border:0;font-size:11px;line-height:1.5;color:var(--ink-3)}
 #textPropertiesHome{width:100%;min-width:0}.markup-context .text-properties{display:flex;align-items:center;flex-wrap:nowrap;gap:5px;width:100%;padding:0}
 .text-properties label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-3)}
@@ -67,6 +82,7 @@
  body[data-mode=basic].editing-focus .pfoot .src{font-size:9px}.editing-focus .pfoot{height:28px}.editing-focus .pick{transform:scale(.8);transform-origin:top right}
 }
 .pv-overlay .selbox{stroke-width:1;stroke-dasharray:3 2;vector-effect:non-scaling-stroke}.pv-overlay .handle{stroke-width:1;vector-effect:non-scaling-stroke}
+.pv-overlay .arrow-handle{cursor:crosshair}
 .highlight-properties{display:flex;align-items:center;gap:12px;width:100%;min-height:48px}
 .highlight-modes{display:flex;gap:1px;border-right:1px solid var(--line);padding-right:10px;flex:none}
 .highlight-modes button{padding:5px 6px;font-size:11px;border-radius:3px;color:var(--ink-3);height:29px}
@@ -95,16 +111,21 @@
  .highlight-properties{gap:8px}.highlight-modes{padding-right:6px}.highlight-modes button{height:38px}.highlight-colors{gap:6px}.highlight-colors button{width:22px;height:22px}.highlight-strength input{width:32px}.highlight-undo{margin-left:0;flex:none;height:38px}
 }
 @container(max-width:540px){
- .markup-context{min-height:90px}
+ .markup-context:has(.text-properties:not([hidden])){min-height:78px}
  .markup-context .text-properties{display:grid;grid-template-columns:minmax(70px,1fr) auto auto;gap:3px 5px;padding:5px 0}
  .text-properties .text-font{grid-area:1/1}.text-properties select{width:100%;max-width:112px;padding-left:4px;padding-right:0}
  .text-size-control{grid-area:1/2}.text-styles{grid-area:1/3;padding:0 0 0 3px;border-right:0}
  .text-more{grid-area:2/1/3/3;justify-self:start}.text-format-popover{left:-35px;right:auto}
  #textEdit,.inline-text-actions{grid-area:2/3;margin-left:0;justify-self:end;min-height:30px}
 }
+@container(max-width:620px){.annotation-tools .named-tool span{display:none}.annotation-tools .ab-tool.named-tool{width:34px;padding:7px}}
+@container(max-width:420px){.annotation-tools{gap:2px;padding-inline:6px}.annotation-tools .ab-group{gap:0}.annotation-tools .ab-tool,.annotation-tools .ab-tool.named-tool{width:32px;height:40px}.markup-separator{margin-inline:2px}.markup-context{padding-inline:8px}.markup-context .annotation-properties{gap:4px 10px}.markup-context .annotation-property-group{gap:5px}.markup-context .fill-opacity #annoOpacity{width:42px}.markup-context .property-label{font-size:10px}}
+@media(pointer:coarse){.annotation-tools .ab-tool,.annotation-tools .ab-tool.named-tool{height:44px}.markup-context input[type=range]{height:32px}.markup-context .ab-nofill{min-height:36px}.markup-context .stroke-pattern,.markup-context .stroke-width{min-height:32px}}
 #pvOverlay text{user-select:none}#btnBlank,#mbBlank{touch-action:none;cursor:grab}#btnBlank:active,#mbBlank:active{cursor:grabbing}
 .blank-page-ghost{position:fixed;left:0;top:0;width:90px;height:114px;background:var(--surface);border:1px solid var(--accent);box-shadow:0 5px 18px #0003;border-radius:4px;z-index:10000;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--accent-ink);font-size:11px}
 .blank-page-ghost .ic{width:28px;height:28px}.blank-dragging{cursor:grabbing;user-select:none}
 .drop-marker.blank-insertion{width:auto;min-height:140px;border:1.5px dashed var(--accent);border-radius:5px;background:var(--accent-wash);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--accent-ink);font-size:12px}
 .drop-marker.blank-insertion::before,.drop-marker.blank-insertion::after{display:none}.blank-insertion .ic{width:30px;height:30px}
 @media(prefers-reduced-motion:reduce){.blank-page-ghost,.blank-insertion{transition:none!important;animation:none!important}}
+
+.app-version{background:transparent;border:0;padding:3px 4px;cursor:pointer;pointer-events:auto}.app-version:hover{color:var(--ink-2)}

@@ -50,7 +50,7 @@
     check(signal);
     result.report.ocr=globalThis.PDFOCR?await PDFOCR.apply(result.doc,options.ocr,callbacks):{pages:0,words:0};
     result.report.stamps=globalThis.PDFStamp?await PDFStamp.apply(result.doc,options.stamps,callbacks):0;
-    check(signal);result.report.deskew=deskew;return result;
+    check(signal);if(globalThis.PDFPrivacy)PDFPrivacy.inherit(result.doc,doc);result.report.deskew=deskew;return result;
   }
   globalThis.PDFProPipeline={apply,rasterize};
 })();

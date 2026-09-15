@@ -15,5 +15,8 @@
     "build:standalone": "node scripts/build-standalone.mjs",
     "test": "node --test tests/*.test.cjs",
     "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "mupdf": "1.28.1"
   }
 }

@@ -1,8 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {maskKey,currentOCR,nativeRecord}=require('../src/privacy-export.js');
 const policy=require('../src/ocr-page-policy.js');
-test('redacted digital pages require fresh OCR, without suppressing remaining text',()=>{
- assert.deepEqual(policy.decide({items:[{str:'Existing digital contract'}],force:true}),{action:'recognize',preserveExisting:false});
+test('native searchable digital pages skip redundant OCR while scans still recognize',()=>{
+ assert.deepEqual(policy.decide({items:[{str:'Existing digital contract'}],force:false}),{action:'skip',preserveExisting:true});
+ assert.deepEqual(policy.decide({items:[],hasImages:true}),{action:'recognize',preserveExisting:false});
 });
 test('only OCR from this exact mask and page may enter a private export',()=>{
  const p={uid:'p1',docId:'d1',srcIndex:0,rotation:0,annots:[{shape:'redaction',nx:.1,ny:.2,nw:.3,nh:.1}]};

@@ -20,8 +20,11 @@
   }finally{await task.destroy();}
  }
  try{
-  const doc=await PDFLib.PDFDocument.create(),p=doc.addPage([400,600]);
+  const scan=await PDFLib.PDFDocument.create(),p=scan.addPage([400,600]);
   p.drawText('PUBLIC 123456',{x:30,y:530,size:24});p.drawText('PRIVATE ACCOUNT 998877',{x:30,y:410,size:21});p.drawText('TOTAL 987654',{x:30,y:310,size:24});
+  const scanTask=pdfjsLib.getDocument({data:await scan.save(),...DOC_OPTS}),scanPdf=await scanTask.promise,scanPage=await scanPdf.getPage(1),scanViewport=scanPage.getViewport({scale:2});
+  const scanCanvas=document.createElement('canvas');scanCanvas.width=scanViewport.width;scanCanvas.height=scanViewport.height;await scanPage.render({canvasContext:scanCanvas.getContext('2d'),viewport:scanViewport}).promise;
+  const doc=await PDFLib.PDFDocument.create(),scanImage=await doc.embedPng(await(await new Promise(r=>scanCanvas.toBlob(r,'image/png'))).arrayBuffer());doc.addPage([400,600]).drawImage(scanImage,{x:0,y:0,width:400,height:600});scanCanvas.width=scanCanvas.height=0;await scanTask.destroy();
   doc.setAuthor('PRIVATE-AUTHOR');await doc.attach(new TextEncoder().encode('PRIVATE ACCOUNT 998877'),'secret.txt');
   const fontData=await PDFMarkupText.load();doc.registerFontkit(fontkit);const font=await doc.embedFont(fontData.bytes,{subset:true});
   const p2=doc.addPage([400,600]);p2.drawText('공개 계약서 PUBLIC SECOND',{x:30,y:520,size:18,font});
@@ -31,7 +34,7 @@
   for(const provider of ['paddle-v5','tesseract']){
    $('ocrProvider').value=provider;configureLocalOCR();report.textContent=lines.join('\n')+'\nRunning real '+provider+' on the masked digital page…';
    await runOCR(false,provider,[first]);const r=ocrRecords.find(r=>r.uid===first.uid&&r.source===provider);
-   assert(!!r&&!r.skipped,provider+' recognizes masked digital page instead of skipping it');
+   assert(!!r&&!r.skipped,provider+' recognizes masked scan page');
    assert(r.text.includes('123456')&&r.text.includes('987654')&&!r.text.includes('998877'),provider+' reads public content only from masked pixels');
    assert(r.privacyKey===PDFPrivacy.maskKey(first),provider+' OCR tied to current mask');
    $('ocrAccept').click();assert(ocrAccepted,provider+' accepts reviewed searchable text');
