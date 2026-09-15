@@ -1,0 +1,12 @@
+<dialog id="appearanceDialog" class="appearance-dialog" aria-labelledby="appearanceTitle">
+  <div class="appearance-heading"><h2 id="appearanceTitle">화면 설정</h2><button type="button" class="btn icon quiet" id="appearanceClose" aria-label="화면 설정 닫기"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <fieldset class="appearance-group"><legend>테마</legend><div class="appearance-styles">
+    <button type="button" data-appearance="studio" aria-pressed="true"><span class="appearance-sample sample-studio" aria-hidden="true"><i></i><b></b><em></em></span><span>Studio</span><svg class="ic appearance-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+    <button type="button" data-appearance="paper" aria-pressed="false"><span class="appearance-sample sample-paper" aria-hidden="true"><i></i><b></b><em></em></span><span>Paper</span><svg class="ic appearance-check" aria-hidden="true"><use href="#i-check"/></svg></button>
+  </div></fieldset>
+  <fieldset class="appearance-group"><legend>밝기</legend><div class="appearance-modes">
+    <button type="button" data-color-mode="light" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg>Light</button>
+    <button type="button" data-color-mode="dark" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Dark</button>
+    <button type="button" data-color-mode="auto" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-auto"/></svg>시스템</button>
+  </div></fieldset>
+</dialog>

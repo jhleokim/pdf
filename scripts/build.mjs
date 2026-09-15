@@ -33,6 +33,8 @@ const version=read('VERSION');
 if(!/^\d+\.\d+(?:\.\d+)?$/.test(version))throw new Error('Invalid VERSION');
 block('app-version', `<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 ${version}, 라이선스 보기">v${version}</button>`, '</body>');
 const appStart = '<script id="editor-code">';
+block('appearance',read('src/appearance.html')+'\n<script id="appearance-runtime">\n'+read('src/appearance.js')+'\n</script>',appStart);
+block('appearance-styles','<style>\n'+read('src/appearance.css')+'\n</style>','</head>');
 const a = html.indexOf(appStart), b = html.indexOf('</script>', a);
 if (a < 0 || b < 0) throw new Error('Missing editor-code block');
 html = html.slice(0, a + appStart.length) + '\n' + read('src/editor.js') + '\n' + html.slice(b);

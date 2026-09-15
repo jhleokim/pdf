@@ -1,0 +1,45 @@
+/* Paper changes application surfaces only. PDF canvases and exported colors stay intact. */
+:root[data-appearance="paper"][data-theme="light"]{
+ --paper:#eeece6;--surface:#fcfbf8;--surface-2:#f1efe9;--sheet:#e5e2da;
+ --ink:#282924;--ink-2:#5e6058;--ink-3:#75776e;--ink-4:#999b92;
+ --line:#dcd9d0;--line-2:#c7c4ba;
+ --accent-wash:#eaf1ec;--accent-line:#b4cec0;
+ --sh-1:0 1px 2px rgba(42,41,32,.05);--sh-2:0 8px 28px rgba(42,41,32,.12);
+}
+:root[data-appearance="paper"][data-theme="dark"]{
+ --paper:#232421;--surface:#2c2d29;--surface-2:#33352f;--sheet:#20211e;
+ --ink:#edeee7;--ink-2:#c4c6bc;--ink-3:#a2a598;--ink-4:#7d8073;
+ --line:#42443b;--line-2:#5b5e51;--accent-wash:#2e4036;--accent-line:#526b5b;
+ --sh-1:0 1px 3px rgba(0,0,0,.18);--sh-2:0 8px 28px rgba(0,0,0,.4);
+}
+:root[data-appearance="paper"] :is(.page,.pro-section,.btn,.mode-switch){box-shadow:none}
+:root[data-appearance="paper"] .page.selected{box-shadow:0 0 0 1px var(--accent)}
+:root[data-appearance="paper"] .page:hover{border-color:var(--accent-line)}
+.appearance-dialog{position:fixed;inset:auto;margin:0;width:312px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:16px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:var(--sh-2);font-family:inherit}
+.appearance-dialog::backdrop{background:transparent}
+.appearance-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.appearance-heading h2{font-size:15px;font-weight:650;margin:0}
+.appearance-heading .btn{border:0;box-shadow:none;width:32px;height:32px}
+.appearance-group{border:0;padding:0;margin:0;min-width:0}
+.appearance-group+.appearance-group{margin-top:20px}
+.appearance-group legend{font-size:12px;font-weight:600;color:var(--ink-2);padding:0;margin-bottom:8px}
+.appearance-styles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.appearance-styles>button{display:grid;grid-template-columns:1fr 16px;gap:8px;padding:8px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);font-family:inherit;font-size:12px;font-weight:600;text-align:left;cursor:pointer}
+.appearance-styles>button>span:last-of-type{font-size:12px;font-weight:600}
+.appearance-styles>button[aria-pressed="true"]{border-color:var(--accent);outline:1px solid var(--accent);outline-offset:-1px}
+.appearance-check{width:15px;height:15px;color:var(--accent);visibility:hidden}
+[aria-pressed="true"]>.appearance-check{visibility:visible}
+.appearance-sample{height:64px;grid-column:1/-1;position:relative;display:block;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.sample-studio{background:#e9ebec;--sample-panel:#fff}.sample-paper{background:#e5e2da;--sample-panel:#fcfbf8}
+[data-theme="dark"] .sample-studio{background:#202124;--sample-panel:#303134}[data-theme="dark"] .sample-paper{background:#20211e;--sample-panel:#35372f}
+.appearance-sample::before{content:"";position:absolute;inset:0 0 auto;height:10px;background:var(--sample-panel);border-bottom:1px solid #8883}
+.appearance-sample i{position:absolute;left:0;top:11px;bottom:0;width:20%;background:var(--sample-panel)}
+.appearance-sample b{position:absolute;left:37%;top:18px;bottom:8px;width:32%;background:#fff;box-shadow:0 1px 3px #0002}
+.appearance-sample em{position:absolute;right:0;top:11px;bottom:0;width:14%;background:var(--sample-panel)}
+.appearance-sample::after{content:"";position:absolute;left:4px;top:4px;width:14px;height:3px;background:#00857d}
+.appearance-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;border:1px solid var(--line);border-radius:5px;background:var(--surface-2)}
+.appearance-modes button{display:flex;align-items:center;justify-content:center;gap:5px;min-height:38px;border:1px solid transparent;border-radius:3px;background:transparent;font-size:12px;color:var(--ink-2);cursor:pointer}
+.appearance-modes button[aria-pressed="true"]{background:var(--surface);border-color:var(--line-2);color:var(--accent-ink)}
+.appearance-modes .ic{width:16px;height:16px}
+.appearance-dialog button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:650px){.appearance-dialog{width:auto;left:12px!important;right:12px;top:auto!important;bottom:calc(12px + env(safe-area-inset-bottom));padding:18px}.appearance-heading .btn{width:44px;height:44px}.appearance-modes button{min-height:44px}.appearance-sample{height:76px}}

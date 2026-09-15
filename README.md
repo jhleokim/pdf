@@ -1,10 +1,10 @@
 # PDF Studio — Basic & Pro
 
-현재 소스 버전: **v6.1.2**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다. [v6.1.1 영역 삭제·성능 개선](docs/release-v6.1.1.md)
+현재 소스 버전: **v6.2.0**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다. [v6.1.1 영역 삭제·성능 개선](docs/release-v6.1.1.md)
 
 브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집과 로컬 OCR은 기기에서 처리합니다. 웹과 단독 실행 HTML 모두 **Paddle OCR(PP-OCRv5 경량 한국어)**이 기본이며 Tesseract를 두 번째 옵션으로 제공합니다. 웹에서는 Google Vision이 세 번째 옵션으로 표시됩니다.
 
-| 구성 | 웹 v6.1.2 | 단독 실행 HTML v6.1.2 |
+| 구성 | 웹 v6.2.0 | 단독 실행 HTML v6.2.0 |
 |---|---|---|
 | OCR 모델 | PP-OCRv5 기본 · Tesseract.js 7.0.0 · Google Vision | 동일한 두 로컬 엔진 제공, Vision 제외 |
 | 모델 준비 | 선택한 엔진의 첫 인식 때 필요한 파일 다운로드. PP-OCRv5 모델 약 18.2MB, 실행 코드·WASM 별도 | 두 엔진·모델·언어 데이터를 HTML에 내장, 선택한 엔진만 초기화 |
@@ -12,7 +12,11 @@
 | 문서 처리 | Tesseract·PP-OCRv5는 브라우저 안에서 처리 | 브라우저 안에서 처리 |
 | 인식 결과 교정 | 원본 영역과 텍스트를 연결한 교정 창 | 같은 교정 창 제공 |
 | Google Vision | 드롭다운에 바로 표시, 실행 전 전송 동의 | 옵션·동의 창·API 연결 모듈 제외 |
-| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/`, `.deploy/privacy/` 자산, API Worker | `dist/PDF-Studio-Standalone-v6.1.2.html` 한 파일 |
+| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/`, `.deploy/privacy/` 자산, API Worker | `dist/PDF-Studio-Standalone-v6.2.0.html` 한 파일 |
+
+## v6.2.0 화면 설정·검토 스탬프
+
+기존 밝기 버튼에서 Studio/Paper 테마와 Light/Dark/시스템 밝기를 함께 선택합니다. 테마 변경은 문서 내용을 유지하고 PDF 미리보기를 다시 그리지 않습니다. 검토 스탬프는 짧은 문구·얇은 사각 테두리·직선 화살표로 정리했습니다. [변경 및 검증 기록](docs/release-v6.2.0.md) · [기획안 검토 의견](docs/planning-review-v6.2.0.md)
 
 ## v6.1.2 페이지 목록
 
@@ -38,7 +42,7 @@ npm test
 node scripts/build-deploy.mjs
 ```
 
-모델 준비 스크립트와 모델 출처는 아래의 PP-OCRv5 설명을 참고하세요. 웹 배포에는 `.deploy/index.html`, `.deploy/ocr/`, `.deploy/privacy/`, `_headers`가 필요합니다. 스탠드얼론 결과는 `dist/PDF-Studio-Standalone-v6.1.2.html`입니다. 우측 하단 버전을 누르면 라이선스와 소스 링크를 볼 수 있습니다.
+모델 준비 스크립트와 모델 출처는 아래의 PP-OCRv5 설명을 참고하세요. 웹 배포에는 `.deploy/index.html`, `.deploy/ocr/`, `.deploy/privacy/`, `_headers`가 필요합니다. 스탠드얼론 결과는 `dist/PDF-Studio-Standalone-v6.2.0.html`입니다. 우측 하단 버전을 누르면 라이선스와 소스 링크를 볼 수 있습니다.
 
 ## OCR 모델 선택과 진행 안내
 
@@ -176,7 +180,7 @@ Cloudflare와 같은 경로로 로컬 확인하려면 `npx wrangler dev`를 실�
 
 배포 권한이 있는 Wrangler 로그인 또는 CI의 Cloudflare API 토큰을 준비한 뒤 `npm run deploy`를 실행합니다. CI도 Node.js 22 이상에서 `npm ci` 후 `npm run deploy`로 재현할 수 있습니다. 배포 명령은 같은 빌드를 다시 수행합니다. `.deploy/`의 HTML·모델·런타임·라이선스와 `server/worker.mjs`가 함께 대상입니다. Google Vision Secret과 기존 Gemini Secret은 HTML이나 Git에 넣지 않습니다. 이번 로컬 엔진·교정 UI 통합은 기존 API 서버의 기능이나 키를 변경하지 않습니다.
 
-단독 실행 파일은 `npm ci` 후 `npm run build:standalone`으로 생성합니다. 이 빌드도 공식 PP-OCRv5 모델을 준비하고 검증하므로 새 개발 환경에는 모델 다운로드가 필요합니다. 출력은 **`dist/PDF-Studio-Standalone-v6.1.2.html`**이며 완성된 파일에는 두 로컬 OCR 엔진과 모델을 내장합니다. 사용 시 클라우드 API 키나 별도 모델 다운로드를 요구하지 않도록 구성했습니다. `file://` 직접 실행의 실제 호환성은 위 미검증 범위를 참고하세요.
+단독 실행 파일은 `npm ci` 후 `npm run build:standalone`으로 생성합니다. 이 빌드도 공식 PP-OCRv5 모델을 준비하고 검증하므로 새 개발 환경에는 모델 다운로드가 필요합니다. 출력은 **`dist/PDF-Studio-Standalone-v6.2.0.html`**이며 완성된 파일에는 두 로컬 OCR 엔진과 모델을 내장합니다. 사용 시 클라우드 API 키나 별도 모델 다운로드를 요구하지 않도록 구성했습니다. `file://` 직접 실행의 실제 호환성은 위 미검증 범위를 참고하세요.
 
 글줄 교정 개선 후 Node 회귀 테스트는 **186개 통과**했습니다. PP-OCRv5 어댑터·로더 10개, 교정 초안 8개, 글줄 그룹·편집 16개, 교정 후 PDF 출력 6개를 포함합니다. `tests/ppocr-v5-adapter.test.cjs`와 `tests/ppocr-v5-bootstrap.test.cjs`는 좌표·신뢰도 변환, 잘못된 위치, 취소·시간 제한, 모델 크기·해시, 지연 로딩과 재시도를 검사합니다. 교정 테스트는 초안 분리, 줄바꿈·표·다단 경계, 띄어쓰기·한글·이모지 편집, 수정 텍스트와 좌표 보존, PDF 검색용 텍스트를 검사합니다. 합성 브라우저 자료에서는 1,680개 단어가 120개 글줄로 묶이며, 단어 선택·수정 적용·Ctrl+Z·재열기·취소를 확인했습니다. 자동 테스트 통과는 실제 문서의 인식 정확도나 모든 브라우저의 실행 보장이 아닙니다.
 

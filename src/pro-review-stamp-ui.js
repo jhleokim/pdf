@@ -71,6 +71,11 @@
   finally{if(token===renderSequence){pending=false;syncReviewStamp();}}
  }
  for(const p of S.presets){const b=document.createElement('button');b.type='button';b.className='review-stamp-preset';b.dataset.preset=p.id;b.dataset.shape=p.shape;b.textContent=p.text;b.setAttribute('aria-pressed','false');b.onclick=()=>changeReview({...stampAsset?.review,preset:p.id,text:p.text,arrow:p.id!=='done'&&p.id!=='important'&&p.id!=='opinion'}, {create:true});$('reviewStampPresets').append(b);}
+ const extra=document.createElement('details');extra.className='review-stamp-extra';
+ const extraTitle=document.createElement('summary');extraTitle.textContent='문구 더 보기';extra.append(extraTitle);
+ const extraGrid=document.createElement('div');extraGrid.className='review-stamp-extra-grid';
+ for(const button of [...$('reviewStampPresets').children].slice(8))extraGrid.append(button);
+ extra.append(extraGrid);$('reviewStampPresets').append(extra);
  $('reviewStampText').oninput=()=>changeReview({...stampAsset?.review,text:$('reviewStampText').value});
  $('reviewStampColor').oninput=()=>changeReview({...stampAsset?.review,color:$('reviewStampColor').value});
  $('reviewStampHex').oninput=()=>{const value=$('reviewStampHex').value,ok=/^#[0-9a-f]{6}$/i.test(value);$('reviewStampHex').setAttribute('aria-invalid',String(!ok));if(ok)changeReview({...stampAsset?.review,color:value});};
