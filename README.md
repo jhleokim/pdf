@@ -1,10 +1,10 @@
 # PDF Studio — Basic & Pro
 
-현재 소스 버전: **v6.2.0**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다. [v6.1.1 영역 삭제·성능 개선](docs/release-v6.1.1.md)
+현재 소스 버전: **v6.2.1**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다. [v6.1.1 영역 삭제·성능 개선](docs/release-v6.1.1.md)
 
 브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집과 로컬 OCR은 기기에서 처리합니다. 웹과 단독 실행 HTML 모두 **Paddle OCR(PP-OCRv5 경량 한국어)**이 기본이며 Tesseract를 두 번째 옵션으로 제공합니다. 웹에서는 Google Vision이 세 번째 옵션으로 표시됩니다.
 
-| 구성 | 웹 v6.2.0 | 단독 실행 HTML v6.2.0 |
+| 구성 | 웹 v6.2.1 | 단독 실행 HTML v6.2.1 |
 |---|---|---|
 | OCR 모델 | PP-OCRv5 기본 · Tesseract.js 7.0.0 · Google Vision | 동일한 두 로컬 엔진 제공, Vision 제외 |
 | 모델 준비 | 선택한 엔진의 첫 인식 때 필요한 파일 다운로드. PP-OCRv5 모델 약 18.2MB, 실행 코드·WASM 별도 | 두 엔진·모델·언어 데이터를 HTML에 내장, 선택한 엔진만 초기화 |
@@ -12,7 +12,11 @@
 | 문서 처리 | Tesseract·PP-OCRv5는 브라우저 안에서 처리 | 브라우저 안에서 처리 |
 | 인식 결과 교정 | 원본 영역과 텍스트를 연결한 교정 창 | 같은 교정 창 제공 |
 | Google Vision | 드롭다운에 바로 표시, 실행 전 전송 동의 | 옵션·동의 창·API 연결 모듈 제외 |
-| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/`, `.deploy/privacy/` 자산, API Worker | `dist/PDF-Studio-Standalone-v6.2.0.html` 한 파일 |
+| 배포·전달물 | `.deploy/index.html`과 `.deploy/ocr/`, `.deploy/privacy/` 자산, API Worker | `dist/PDF-Studio-Standalone-v6.2.1.html` 한 파일 |
+
+## v6.2.1 Pro 기본값·도움말
+
+Pro는 기울기·스캔 보정과 용량 최적화를 적용하지 않은 상태로 시작합니다. 텍스트 인식은 도구의 마지막에 배치하고, 물음표 도움말은 마우스를 1초 올려두면 표시합니다. [변경 및 검증 기록](docs/release-v6.2.1.md) · [Stirling과 용량 최적화 비교](docs/compression-comparison-v6.2.1.md)
 
 ## v6.2.0 화면 설정·검토 스탬프
 
@@ -42,7 +46,7 @@ npm test
 node scripts/build-deploy.mjs
 ```
 
-모델 준비 스크립트와 모델 출처는 아래의 PP-OCRv5 설명을 참고하세요. 웹 배포에는 `.deploy/index.html`, `.deploy/ocr/`, `.deploy/privacy/`, `_headers`가 필요합니다. 스탠드얼론 결과는 `dist/PDF-Studio-Standalone-v6.2.0.html`입니다. 우측 하단 버전을 누르면 라이선스와 소스 링크를 볼 수 있습니다.
+모델 준비 스크립트와 모델 출처는 아래의 PP-OCRv5 설명을 참고하세요. 웹 배포에는 `.deploy/index.html`, `.deploy/ocr/`, `.deploy/privacy/`, `_headers`가 필요합니다. 스탠드얼론 결과는 `dist/PDF-Studio-Standalone-v6.2.1.html`입니다. 우측 하단 버전을 누르면 라이선스와 소스 링크를 볼 수 있습니다.
 
 ## OCR 모델 선택과 진행 안내
 
