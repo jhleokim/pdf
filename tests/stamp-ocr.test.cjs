@@ -17,6 +17,7 @@ test('repeated stamps respect physical corner offsets and fit small pages withou
 const scripts=[...fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
 const ctx=vm.createContext({console:{log(){},warn(){},error:console.error},setTimeout,clearTimeout,TextEncoder,TextDecoder,URL,URLSearchParams,Blob,ReadableStream,WritableStream,TransformStream,AbortController,AbortSignal,atob,btoa,DOMException,ArrayBuffer,Uint8Array,Uint8ClampedArray,Int8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,DataView,assert});
 for(const marker of ['sourceMappingURL=pdf-lib.min.js.map','pdfjs-dist/build/pdf"]','pdfjs-dist/build/pdf.worker'])vm.runInContext(scripts.find(s=>s.includes(marker)),ctx);
+ctx.PDFTesseractAssets={get:id=>id==='ocr-search-font'?new Uint8Array(fs.readFileSync(path.join(root,'vendor/markup/GlyphLessFont.ttf'))):null};
 for(const name of ['pro-document','pro-stamp','pro-ocr'])vm.runInContext(fs.readFileSync(path.join(root,'src',name+'.js'),'utf8'),ctx);
 test('Unicode OCR layer extracts Korean, Latin and supplementary characters for rotated offset pages',async()=>{
   await vm.runInContext(`(async()=>{

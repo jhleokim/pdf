@@ -1,8 +1,8 @@
 /* Embedded fonts supply identical Korean/Latin metrics in the editor and PDF. */
 const PDFMarkupText=(()=>{
-  const families={gothic:{name:'나눔고딕',family:'PDFStudioGothic',asset:'markup-font-gothic'},myeongjo:{name:'나눔명조',family:'PDFStudioMyeongjo',asset:'markup-font-myeongjo'}};
+  const families={gothic:{name:'나눔고딕',family:'PDFStudioGothic',asset:'markup-font-gothic'},myeongjo:{name:'나눔명조',family:'PDFStudioMyeongjo',asset:'markup-font-myeongjo'},'hana-regular':{name:'하나2.0 Regular',family:'PDFStudioHanaRegular',asset:'markup-font-hana-regular'},'hana-bold':{name:'하나2.0 Bold',family:'PDFStudioHanaBold',asset:'markup-font-hana-bold'}};
   const fonts=new Map();let boot;
-  // Synthetic emphasis keeps both embedded Korean families available offline.
+  // Synthetic emphasis works with every bundled family, including selected ranges.
   const boldStroke=.035,strikeWidth=.05,italicSlope=Math.tan(14*Math.PI/180);
   function data(id){return b64bytes(document.getElementById(id).textContent.trim());}
   async function load(id='gothic'){
@@ -102,7 +102,7 @@ const PDFMarkupText=(()=>{
     const key='text-font:'+a.font;
     // These Korean TTFs lose glyphs with fontkit's subset path.
     // Embed each used family once, retaining its original glyph tables.
-    if(!cache.has(key)){const f=await load(a.font);doc.registerFontkit(fontkit);cache.set(key,await doc.embedFont(f.bytes,{subset:false}));}
+    if(!cache.has(key)){const f=await load(a.font);doc.registerFontkit(fontkit);cache.set(key,await doc.embedFont(f.bytes,{subset:false,customName:f.font.postscriptName}));}
     const font=cache.get(key),sx=a.nw*vp.width/a.textLayout.width,sy=a.nh*vp.height/a.textLayout.height;
     const c=hexToRgb(a.color);
     // Transform the slant in text space before rotating into the source PDF.

@@ -19,6 +19,7 @@ for(const marker of ['sourceMappingURL=pdf-lib.min.js.map','pdfjs-dist/build/pdf
 vm.runInContext(fs.readFileSync(path.join(root,'vendor/markup/fontkit.umd.min.js'),'utf8'),context);
 const fontBytes=new Uint8Array(inflateSync(fs.readFileSync(path.join(root,'vendor/markup/NanumGothic.ttf.zlib'))));
 const font=context.fontkit.create(fontBytes),fontLoads=[];
+context.PDFTesseractAssets={get:id=>id==='ocr-search-font'?new Uint8Array(fs.readFileSync(path.join(root,'vendor/markup/GlyphLessFont.ttf'))):null};
 context.PDFMarkupText={async load(name){fontLoads.push(name);return {font,bytes:fontBytes};}};
 for(const file of ['pro-document.js','pro-ocr.js'])vm.runInContext(fs.readFileSync(path.join(root,'src',file),'utf8'),context);
 const {PDFLib:P,PDFOCR,PDFProDocument:geometry,pdfjsLib}=context;

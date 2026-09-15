@@ -26,6 +26,39 @@
     "NanumMyeongjo.ttf.zlib": {
       "bytes": 1048818,
       "sha256": "85cb99f032710474ffb59bc0f76fbfeb4d686f8ea73d2c4699a0da61a6d53663"
+    },
+    "GlyphLessFont.ttf": {
+      "bytes": 572,
+      "sha256": "c7845420925a23d88ed830a63957b8af85a66a8daf8d9fc90e843673b2ef1a59"
+    },
+    "LICENSE-GlyphLessFont": {
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "Hana2-Regular.ttf.zlib": {
+      "bytes": 2962505,
+      "sha256": "c3001575c8aab92666e89cef3b5f7d77cf00c3c384fb7cec1fef86965ba9e232"
+    },
+    "Hana2-Bold.ttf.zlib": {
+      "bytes": 3006916,
+      "sha256": "58b4963e022319f3a3f1e63d2ac43e3ebcdf74bb7345466b03770ac2e8c899b2"
+    },
+    "Hana2-LICENSE.txt": {
+      "bytes": 1019,
+      "sha256": "e24b58a5d2a55e28e65b4647beb0581bb761eca018ba6243d45ae57cf9453d14"
     }
+  },
+  "glyphLessFont": {
+    "source": "https://github.com/tesseract-ocr/tessconfigs",
+    "commit": "3decf1c8252ba6dbeef0bf908f4b0aab7f18d113",
+    "file": "pdf.ttf",
+    "license": "Apache-2.0"
+  },
+  "hana2": {
+    "source": "https://www.hanafn.com/hfm/mnu/aboutus/hanaFnCi.do",
+    "archive": "https://www.hanafn.com/download/10054025/crossDownload.do",
+    "archiveSha256": "2855fc7c8e582d0886fac563de79183a214d87de504bec643a8b7697882aaeac",
+    "retrieved": "2026-09-16",
+    "license": "Hana Financial Group font terms; see Hana2-LICENSE.txt"
   }
 }
