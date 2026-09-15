@@ -1160,7 +1160,12 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 @media(max-height:700px){.deskew-dock{--deskew-dock-pad:2px}}
 /* Compact tools; properties belong only to the active editing tool. */
 .anno-bar{position:relative;flex:none;border-bottom:1px solid var(--line);background:var(--surface);container-type:inline-size}
-.page .sheet{aspect-ratio:var(--page-ratio,0.70710678)}
+/* Grid cards share a portrait frame; single-column rails follow the page. */
+.page .sheet{aspect-ratio:3/4}
+@media(min-width:881px){
+ body[data-mode=basic].editing-focus #board .sheet,
+ body[data-mode=pro].pro-preview-open main[data-thumbnail-columns="1"] #board .sheet{aspect-ratio:var(--page-ratio,0.70710678)}
+}
 #board{align-items:start}
 .page-thumbnail{position:absolute;inset:0;pointer-events:none;isolation:isolate;aspect-ratio:auto}
 .sheet .page-thumbnail canvas,.thumbnail-markup{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:100%;max-height:100%;background:transparent;object-fit:contain}
@@ -3793,7 +3798,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.1.1, 라이선스 보기">v6.1.1</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.1.2, 라이선스 보기">v6.1.2</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -11714,7 +11719,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
 <!-- privacy-assets:end -->
 <!-- app-license:start -->
-<dialog id="appLicenseDialog" class="document-check-dialog"><h2>오픈소스 라이선스</h2><p>PDF Studio v6.1.1 · GNU AGPL v3 이상</p><p>개인정보 영역 삭제: MuPDF.js 1.28.1<br>Copyright © Artifex Software, Inc.</p><p><a href="https://github.com/jhleokim/pdf" target="_blank" rel="noopener noreferrer">전체 소스 및 빌드 방법</a> · <a href="https://github.com/ArtifexSoftware/mupdf/tree/20061bd45183f5a2bff8f43675e4da91e5ac2901" target="_blank" rel="noopener noreferrer">MuPDF 소스</a></p><details><summary>GNU AGPL 라이선스 전문</summary><pre style="white-space:pre-wrap;max-height:35vh;overflow:auto;font:11px/1.5 monospace">                    GNU AFFERO GENERAL PUBLIC LICENSE
+<dialog id="appLicenseDialog" class="document-check-dialog"><h2>오픈소스 라이선스</h2><p>PDF Studio v6.1.2 · GNU AGPL v3 이상</p><p>개인정보 영역 삭제: MuPDF.js 1.28.1<br>Copyright © Artifex Software, Inc.</p><p><a href="https://github.com/jhleokim/pdf" target="_blank" rel="noopener noreferrer">전체 소스 및 빌드 방법</a> · <a href="https://github.com/ArtifexSoftware/mupdf/tree/20061bd45183f5a2bff8f43675e4da91e5ac2901" target="_blank" rel="noopener noreferrer">MuPDF 소스</a></p><details><summary>GNU AGPL 라이선스 전문</summary><pre style="white-space:pre-wrap;max-height:35vh;overflow:auto;font:11px/1.5 monospace">                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. &lt;http://fsf.org/&gt;
@@ -12580,7 +12585,7 @@ function observeThumbnail(p){
     // One bounded cache of the sanitized document only. Never cache source
     // pixels, rendering canvases, PDF instances or results of Pro settings here.
     cache=sources&&result.bytes.length<=24*1024*1024?{key,bytes:result.bytes}:null;
-    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.1; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);return clean;
+    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.2; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);return clean;
   }
   async function flatten(doc,{signal,docOptions={},onProgress,onText,pageSources=[],ocr=[],ocrApplied=false}={}){
     signal?.throwIfAborted();if(pageSources.length!==doc.getPageCount())throw Error('마스킹 문서의 페이지 대응을 확인하지 못했습니다.');
@@ -12588,7 +12593,7 @@ function observeThumbnail(p){
     const accepted=ocr.filter(r=>pageSources.some(p=>currentOCR(r,p)));
     if(!ocrApplied&&accepted.length)await PDFOCR.apply(doc,accepted,{signal,pageIds:pageSources.map(p=>p.uid)});
     const result=await PDFPrivacyNative.run(await doc.save({useObjectStreams:true,updateFieldAppearances:false}),pageSources.map(()=>[]),{signal,onProgress});signal?.throwIfAborted();
-    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.1; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);
+    const clean=await PDFLib.PDFDocument.load(result.bytes);clean.setProducer('PDF Studio 6.1.2; MuPDF 1.28.1 (AGPL-3.0-or-later); pdf-lib');safe.add(clean);
     if(onText){
       let searchable=0,pendingOCR=0;
       const task=pdfjsLib.getDocument({data:result.bytes.slice(),...docOptions});
@@ -14260,7 +14265,9 @@ let proRailDragging=false;
   function apply(value=preferred??defaultWidth()){
     const {min,max}=limits(),width=Math.max(min,Math.min(max,value));
     main.style.setProperty('--pro-rail-width',width+'px');
-    main.style.setProperty('--pro-thumb-columns',Math.max(1,Math.floor((width-8)/154)));
+    const columns=Math.max(1,Math.floor((width-8)/154));
+    main.style.setProperty('--pro-thumb-columns',columns);
+    main.dataset.thumbnailColumns=String(columns);
     handle.setAttribute('aria-valuemin',min);handle.setAttribute('aria-valuemax',max);handle.setAttribute('aria-valuenow',Math.round(width));
     return width;
   }

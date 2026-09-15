@@ -1,6 +1,11 @@
 /* Compact tools; properties belong only to the active editing tool. */
 .anno-bar{position:relative;flex:none;border-bottom:1px solid var(--line);background:var(--surface);container-type:inline-size}
-.page .sheet{aspect-ratio:var(--page-ratio,0.70710678)}
+/* Grid cards share a portrait frame; single-column rails follow the page. */
+.page .sheet{aspect-ratio:3/4}
+@media(min-width:881px){
+ body[data-mode=basic].editing-focus #board .sheet,
+ body[data-mode=pro].pro-preview-open main[data-thumbnail-columns="1"] #board .sheet{aspect-ratio:var(--page-ratio,0.70710678)}
+}
 #board{align-items:start}
 .page-thumbnail{position:absolute;inset:0;pointer-events:none;isolation:isolate;aspect-ratio:auto}
 .sheet .page-thumbnail canvas,.thumbnail-markup{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:100%;max-height:100%;background:transparent;object-fit:contain}
