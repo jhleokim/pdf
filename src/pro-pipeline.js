@@ -43,7 +43,7 @@
       await PDFProDocument.applyDocument(doc,options,callbacks);check(signal);
       result=await rasterize(doc,options,{...callbacks,onProgress:(n,label)=>onProgress?.(.3+n*.7,label)});
     }else{
-      const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>onProgress?.(.3+.5*(info.total?info.completed/info.total:1),'이미지를 보정하고 압축하는 중…')});check(signal);
+      const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>onProgress?.(.3+.5*(info.total?info.completed/info.total:1),info.phase||'이미지를 보정하고 압축하는 중…')});check(signal);
       await PDFProDocument.applyDocument(doc,options,{...callbacks,onProgress:n=>onProgress?.(.8+n*.2,'페이지 설정을 적용하는 중…')});
       result={doc,report};
     }

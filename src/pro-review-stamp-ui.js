@@ -51,7 +51,7 @@
   controls();
   if(gesture&&(!valid()||livePage()?.uid!==gesture.uid||lastAsset!==stampAsset)){cancel();}
   lastAsset=stampAsset;
-  if(!valid()||$('proCompare').hidden||$('compareStage').classList.contains('show-original')||!$('compareAfter').width){svg.setAttribute('hidden','');return;}
+  if(!valid()||liveCache?.savedTarget||$('proCompare').hidden||$('compareStage').classList.contains('show-original')||!$('compareAfter').width){svg.setAttribute('hidden','');return;}
   let mark;try{mark=currentStamp();}catch(_){svg.setAttribute('hidden','');return;}
   if(mark.scope!=='all'&&!mark.targets.includes(livePage()?.uid)){svg.setAttribute('hidden','');return;}
   if(!gesture)paint(mark);

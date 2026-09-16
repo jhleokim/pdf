@@ -18,7 +18,7 @@ function restoreLiveZoomAnchor(key){
 }
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
 function liveContentKey(){
-  return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
+  return JSON.stringify([proFingerprint(),!!proResult,livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
     const el=$(id);return el.type==='checkbox'?el.checked:el.value;
   })]);
 }
@@ -108,6 +108,11 @@ async function updateLivePreview(seq){
   let loaded=[],canvases=[];
   try{
     const p=livePage(),offset=pages.indexOf(p),options=readProOptions(),key=liveContentKey();
+    const targetRequested=options.targetBytes>0;
+    const savedTarget=targetRequested&&proResult?.fingerprint===proFingerprint()?proResult:null;
+    // A document-wide budget cannot be guessed from a single page. Until export,
+    // show the chosen preset. Afterwards render the actual verified saved page.
+    options.targetBytes=0;
     // Keep the active review label in the interactive overlay. Committed labels
     // use the normal PDF pipeline; export always includes the active label too.
     if(typeof stampAsset!=='undefined'&&stampAsset?.review&&options.stamps?.length)options.stamps=options.stamps.slice(0,-1);
@@ -116,7 +121,12 @@ async function updateLivePreview(seq){
       const edited=await buildEditedDocument([p],{signal});check();
       const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
       const doc=await PDFLib.PDFDocument.load(before);check();
-      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
+      let result;
+      if(savedTarget){
+        const saved=await PDFLib.PDFDocument.load(savedTarget.bytes),pageDoc=await PDFLib.PDFDocument.create();
+        const [savedPage]=await pageDoc.copyPages(saved,[offset]);pageDoc.addPage(savedPage);
+        result={doc:pageDoc,report:{...savedTarget.report,deskew:{...savedTarget.report.deskew,pages:[savedTarget.report.deskew?.pages?.[offset]].filter(Boolean)}}};
+      }else result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
       report=result.report;
       const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
       if(!options.rasterize){await verifyProText(before,after,signal,true,{deskew:report.deskew,options});check();}
@@ -136,12 +146,12 @@ async function updateLivePreview(seq){
     canvases=[];
     restoreLiveZoomAnchor(key);
     const old=loaded.length?liveDocs:[];if(loaded.length){liveDocs=loaded;loaded=[];}
-    liveCache={key,report};
+    liveCache={key,report,savedTarget:!!savedTarget};
     const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
     liveOutputSize={width:outputViewport.width*(outputPage.userUnit||1),height:outputViewport.height*(outputPage.userUnit||1)};
     await Promise.allSettled(old.map(d=>d.destroy()));check();
     $('comparePageLabel').textContent=`${offset+1} / ${pages.length}페이지`;
-    $('compareState').textContent='미리보기 업데이트 완료';
+    $('compareState').textContent=savedTarget?'저장 결과 미리보기':targetRequested?'예상 미리보기 · 목표 용량은 결과 생성 시 적용':'미리보기 업데이트 완료';
     $('compareOriginal').disabled=false;
     let note='원본 보기에 마우스를 올려 비교하세요. 터치·키보드에서는 눌러 전환합니다.';
     if((options.blackWhite||options.grayscale)&&report.changed===0)note=report.imageCount===0?'이 페이지에는 보정할 이미지가 없습니다. 텍스트와 벡터 색상은 유지됩니다.':'변환 가능한 이미지가 없어 원본을 유지했습니다. '+report.notes.join(' ');

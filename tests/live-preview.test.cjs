@@ -17,7 +17,7 @@ function harness(){
  const report={changed:1,skipped:0,imageCount:1,notes:[]};
  const doc=()=>({save:async()=>new Uint8Array([1,2,3])});
  const c=vm.createContext({AbortController,DOMException,console,Number,JSON,Promise,setTimeout,clearTimeout,
-  $:element,proReady:true,proMode:'pro',proAbort:null,proControlIds:[],pages:[{uid:'p1'}],previewUid:'p1',selected:()=>[],
+  $:element,proReady:true,proMode:'pro',proAbort:null,proResult:null,proControlIds:[],pages:[{uid:'p1'}],previewUid:'p1',selected:()=>[],
   proFingerprint:()=>'',isMobile:()=>false,setProView(){},devicePixelRatio:1,ResizeObserver:class{observe(){}},
   document:{body:{classList:classList()},addEventListener(){},createElement(){return {style:{},attrs:{},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k]||'';},getContext(){return {};},replaceWith(canvas){published.push(this.id);elements.set(this.id,canvas);}};}},
   requestAnimationFrame:fn=>fn(),showPreview(){},readProOptions:()=>({grayscale:true}),buildEditedDocument:async()=>doc(),
@@ -31,7 +31,7 @@ function harness(){
 }
 test('a superseded preview never publishes stale canvases and the newer result succeeds',async()=>{
  const h=harness();const first=vm.runInContext('updateLivePreview(0)',h.c);
- while(!h.isWaiting())await new Promise(r=>setImmediate(r));
+ for(let n=0;!h.isWaiting();n++){if(n>10000)throw Error('Preview never reached processing: '+h.element('compareNote').textContent);await new Promise(r=>setImmediate(r));}
  vm.runInContext('cancelLivePreview()',h.c);h.release();await first;
  assert.deepEqual(h.published,[]);
  await vm.runInContext('updateLivePreview(1)',h.c);
@@ -42,7 +42,7 @@ test('a superseded preview never publishes stale canvases and the newer result s
 
 test('zoom and viewport resizing reuse the processed PDF; document edits invalidate it',async()=>{
  const h=harness(),first=vm.runInContext('updateLivePreview(0)',h.c);
- while(!h.isWaiting())await new Promise(r=>setImmediate(r));h.release();await first;
+ for(let n=0;!h.isWaiting();n++){if(n>10000)throw Error('Preview never reached processing: '+h.element('compareNote').textContent);await new Promise(r=>setImmediate(r));}h.release();await first;
  h.element('compareZoom').value='2';h.element('compareStage').clientWidth=800;
  await vm.runInContext('updateLivePreview(0)',h.c);
  assert.equal(h.processing(),1,'Display changes must not reapply PDF transformations');
@@ -54,7 +54,7 @@ test('zoom and viewport resizing reuse the processed PDF; document edits invalid
 });
 test('closing a preview cancels in-flight work without publishing an obsolete result',async()=>{
  const h=harness();const job=vm.runInContext('updateLivePreview(0)',h.c);
- while(!h.isWaiting())await new Promise(r=>setImmediate(r));
+ for(let n=0;!h.isWaiting();n++){if(n>10000)throw Error('Preview never reached processing: '+h.element('compareNote').textContent);await new Promise(r=>setImmediate(r));}
  vm.runInContext('setLivePreviewOpen(false)',h.c);h.release();await job;
  assert.deepEqual(h.published,[]);assert.equal(h.element('proCompare').hidden,true);
  assert.equal(h.element('proPreviewLabel').textContent,'페이지 미리보기');
@@ -62,7 +62,7 @@ test('closing a preview cancels in-flight work without publishing an obsolete re
 
 test('deskew temporarily fits the page at zoom one, follows available height, then restores the saved zoom without PDF processing',async()=>{
  const h=harness();h.element('compareZoom').value='2';const first=vm.runInContext('updateLivePreview(0)',h.c);
- while(!h.isWaiting())await new Promise(r=>setImmediate(r));h.release();await first;
+ for(let n=0;!h.isWaiting();n++){if(n>10000)throw Error('Preview never reached processing: '+h.element('compareNote').textContent);await new Promise(r=>setImmediate(r));}h.release();await first;
  assert.equal(h.element('compareAfter').style.width,'560px');assert.equal(h.element('compareAfter').style.height,'1120px');
  const body=h.c.document.body.classList;body.add('deskew-adjusting');
  await vm.runInContext('updateLivePreview(0)',h.c);

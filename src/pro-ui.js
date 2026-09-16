@@ -2,7 +2,7 @@
 let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
-const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
+const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proTargetMB','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
 function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],p.deskewAngle,p.deskewCrop===true]));}
 function proInvalidate(message){
@@ -122,8 +122,10 @@ function proNumberInput(id,min,max,integer=false){
 }
 function readProOptions(strict=false){
   if(strict&&typeof validateDeskewInput==='function')validateDeskewInput();
+  if(strict&&$('proOptimize').checked&&$('proCompressionMode').value==='preserve'&&$('proTargetMB').value&&!$('proTargetMB').checkValidity())throw Error('목표 용량은 0.1~2,000 MB 사이로 입력해 주세요.');
   const crop=$('proCrop').checked, number=$('proNumber').checked;
   const options={
+    adaptiveResolution:true,targetBytes:$('proOptimize').checked&&$('proCompressionMode').value==='preserve'?PDFCompressionPlan.targetBytes(Number($('proTargetMB').value)*1000000):0,
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
     blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
     rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
@@ -157,6 +159,9 @@ function refreshProControls(){
   $('proBWHelp').hidden=!$('proGrayscale').checked;
   for(const id of ['proContrast','proWhitePoint'])$(id).closest('label').hidden=$('proGrayscale').checked;
   for(const id of ['proCompressionMode','proPreset','proResolution','proQuality'])$(id).closest('label').hidden=!$('proOptimize').checked||(id==='proQuality'&&$('proGrayscale').checked);
+  $('proTargetMB').disabled=!$('proOptimize').checked||$('proCompressionMode').value==='raster';
+  $('proTargetMB').closest('label').hidden=$('proTargetMB').disabled;
+  $('proTargetHelp').hidden=$('proTargetMB').disabled;
   syncProSummaries();
 }
 function syncProSummaries(){
@@ -292,7 +297,11 @@ async function createProResult({reveal=true}={}){
     const bytes=result.bytes;
     const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
     const hasPageEffects=!result.retained&&!!(masked||report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
-    proResult={bytes,fingerprint,hasPageEffects};
+    const {outputDoc,...previewReport}=report;
+    proResult={bytes,fingerprint,hasPageEffects,report:previewReport};
+    if(options.targetBytes)report.notes.push(bytes.length<=options.targetBytes?'목표 용량을 달성했습니다.':'설정 범위 내에서 목표 용량에 도달하지 못했습니다. 실제 결과 용량을 확인하세요.');
+    $('proTargetResult').hidden=!options.targetBytes;
+    $('proTargetResult').textContent=options.targetBytes?`목표 ${(options.targetBytes/1000000).toFixed(1)} MB · 실제 ${(bytes.length/1000000).toFixed(2)} MB · ${bytes.length<=options.targetBytes?'달성':'미달성'}`:'';
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
     const change=result.reduction;
@@ -311,7 +320,7 @@ async function createProResult({reveal=true}={}){
   }catch(e){
     if(e.name==='AbortError')toast('작업을 취소했습니다. 편집 중인 문서는 유지됩니다.');
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
-  }finally{finishProWork();}
+  }finally{finishProWork();if(proResult&&options.targetBytes){liveCache=null;scheduleLivePreview();}}
 }
 $('modeBasic').onclick=()=>setProMode('basic');
 $('modePro').onclick=()=>{

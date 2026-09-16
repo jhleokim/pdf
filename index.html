@@ -1846,7 +1846,9 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
           <label class="pro-field" for="proPreset"><span>품질 프리셋</span><select id="proPreset"><option value="quality">품질 우선</option><option value="balanced" selected>균형 — 권장</option><option value="small">작은 용량</option></select></label>
           <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option><option value="1200">1,200 px · 작은 용량</option></select></label>
           <label class="pro-field pro-range" for="proQuality"><span>이미지 품질 <output id="proQualityValue" for="proQuality">82%</output></span><input type="range" id="proQuality" min="40" max="95" value="82"><span class="pro-range-scale"><small>작은 용량</small><small>높은 품질</small></span></label>
-          <p class="pro-hint">텍스트 유지 방식의 절감이 작다면 페이지 전체 압축을 사용하세요. 글자 중심 스캔은 B&W를 함께 사용하면 더 작게 저장됩니다.</p>
+          <label class="pro-field" for="proTargetMB"><span>목표 용량 <small>MB · 선택</small></span><input id="proTargetMB" type="number" min="0.1" max="2000" step="0.1" placeholder="제한 없음"></label>
+          <p class="pro-hint" id="proTargetHelp">입력하면 설정한 품질·해상도에서 시작해 최대 3개 후보를 비교합니다. 품질은 최저 40%, 긴 변은 1,200px까지 낮아질 수 있습니다. 목표 달성은 보장하지 않으며 실제 결과 용량을 표시합니다. 결과를 만든 후 미리보기에서 최종 화질을 확인하세요. MB는 1,000,000바이트입니다.</p>
+          <p class="pro-hint">작은 삽입 이미지는 문서의 배치 크기에 맞춰 조절합니다. 텍스트·검색층은 유지하고 흑백 변환은 별도로 선택한 경우에만 적용합니다.</p>
         </div>
       </details>
 
@@ -1893,6 +1895,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
         <p id="proResultSummary" class="pro-result-summary"></p>
         <div class="pro-size-comparison"><div><span id="proBeforeLabel">최적화 전</span><strong id="proBeforeSize">—</strong></div><span class="pro-size-arrow" aria-hidden="true">→</span><div><span>Pro 결과</span><strong id="proAfterSize">—</strong></div></div>
         <p class="pro-reduction" id="proReduction"></p>
+        <p class="pro-composition" id="proTargetResult" role="status" hidden></p>
         <details class="pro-report-details"><summary>처리 내역 보기</summary><p class="pro-composition" id="proComposition"></p><p class="pro-report" id="proReport"></p></details>
         <button class="btn primary" id="proDownload" hidden><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>결과 PDF 다운로드</button>
         <button class="btn quiet" id="proDiscard" hidden>결과 닫기</button>
@@ -3994,7 +3997,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.3.0, 라이선스 보기">v6.3.0</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.0, 라이선스 보기">v6.4.0</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -12124,7 +12127,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 </script>
 <!-- ocr-table-worker-source:end -->
 <!-- privacy-assets:start -->
-<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/a11214fc323965c7570cd7ae29e66cc325c371b3452f5e5e4170cbd2c79c2c25.zlib","sha256":"a11214fc323965c7570cd7ae29e66cc325c371b3452f5e5e4170cbd2c79c2c25","bytes":25852},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
+<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/12d2217c6d56bf93ef07cfef96c458c2b14e1ffe6c55b4a4e7ef04b630469856.zlib","sha256":"12d2217c6d56bf93ef07cfef96c458c2b14e1ffe6c55b4a4e7ef04b630469856","bytes":26641},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
 
 <!-- privacy-assets:end -->
 <!-- app-license:start -->
@@ -12936,19 +12939,19 @@ function observeThumbnail(p){
   })();
   try{await ready;}catch(e){if(token===generation)dispose();throw e;}
  }
- function run(bytes,masks,{signal,onProgress}={}){
+ function run(bytes,masks,{signal,onProgress,operation='redact'}={}){
   const job=async()=>{
    signal?.throwIfAborted();clearTimeout(idleTimer);
    let timer,abort;
    try{return await new Promise((resolve,reject)=>{
     abort=()=>{dispose();reject(signal?.reason||new DOMException('취소했습니다.','AbortError'));};signal?.addEventListener('abort',abort,{once:true});
-    timer=setTimeout(()=>{dispose();reject(Error('개인정보 삭제 처리 시간이 초과됐습니다. 문서는 저장하지 않았습니다.'));},120000);
-    start(signal).then(()=>{signal?.throwIfAborted();pending={id:++sequence,resolve,reject,progress:onProgress};worker.postMessage({id:pending.id,bytes,masks},[bytes.buffer]);},reject).catch(reject);
+    timer=setTimeout(()=>{dispose();reject(Error(operation==='placements'?'이미지 배치 분석 시간이 초과됐습니다.':'개인정보 삭제 처리 시간이 초과됐습니다. 문서는 저장하지 않았습니다.'));},operation==='placements'?30000:120000);
+    start(signal).then(()=>{signal?.throwIfAborted();pending={id:++sequence,resolve,reject,progress:onProgress};worker.postMessage({id:pending.id,bytes,masks,operation},[bytes.buffer]);},reject).catch(reject);
    });}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);pending=null;idleTimer=setTimeout(dispose,30000);}
   };
   const result=queue.catch(()=>{}).then(job);queue=result.catch(()=>{});return result;
  }
- root.PDFPrivacyNative={run,dispose};addEventListener('pagehide',dispose);
+ root.PDFPrivacyNative={run,dispose,placements:(bytes,options)=>run(bytes,null,{...options,operation:'placements'})};addEventListener('pagehide',dispose);
 })(globalThis);
 </script>
 <script id="privacy-export">
@@ -13078,6 +13081,37 @@ function observeThumbnail(p){
   };
 })();
 </script>
+<script id="compression-plan">
+/* Bounded compression policy shared by export, preview and regression tests. */
+(function(root){
+ 'use strict';
+ function targetBytes(value){const n=Number(value);return Number.isFinite(n)&&n>0?Math.round(Math.min(2*1024**3,Math.max(100000,n))):0;}
+ function scale(spec,options,placement){
+  let s=options.optimize?Math.min(1,options.maxDimension/Math.max(spec.width,spec.height)):1;
+  if(options.optimize&&options.adaptiveResolution&&placement?.length===2&&placement.every(n=>Number.isFinite(n)&&n>0)){
+   // A4 long edge at the selected pixel cap defines the same density for small
+   // placed illustrations; use the larger axis to preserve non-square scaling.
+   const dpi=options.maxDimension/11.7;
+   s=Math.min(s,Math.max(placement[0]*dpi/(72*spec.width),placement[1]*dpi/(72*spec.height)));
+  }
+  return Math.max(1/Math.min(spec.width,spec.height),s);
+ }
+ function candidates(spec,options,placement,budget){
+  const initial=scale(spec,options,placement),base={scale:initial,quality:options.optimize?options.jpegQuality:.95};
+  const plans=[base];
+  if(options.optimize&&budget>0&&!options.blackWhite){
+   const floor=Math.min(initial,1200/Math.max(spec.width,spec.height));
+   for(const [factor,drop]of [[.85,.15],[.7,.3]]){
+    const next={scale:Math.max(floor,initial*factor),quality:Math.max(.4,base.quality-drop)};
+    if(!plans.some(p=>p.scale===next.scale&&p.quality===next.quality))plans.push(next);
+   }
+  }
+  return plans;
+ }
+ root.PDFCompressionPlan={targetBytes,scale,candidates};
+ if(typeof module!=='undefined'&&module.exports)module.exports=root.PDFCompressionPlan;
+})(globalThis);
+</script>
 <script id="pro-engine">
 /* PDF Studio Pro — local, image-only PDF processing. No page rasterization.
  * PDFLib 1.17.1 must be available as globalThis.PDFLib.
@@ -13089,6 +13123,7 @@ function observeThumbnail(p){
   const MAX_PIXELS = 16000000;
   const MAX_EDGE = 16384;
   const MAX_ENCODED_BYTES = 64 * 1024 * 1024;
+  const compression=root.PDFCompressionPlan||(typeof module!=='undefined'&&module.exports?require('./compression-plan.js'):null);
   const REASONS = {
     maskSource: '투명도 마스크와 마스크에 사용된 이미지는 원본 그대로 보존했습니다.',
     bwEmpty: '흑백 변환으로 내용이 사라질 수 있는 이미지는 원본을 유지했습니다.',
@@ -13453,21 +13488,27 @@ function observeThumbnail(p){
     if(isEnhanced(o))await enhance(context,canvas.width,canvas.height,o,signal);
     return {bytes:await encode(canvas,o.optimize?o.jpegQuality:.95),width:canvas.width,height:canvas.height,bits:8,colorSpace:'DeviceRGB',filter:'DCTDecode'};
   }
-  async function transform(spec, options, signal) {
+  async function transform(spec, options, signal, placement, budget) {
     let source, target;
     try {
       source = spec.compression === '/DCTDecode' ? await loadJpeg(spec, signal) : await rawCanvas(spec, signal);
       abortIfNeeded(signal);
-      const scale = options.optimize ? Math.min(1, options.maxDimension / Math.max(spec.width, spec.height)) : 1;
-      const width = Math.max(1, Math.round(spec.width * scale));
-      const height = Math.max(1, Math.round(spec.height * scale));
-      target = newCanvas(width, height);
-      const context = canvasContext(target);
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = 'high';
-      context.drawImage(source, 0, 0, width, height);
-      const result=await encodeCanvas(target,options,signal);
-      abortIfNeeded(signal);return result;
+      const plans=compression.candidates(spec,options,placement,budget);let best=null,attempts=0;
+      for(const plan of plans){
+        abortIfNeeded(signal);
+        const width=Math.max(1,Math.round(spec.width*plan.scale)),height=Math.max(1,Math.round(spec.height*plan.scale));
+        target=newCanvas(width,height);
+        try{
+          const context=canvasContext(target);context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+          // Every candidate is decoded from the original image, never from an
+          // earlier JPEG. Keep at most one source and one target raster alive.
+          context.drawImage(source,0,0,width,height);
+          const result=await encodeCanvas(target,{...options,jpegQuality:plan.quality},signal);attempts++;
+          if(!best||result.bytes.length<best.bytes.length)best={...result,quality:plan.quality};
+          if(!budget||best.bytes.length<=budget||best.packed)break;
+        }finally{target.width=target.height=1;target=null;}
+      }
+      abortIfNeeded(signal);return {...best,attempts};
     } finally {
       if (source && typeof source.close === 'function') source.close();
       else if (source && typeof source.getContext === 'function') source.width = source.height = 1;
@@ -13490,8 +13531,12 @@ function observeThumbnail(p){
     const lib=root.PDFLib,groups=new Map(),aliases=new Map();let saved=0;
     for(const [ref,stream]of doc.context.enumerateIndirectObjects()){
       abortIfNeeded(signal);if(!(stream instanceof lib.PDFRawStream)||nameValue(pdfValue(stream.dict,'Subtype',lib))!=='/Image')continue;
-      const data=stream.getContents(),key=stream.dict.toString()+'|'+data.length,list=groups.get(key)||[];
-      const prior=list.find(item=>item.data.length===data.length&&item.data.every((b,i)=>b===data[i]));
+      const data=stream.getContents();let hash=2166136261;
+      for(let start=0;start<data.length;start+=262144){abortIfNeeded(signal);for(let i=start;i<Math.min(start+262144,data.length);i++)hash=Math.imul(hash^data[i],16777619);if(start)await pause();}
+      const key=stream.dict.toString()+'|'+data.length+'|'+(hash>>>0),list=groups.get(key)||[];
+      let prior;
+      // Hashes only select candidates. Exact byte equality still authorizes reuse.
+      for(const item of list){let equal=true;for(let start=0;start<data.length&&equal;start+=262144){abortIfNeeded(signal);for(let i=start;i<Math.min(start+262144,data.length);i++)if(item.data[i]!==data[i]){equal=false;break;}if(start)await pause();}if(equal){prior=item;break;}}
       if(prior){aliases.set(ref,prior.ref);saved+=data.length;}else{list.push({ref,data});groups.set(key,list);}await pause();
     }
     if(!aliases.size)return {count:0,bytes:0};
@@ -13509,19 +13554,39 @@ function observeThumbnail(p){
     const lib = root.PDFLib;
     if (!lib || !doc || !doc.context) throw new Error('PDFLib and a loaded PDFDocument are required.');
     const settings = normalizeOptions(options);
+    settings.adaptiveResolution=options?.adaptiveResolution===true&&(!options.paper||options.paper==='original');
+    const targetBytes=compression.targetBytes(options?.targetBytes);
     const { onProgress, signal } = callbacks || {};
     abortIfNeeded(signal);
     // PDFLib defers new image/font embedding until save/flush. Include newly inserted
     // image assets as well as the streams loaded from the original PDF.
     if (typeof doc.flush === 'function') await doc.flush();
     abortIfNeeded(signal);
-    const images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
+    let images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
       object instanceof lib.PDFRawStream && nameValue(pdfValue(object.dict, 'Subtype', lib)) === '/Image');
-    const masks=maskImages(doc,lib);
+    let masks=maskImages(doc,lib);
     const report = { imageCount: images.length, processed: 0, changed: 0, skipped: 0,
       originalImageBytes: 0, resultImageBytes: 0, skipReasons: {}, notes: [] };
     for (const [, stream] of images) report.originalImageBytes += stream.getContents().length;
     report.resultImageBytes = report.originalImageBytes;
+    onProgress?.({completed:0,total:images.length,changed:0,phase:'중복 이미지를 확인하는 중…'});
+    // Repeated embedded assets are unified before any decoding or JPEG work.
+    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;images=images.filter(([ref])=>doc.context.lookup(ref) instanceof lib.PDFRawStream);masks=maskImages(doc,lib);}
+    let placements={},placementNote='',budgetRemaining=0,eligibleRemaining=0;
+    if(settings.optimize&&(settings.adaptiveResolution||targetBytes)){
+      const eligible=await analyzeDocument(doc);eligibleRemaining=eligible.eligibleBytes;
+      if(eligibleRemaining){
+        const serialized=await doc.save({useObjectStreams:true,updateFieldAppearances:false});abortIfNeeded(signal);
+        if(targetBytes)budgetRemaining=Math.max(1,targetBytes-Math.max(0,serialized.length-eligibleRemaining));
+        if(settings.adaptiveResolution&&root.PDFPrivacyNative?.placements){
+          try{onProgress?.({completed:0,total:images.length,changed:0,phase:'이미지 배치를 확인하는 중…'});
+            const inspected=await root.PDFPrivacyNative.placements(serialized,{signal,onProgress:(n,total)=>onProgress?.({completed:0,total:images.length,changed:0,phase:`이미지 배치 확인 ${n} / ${total}쪽`})});placements=inspected.placements||{};
+            if(inspected.reason)placementNote='동적 요소 또는 복잡한 문서는 배치 크기 조정을 생략하고 설정한 픽셀 크기로 압축했습니다.';
+          }catch(e){abortIfNeeded(signal);placementNote='이미지 배치 분석을 완료하지 못해 설정한 픽셀 크기로 압축했습니다.';}
+        }
+      }
+    }
+    report.attempts=0;report.placementResized=0;report.targetBytes=targetBytes;
     const skip = code => {
       report.skipped++;
       report.skipReasons[code] = (report.skipReasons[code] || 0) + 1;
@@ -13534,8 +13599,12 @@ function observeThumbnail(p){
         if (!settings.optimize && !isEnhanced(settings)) throw failure('noAction');
         if(masks.has(stream))throw failure('maskSource');
         const spec = imageSpec(stream, lib);
-        const result = await transform(spec, settings, signal);
+        const placement=placements[ref.objectNumber];
+        const budget=targetBytes&&eligibleRemaining?Math.max(1,budgetRemaining*spec.bytes.length/eligibleRemaining):0;
+        const result = await transform(spec, settings, signal,placement,budget);
+        report.attempts+=result.attempts;
         if(result.packed)result.bytes=doc.context.flateStream(result.bytes).getContents();
+        if(targetBytes){eligibleRemaining-=spec.bytes.length;budgetRemaining-=isEnhanced(settings)?result.bytes.length:Math.min(result.bytes.length,spec.bytes.length);}
         report.processed++;
         if (!isEnhanced(settings) && result.bytes.length >= spec.bytes.length) {
           // A supported image was evaluated, but kept intact because recompression did not help.
@@ -13555,6 +13624,7 @@ function observeThumbnail(p){
           // text, OCR layers, annotations, and vector content; no stale image object is added.
           doc.context.assign(ref, lib.PDFRawStream.of(dict, result.bytes));
           report.changed++;
+          if(placement&&compression.scale(spec,settings,placement)<compression.scale(spec,settings))report.placementResized++;
           report.resultImageBytes += result.bytes.length - spec.bytes.length;
         }
       } catch (error) {
@@ -13565,9 +13635,12 @@ function observeThumbnail(p){
       await pause();
     }
     abortIfNeeded(signal);
-    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
+    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates+=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
     report.notes = Object.keys(report.skipReasons).map(code => REASONS[code] || REASONS.decodeFailed);
     if(report.duplicates)report.notes.push('동일한 이미지 '+report.duplicates+'개를 공유하여 중복 데이터를 제거했습니다.');
+    if(report.placementResized)report.notes.push('배치 크기에 맞춰 이미지 '+report.placementResized+'개의 해상도를 조정했습니다.');
+    if(placementNote)report.notes.push(placementNote);
+    if(targetBytes)report.notes.push('목표 용량에 맞춰 이미지마다 최대 3개 후보를 원본에서 비교했습니다.');
     if (!images.length) report.notes.push('처리할 이미지가 없습니다. 텍스트와 벡터는 원본을 유지했습니다.');
     if (isEnhanced(settings) && report.changed) report.notes.push('보정 후 용량이 늘어날 수 있습니다. 기존 텍스트·OCR 레이어는 유지했습니다.');
     return report;
@@ -14347,7 +14420,7 @@ globalThis.PDFGemini=createCloudOCRClient();
       await PDFProDocument.applyDocument(doc,options,callbacks);check(signal);
       result=await rasterize(doc,options,{...callbacks,onProgress:(n,label)=>onProgress?.(.3+n*.7,label)});
     }else{
-      const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>onProgress?.(.3+.5*(info.total?info.completed/info.total:1),'이미지를 보정하고 압축하는 중…')});check(signal);
+      const report=await PDFPro.processDocument(doc,options,{signal,onProgress:info=>onProgress?.(.3+.5*(info.total?info.completed/info.total:1),info.phase||'이미지를 보정하고 압축하는 중…')});check(signal);
       await PDFProDocument.applyDocument(doc,options,{...callbacks,onProgress:n=>onProgress?.(.8+n*.2,'페이지 설정을 적용하는 중…')});
       result={doc,report};
     }
@@ -14476,7 +14549,7 @@ function restoreLiveZoomAnchor(key){
 }
 const livePage=()=>pages.find(p=>p.uid===previewUid)||selected()[0]||pages[0];
 function liveContentKey(){
-  return JSON.stringify([proFingerprint(),livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
+  return JSON.stringify([proFingerprint(),!!proResult,livePage()?.uid,selected().map(p=>p.uid),typeof toolsRevision==='undefined'?0:toolsRevision,proControlIds.map(id=>{
     const el=$(id);return el.type==='checkbox'?el.checked:el.value;
   })]);
 }
@@ -14566,6 +14639,11 @@ async function updateLivePreview(seq){
   let loaded=[],canvases=[];
   try{
     const p=livePage(),offset=pages.indexOf(p),options=readProOptions(),key=liveContentKey();
+    const targetRequested=options.targetBytes>0;
+    const savedTarget=targetRequested&&proResult?.fingerprint===proFingerprint()?proResult:null;
+    // A document-wide budget cannot be guessed from a single page. Until export,
+    // show the chosen preset. Afterwards render the actual verified saved page.
+    options.targetBytes=0;
     // Keep the active review label in the interactive overlay. Committed labels
     // use the normal PDF pipeline; export always includes the active label too.
     if(typeof stampAsset!=='undefined'&&stampAsset?.review&&options.stamps?.length)options.stamps=options.stamps.slice(0,-1);
@@ -14574,7 +14652,12 @@ async function updateLivePreview(seq){
       const edited=await buildEditedDocument([p],{signal});check();
       const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});check();
       const doc=await PDFLib.PDFDocument.load(before);check();
-      const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
+      let result;
+      if(savedTarget){
+        const saved=await PDFLib.PDFDocument.load(savedTarget.bytes),pageDoc=await PDFLib.PDFDocument.create();
+        const [savedPage]=await pageDoc.copyPages(saved,[offset]);pageDoc.addPage(savedPage);
+        result={doc:pageDoc,report:{...savedTarget.report,deskew:{...savedTarget.report.deskew,pages:[savedTarget.report.deskew?.pages?.[offset]].filter(Boolean)}}};
+      }else result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
       report=result.report;
       const after=await result.doc.save({useObjectStreams:true,updateFieldAppearances:false});check();
       if(!options.rasterize){await verifyProText(before,after,signal,true,{deskew:report.deskew,options});check();}
@@ -14594,12 +14677,12 @@ async function updateLivePreview(seq){
     canvases=[];
     restoreLiveZoomAnchor(key);
     const old=loaded.length?liveDocs:[];if(loaded.length){liveDocs=loaded;loaded=[];}
-    liveCache={key,report};
+    liveCache={key,report,savedTarget:!!savedTarget};
     const outputPage=await liveDocs[1].getPage(1),outputViewport=outputPage.getViewport({scale:1});
     liveOutputSize={width:outputViewport.width*(outputPage.userUnit||1),height:outputViewport.height*(outputPage.userUnit||1)};
     await Promise.allSettled(old.map(d=>d.destroy()));check();
     $('comparePageLabel').textContent=`${offset+1} / ${pages.length}페이지`;
-    $('compareState').textContent='미리보기 업데이트 완료';
+    $('compareState').textContent=savedTarget?'저장 결과 미리보기':targetRequested?'예상 미리보기 · 목표 용량은 결과 생성 시 적용':'미리보기 업데이트 완료';
     $('compareOriginal').disabled=false;
     let note='원본 보기에 마우스를 올려 비교하세요. 터치·키보드에서는 눌러 전환합니다.';
     if((options.blackWhite||options.grayscale)&&report.changed===0)note=report.imageCount===0?'이 페이지에는 보정할 이미지가 없습니다. 텍스트와 벡터 색상은 유지됩니다.':'변환 가능한 이미지가 없어 원본을 유지했습니다. '+report.notes.join(' ');
@@ -14713,7 +14796,7 @@ let proRailDragging=false;
 let proMode='basic', proResult=null, proAbort=null;
 let proReady=false;
 const proPresets={quality:{resolution:3200,quality:92},balanced:{resolution:2400,quality:82},small:{resolution:1200,quality:50}};
-const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
+const proControlIds=['proOptimize','proCompressionMode','proBWThreshold','proPreset','proResolution','proQuality','proTargetMB','proGrayscale','proContrast','proWhitePoint','proDeskew','proCrop','proCropTop','proCropRight','proCropBottom','proCropLeft','proPaper','proNumber','proStartNumber','proSkipPages','proNumberPosition','proWatermark'];
 const formatBytes=n=> n>=1048576 ? (n/1048576).toFixed(2)+' MB' : (n/1024).toFixed(1)+' KB';
 function proFingerprint(){return JSON.stringify(pages.map(p=>[p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],p.deskewAngle,p.deskewCrop===true]));}
 function proInvalidate(message){
@@ -14833,8 +14916,10 @@ function proNumberInput(id,min,max,integer=false){
 }
 function readProOptions(strict=false){
   if(strict&&typeof validateDeskewInput==='function')validateDeskewInput();
+  if(strict&&$('proOptimize').checked&&$('proCompressionMode').value==='preserve'&&$('proTargetMB').value&&!$('proTargetMB').checkValidity())throw Error('목표 용량은 0.1~2,000 MB 사이로 입력해 주세요.');
   const crop=$('proCrop').checked, number=$('proNumber').checked;
   const options={
+    adaptiveResolution:true,targetBytes:$('proOptimize').checked&&$('proCompressionMode').value==='preserve'?PDFCompressionPlan.targetBytes(Number($('proTargetMB').value)*1000000):0,
     optimize:$('proOptimize').checked,maxDimension:Number($('proResolution').value),jpegQuality:Number($('proQuality').value)/100,
     blackWhite:$('proGrayscale').checked,bwThreshold:Number($('proBWThreshold').value),contrast:$('proGrayscale').checked?0:Number($('proContrast').value),whitePoint:$('proGrayscale').checked?255:Number($('proWhitePoint').value),
     rasterize:$('proOptimize').checked&&$('proCompressionMode').value==='raster',
@@ -14868,6 +14953,9 @@ function refreshProControls(){
   $('proBWHelp').hidden=!$('proGrayscale').checked;
   for(const id of ['proContrast','proWhitePoint'])$(id).closest('label').hidden=$('proGrayscale').checked;
   for(const id of ['proCompressionMode','proPreset','proResolution','proQuality'])$(id).closest('label').hidden=!$('proOptimize').checked||(id==='proQuality'&&$('proGrayscale').checked);
+  $('proTargetMB').disabled=!$('proOptimize').checked||$('proCompressionMode').value==='raster';
+  $('proTargetMB').closest('label').hidden=$('proTargetMB').disabled;
+  $('proTargetHelp').hidden=$('proTargetMB').disabled;
   syncProSummaries();
 }
 function syncProSummaries(){
@@ -15003,7 +15091,11 @@ async function createProResult({reveal=true}={}){
     const bytes=result.bytes;
     const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
     const hasPageEffects=!result.retained&&!!(masked||report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
-    proResult={bytes,fingerprint,hasPageEffects};
+    const {outputDoc,...previewReport}=report;
+    proResult={bytes,fingerprint,hasPageEffects,report:previewReport};
+    if(options.targetBytes)report.notes.push(bytes.length<=options.targetBytes?'목표 용량을 달성했습니다.':'설정 범위 내에서 목표 용량에 도달하지 못했습니다. 실제 결과 용량을 확인하세요.');
+    $('proTargetResult').hidden=!options.targetBytes;
+    $('proTargetResult').textContent=options.targetBytes?`목표 ${(options.targetBytes/1000000).toFixed(1)} MB · 실제 ${(bytes.length/1000000).toFixed(2)} MB · ${bytes.length<=options.targetBytes?'달성':'미달성'}`:'';
     $('proBeforeLabel').textContent=result.originalBasis?'입력 PDF':'최적화 전 편집본';
     $('proBeforeSize').textContent=formatBytes(result.reference.length);$('proAfterSize').textContent=formatBytes(bytes.length);
     const change=result.reduction;
@@ -15022,7 +15114,7 @@ async function createProResult({reveal=true}={}){
   }catch(e){
     if(e.name==='AbortError')toast('작업을 취소했습니다. 편집 중인 문서는 유지됩니다.');
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
-  }finally{finishProWork();}
+  }finally{finishProWork();if(proResult&&options.targetBytes){liveCache=null;scheduleLivePreview();}}
 }
 $('modeBasic').onclick=()=>setProMode('basic');
 $('modePro').onclick=()=>{
@@ -16390,7 +16482,7 @@ configureLocalOCR();syncToolsState();
   controls();
   if(gesture&&(!valid()||livePage()?.uid!==gesture.uid||lastAsset!==stampAsset)){cancel();}
   lastAsset=stampAsset;
-  if(!valid()||$('proCompare').hidden||$('compareStage').classList.contains('show-original')||!$('compareAfter').width){svg.setAttribute('hidden','');return;}
+  if(!valid()||liveCache?.savedTarget||$('proCompare').hidden||$('compareStage').classList.contains('show-original')||!$('compareAfter').width){svg.setAttribute('hidden','');return;}
   let mark;try{mark=currentStamp();}catch(_){svg.setAttribute('hidden','');return;}
   if(mark.scope!=='all'&&!mark.targets.includes(livePage()?.uid)){svg.setAttribute('hidden','');return;}
   if(!gesture)paint(mark);

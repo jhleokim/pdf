@@ -28,17 +28,17 @@
   })();
   try{await ready;}catch(e){if(token===generation)dispose();throw e;}
  }
- function run(bytes,masks,{signal,onProgress}={}){
+ function run(bytes,masks,{signal,onProgress,operation='redact'}={}){
   const job=async()=>{
    signal?.throwIfAborted();clearTimeout(idleTimer);
    let timer,abort;
    try{return await new Promise((resolve,reject)=>{
     abort=()=>{dispose();reject(signal?.reason||new DOMException('취소했습니다.','AbortError'));};signal?.addEventListener('abort',abort,{once:true});
-    timer=setTimeout(()=>{dispose();reject(Error('개인정보 삭제 처리 시간이 초과됐습니다. 문서는 저장하지 않았습니다.'));},120000);
-    start(signal).then(()=>{signal?.throwIfAborted();pending={id:++sequence,resolve,reject,progress:onProgress};worker.postMessage({id:pending.id,bytes,masks},[bytes.buffer]);},reject).catch(reject);
+    timer=setTimeout(()=>{dispose();reject(Error(operation==='placements'?'이미지 배치 분석 시간이 초과됐습니다.':'개인정보 삭제 처리 시간이 초과됐습니다. 문서는 저장하지 않았습니다.'));},operation==='placements'?30000:120000);
+    start(signal).then(()=>{signal?.throwIfAborted();pending={id:++sequence,resolve,reject,progress:onProgress};worker.postMessage({id:pending.id,bytes,masks,operation},[bytes.buffer]);},reject).catch(reject);
    });}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);pending=null;idleTimer=setTimeout(dispose,30000);}
   };
   const result=queue.catch(()=>{}).then(job);queue=result.catch(()=>{});return result;
  }
- root.PDFPrivacyNative={run,dispose};addEventListener('pagehide',dispose);
+ root.PDFPrivacyNative={run,dispose,placements:(bytes,options)=>run(bytes,null,{...options,operation:'placements'})};addEventListener('pagehide',dispose);
 })(globalThis);
