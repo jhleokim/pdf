@@ -66,6 +66,42 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
     });
   }
   async function available(signal){const wait=cooldown();if(wait)return {available:true,retryAfter:wait};return responseJSON(await fetch(endpoint(),{method:'GET',signal,credentials:'omit',cache:'no-store'}),signal);}
+  async function retryWait(ms,signal,onProgress,attempt,code){
+    const until=Date.now()+ms;
+    while(Date.now()<until){
+      signal.throwIfAborted();const remaining=until-Date.now();
+      onProgress?.({status:'retrying',retryAfter:Math.ceil(remaining/1000),attempt,maxAttempts:3,code});
+      await new Promise((resolve,reject)=>{
+        const abort=()=>{clearTimeout(timer);reject(signal.reason);};
+        const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);resolve();},Math.min(1000,remaining));
+        signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();
+      });
+    }
+  }
+  async function sendPage(url,body,signal,onProgress){
+    const deadline=Date.now()+240000;
+    for(let attempt=0;;attempt++){
+      signal.throwIfAborted();const request=new AbortController(),abort=()=>request.abort(signal.reason);
+      const timer=provider==='vision'?setTimeout(()=>request.abort(),60000):null;
+      signal.addEventListener('abort',abort,{once:true});
+      let error;
+      try{
+        onProgress?.({status:'sending page'});
+        const response=await fetch(url,{method:'POST',signal:request.signal,credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body});
+        onProgress?.({status:'reading result'});return await responseJSON(response,request.signal);
+      }catch(e){
+        signal.throwIfAborted();error=request.signal.aborted?failure('Gemini 응답 시간이 초과됐습니다.','GEMINI_TIMEOUT',504):e;
+      }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);}
+      if(error.status===429)retryUntil=Date.now()+Math.max(1,error.retryAfter||60)*1000;
+      // Retry transport/availability failures only. Invalid OCR, permissions,
+      // billing and image errors must never be accepted or retried as success.
+      const transient=[408,429,500,502,503,504].includes(error.status)&&['VISION_RATE_LIMIT','VISION_QUOTA','VISION_TIMEOUT','VISION_CONNECTION','VISION_UPSTREAM'].includes(error.code)||error.name==='TypeError'&&!error.code;
+      if(provider!=='vision'||attempt>=2||!transient)throw error;
+      const delay=Math.max(1000*2**attempt,(error.retryAfter||(error.status===429?60:0))*1000);
+      if(delay>120000||Date.now()+delay+1000>=deadline)throw error;
+      await retryWait(delay,signal,onProgress,attempt+2,error.code);
+    }
+  }
   async function session(language,signal,onProgress,consent){
     if(consent!==true)throw new Error('민감정보 없는 문서임을 먼저 확인해 주세요.');
     signal.throwIfAborted();const url=endpoint();let closed=false,active=null;
@@ -73,13 +109,12 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
       signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
       const wait=cooldown();if(wait)throw failure('Gemini 호출 한도에 도달했습니다. '+wait+'초 뒤 다시 시도하세요. 한도가 초기화되지 않았다면 더 기다려야 합니다.','GEMINI_QUOTA',429,wait);
       if(active)throw new Error('이전 페이지 인식이 끝난 뒤 다시 시도하세요.');
-      const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(),90000),abort=()=>timeout.abort();active=timeout;
+      const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(),provider==='vision'?240000:90000),abort=()=>timeout.abort();active=timeout;
       signal.addEventListener('abort',abort,{once:true});
       try{
         signal.throwIfAborted();onProgress?.({status:'encoding page'});
-        const image=await encodeImage(canvas,timeout.signal);timeout.signal.throwIfAborted();onProgress?.({status:'sending page'});
-        const response=await fetch(url,{method:'POST',signal:timeout.signal,credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'})});
-        onProgress?.({status:'reading result'});const data=await responseJSON(response,timeout.signal);
+        const image=await encodeImage(canvas,timeout.signal);timeout.signal.throwIfAborted();
+        const data=await sendPage(url,JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'}),timeout.signal,onProgress);
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
         if(normalize)return normalize(data);
         if(!Array.isArray(data.lines)||data.lines.length>1500)throw failure('Gemini 결과 형식이 올바르지 않습니다.','GEMINI_RESULT_INVALID');

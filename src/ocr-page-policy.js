@@ -26,6 +26,9 @@
     }
     context.restore();
   }
-  root.PDFOCRPolicy={decide,textBoxes,coverExisting};
+  function canRenderSource(page,options){
+    return !page.rotation&&!page.annots?.length&&!options.optimize&&!options.rasterize&&!options.blackWhite&&!options.grayscale&&!(options.contrast>0)&&!(options.whitePoint<255)&&!options.deskew&&!options.deskewAngles?.[page.uid]&&!options.deskewCropByPage?.[page.uid]&&!options.crop&&options.paper==='original'&&!options.number&&!options.watermark&&!options.stamps?.length&&!options.ocr?.length;
+  }
+  root.PDFOCRPolicy={decide,textBoxes,coverExisting,canRenderSource};
   if(typeof module!=='undefined')module.exports=root.PDFOCRPolicy;
 })(globalThis);
