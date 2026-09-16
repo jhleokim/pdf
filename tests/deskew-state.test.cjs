@@ -7,7 +7,7 @@ const makePage=uid=>({uid,docId:'d1',srcIndex:Number(uid.slice(1))-1,rotation:0,
 function optionContext(pages){
   const values={proResolution:2400,proQuality:82,proBWThreshold:180,proContrast:0,proWhitePoint:255,proCompressionMode:'preserve',proPaper:'original',proNumberPosition:'bottom-center',proWatermark:''};
   const fields=new Map(),get=id=>{if(!fields.has(id))fields.set(id,{value:String(values[id]??''),checked:id==='proOptimize'||id==='proDeskew'});return fields.get(id);};
-  const context=vm.createContext({pages,$:get,PADDLE_MODEL_CACHE_TAG:'test'});
+  const context=vm.createContext({pages,$:get,PADDLE_MODEL_CACHE_TAG:'test',PDFCompressionPlan:require('../src/compression-plan.js')});
   vm.runInContext(part(ui,'function proFingerprint()','function proInvalidate(')+part(ui,'function readProOptions(','function refreshProControls(')+part(tools,'function ocrKey(','function readToolOptions('),context);
   return {context,get};
 }

@@ -1,5 +1,6 @@
 import * as M from 'mupdf';
 import {stripHiddenProperties} from './privacy-content.mjs';
+import {imagePlacements} from './compression-placement.mjs';
 
 // Strip non-page data. Content is rewritten and unreachable objects collected,
 // never incrementally saved over the original confidential bytes.
@@ -88,7 +89,9 @@ export async function process(data,progress=()=>{}){
 
 if(typeof WorkerGlobalScope!=='undefined'){
   self.onmessage=async({data})=>{
-    try{const result=await process(data,(done,total)=>postMessage({id:data.id,done,total}));postMessage({id:data.id,result},[result.bytes.buffer]);}
+    try{const progress=(done,total)=>postMessage({id:data.id,done,total});
+      const result=data.operation==='placements'?await imagePlacements(data.bytes,progress):await process(data,progress);
+      postMessage({id:data.id,result},result.bytes?[result.bytes.buffer]:[]);}
     catch(e){postMessage({id:data.id,error:e.message||String(e)});}
   };
   postMessage({ready:true});

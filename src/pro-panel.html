@@ -72,7 +72,9 @@
           <label class="pro-field" for="proPreset"><span>품질 프리셋</span><select id="proPreset"><option value="quality">품질 우선</option><option value="balanced" selected>균형 — 권장</option><option value="small">작은 용량</option></select></label>
           <label class="pro-field" for="proResolution"><span>이미지 최대 크기 <small>긴 변 기준</small></span><select id="proResolution"><option value="3200">3,200 px · 선명하게</option><option value="2400" selected>2,400 px · 균형 있게</option><option value="1600">1,600 px · 가볍게</option><option value="1200">1,200 px · 작은 용량</option></select></label>
           <label class="pro-field pro-range" for="proQuality"><span>이미지 품질 <output id="proQualityValue" for="proQuality">82%</output></span><input type="range" id="proQuality" min="40" max="95" value="82"><span class="pro-range-scale"><small>작은 용량</small><small>높은 품질</small></span></label>
-          <p class="pro-hint">텍스트 유지 방식의 절감이 작다면 페이지 전체 압축을 사용하세요. 글자 중심 스캔은 B&W를 함께 사용하면 더 작게 저장됩니다.</p>
+          <label class="pro-field" for="proTargetMB"><span>목표 용량 <small>MB · 선택</small></span><input id="proTargetMB" type="number" min="0.1" max="2000" step="0.1" placeholder="제한 없음"></label>
+          <p class="pro-hint" id="proTargetHelp">입력하면 설정한 품질·해상도에서 시작해 최대 3개 후보를 비교합니다. 품질은 최저 40%, 긴 변은 1,200px까지 낮아질 수 있습니다. 목표 달성은 보장하지 않으며 실제 결과 용량을 표시합니다. 결과를 만든 후 미리보기에서 최종 화질을 확인하세요. MB는 1,000,000바이트입니다.</p>
+          <p class="pro-hint">작은 삽입 이미지는 문서의 배치 크기에 맞춰 조절합니다. 텍스트·검색층은 유지하고 흑백 변환은 별도로 선택한 경우에만 적용합니다.</p>
         </div>
       </details>
 
@@ -85,6 +87,7 @@
         <p id="proResultSummary" class="pro-result-summary"></p>
         <div class="pro-size-comparison"><div><span id="proBeforeLabel">최적화 전</span><strong id="proBeforeSize">—</strong></div><span class="pro-size-arrow" aria-hidden="true">→</span><div><span>Pro 결과</span><strong id="proAfterSize">—</strong></div></div>
         <p class="pro-reduction" id="proReduction"></p>
+        <p class="pro-composition" id="proTargetResult" role="status" hidden></p>
         <details class="pro-report-details"><summary>처리 내역 보기</summary><p class="pro-composition" id="proComposition"></p><p class="pro-report" id="proReport"></p></details>
         <button class="btn primary" id="proDownload" hidden><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>결과 PDF 다운로드</button>
         <button class="btn quiet" id="proDiscard" hidden>결과 닫기</button>

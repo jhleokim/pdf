@@ -8,6 +8,7 @@
   const MAX_PIXELS = 16000000;
   const MAX_EDGE = 16384;
   const MAX_ENCODED_BYTES = 64 * 1024 * 1024;
+  const compression=root.PDFCompressionPlan||(typeof module!=='undefined'&&module.exports?require('./compression-plan.js'):null);
   const REASONS = {
     maskSource: '투명도 마스크와 마스크에 사용된 이미지는 원본 그대로 보존했습니다.',
     bwEmpty: '흑백 변환으로 내용이 사라질 수 있는 이미지는 원본을 유지했습니다.',
@@ -372,21 +373,27 @@
     if(isEnhanced(o))await enhance(context,canvas.width,canvas.height,o,signal);
     return {bytes:await encode(canvas,o.optimize?o.jpegQuality:.95),width:canvas.width,height:canvas.height,bits:8,colorSpace:'DeviceRGB',filter:'DCTDecode'};
   }
-  async function transform(spec, options, signal) {
+  async function transform(spec, options, signal, placement, budget) {
     let source, target;
     try {
       source = spec.compression === '/DCTDecode' ? await loadJpeg(spec, signal) : await rawCanvas(spec, signal);
       abortIfNeeded(signal);
-      const scale = options.optimize ? Math.min(1, options.maxDimension / Math.max(spec.width, spec.height)) : 1;
-      const width = Math.max(1, Math.round(spec.width * scale));
-      const height = Math.max(1, Math.round(spec.height * scale));
-      target = newCanvas(width, height);
-      const context = canvasContext(target);
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = 'high';
-      context.drawImage(source, 0, 0, width, height);
-      const result=await encodeCanvas(target,options,signal);
-      abortIfNeeded(signal);return result;
+      const plans=compression.candidates(spec,options,placement,budget);let best=null,attempts=0;
+      for(const plan of plans){
+        abortIfNeeded(signal);
+        const width=Math.max(1,Math.round(spec.width*plan.scale)),height=Math.max(1,Math.round(spec.height*plan.scale));
+        target=newCanvas(width,height);
+        try{
+          const context=canvasContext(target);context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+          // Every candidate is decoded from the original image, never from an
+          // earlier JPEG. Keep at most one source and one target raster alive.
+          context.drawImage(source,0,0,width,height);
+          const result=await encodeCanvas(target,{...options,jpegQuality:plan.quality},signal);attempts++;
+          if(!best||result.bytes.length<best.bytes.length)best={...result,quality:plan.quality};
+          if(!budget||best.bytes.length<=budget||best.packed)break;
+        }finally{target.width=target.height=1;target=null;}
+      }
+      abortIfNeeded(signal);return {...best,attempts};
     } finally {
       if (source && typeof source.close === 'function') source.close();
       else if (source && typeof source.getContext === 'function') source.width = source.height = 1;
@@ -409,8 +416,12 @@
     const lib=root.PDFLib,groups=new Map(),aliases=new Map();let saved=0;
     for(const [ref,stream]of doc.context.enumerateIndirectObjects()){
       abortIfNeeded(signal);if(!(stream instanceof lib.PDFRawStream)||nameValue(pdfValue(stream.dict,'Subtype',lib))!=='/Image')continue;
-      const data=stream.getContents(),key=stream.dict.toString()+'|'+data.length,list=groups.get(key)||[];
-      const prior=list.find(item=>item.data.length===data.length&&item.data.every((b,i)=>b===data[i]));
+      const data=stream.getContents();let hash=2166136261;
+      for(let start=0;start<data.length;start+=262144){abortIfNeeded(signal);for(let i=start;i<Math.min(start+262144,data.length);i++)hash=Math.imul(hash^data[i],16777619);if(start)await pause();}
+      const key=stream.dict.toString()+'|'+data.length+'|'+(hash>>>0),list=groups.get(key)||[];
+      let prior;
+      // Hashes only select candidates. Exact byte equality still authorizes reuse.
+      for(const item of list){let equal=true;for(let start=0;start<data.length&&equal;start+=262144){abortIfNeeded(signal);for(let i=start;i<Math.min(start+262144,data.length);i++)if(item.data[i]!==data[i]){equal=false;break;}if(start)await pause();}if(equal){prior=item;break;}}
       if(prior){aliases.set(ref,prior.ref);saved+=data.length;}else{list.push({ref,data});groups.set(key,list);}await pause();
     }
     if(!aliases.size)return {count:0,bytes:0};
@@ -428,19 +439,39 @@
     const lib = root.PDFLib;
     if (!lib || !doc || !doc.context) throw new Error('PDFLib and a loaded PDFDocument are required.');
     const settings = normalizeOptions(options);
+    settings.adaptiveResolution=options?.adaptiveResolution===true&&(!options.paper||options.paper==='original');
+    const targetBytes=compression.targetBytes(options?.targetBytes);
     const { onProgress, signal } = callbacks || {};
     abortIfNeeded(signal);
     // PDFLib defers new image/font embedding until save/flush. Include newly inserted
     // image assets as well as the streams loaded from the original PDF.
     if (typeof doc.flush === 'function') await doc.flush();
     abortIfNeeded(signal);
-    const images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
+    let images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
       object instanceof lib.PDFRawStream && nameValue(pdfValue(object.dict, 'Subtype', lib)) === '/Image');
-    const masks=maskImages(doc,lib);
+    let masks=maskImages(doc,lib);
     const report = { imageCount: images.length, processed: 0, changed: 0, skipped: 0,
       originalImageBytes: 0, resultImageBytes: 0, skipReasons: {}, notes: [] };
     for (const [, stream] of images) report.originalImageBytes += stream.getContents().length;
     report.resultImageBytes = report.originalImageBytes;
+    onProgress?.({completed:0,total:images.length,changed:0,phase:'중복 이미지를 확인하는 중…'});
+    // Repeated embedded assets are unified before any decoding or JPEG work.
+    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;images=images.filter(([ref])=>doc.context.lookup(ref) instanceof lib.PDFRawStream);masks=maskImages(doc,lib);}
+    let placements={},placementNote='',budgetRemaining=0,eligibleRemaining=0;
+    if(settings.optimize&&(settings.adaptiveResolution||targetBytes)){
+      const eligible=await analyzeDocument(doc);eligibleRemaining=eligible.eligibleBytes;
+      if(eligibleRemaining){
+        const serialized=await doc.save({useObjectStreams:true,updateFieldAppearances:false});abortIfNeeded(signal);
+        if(targetBytes)budgetRemaining=Math.max(1,targetBytes-Math.max(0,serialized.length-eligibleRemaining));
+        if(settings.adaptiveResolution&&root.PDFPrivacyNative?.placements){
+          try{onProgress?.({completed:0,total:images.length,changed:0,phase:'이미지 배치를 확인하는 중…'});
+            const inspected=await root.PDFPrivacyNative.placements(serialized,{signal,onProgress:(n,total)=>onProgress?.({completed:0,total:images.length,changed:0,phase:`이미지 배치 확인 ${n} / ${total}쪽`})});placements=inspected.placements||{};
+            if(inspected.reason)placementNote='동적 요소 또는 복잡한 문서는 배치 크기 조정을 생략하고 설정한 픽셀 크기로 압축했습니다.';
+          }catch(e){abortIfNeeded(signal);placementNote='이미지 배치 분석을 완료하지 못해 설정한 픽셀 크기로 압축했습니다.';}
+        }
+      }
+    }
+    report.attempts=0;report.placementResized=0;report.targetBytes=targetBytes;
     const skip = code => {
       report.skipped++;
       report.skipReasons[code] = (report.skipReasons[code] || 0) + 1;
@@ -453,8 +484,12 @@
         if (!settings.optimize && !isEnhanced(settings)) throw failure('noAction');
         if(masks.has(stream))throw failure('maskSource');
         const spec = imageSpec(stream, lib);
-        const result = await transform(spec, settings, signal);
+        const placement=placements[ref.objectNumber];
+        const budget=targetBytes&&eligibleRemaining?Math.max(1,budgetRemaining*spec.bytes.length/eligibleRemaining):0;
+        const result = await transform(spec, settings, signal,placement,budget);
+        report.attempts+=result.attempts;
         if(result.packed)result.bytes=doc.context.flateStream(result.bytes).getContents();
+        if(targetBytes){eligibleRemaining-=spec.bytes.length;budgetRemaining-=isEnhanced(settings)?result.bytes.length:Math.min(result.bytes.length,spec.bytes.length);}
         report.processed++;
         if (!isEnhanced(settings) && result.bytes.length >= spec.bytes.length) {
           // A supported image was evaluated, but kept intact because recompression did not help.
@@ -474,6 +509,7 @@
           // text, OCR layers, annotations, and vector content; no stale image object is added.
           doc.context.assign(ref, lib.PDFRawStream.of(dict, result.bytes));
           report.changed++;
+          if(placement&&compression.scale(spec,settings,placement)<compression.scale(spec,settings))report.placementResized++;
           report.resultImageBytes += result.bytes.length - spec.bytes.length;
         }
       } catch (error) {
@@ -484,9 +520,12 @@
       await pause();
     }
     abortIfNeeded(signal);
-    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
+    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates+=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
     report.notes = Object.keys(report.skipReasons).map(code => REASONS[code] || REASONS.decodeFailed);
     if(report.duplicates)report.notes.push('동일한 이미지 '+report.duplicates+'개를 공유하여 중복 데이터를 제거했습니다.');
+    if(report.placementResized)report.notes.push('배치 크기에 맞춰 이미지 '+report.placementResized+'개의 해상도를 조정했습니다.');
+    if(placementNote)report.notes.push(placementNote);
+    if(targetBytes)report.notes.push('목표 용량에 맞춰 이미지마다 최대 3개 후보를 원본에서 비교했습니다.');
     if (!images.length) report.notes.push('처리할 이미지가 없습니다. 텍스트와 벡터는 원본을 유지했습니다.');
     if (isEnhanced(settings) && report.changed) report.notes.push('보정 후 용량이 늘어날 수 있습니다. 기존 텍스트·OCR 레이어는 유지했습니다.');
     return report;

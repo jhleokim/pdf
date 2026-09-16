@@ -52,7 +52,7 @@ const root=path.resolve(__dirname,'..'),scripts=[...fs.readFileSync(path.join(ro
 const ctx=vm.createContext({console:{log(){},warn(){},error:console.error},setTimeout,clearTimeout,TextEncoder,TextDecoder,URL,URLSearchParams,Blob,ReadableStream,WritableStream,TransformStream,AbortController,AbortSignal,atob,btoa,DOMException,ArrayBuffer,Uint8Array,Uint8ClampedArray,Int8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,DataView,assert});
 for(const marker of ['sourceMappingURL=pdf-lib.min.js.map','pdfjs-dist/build/pdf"]','pdfjs-dist/build/pdf.worker'])vm.runInContext(scripts.find(s=>s.includes(marker)),ctx);
 ctx.PDFTesseractAssets={get:id=>id==='ocr-search-font'?new Uint8Array(fs.readFileSync(path.join(root,'vendor/markup/GlyphLessFont.ttf'))):null};
-for(const name of ['pro-engine','pro-document','pro-deskew','pro-ocr','pro-pipeline'])vm.runInContext(fs.readFileSync(path.join(root,'src',name+'.js'),'utf8'),ctx);
+for(const name of ['compression-plan','pro-engine','pro-document','pro-deskew','pro-ocr','pro-pipeline'])vm.runInContext(fs.readFileSync(path.join(root,'src',name+'.js'),'utf8'),ctx);
 const run=code=>vm.runInContext(code,ctx);
 run(`
 async function fixture({angle=0,userUnit=1,annot=false,coloredPaper=false}={}){

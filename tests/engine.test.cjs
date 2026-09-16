@@ -22,6 +22,16 @@ const P = globalThis.PDFLib = libModule.exports;
 const engine = require('../src/pro-engine.js');
 const name = key => P.PDFName.of(key);
 
+test('deduplicating a shared soft-mask dependency never makes it eligible for image compression',async()=>{
+ const doc=await P.PDFDocument.create();doc.addPage();
+ const [first]=image(doc,{ColorSpace:'DeviceGray'},new Uint8Array(16).fill(150));
+ const [mask]=image(doc,{ColorSpace:'DeviceGray'},new Uint8Array(16).fill(150));
+ image(doc,{SMask:mask});
+ const report=await engine.processDocument(doc,{optimize:true});
+ assert.equal(report.duplicates,1);assert.equal(report.processed,0);assert.equal(report.skipReasons.maskSource,1);
+ assert.deepEqual([...doc.context.lookup(first).getContents()],Array(16).fill(150));
+});
+
 function image(doc, extra = {}, bytes = new Uint8Array(48).fill(180)) {
   const stream = doc.context.stream(bytes, { Type: 'XObject', Subtype: 'Image', Width: 4,
     Height: 4, BitsPerComponent: 8, ColorSpace: 'DeviceRGB', ...extra });
