@@ -6,7 +6,9 @@ async function requestVisionOCR(sample){
   let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
   visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
   visionReady=false;$('visionConsent').checked=false;$('visionConfirm').disabled=true;
-  $('visionConfirmScope').textContent=`${list.length}페이지를 확인합니다. 이미 완료한 페이지는 재사용합니다. 혼합 문서는 기존 텍스트 영역을 제외하고 전송합니다.`;
+  const indices=list.map(p=>pages.indexOf(p)+1),ranges=[];
+  for(let i=0;i<indices.length;){const start=indices[i];let end=start;while(indices[i+1]===end+1)end=indices[++i];ranges.push(start===end?String(start):start+'–'+end);i++;}
+  $('visionConfirmScope').textContent=`대상 ${ranges.join(', ')}쪽 · 최대 ${list.length}페이지의 이미지를 전송합니다. 이미 완료한 페이지는 재사용하며, 혼합 문서는 기존 텍스트 영역을 제외합니다.`;
   $('visionAvailability').textContent='서버 연결을 확인하는 중…';$('visionDialog').showModal();
   const ctrl=new AbortController();visionCheck?.abort();visionCheck=ctrl;const timer=setTimeout(()=>ctrl.abort(),10000);
   try{const status=await PDFVision.available(ctrl.signal);if(visionCheck!==ctrl||!$('visionDialog').open)return;

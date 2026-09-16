@@ -198,7 +198,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   let workStage='',recognizedMs=0,measuredPages=0;
   const timingKey=(provider==='paddle-v5'?PADDLE_MODEL_CACHE_TAG:provider)+':'+language+':'+layout;
   const stage=(name,known=true)=>{if(workStage!==name){workStage=name;globalThis.PDFWorkProgress?.phase(name,known);}};
-  ocrRunning=true;for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':provider==='paddle-v5'?'PP-OCRv5 모델을 준비하는 중…':'텍스트 인식을 준비하는 중…');
+  ocrRunning=true;if(typeof syncProcessingLocation==='function')syncProcessingLocation();for(const id of ocrActionIds)$(id).disabled=true;startProWork(provider==='gemini'?'Gemini 인식을 준비하는 중…':provider==='paddle-v5'?'PP-OCRv5 모델을 준비하는 중…':'텍스트 인식을 준비하는 중…');
   stage('문서 준비');
   const workController=proAbort,workSignal=workController.signal;
   $('ocrStatus').classList.remove('ocr-error');
@@ -285,7 +285,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
     if(e.retryAfter)status+=` 약 ${Math.ceil(e.retryAfter)}초 뒤 다시 시도하세요.`;
     toast(message,e.name!=='AbortError');
   }finally{
-    try{if(engine)await waitForOCR(engine.close(),AbortSignal.timeout(2000)).catch(()=>{});}finally{ocrRunning=false;finishProWork();if(status)$('ocrStatus').textContent=status;$('ocrStatus').classList.toggle('ocr-error',failed);if(failed){$('ocrSection').open=true;$('ocrStatus').scrollIntoView({block:'nearest',behavior:'smooth'});}}
+    try{if(engine)await waitForOCR(engine.close(),AbortSignal.timeout(2000)).catch(()=>{});}finally{ocrRunning=false;if(typeof syncProcessingLocation==='function'){syncProcessingLocation();syncOCRPreparation();}finishProWork();if(status)$('ocrStatus').textContent=status;$('ocrStatus').classList.toggle('ocr-error',failed);if(failed){$('ocrSection').open=true;$('ocrStatus').scrollIntoView({block:'nearest',behavior:'smooth'});}}
   }
 }
 function renderOCRResults(){

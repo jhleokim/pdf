@@ -29,6 +29,6 @@
   await preview(target);assert($('modalCanvas').width>0,'Full preview failed');closeFullPreview();
   record('The full-page preview still renders the edited document');
   const external=performance.getEntriesByType('resource').filter(e=>/^https?:/.test(e.name)&&new URL(e.name).origin!==location.origin);assert(!external.length,'External font request');
-  record('Fonts work with HTTP connections blocked');out.textContent='PASS · '+checks.length+' font checks\n'+checks.join('\n');
+  record(document.getElementById('markup-fontkit')?'Fonts work with HTTP connections blocked':'Web fonts load from the same origin only');out.textContent='PASS · '+checks.length+' font checks\n'+checks.join('\n');
  }catch(e){out.textContent='FAIL · '+e.stack;console.error(e);}
 })();

@@ -45,8 +45,10 @@ function showOriginal(){
 function setLivePreviewOpen(open){
   if(!open&&typeof setDeskewInteraction==='function')setDeskewInteraction(false);
   proPreviewOpen=open;
+  if(typeof isCompactPro==='function'&&isCompactPro()){setProView(open?'workspace':'pages');return;}
   syncLivePreview();
 }
+function livePreviewOnScreen(){return typeof isCompactPro!=='function'||!isCompactPro()||document.body.dataset.proView==='workspace';}
 function syncLivePreview(){
   if(!proReady)return;
   if(typeof syncDeskewControls==='function')syncDeskewControls();
@@ -56,14 +58,16 @@ function syncLivePreview(){
   const visible=proMode==='pro'&&any&&proPreviewOpen;
   $('proCompare').hidden=!visible;
   document.body.classList.toggle('pro-preview-open',visible);
-  $('proPreview').setAttribute('aria-pressed',String(visible));
-  $('proPreviewLabel').textContent=visible?'미리보기 닫기':'페이지 미리보기';
+  $('proPreview').setAttribute('aria-pressed',String(visible&&livePreviewOnScreen()));
+  $('proPreviewLabel').textContent=typeof isCompactPro==='function'&&isCompactPro()?'미리보기':visible?'미리보기 닫기':'페이지 미리보기';
   if(proMode==='pro'){
     $('btnPreview').setAttribute('aria-pressed',String(visible));
     $('btnPreview').title=visible?'미리보기 닫기':'페이지 미리보기';
     $('btnPreview').classList.toggle('active',visible);
   }
   if(!visible||proAbort){cancelLivePreview();if(!visible)releaseLivePreview();return;}
+  // Retain the prepared page while the small-screen user edits settings.
+  if(!livePreviewOnScreen()){cancelLivePreview();return;}
   const index=pages.indexOf(livePage());
   $('comparePrev').disabled=index<=0;$('compareNext').disabled=index>=pages.length-1;
   if(typeof proRailDragging!=='undefined'&&proRailDragging)return;
@@ -71,7 +75,7 @@ function syncLivePreview(){
   if(liveKey()!==liveRequestedKey)scheduleLivePreview();
 }
 function scheduleLivePreview(){
-  if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort)return;
+  if(!proReady||proMode!=='pro'||!pages.length||!proPreviewOpen||proAbort||!livePreviewOnScreen())return;
   if(typeof deskewGestureActive==='function'&&deskewGestureActive())return;
   cancelLivePreview();liveRequestedKey=liveKey();
   const seq=liveSequence;
@@ -163,7 +167,7 @@ async function updateLivePreview(seq){
     if(typeof syncReviewStamp==='function')syncReviewStamp();
   }
 }
-$('compareClose').onclick=()=>{setLivePreviewOpen(false);(isMobile()?$('proWorkspace'):$('btnPreview')).focus();};
+$('compareClose').onclick=()=>{setLivePreviewOpen(false);(isCompactPro()?$('proPages'):isMobile()?$('proWorkspace'):$('btnPreview')).focus();};
 $('comparePrev').onclick=()=>{const p=pages[pages.indexOf(livePage())-1];if(p)showPreview(p);};
 $('compareNext').onclick=()=>{const p=pages[pages.indexOf(livePage())+1];if(p)showPreview(p);};
 $('compareZoom').onchange=()=>{liveZoomAnchor=null;setLiveZoomValue(Number($('compareZoom').value));if(document.body.classList.contains('deskew-adjusting'))setDeskewInteraction(false);scheduleLivePreview();};

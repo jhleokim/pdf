@@ -206,12 +206,12 @@ function render(){
 }
 
 function renderInfo(){
-  const list = [...docs].map(([id, d]) => `
+  const list = PDFSource.groups(pages,docs).map(d => `
     <div class="doc-item">
       <div class="doc-swatch" style="background:${d.color}"></div>
       <div style="min-width:0">
         <div class="doc-name"><svg class="ic"><use href="#i-${d.kind === 'image' ? 'photo' : 'file'}"/></svg>${esc(d.name)}</div>
-        <div class="doc-meta">원본 ${d.count}p · 현재 ${pages.filter(x => x.docId === id).length}p 사용</div>
+        <div class="doc-meta">원본 ${d.count}p · 현재 ${d.used}p 사용</div>
       </div>
     </div>`).join('') || '<div class="doc-meta">불러온 문서가 없습니다</div>';
 
@@ -227,6 +227,7 @@ function renderInfo(){
   $('infoMobile').innerHTML =
     `<div class="dc-block"><div class="label">불러온 문서</div>${list}</div>` +
     `<div class="dc-block"><div class="label">현황</div>${stats}</div>`;
+  if(typeof syncDocumentFilename==='function')syncDocumentFilename();
 }
 
 function syncCounts(){
@@ -245,6 +246,8 @@ function syncCounts(){
   $('btnAll').lastChild.textContent = all ? '전체 해제' : '전체 선택';
   $('mbAll').textContent = all ? '전체 해제' : '전체';
   for(const id of ['btnAll','mbAll']) $(id).setAttribute('aria-pressed',String(all));
+  for(const p of pages)if(p.el)p.el.querySelector('.pick')?.setAttribute('aria-pressed',String(p.el.classList.contains('selected')));
+  if(typeof syncPageNavigation==='function')syncPageNavigation();
   const stat = $('infoDesktop').querySelectorAll('.stat-row b')[2];
   if(stat) stat.textContent = n;
   const stat2 = $('infoMobile').querySelectorAll('.stat-row b')[2];
@@ -262,9 +265,12 @@ function measureActionBar(){
 }
 
 function makeCard(p, idx){
-  const d = docs.get(p.docId);
+  const d = PDFSource.page(p,docs);
   const el = document.createElement('div');
   el.className = 'page'; el.draggable = true; el.dataset.uid = p.uid; el.tabIndex = 0;
+  el.setAttribute('role','listitem');
+  el.setAttribute('aria-label',`${idx+1}페이지 · ${d.name} · 원본 ${d.index+1}페이지`);
+  el.setAttribute('aria-posinset',idx+1);el.setAttribute('aria-setsize',pages.length);
   el.innerHTML = `
     <div class="sheet">
       <div class="spine" style="background:${d.color}"></div>
@@ -272,9 +278,9 @@ function makeCard(p, idx){
       ${d.kind === 'image' ? '<div class="img-tag" title="사진에서 만든 페이지"><svg class="ic"><use href="#i-photo"/></svg></div>' : ''}
     </div>
     <div class="plate">${idx + 1}</div>
-    <div class="pick"><svg class="ic"><use href="#i-check"/></svg></div>
+    <button type="button" class="pick" aria-label="${idx+1}페이지 선택" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></button>
     <div class="pfoot">
-      <span class="src" title="${esc(d.name)} · 원본 ${p.srcIndex + 1}p">${esc(d.name)}</span>
+      <span class="src" title="${esc(d.name)} · 원본 ${d.index + 1}p">${esc(d.name)}</span>
       <span class="acts">
         <button class="icon-btn" data-act="rot" title="오른쪽 회전"><svg class="ic"><use href="#i-rot-r"/></svg></button>
         <button class="icon-btn del" data-act="del" title="삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
@@ -297,8 +303,9 @@ function makeCard(p, idx){
 
   el.querySelector('[data-act="rot"]').onclick = e => { e.stopPropagation(); rotate([p], 90); };
   el.querySelector('[data-act="del"]').onclick = e => { e.stopPropagation(); remove([p]); };
-  el.ondblclick = () => { if(isMobile()) setMobileView('preview'); else preview(p); };
+  el.ondblclick = e => { if(e.target.closest('button'))return;if(typeof proMode!=='undefined'&&proMode==='pro'&&isMobile()){setLivePreviewOpen(true);showPreview(p);}else if(isMobile()) setMobileView('preview'); else preview(p); };
   el.onclick = e => select(pages.indexOf(p), e);
+  el.querySelector('.pick').onclick=e=>{e.stopPropagation();select(pages.indexOf(p),{ctrlKey:true,shiftKey:e.shiftKey});};
   return el;
 }
 
@@ -340,9 +347,9 @@ const previewVisible = () => !$('previewPanel').hidden &&
   !(mainEl.classList.contains('layout-mobile') && !mainEl.classList.contains('view-preview'));
 
 function setPvTitle(p){
-  const d = docs.get(p.docId);
+  const d = PDFSource.page(p,docs);
   $('pvT1').textContent = `${pages.indexOf(p) + 1}번 페이지`;
-  $('pvT2').textContent = `${d.name} · 원본 ${p.srcIndex + 1}p`;
+  $('pvT2').textContent = `${d.name} · 원본 ${d.index + 1}p`;
 }
 
 async function showPreview(p){
@@ -746,11 +753,13 @@ function remove(list){
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const history=typeof captureEditHistory==='function'?captureEditHistory():null;
   const set = new Set(list.map(p => p.uid));
+  const focus=document.activeElement?.closest('.page'),focusAt=focus?pages.findIndex(p=>p.uid===focus.dataset.uid):-1;
   const hit = set.has(previewUid);
   pages = pages.filter(p => !set.has(p.uid));
   lastClicked = null;
   if(hit) clearPreview();
   render();
+  if(focusAt>=0){if(pages.length)pages[Math.min(focusAt,pages.length-1)].el.focus({preventScroll:true});else $('btnBlank').focus();}
   toast(`${list.length}개 페이지를 삭제했습니다`);
   if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 삭제');
 }
@@ -1239,6 +1248,7 @@ $('btnReset').onclick = () => {
   clearPreview();
   for(const d of docs.values())void d.pdfjsDoc?.destroy().catch(()=>{});
   docs.clear(); pages = []; origCount = 0; docSeq = 0; lastClicked = null;
+  if(typeof resetDocumentFilename==='function')resetDocumentFilename();
   if(typeof resetTools==='function')resetTools();
   clearPreview(); render();
 };
