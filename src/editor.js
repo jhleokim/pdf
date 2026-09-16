@@ -41,6 +41,23 @@ const docs = new Map();
 const stamps = new Map();                 // 페이지 위에 붙인 사진 원본
 let pages = [], origCount = 0, docSeq = 0, uidSeq = 0, stampSeq = 0;
 let lastClicked = null, previewUid = null;
+let leaveWarningActive = false;
+
+function hasWorkspaceToLose(){
+  return pages.length > 0 || docs.size > 0 || document.body.classList.contains('is-busy');
+}
+function warnBeforeLeaving(event){
+  if(!hasWorkspaceToLose())return;
+  event.preventDefault();
+  event.returnValue = true;
+}
+function syncLeaveWarning(){
+  const active = hasWorkspaceToLose();
+  if(active === leaveWarningActive)return;
+  leaveWarningActive = active;
+  if(active)window.addEventListener('beforeunload', warnBeforeLeaving);
+  else window.removeEventListener('beforeunload', warnBeforeLeaving);
+}
 
 const $ = id => document.getElementById(id);
 const board = $('board');
@@ -56,7 +73,7 @@ function toast(msg, isErr){
   clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3400);
 }
 const progress = p => { $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%'; globalThis.PDFWorkProgress?.update(p); };
-const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
+const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); syncLeaveWarning(); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
 const buzz = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(_){} };
 
 /* ════════════════════════════════════════════════════════════
@@ -175,6 +192,7 @@ async function renderThumb(pdf, pageNo, maxWidth=300){
    렌더링
    ════════════════════════════════════════════════════════════ */
 function render(){
+  syncLeaveWarning();
   const has = pages.length > 0 || docs.size > 0;
   $('empty').hidden = has;
   $('boardWrap').hidden = !has;

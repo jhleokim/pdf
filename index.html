@@ -2165,6 +2165,23 @@ const docs = new Map();
 const stamps = new Map();                 // 페이지 위에 붙인 사진 원본
 let pages = [], origCount = 0, docSeq = 0, uidSeq = 0, stampSeq = 0;
 let lastClicked = null, previewUid = null;
+let leaveWarningActive = false;
+
+function hasWorkspaceToLose(){
+  return pages.length > 0 || docs.size > 0 || document.body.classList.contains('is-busy');
+}
+function warnBeforeLeaving(event){
+  if(!hasWorkspaceToLose())return;
+  event.preventDefault();
+  event.returnValue = true;
+}
+function syncLeaveWarning(){
+  const active = hasWorkspaceToLose();
+  if(active === leaveWarningActive)return;
+  leaveWarningActive = active;
+  if(active)window.addEventListener('beforeunload', warnBeforeLeaving);
+  else window.removeEventListener('beforeunload', warnBeforeLeaving);
+}
 
 const $ = id => document.getElementById(id);
 const board = $('board');
@@ -2180,7 +2197,7 @@ function toast(msg, isErr){
   clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3400);
 }
 const progress = p => { $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%'; globalThis.PDFWorkProgress?.update(p); };
-const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
+const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); syncLeaveWarning(); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
 const buzz = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(_){} };
 
 /* ════════════════════════════════════════════════════════════
@@ -2299,6 +2316,7 @@ async function renderThumb(pdf, pageNo, maxWidth=300){
    렌더링
    ════════════════════════════════════════════════════════════ */
 function render(){
+  syncLeaveWarning();
   const has = pages.length > 0 || docs.size > 0;
   $('empty').hidden = has;
   $('boardWrap').hidden = !has;
@@ -3997,7 +4015,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.0, 라이선스 보기">v6.4.0</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.2, 라이선스 보기">v6.4.2</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -13047,7 +13065,10 @@ function observeThumbnail(p){
     }
     context.restore();
   }
-  root.PDFOCRPolicy={decide,textBoxes,coverExisting};
+  function canRenderSource(page,options){
+    return !page.rotation&&!page.annots?.length&&!options.optimize&&!options.rasterize&&!options.blackWhite&&!options.grayscale&&!(options.contrast>0)&&!(options.whitePoint<255)&&!options.deskew&&!options.deskewAngles?.[page.uid]&&!options.deskewCropByPage?.[page.uid]&&!options.crop&&options.paper==='original'&&!options.number&&!options.watermark&&!options.stamps?.length&&!options.ocr?.length;
+  }
+  root.PDFOCRPolicy={decide,textBoxes,coverExisting,canRenderSource};
   if(typeof module!=='undefined')module.exports=root.PDFOCRPolicy;
 })(globalThis);
 </script>
@@ -14125,6 +14146,42 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
     });
   }
   async function available(signal){const wait=cooldown();if(wait)return {available:true,retryAfter:wait};return responseJSON(await fetch(endpoint(),{method:'GET',signal,credentials:'omit',cache:'no-store'}),signal);}
+  async function retryWait(ms,signal,onProgress,attempt,code){
+    const until=Date.now()+ms;
+    while(Date.now()<until){
+      signal.throwIfAborted();const remaining=until-Date.now();
+      onProgress?.({status:'retrying',retryAfter:Math.ceil(remaining/1000),attempt,maxAttempts:3,code});
+      await new Promise((resolve,reject)=>{
+        const abort=()=>{clearTimeout(timer);reject(signal.reason);};
+        const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);resolve();},Math.min(1000,remaining));
+        signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();
+      });
+    }
+  }
+  async function sendPage(url,body,signal,onProgress){
+    const deadline=Date.now()+240000;
+    for(let attempt=0;;attempt++){
+      signal.throwIfAborted();const request=new AbortController(),abort=()=>request.abort(signal.reason);
+      const timer=provider==='vision'?setTimeout(()=>request.abort(),60000):null;
+      signal.addEventListener('abort',abort,{once:true});
+      let error;
+      try{
+        onProgress?.({status:'sending page'});
+        const response=await fetch(url,{method:'POST',signal:request.signal,credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body});
+        onProgress?.({status:'reading result'});return await responseJSON(response,request.signal);
+      }catch(e){
+        signal.throwIfAborted();error=request.signal.aborted?failure('Gemini 응답 시간이 초과됐습니다.','GEMINI_TIMEOUT',504):e;
+      }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);}
+      if(error.status===429)retryUntil=Date.now()+Math.max(1,error.retryAfter||60)*1000;
+      // Retry transport/availability failures only. Invalid OCR, permissions,
+      // billing and image errors must never be accepted or retried as success.
+      const transient=[408,429,500,502,503,504].includes(error.status)&&['VISION_RATE_LIMIT','VISION_QUOTA','VISION_TIMEOUT','VISION_CONNECTION','VISION_UPSTREAM'].includes(error.code)||error.name==='TypeError'&&!error.code;
+      if(provider!=='vision'||attempt>=2||!transient)throw error;
+      const delay=Math.max(1000*2**attempt,(error.retryAfter||(error.status===429?60:0))*1000);
+      if(delay>120000||Date.now()+delay+1000>=deadline)throw error;
+      await retryWait(delay,signal,onProgress,attempt+2,error.code);
+    }
+  }
   async function session(language,signal,onProgress,consent){
     if(consent!==true)throw new Error('민감정보 없는 문서임을 먼저 확인해 주세요.');
     signal.throwIfAborted();const url=endpoint();let closed=false,active=null;
@@ -14132,13 +14189,12 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
       signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
       const wait=cooldown();if(wait)throw failure('Gemini 호출 한도에 도달했습니다. '+wait+'초 뒤 다시 시도하세요. 한도가 초기화되지 않았다면 더 기다려야 합니다.','GEMINI_QUOTA',429,wait);
       if(active)throw new Error('이전 페이지 인식이 끝난 뒤 다시 시도하세요.');
-      const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(),90000),abort=()=>timeout.abort();active=timeout;
+      const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(),provider==='vision'?240000:90000),abort=()=>timeout.abort();active=timeout;
       signal.addEventListener('abort',abort,{once:true});
       try{
         signal.throwIfAborted();onProgress?.({status:'encoding page'});
-        const image=await encodeImage(canvas,timeout.signal);timeout.signal.throwIfAborted();onProgress?.({status:'sending page'});
-        const response=await fetch(url,{method:'POST',signal:timeout.signal,credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'})});
-        onProgress?.({status:'reading result'});const data=await responseJSON(response,timeout.signal);
+        const image=await encodeImage(canvas,timeout.signal);timeout.signal.throwIfAborted();
+        const data=await sendPage(url,JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'}),timeout.signal,onProgress);
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
         if(normalize)return normalize(data);
         if(!Array.isArray(data.lines)||data.lines.length>1500)throw failure('Gemini 결과 형식이 올바르지 않습니다.','GEMINI_RESULT_INVALID');
@@ -16278,6 +16334,12 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='',failed=false;
   const unchanged=()=>{const current=readProOptions();return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
   const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions()))ocrCheckpoints.set(provider+':'+p.uid,record);};
+  const publish=()=>{
+    const merged=new Map(ocrRecords.map(r=>[r.uid,r]));for(const r of fresh)merged.set(r.uid,r);
+    const current=readProOptions();let outdated=0;
+    ocrRecords=pages.flatMap((p,i)=>{const r=merged.get(p.uid);if(!r)return [];if(!ocrRecordCurrent(r,p,current)){outdated++;return [];}return [{...r,page:i+1}];});
+    ocrAccepted=false;renderOCRResults();toolsChanged();return outdated;
+  };
   if(force)for(const p of list)ocrCheckpoints.delete(provider+':'+p.uid);
   const update=n=>progress((position+Math.max(0,Math.min(1,n)))/list.length*95);
   let workStage='',recognizedMs=0,measuredPages=0;
@@ -16293,13 +16355,13 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
       const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&!r.skipped&&(provider!=='paddle-v5'||ocrCanEmbed(r));
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
-      let pdfTask;
+      let pdfTask,source;
       // Include rendering and cleanup in the deadline, not just the network request.
       const pageTimer=provider==='tesseract'?null:setTimeout(()=>workController.abort(new Error((provider==='gemini'?'Gemini':provider==='vision'?'Google Vision':'Paddle')+' 페이지 처리 시간이 초과됐습니다. 완료한 결과는 유지됩니다. Tesseract로 다시 시도할 수 있습니다.')),['gemini','vision'].includes(provider)?120000:210000);
       try{
         // Preserve the existing searchable-text skip policy without serializing/reopening the PDF.
         // Shared PDF.js source reads can be cancelled without destroying the document being edited.
-        const source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
+        source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
         const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
         const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
         const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:false});
@@ -16307,9 +16369,15 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         checkProAbort();update(.05);
         if(existing){fresh.push({uid:p.uid,key,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout});update(1);continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
-        const doc=await waitForOCR(buildEditedDocument([p],{signal:workSignal}),workSignal);checkProAbort();
-        const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),workSignal);checkProAbort();
-        pdfTask=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),workSignal),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,workSignal),page=await waitForOCR(pdf.getPage(1),workSignal),base=page.getViewport({scale:1});
+        // Ordinary scans use the already opened PDF.js page. Edited/masked pages
+        // still use the full pipeline so cloud OCR never receives hidden pixels.
+        let page=source;
+        if(!PDFOCRPolicy.canRenderSource(p,o)){
+          const doc=await waitForOCR(buildEditedDocument([p],{signal:workSignal}),workSignal);checkProAbort();
+          const processed=await waitForOCR(PDFProPipeline.apply(doc,o,{signal:workSignal,docOptions:DOC_OPTS,pageOffset:index,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})}),workSignal);checkProAbort();
+          pdfTask=pdfjsLib.getDocument({data:await waitForOCR(processed.doc.save(),workSignal),...DOC_OPTS});const pdf=await waitForOCR(pdfTask.promise,workSignal);page=await waitForOCR(pdf.getPage(1),workSignal);
+        }
+        const base=page.getViewport({scale:1});
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
@@ -16323,6 +16391,9 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
                 stage('모델 준비');progress(m.progress*100);busy(true,m.detail||'인식 데이터를 준비하는 중…');return;
               }
               if(provider==='gemini'||provider==='vision'){
+                if(m.status==='retrying'){
+                  stage('재시도 대기',false);busy(true,`${recognizingPage}쪽 · ${m.retryAfter}초 후 자동 재시도 (${m.attempt}/${m.maxAttempts})`);return;
+                }
                 stage('문서 인식',position>0);
                 const label=m.status==='encoding page'?'전송할 이미지를 준비하는 중…':m.status==='reading result'?'인식 결과를 확인하는 중…':(provider==='vision'?'Google Vision':'Gemini')+'이 글자를 읽는 중…';
                 busy(true,`${recognizingPage}쪽 · ${label} (${position+1}/${list.length})`);return;
@@ -16347,25 +16418,27 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
           const expected=measuredPages?recognizedMs/measuredPages:globalThis.PDFWorkProgress?.previous(timingKey);
           if(!['tesseract','paddle-v5'].includes(provider)&&expected){globalThis.PDFWorkProgress?.estimate(expected*(list.length-position));globalThis.PDFWorkProgress?.plan(position/list.length*95,(position+1)/list.length*95,expected);}
           const recognizedAt=performance.now();
+          // Vision owns a bounded 4-minute recognition deadline including quota
+          // waits; the preparation deadline must not interrupt an allowed wait.
+          if(provider==='vision')clearTimeout(pageTimer);
           const result=await waitForOCR(engine.recognize(canvas),workSignal);checkProAbort();
           recognizedMs+=performance.now()-recognizedAt;measuredPages++;
           globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
           const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
-      }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});}
+      }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});source?.cleanup();}
       progress((i+1)/list.length*95);await idle();
     }
     if(!unchanged())throw new Error('처리 중 문서 또는 설정이 바뀌었습니다. 다시 인식해 주세요.');
-    const merged=new Map(ocrRecords.map(r=>[r.uid,r]));for(const r of fresh)merged.set(r.uid,r);
-    const current=readProOptions();let outdated=0;
-    ocrRecords=pages.flatMap((p,i)=>{const r=merged.get(p.uid);if(!r)return [];if(!ocrRecordCurrent(r,p,current)){outdated++;return [];}return [{...r,page:i+1}];});ocrAccepted=false;renderOCRResults();toolsChanged();
+    const outdated=publish();
     const skipped=fresh.filter(r=>r.skipped).length;
     status=`${provider==='gemini'?'Gemini · ':provider==='paddle-v5'?'PP-OCRv5 · ':''}${fresh.length-skipped}쪽 인식${reused?' (이전 결과 '+reused+'쪽 재사용)':''} · 기존 텍스트 ${skipped}쪽 건너뜀.${outdated?' 설정이 바뀐 이전 결과 '+outdated+'쪽은 제외했습니다.':''}${ocrRecords.some(ocrCanEmbed)?' 내용을 확인한 뒤 PDF 포함을 선택하세요.':fresh.some(ocrHasText)?' 텍스트는 저장할 수 있지만 검색용 PDF에 포함할 위치 정보가 없습니다.':' 기존 검색 텍스트를 유지합니다.'}`;
   }catch(e){
     if(workSignal.aborted)e=workSignal.reason;
     failed=e.name!=='AbortError';
-    const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':e.message||'텍스트 인식에 실패했습니다.';
+    const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':`${recognizingPage}쪽 · ${e.message||'텍스트 인식에 실패했습니다.'}${e.code?' ['+e.code+']':''}`;
     let resumable=false;try{resumable=unchanged();}catch(_){}
+    if(resumable&&completed)publish();
     status=message+(resumable&&completed+reused?` 완료한 ${completed+reused}쪽은 이 탭에서 보관합니다. 다시 인식하면 완료한 페이지를 재사용합니다.`:'')+(ocrRecords.length?' 이전 인식 결과는 유지됩니다.':'');
     if(e.retryAfter)status+=` 약 ${Math.ceil(e.retryAfter)}초 뒤 다시 시도하세요.`;
     toast(message,e.name!=='AbortError');
