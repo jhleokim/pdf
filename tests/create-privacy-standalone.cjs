@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');
+const version=fs.readFileSync(path.join(root,'VERSION'),'utf8').trim(),folder=path.join(root,'work/privacy-fix');fs.mkdirSync(folder,{recursive:true});
+let html=fs.readFileSync(path.join(root,'dist/PDF-Studio-Standalone-v'+version+'.html'),'utf8');
+html=html.replace('<head>','<head><meta http-equiv="Content-Security-Policy" content="connect-src blob: data:">');
+html=html.replace('</body>','<script>'+fs.readFileSync(path.join(__dirname,'privacy-standalone-browser.js'),'utf8')+'</script></body>');
+fs.writeFileSync(path.join(folder,'standalone-qa.html'),html);
+fs.writeFileSync(path.join(folder,'opaque-qa.html'),'<meta charset="utf-8"><h1>Standalone opaque origin verification</h1><pre id="status">Loading…</pre><iframe id="app" sandbox="allow-scripts allow-modals allow-downloads" src="standalone-qa.html" style="width:1400px;height:960px;border:1px solid #aaa"></iframe><script>onmessage=e=>{if(e.source===document.getElementById("app").contentWindow&&e.data.privacyQA)document.getElementById("status").textContent=e.data.privacyQA;}</script>');
+console.log('Created standalone and opaque-origin app fixtures');
+const web=fs.readFileSync(path.join(root,'index.html'),'utf8').replaceAll('"/privacy/','"/.deploy/privacy/');
+fs.writeFileSync(path.join(folder,'web-qa.html'),web.replace('</body>','<script>self.PDFPrivacyQAWeb=true;'+fs.readFileSync(path.join(__dirname,'privacy-standalone-browser.js'),'utf8')+'</script></body>'));
