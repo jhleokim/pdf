@@ -1,16 +1,15 @@
 /* Prepare once; the user's download click stays synchronous on mobile browsers. */
-let basicSaveState=null;
+let basicSaveState=null,documentFilename=null;
 function pdfFilename(value){
   let name=String(value).trim().replace(/\.pdf$/i,'').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/[. ]+$/g,'').slice(0,100);
   if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name))name='_'+name;
   return name;
 }
 function suggestedPdfFilename(){
-  const sources=[...new Set(pages.map(p=>p.docId))],doc=sources.length===1?docs.get(sources[0]):null;
-  if(doc&&doc.kind!=='blank')return pdfFilename(doc.name.replace(/\.[^.]+$/,''))+'_편집본';
-  const now=new Date(),stamp=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('');
-  return '편집본_'+stamp;
+  return pdfFilename(PDFSource.filename(pages,docs));
 }
+function syncDocumentFilename(){if(typeof documentFilename==='undefined')return;$('proFilename').value=documentFilename??suggestedPdfFilename();}
+function resetDocumentFilename(){documentFilename=null;syncDocumentFilename();}
 function syncBasicSaveAction(){
   const state=basicSaveState;if(!state)return;
   const valid=!!pdfFilename($('basicSaveFilename').value);
@@ -48,7 +47,7 @@ async function openBasicSaveDialog(){
   const list=pages.map(p=>({...p,annots:structuredClone(p.annots||[])}));
   const textCount=list.reduce((n,p)=>n+p.annots.filter(a=>a.shape==='text').length,0);
   const state={pages:list,controller:new AbortController(),phase:'preparing',bytes:null,pending:null};basicSaveState=state;
-  $('basicSaveFilename').value=suggestedPdfFilename().slice(0,100);
+  $('basicSaveFilename').value=documentFilename??suggestedPdfFilename();
   $('basicSaveSummary').textContent='전체 '+list.length+'페이지'+(textCount?' · 추가한 텍스트 '+textCount+'개':'');
   dialog.showModal();$('basicSaveFilename').focus();$('basicSaveFilename').select();
   state.pending=prepareBasicSave(state);return state.pending;
@@ -68,7 +67,8 @@ function downloadBasicSave(){
   }catch(e){$('basicSaveError').textContent='다운로드를 시작하지 못했습니다. 다시 눌러 주세요.';}
 }
 $('basicSaveDownload').onclick=downloadBasicSave;
-$('basicSaveFilename').oninput=syncBasicSaveAction;
+$('basicSaveFilename').oninput=()=>{documentFilename=$('basicSaveFilename').value;syncDocumentFilename();syncBasicSaveAction();};
+$('proFilename').addEventListener('input',()=>{documentFilename=$('proFilename').value;});
 $('basicSaveBack').onclick=$('basicSaveClose').onclick=closeBasicSaveDialog;
 $('basicSaveDialog').addEventListener('cancel',e=>{e.preventDefault();closeBasicSaveDialog();});
 $('basicSaveDialog').addEventListener('close',()=>{if(!$('basicSaveDialog').open){basicSaveState?.controller.abort();basicSaveState=null;}});
@@ -77,3 +77,4 @@ $('basicSaveDialog').addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();void downloadBasicSave();}
   if(e.key==='Enter'&&e.target===$('basicSaveFilename')){e.preventDefault();void downloadBasicSave();}
 });
+syncDocumentFilename();

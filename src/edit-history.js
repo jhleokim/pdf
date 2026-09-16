@@ -79,9 +79,9 @@ function flushTextHistory(){
 }
 function syncHistoryControls(){
   const stack=historyDraft?.session===textEditing?historyDraft.stack:editHistory;
-  for(const [id,entries]of [['editUndo',stack.undo],['editRedo',stack.redo]]){
+  for(const [id,entries]of [['editUndo',stack.undo],['editRedo',stack.redo],['documentUndo',stack.undo],['documentRedo',stack.redo]]){
     const button=$(id);if(!button)continue;button.disabled=!entries.length||!!textComposing;
-    button.title=(id==='editUndo'?'되돌리기':'다시 실행')+(entries.length?' · '+entries.at(-1).label:'');
+    button.title=(id.endsWith('Undo')?'되돌리기':'다시 실행')+(entries.length?' · '+entries.at(-1).label:'');
   }
 }
 async function restoreTextHistory(redo,session){

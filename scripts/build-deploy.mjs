@@ -1,4 +1,4 @@
-import {tesseractWebAssets} from './build.mjs';
+import {tesseractWebAssets,markupWebAssets} from './build.mjs';
 import {mkdirSync,copyFileSync,writeFileSync,existsSync,rmSync} from 'node:fs';
 import {resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -10,6 +10,8 @@ if(!retired.startsWith(deployRoot+sep)||retired===deployRoot)throw Error('Unsafe
 if(existsSync(retired))rmSync(retired,{recursive:true});
 mkdirSync(new URL('../.deploy/ocr/tesseract/7.0.0/',import.meta.url),{recursive:true});
 for(const asset of Object.values(tesseractWebAssets))copyFileSync(new URL('../vendor/ocr/'+asset.file,import.meta.url),new URL('../.deploy'+asset.url,import.meta.url));
+mkdirSync(new URL('../.deploy/markup/',import.meta.url),{recursive:true});
+for(const asset of Object.values(markupWebAssets))copyFileSync(new URL('../vendor/markup/'+asset.file,import.meta.url),new URL('../.deploy'+asset.url,import.meta.url));
 writeFileSync(new URL('../.deploy/_headers',import.meta.url),`/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: same-origin
@@ -24,5 +26,7 @@ writeFileSync(new URL('../.deploy/_headers',import.meta.url),`/*
 /ocr/ppocr-v5/manifest.json
   Cache-Control: no-cache
 /privacy/*
+  Cache-Control: public, max-age=31536000, immutable
+/markup/*
   Cache-Control: public, max-age=31536000, immutable
 `);

@@ -4,14 +4,14 @@ const PDFMarkupText=(()=>{
   const fonts=new Map();let boot;
   // Synthetic emphasis works with every bundled family, including selected ranges.
   const boldStroke=.035,strikeWidth=.05,italicSlope=Math.tan(14*Math.PI/180);
-  function data(id){return b64bytes(document.getElementById(id).textContent.trim());}
+  async function data(id){return typeof PDFMarkupAssets==='undefined'?b64bytes(document.getElementById(id).textContent.trim()):PDFMarkupAssets.get(id);}
   async function load(id='gothic'){
     if(!families[id])throw Error('지원하지 않는 글꼴입니다.');
-    if(!boot)boot=Promise.resolve().then(()=>{const script=document.createElement('script');script.textContent=new TextDecoder().decode(data('markup-fontkit'));document.head.appendChild(script);});
+    if(!boot)boot=(async()=>{const script=document.createElement('script');script.textContent=new TextDecoder().decode(await data('markup-fontkit'));document.head.appendChild(script);if(typeof fontkit==='undefined')throw Error('글꼴 엔진을 준비하지 못했습니다. 다시 시도해 주세요.');})().catch(e=>{boot=null;throw e;});
     await boot;
     if(!fonts.has(id))fonts.set(id,(async()=>{
       const context=PDFLib.PDFContext.create();
-      const bytes=PDFLib.decodePDFRawStream(PDFLib.PDFRawStream.of(context.obj({Filter:'FlateDecode'}),data(families[id].asset))).decode();
+      const bytes=PDFLib.decodePDFRawStream(PDFLib.PDFRawStream.of(context.obj({Filter:'FlateDecode'}),await data(families[id].asset))).decode();
       const font=fontkit.create(bytes),face=new FontFace(families[id].family,bytes);
       await face.load();document.fonts.add(face);return {font,bytes};
     })());

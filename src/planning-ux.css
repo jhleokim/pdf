@@ -1,0 +1,61 @@
+/* Compact workspace variants retain the existing palette and desktop layout. */
+#proPages{display:none}
+#pageOrderButton[hidden]{display:none!important}
+.document-history-controls{display:flex;align-items:center;gap:4px;flex:none}
+#documentRedo .ic{transform:scaleX(-1)}
+.page .pick{padding:0;color:inherit;cursor:pointer;font:inherit}
+.page:focus-within .pick{display:grid}
+.page:focus-visible,.page .pick:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.page-order-dialog h2{margin:0;font-size:17px}
+.page-order-steps{display:flex;gap:8px;margin:18px 0}
+.page-order-steps .btn{flex:1;min-height:44px}
+.page-order-dialog .pro-field input{width:100%;box-sizing:border-box;min-height:44px}
+.page-order-dialog #pageOrderSummary{font-size:13px;line-height:1.6;margin:0}
+.brand-txt{display:grid;grid-template-columns:auto 24px;align-items:center;column-gap:3px}
+.brand-txt h1{grid-column:1 / -1}
+.brand-txt #processingBadge{grid-column:1;margin:3px 0 0;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.brand-txt>.help-dot{grid-column:2;grid-row:2;margin:0}
+.brand-txt #processingBadge[data-cloud=true]::before{background:var(--ink-3)}
+.pro-result-summary,.ocr-preparation{font-size:12px;line-height:1.6;color:var(--ink-2);margin:0}
+.pro-result-summary{margin:10px 0;overflow-wrap:anywhere}
+.ocr-preparation[hidden]{display:none!important}
+.ocr-preparation{white-space:pre-line}
+@media(max-width:880px){
+ .brand-txt #processingBadge{font-size:10px}
+ .tools::before{content:none}
+ .tools #pageOrderButton{display:inline-flex;width:44px;height:44px}
+ .legend .document-history-controls{margin-left:auto}
+ body[data-mode=basic] .legend:has(.document-history-controls){display:flex}
+ .document-history-controls .btn{width:44px;height:44px}
+ .page .pick::after{content:'';position:absolute;inset:50% auto auto 50%;width:44px;height:44px;transform:translate(-50%,-50%)}
+ .page .pick{display:grid}
+}
+@media(max-width:620px),(max-width:880px) and (max-height:540px){
+ #proPages{display:block}
+ .pro-mobile-switch{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .pro-mobile-switch button{min-height:44px}
+ body[data-mode=pro] main{min-height:0;overflow:auto!important}
+ body[data-mode=pro][data-pro-view=pages] #proPanel,
+ body[data-mode=pro][data-pro-view=workspace] #proPanel,
+ body[data-mode=pro].pro-preview-open[data-pro-view=pages] #proCompare,
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #proCompare,
+ body[data-mode=pro].pro-preview-open[data-pro-view=workspace] #boardWrap:not([hidden]),
+ body[data-mode=pro].pro-preview-open[data-pro-view=settings] #boardWrap:not([hidden]){display:none!important}
+ body[data-mode=pro][data-pro-view=pages] #boardWrap:not([hidden]){display:block!important;flex:1;width:100%;height:auto;max-height:none;box-sizing:border-box;padding:0 12px 24px;overflow:auto;border:0}
+ body[data-mode=pro][data-pro-view=pages] #boardWrap .legend{display:flex;position:sticky;top:0;z-index:4;padding:9px 0;background:var(--surface-2)}
+ body[data-mode=pro][data-pro-view=pages] main #board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:12px;align-items:start}
+ body[data-mode=pro][data-pro-view=pages] #board .page{width:auto;padding:7px;min-width:0}
+ body[data-mode=pro][data-pro-view=pages] #board .sheet{height:auto;aspect-ratio:210 / 297}
+ body[data-mode=pro][data-pro-view=pages] #board .pfoot{display:flex}
+ body[data-mode=pro][data-pro-view=pages] #board .pfoot .acts{display:none}
+ body[data-mode=pro][data-pro-view=pages] #board .plate{left:9px;top:9px;min-width:23px;height:24px;font-size:12px}
+ body[data-mode=pro][data-pro-view=pages] #board .pick{right:9px;top:9px;transform:none}
+ body[data-mode=pro][data-pro-view=workspace].pro-preview-open #proCompare{display:flex!important;flex:1 0 330px;min-height:330px;height:auto;border:0}
+ body[data-mode=pro][data-pro-view=workspace] #proCompare .compare-head p{display:block}
+ body[data-mode=pro][data-pro-view=workspace] #proCompare .compare-stage{min-height:200px}
+ body[data-mode=pro][data-pro-view=workspace] .compare-navigation .btn,body[data-mode=pro] #compareOriginal{height:44px;min-height:44px}
+ body[data-mode=pro][data-pro-view=settings] #proPanel{display:flex!important;flex:1;min-height:0;width:100%;overflow:visible;padding:0 0 20px;border:0}
+ body[data-mode=pro][data-pro-view=settings] .pro-panel-head{display:flex}
+ body[data-mode=pro][data-pro-view=settings] .pro-panel-scroll{overflow:visible;flex:none;padding-top:12px}
+ body[data-mode=pro][data-pro-view=settings] .pro-panel-footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line)}
+}
