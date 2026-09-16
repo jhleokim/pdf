@@ -18,10 +18,8 @@
   ready=(async()=>{
    const [wasm,code]=await Promise.all([asset('wasm',signal),asset('worker',signal)]);signal?.throwIfAborted();
    if(token!==generation)throw new DOMException('취소했습니다.','AbortError');
-   // A single self-contained worker avoids nested blob imports from file://,
-   // the opaque-origin failure seen in older standalone OCR loaders.
-   const boot=`const __pdfPrivacyInit=await new Promise(resolve=>self.onmessage=({data})=>resolve(data));globalThis.$libmupdf_wasm_Module={wasmBinary:__pdfPrivacyInit.wasm,locateFile:()=>''};\n`;
-   workerURL=URL.createObjectURL(new Blob([boot,code],{type:'text/javascript'}));worker=new Worker(workerURL,{type:'module'});
+   // The bundle includes its async WASM bootstrap; no module imports or URLs.
+   workerURL=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));worker=new Worker(workerURL,{type:'classic'});
    await new Promise((resolve,reject)=>{
     worker.onerror=e=>{reject(Error(e.message||'개인정보 삭제 엔진 오류'));if(token===generation){pending?.reject(Error('개인정보 삭제 엔진이 중단되었습니다.'));dispose();}};
     worker.onmessage=({data:d})=>{if(d.ready)return resolve();if(d.error&&!d.id)return reject(Error(d.error));if(pending?.id!==d.id)return;if(d.error)pending.reject(Error(d.error));else if(d.result)pending.resolve(d.result);else pending.progress?.(d.done,d.total);};

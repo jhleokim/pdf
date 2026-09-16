@@ -1,4 +1,4 @@
-import {build} from 'esbuild';
+import {build,transform} from 'esbuild';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -7,9 +7,25 @@ import {createHash} from 'node:crypto';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 let assets;
 export async function buildPrivacyAssets(){
-  const result=await build({entryPoints:[resolve(root,'src/privacy-native-worker.js')],bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',minify:true,define:{process:'undefined'},external:['module','node:fs']});
+  // Module Workers cannot load blobs from a local HTML's opaque origin.
+  // A side-effect entry and async wrapper retain MuPDF's async initialization
+  // in a classic Worker, using only verified, transferred WASM bytes.
+  const result=await build({
+    stdin:{contents:"import './src/privacy-native-worker.js';",resolveDir:root},
+    bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',minify:true,
+    define:{process:'undefined','import.meta.url':'""'},
+    plugins:[{name:'privacy-browser-only',setup(b){
+      b.onResolve({filter:/^(?:module|node:fs)$/},args=>({path:args.path,namespace:'no-node'}));
+      b.onLoad({filter:/.*/,namespace:'no-node'},()=>({contents:'export function createRequire(){throw Error("Node runtime unavailable");}'}));
+    }}]
+  });
+  const worker=await transform(`(async()=>{
+    const init=await new Promise(resolve=>self.onmessage=({data})=>resolve(data));
+    globalThis.$libmupdf_wasm_Module={wasmBinary:init.wasm,locateFile:()=>''};
+    ${result.outputFiles[0].text}
+  })().catch(error=>self.postMessage({error:'개인정보 삭제 엔진을 시작하지 못했습니다: '+(error?.message||String(error))}));`,{format:'iife',target:'es2022',minify:true});
   assets={};const folder=resolve(root,'.deploy/privacy');mkdirSync(folder,{recursive:true});
-  for(const [name,bytes]of [['worker',Buffer.from(result.outputFiles[0].contents)],['wasm',readFileSync(resolve(root,'node_modules/mupdf/dist/mupdf-wasm.wasm'))]]){
+  for(const [name,bytes]of [['worker',Buffer.from(worker.code)],['wasm',readFileSync(resolve(root,'node_modules/mupdf/dist/mupdf-wasm.wasm'))]]){
     const packed=deflateSync(bytes,{level:9}),sha=createHash('sha256').update(packed).digest('hex'),url='/privacy/'+sha+'.zlib';
     assets[name]={url,sha256:sha,bytes:packed.length,packed};writeFileSync(resolve(root,'.deploy'+url),packed);
   }
