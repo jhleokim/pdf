@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 function harness(data){const calls=[];class Reader{readAsDataURL(){this.result='data:image/jpeg;base64,/9j/AAAAAAAAAAAA';queueMicrotask(()=>this.onload());}abort(){this.onabort?.();}}
  const context={URL,AbortController,DOMException,Uint8Array,TextDecoder,Date,setTimeout,clearTimeout,FileReader:Reader,location:{protocol:'https:',href:'https://pdf.test/'},fetch:async(url,init)=>{calls.push({url,init});return Response.json(data);}};
- vm.createContext(context);for(const file of ['pro-gemini.js','pro-vision.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../src',file),'utf8'),context);
+ vm.createContext(context);for(const file of ['pro-gemini.js','pro-vision-result.js','pro-vision.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../src',file),'utf8'),context);
  return {api:context.PDFVision,calls,canvas:{width:100,height:200,toBlob:cb=>queueMicrotask(()=>cb({type:'image/jpeg',size:100}))}};
 }
 const result={text:'한글\n',model:'builtin/latest',words:[{text:'한글',box:[0,0,.5,.1],separator:'\n',confidence:91}]};

@@ -12,8 +12,8 @@ class RequestError extends Error {
 }
 /** @param {unknown} data @param {number} [status] @param {Record<string,string>} [headers] */
 const json=(data,status=200,headers={})=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
-/** @param {Request | Response} request @param {number} max @param {AbortSignal} [signal] @returns {Promise<unknown>} */
-async function readJSON(request,max,signal){
+/** @param {Request | Response} request @param {number} max @param {AbortSignal} [signal] */
+async function readBytes(request,max,signal){
   if(signal?.aborted){await request.body?.cancel().catch(()=>{});signal.throwIfAborted();}
   if(Number(request.headers.get('content-length'))>max){await request.body?.cancel();throw new RequestError(413,'처리할 데이터가 너무 큽니다.');}
   if(!request.body)throw new RequestError(400,'요청 내용이 없습니다.');
@@ -25,6 +25,11 @@ async function readJSON(request,max,signal){
   catch(e){if(signal?.aborted)throw signal.reason;throw e;}
   finally{signal?.removeEventListener('abort',abort);reader.releaseLock();}
   const buffer=new Uint8Array(size);let offset=0;for(const chunk of chunks){buffer.set(chunk,offset);offset+=chunk.length;}
+  return buffer;
+}
+/** @param {Request | Response} request @param {number} max @param {AbortSignal} [signal] @returns {Promise<unknown>} */
+async function readJSON(request,max,signal){
+  const buffer=await readBytes(request,max,signal);
   try{return JSON.parse(new TextDecoder().decode(buffer));}catch(_){throw new RequestError(400,'요청 형식이 올바르지 않습니다.');}
 }
 /** @param {unknown} value @returns {Record<string,unknown>} */
@@ -110,7 +115,7 @@ function resultLines(input){
   let parsed;try{parsed=JSON.parse(text);}catch(_){throw new RequestError(502,'Gemini 인식 결과를 읽지 못했습니다.','GEMINI_RESULT_INVALID');}
   return validLines(parsed);
 }
-export function createWorker(upstreamFetch=fetch,wait=retryDelay,now=Date.now){const vision=createVisionWorker(upstreamFetch,{readJSON,json,RequestError,validInput});return {
+export function createWorker(upstreamFetch=fetch,wait=retryDelay,now=Date.now){const vision=createVisionWorker(upstreamFetch,{readBytes,readJSON,json,RequestError,validInput});return {
   /** @param {Request} request @param {Env} env */
   async fetch(request,env){
   const url=new URL(request.url);if(url.pathname==='/api/ocr/vision')return vision.fetch(request,env);if(url.pathname!==PATH){if(url.pathname.startsWith('/api/'))return json({error:'없는 API 경로입니다.'},404);return env.ASSETS.fetch(request);}

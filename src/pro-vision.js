@@ -1,7 +1,11 @@
 /* Cloud Vision uses its own server key and explicit document-transmission consent. */
 (() => {
+  class VisionError extends Error{constructor(status,message,code,retryAfter){super(message);Object.assign(this,{status,code,retryAfter});}}
+  const google=PDFVisionResult.createNormalizer(VisionError);
   function normalize(data){
-    const invalid=()=>{throw new Error('Google Vision의 텍스트 또는 위치 정보가 올바르지 않습니다.');};
+    if(data&&'responses' in data)data=google.normalize(data);
+    const invalid=()=>{throw new VisionError(502,'Google Vision의 텍스트 또는 위치 정보가 올바르지 않습니다.','VISION_RESULT_INVALID');};
+    if(!data||typeof data!=='object'||Array.isArray(data))invalid();
     if(typeof data.text!=='string'||data.text.length>60000||!Array.isArray(data.words)||data.words.length>10000)invalid();
     let chars=0;
     const words=data.words.map(word=>{

@@ -7,7 +7,7 @@ function harness(reply){
  const context={URL,AbortController,DOMException,Uint8Array,TextDecoder,Date:Clock,FileReader:Reader,location:{protocol:'https:',href:'https://pdf.test/'},
   setTimeout(fn,ms){const key=++id;timers.set(key,{fn,ms});if(ms<=1000)queueMicrotask(()=>{if(timers.delete(key)){time+=ms;fn();}});return key;},clearTimeout:key=>timers.delete(key),
   fetch:async(url,init)=>{calls.push({url,init});return reply(calls.length,init);}};
- vm.createContext(context);for(const name of ['pro-gemini.js','pro-vision.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../src',name),'utf8'),context);
+ vm.createContext(context);for(const name of ['pro-gemini.js','pro-vision-result.js','pro-vision.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../src',name),'utf8'),context);
  return {api:context.PDFVision,calls,events,timers,get time(){return time;},get encodes(){return encodes;},canvas:{width:100,height:200,toBlob:cb=>{encodes++;queueMicrotask(()=>cb({type:'image/jpeg',size:100}));}}};
 }
 test('212-page Vision run resumes the same page after rate limiting at 60 and 140 without repeated encoding',async()=>{
@@ -42,6 +42,41 @@ test('HTML authentication errors never trigger another upload',async()=>{
  const h=harness(()=>new Response('Sign in',{status:403,headers:{'Content-Type':'text/html'}})),s=await h.api.session('eng',new AbortController().signal,null,true);
  await assert.rejects(s.recognize(h.canvas),e=>e.status===403);assert.equal(h.calls.length,1);assert.equal(h.timers.size,0);await s.close();
 });
+
+test('a non-JSON Cloudflare gateway error on page 90 retries that page and completes 212 pages',async()=>{
+ let page=1,interrupted=false;
+ const h=harness(()=>{
+  if(page===90&&!interrupted){interrupted=true;return new Response('<html>Gateway error</html>',{status:520,headers:{'Content-Type':'text/html','CF-Ray':'abc123-ICN'}});}
+  page++;return success();
+ });
+ const s=await h.api.session('kor+eng',new AbortController().signal,e=>h.events.push(e),true);
+ for(let n=0;n<212;n++)assert.equal((await s.recognize(h.canvas)).text,'계약');await s.close();
+ assert.equal(page,213);assert.equal(h.calls.length,213);assert.equal(h.encodes,212);assert.equal(h.calls[89].init.body,h.calls[90].init.body);assert.ok(h.time>=10000);assert.equal(h.timers.size,0);
+});
+
+test('HTML quota responses preserve Retry-After instead of uploading earlier',async()=>{
+ for(const header of ['180',new Date(180000).toUTCString()]){
+  const h=harness(()=>new Response('Rate limited',{status:429,headers:{'Content-Type':'text/html','Retry-After':header}}));
+  const s=await h.api.session('eng',new AbortController().signal,null,true);
+  await assert.rejects(s.recognize(h.canvas),e=>e.retryAfter===180&&e.httpStatus===429);assert.equal(h.calls.length,1);await s.close();
+ }
+});
+
+test('edge failures report the last HTTP status and safe request ID after bounded retries',async()=>{
+ for(const status of [520,521,522,523,524]){
+  const h=harness(n=>new Response('<html>private response must never be displayed</html>',{status,headers:{'Content-Type':'text/html','CF-Ray':'abc'+n+'-ICN'}}));
+  const s=await h.api.session('eng',new AbortController().signal,null,true);
+  await assert.rejects(s.recognize(h.canvas),e=>e.httpStatus===status&&e.rayId==='abc3-ICN'&&e.attempts===3&&!e.message.includes('private response'));assert.equal(h.calls.length,3);assert.equal(h.encodes,1);assert.equal(h.timers.size,0);await s.close();
+ }
+});
+
+test('access challenges, sign-in redirects and unexpected successful HTML never re-upload',async()=>{
+ for(const kind of ['challenge','redirect','forbidden','unexpected']){
+  const h=harness(()=>{const r=new Response('private sign in page',{status:kind==='challenge'?503:kind==='forbidden'?403:200,headers:{'Content-Type':'text/html',...(kind==='challenge'?{'cf-mitigated':'challenge'}:{})}});if(kind==='redirect')Object.defineProperty(r,'redirected',{value:true});return r;});
+  const s=await h.api.session('eng',new AbortController().signal,null,true);
+  await assert.rejects(s.recognize(h.canvas),e=>e.code===(kind==='unexpected'?'VISION_RESPONSE_UNEXPECTED':'VISION_ACCESS_BLOCKED'));assert.equal(h.calls.length,1);assert.equal(h.timers.size,0);await s.close();
+ }
+});
 test('a stalled Vision response is canceled at the attempt deadline and retries safely',async()=>{
  let canceled=false;const h=harness(n=>n===1?new Response(new ReadableStream({cancel(){canceled=true;}}),{headers:{'Content-Type':'application/json'}}):success());
  const s=await h.api.session('eng',new AbortController().signal,null,true),result=s.recognize(h.canvas);
@@ -55,4 +90,22 @@ test('source page reuse is forbidden for masks, edits or image/page transformati
  for(const change of [{optimize:true},{rasterize:true},{blackWhite:true},{grayscale:true},{contrast:1},{whitePoint:250},{deskew:true},{deskewAngles:{p1:1}},{deskewCropByPage:{p1:true}},{crop:true},{paper:'a4'},{number:true},{watermark:'TEST'},{stamps:[{}]},{ocr:[{}]}])assert.equal(policy.canRenderSource(p,{...o,...change}),false,JSON.stringify(change));
  assert.equal(policy.canRenderSource({...p,rotation:90},o),false);assert.equal(policy.canRenderSource({...p,annots:[{shape:'redaction'}]},o),false);
  assert.equal(policy.canRenderSource(p,{...o,deskewAngles:{other:4}}),true);
+});
+const rawVision=()=>({responses:[{fullTextAnnotation:{text:'계약\n',pages:[{width:100,height:100,blocks:[{paragraphs:[{words:[{symbols:[{text:'계'},{text:'약'}],boundingBox:{vertices:[{}, {x:50}, {x:50,y:10},{y:10}]},confidence:.9}]}]}]}]}}]});
+test('raw Google results are strictly validated in the browser and binary uploads skip FileReader',async()=>{
+ const raw=rawVision(),h=harness(()=>Response.json(raw)),s=await h.api.session('kor+eng',new AbortController().signal,null,true);
+ const result=await s.recognize(h.canvas);assert.equal(result.text,'계약\n');assert.equal(result.words[0].confidence,90);assert.equal(h.calls[0].init.headers['Content-Type'],'image/jpeg');assert.equal(h.calls[0].init.headers['X-OCR-Consent'],'true');assert.equal(typeof h.calls[0].init.body,'object');await s.close();
+ raw.responses[0].fullTextAnnotation.pages[0].blocks[0].paragraphs[0].words[0].boundingBox.vertices=[];
+ const bad=harness(()=>Response.json(raw)),b=await bad.api.session('eng',new AbortController().signal,null,true);await assert.rejects(b.recognize(bad.canvas),e=>e.code==='VISION_RESULT_INVALID');assert.equal(bad.calls.length,1);await b.close();
+});
+test('embedded Google errors in HTTP 200 retain retry policy and never become an empty completed page',async()=>{
+ for(const [error,code,retry] of [[{code:8},'VISION_QUOTA',true],[{code:13},'VISION_UPSTREAM',true],[{code:7},'VISION_AUTH',false],[{code:3},'VISION_IMAGE',false],[{details:[{reason:'BILLING_DISABLED'}]},'VISION_BILLING',false]]){
+ const h=harness(n=>n===1?Response.json({responses:[{error}]}):Response.json(rawVision())),s=await h.api.session('eng',new AbortController().signal,null,true);
+ if(retry){assert.equal((await s.recognize(h.canvas)).text,'계약\n');assert.equal(h.calls.length,2);assert.equal(h.encodes,1);}else{await assert.rejects(s.recognize(h.canvas),e=>e.code===code);assert.equal(h.calls.length,1);}assert.equal(h.timers.size,0);await s.close();
+ }
+});
+test('malformed raw Google nesting fails closed without a repeated upload',async()=>{
+ for(const mutate of [r=>r.responses[0].fullTextAnnotation.pages=[null],r=>r.responses[0].fullTextAnnotation.pages[0].blocks=[null],r=>r.responses[0].fullTextAnnotation.pages[0].blocks[0].paragraphs=[null],r=>r.responses[0].fullTextAnnotation.pages[0].blocks[0].paragraphs[0].words=[null]]){
+ const raw=rawVision();mutate(raw);const h=harness(()=>Response.json(raw)),s=await h.api.session('eng',new AbortController().signal,null,true);await assert.rejects(s.recognize(h.canvas),e=>e.code==='VISION_RESULT_INVALID');assert.equal(h.calls.length,1);await s.close();
+ }
 });

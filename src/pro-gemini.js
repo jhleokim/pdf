@@ -1,7 +1,7 @@
 /* Optional online OCR. Only explicitly confirmed pages are sent; no persistent cache. */
 'use strict';
 function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='gemini',normalize=null){
-  const MAX_IMAGE=8*1024*1024,MAX_RESPONSE=2*1024*1024;
+  const MAX_IMAGE=8*1024*1024,MAX_RESPONSE=(provider==='vision'?8:2)*1024*1024;
   let retryUntil=0;
   const cooldown=()=>Math.max(0,Math.ceil((retryUntil-Date.now())/1000));
   function endpoint(){
@@ -15,8 +15,20 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
   }
   async function responseJSON(response,signal){
     signal.throwIfAborted();
+    const header=response.headers.get('retry-after'),seconds=header?(Number.isFinite(Number(header))?Number(header):(Date.parse(header)-Date.now())/1000):NaN;
+    const responseError=(message,code,status=response.status,retryAfter=seconds)=>{
+      const error=failure(message,code,status,retryAfter),ray=response.headers.get('cf-ray');
+      error.httpStatus=response.status;
+      if(ray&&/^[a-zA-Z0-9-]{1,80}$/.test(ray))error.rayId=ray;
+      return error;
+    };
     if(!response.headers.get('content-type')?.toLowerCase().includes('application/json')){
-      await response.body?.cancel();throw failure('Gemini 연결 응답을 확인하지 못했습니다. 잠시 후 다시 시도하세요.','GEMINI_CONNECTION',response.status);
+      await response.body?.cancel();
+      if(provider==='vision'){
+        if(response.headers.get('cf-mitigated')==='challenge'||response.redirected||[401,403].includes(response.status))throw responseError('Gemini 요청이 접근 확인 화면에서 차단됐습니다. 네트워크 또는 사이트 접근 설정을 확인한 뒤 다시 시도하세요.','GEMINI_ACCESS_BLOCKED');
+        if(response.ok)throw responseError('Gemini 인식 결과 대신 다른 형식의 응답을 받았습니다. 네트워크 연결 상태를 확인한 뒤 다시 시도하세요.','GEMINI_RESPONSE_UNEXPECTED');
+      }
+      throw responseError('Gemini 연결 응답을 확인하지 못했습니다. 잠시 후 다시 시도하세요.','GEMINI_CONNECTION');
     }
     if(Number(response.headers.get('content-length'))>MAX_RESPONSE){await response.body?.cancel();throw failure('Gemini 결과가 너무 큽니다. 페이지를 나누어 주세요.','GEMINI_RESULT_INVALID');}
     if(!response.body)throw failure('Gemini 응답 내용이 없습니다.','GEMINI_RESULT_INVALID');
@@ -33,8 +45,7 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
     let data;try{data=JSON.parse(new TextDecoder().decode(bytes));}catch(_){throw failure('Gemini 응답 형식을 확인하지 못했습니다.','GEMINI_RESULT_INVALID');}
     if(!data||typeof data!=='object'||Array.isArray(data))throw failure('Gemini 응답 형식을 확인하지 못했습니다.','GEMINI_RESULT_INVALID');
     if(!response.ok){
-      const header=response.headers.get('retry-after'),seconds=header?(Number.isFinite(Number(header))?Number(header):(Date.parse(header)-Date.now())/1000):NaN;
-      throw failure(typeof data.error==='string'?data.error:'Gemini 인식에 실패했습니다.',data.code,response.status,Number.isFinite(data.retryAfter)?data.retryAfter:seconds);
+      throw responseError(typeof data.error==='string'?data.error:'Gemini 인식에 실패했습니다.',data.code,response.status,Number.isFinite(data.retryAfter)?data.retryAfter:seconds);
     }
     return data;
   }
@@ -57,6 +68,7 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
       if(4*Math.ceil(blob.size/3)<=MAX_IMAGE)break;
     }
     if(4*Math.ceil(blob.size/3)>MAX_IMAGE)throw new Error('이 페이지 이미지가 너무 큽니다. 페이지 크기를 줄인 뒤 다시 시도하세요.');
+    if(provider==='vision')return blob;
     return new Promise((resolve,reject)=>{
       const reader=new FileReader(),cleanup=()=>{signal.removeEventListener('abort',abort);reader.onload=reader.onerror=reader.onabort=null;};
       const abort=()=>{reader.abort();cleanup();reject(signal.reason);};
@@ -78,7 +90,7 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
       });
     }
   }
-  async function sendPage(url,body,signal,onProgress){
+  async function sendPage(url,body,headers,signal,onProgress){
     const deadline=Date.now()+240000;
     for(let attempt=0;;attempt++){
       signal.throwIfAborted();const request=new AbortController(),abort=()=>request.abort(signal.reason);
@@ -87,17 +99,20 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
       let error;
       try{
         onProgress?.({status:'sending page'});
-        const response=await fetch(url,{method:'POST',signal:request.signal,credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body});
-        onProgress?.({status:'reading result'});return await responseJSON(response,request.signal);
+        const response=await fetch(url,{method:'POST',signal:request.signal,credentials:'omit',cache:'no-store',headers,body});
+        onProgress?.({status:'reading result'});
+        const data=await responseJSON(response,request.signal);
+        try{return normalize?normalize(data):data;}catch(e){e.httpStatus=response.status;throw e;}
       }catch(e){
         signal.throwIfAborted();error=request.signal.aborted?failure('Gemini 응답 시간이 초과됐습니다.','GEMINI_TIMEOUT',504):e;
       }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);}
       if(error.status===429)retryUntil=Date.now()+Math.max(1,error.retryAfter||60)*1000;
       // Retry transport/availability failures only. Invalid OCR, permissions,
       // billing and image errors must never be accepted or retried as success.
-      const transient=[408,429,500,502,503,504].includes(error.status)&&['VISION_RATE_LIMIT','VISION_QUOTA','VISION_TIMEOUT','VISION_CONNECTION','VISION_UPSTREAM'].includes(error.code)||error.name==='TypeError'&&!error.code;
+      error.attempts=attempt+1;
+      const transient=[408,429,500,502,503,504,520,521,522,523,524].includes(error.status)&&['VISION_RATE_LIMIT','VISION_QUOTA','VISION_TIMEOUT','VISION_CONNECTION','VISION_UPSTREAM'].includes(error.code)||error.name==='TypeError'&&!error.code;
       if(provider!=='vision'||attempt>=2||!transient)throw error;
-      const delay=Math.max(1000*2**attempt,(error.retryAfter||(error.status===429?60:0))*1000);
+      const delay=Math.max(attempt===0?10000:30000,(error.retryAfter||(error.status===429?60:0))*1000);
       if(delay>120000||Date.now()+delay+1000>=deadline)throw error;
       await retryWait(delay,signal,onProgress,attempt+2,error.code);
     }
@@ -114,9 +129,12 @@ function createCloudOCRClient(label='Gemini',path='/api/ocr/gemini',provider='ge
       try{
         signal.throwIfAborted();onProgress?.({status:'encoding page'});
         const image=await encodeImage(canvas,timeout.signal);timeout.signal.throwIfAborted();
-        const data=await sendPage(url,JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'}),timeout.signal,onProgress);
+        const binary=provider==='vision';
+        const body=binary?image:JSON.stringify({consent:true,language,image,mimeType:'image/jpeg'});
+        const headers=binary?{'Content-Type':'image/jpeg','X-OCR-Consent':'true','X-OCR-Language':language}:{'Content-Type':'application/json'};
+        const data=await sendPage(url,body,headers,timeout.signal,onProgress);
         signal.throwIfAborted();if(closed)throw new DOMException('인식이 종료되었습니다.','AbortError');
-        if(normalize)return normalize(data);
+        if(normalize)return data;
         if(!Array.isArray(data.lines)||data.lines.length>1500)throw failure('Gemini 결과 형식이 올바르지 않습니다.','GEMINI_RESULT_INVALID');
         let chars=0;
         const words=data.lines.map(line=>{
