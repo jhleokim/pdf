@@ -295,7 +295,8 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   }catch(e){
     if(workSignal.aborted)e=workSignal.reason;
     failed=e.name!=='AbortError';
-    const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':`${recognizingPage}쪽 · ${e.message||'텍스트 인식에 실패했습니다.'}${e.code?' ['+e.code+']':''}`;
+    const details=[e.code,Number.isInteger(e.httpStatus)&&e.httpStatus>0?'HTTP '+e.httpStatus:null,e.attempts>1?e.attempts+'회 시도':null,e.rayId?'요청 '+e.rayId:null].filter(Boolean);
+    const message=e.name==='AbortError'?'텍스트 인식을 취소했습니다.':`${recognizingPage}쪽 · ${e.message||'텍스트 인식에 실패했습니다.'}${details.length?' ['+details.join(' · ')+']':''}`;
     let resumable=false;try{resumable=unchanged();}catch(_){}
     if(resumable&&completed)publish();
     status=message+(resumable&&completed+reused?` 완료한 ${completed+reused}쪽은 이 탭에서 보관합니다. 다시 인식하면 완료한 페이지를 재사용합니다.`:'')+(ocrRecords.length?' 이전 인식 결과는 유지됩니다.':'');

@@ -31,9 +31,9 @@ test('Vision words preserve financial punctuation through server, browser, cells
   const context=vm.createContext({URL,AbortController,DOMException,Uint8Array,TextDecoder,Date,setTimeout,clearTimeout,FileReader:Reader,
     location:{protocol:'https:',href:'https://pdf.test/'},
     fetch:(url,init)=>worker.fetch(new Request(url,init),env)});
-  for(const file of ['pro-gemini.js','pro-vision.js','ocr-tables.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../src',file),'utf8'),context);
+  for(const file of ['pro-gemini.js','pro-vision-result.js','pro-vision.js','ocr-tables.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../src',file),'utf8'),context);
   const session=await context.PDFVision.session('kor+eng',new AbortController().signal,null,true);
-  const record=await session.recognize({width:1000,height:1000,toBlob:cb=>queueMicrotask(()=>cb({type:'image/jpeg',size:100}))});
+  const record=await session.recognize({width:1000,height:1000,toBlob:cb=>queueMicrotask(()=>cb(new Blob([Buffer.from('/9j/AAAAAAAAAAAA','base64')],{type:'image/jpeg'})))});
   await session.close();
   assert.equal(requests,1);assert.equal(record.source,'vision');assert.equal(record.words.length,19);
   const sourceWords=JSON.stringify(record.words);
