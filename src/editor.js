@@ -1216,8 +1216,22 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     for(const p of list){ if(!need.has(p.docId)) need.set(p.docId,[]); need.get(p.docId).push(p.srcIndex); }
     for(const [docId,indices] of need){
       signal?.throwIfAborted();
-      const src = await PDFDocument.load(docs.get(docId).libBytes);
-      copied.set(docId,await out.copyPages(src,indices));
+      const source=docs.get(docId),src=await PDFDocument.load(source.libBytes);
+      // Page copies omit catalog layer state; reject before hidden content can
+      // become visible. Reuse this parsed source for the cached safety check.
+      await PDFPrivacy.assertSupportedSource(source,signal,src);
+      const unique=[...new Set(indices)],firstCopies=await out.copyPages(src,unique);
+      const remaining=new Map(unique.map((index,i)=>[index,firstCopies[i]])),sourceCopies=[];
+      for(const index of indices){
+        signal?.throwIfAborted();
+        if(remaining.has(index)){sourceCopies.push(remaining.get(index));remaining.delete(index);}
+        else{
+          // One PDF-lib copier reuses the source page's mutable content/resource
+          // arrays. A separate copier keeps edits and Pro marks on this copy.
+          sourceCopies.push((await out.copyPages(src,[index]))[0]);await idle();
+        }
+      }
+      copied.set(docId,sourceCopies);
       await idle();
     }
   }
@@ -1244,8 +1258,8 @@ function downloadPdf(bytes,name){
 }
 
 async function save(){
-  if(typeof textUpdate!=='undefined')await textUpdate;
-  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  // The save dialog serializes requests and waits for the latest text layout.
+  // Waiting once here can swallow a save when newer input replaces that task.
   if(!pages.length || document.body.classList.contains('is-busy')) return;
   if(document.body.dataset.mode==='pro' && typeof proPrimaryAction==='function') return proPrimaryAction();
   return openBasicSaveDialog();
@@ -1544,7 +1558,15 @@ window.addEventListener('resize', () => {
 /* ── 단축키 ── */
 document.addEventListener('keydown', e => {
   if(document.querySelector('dialog[open]'))return;
-  if(document.body.classList.contains('is-busy')){ if(e.key==='Escape' && !$('busyCancel').hidden) $('busyCancel').click(); e.preventDefault(); return; }
+  if(document.body.classList.contains('is-busy')){
+    const cancel=$('busyCancel'),canCancel=!cancel.hidden&&!cancel.disabled;
+    if(e.key==='Tab'){
+      e.preventDefault();const target=canCancel?cancel:$('busy');if(!canCancel)target.tabIndex=-1;target.focus({preventScroll:true});return;
+    }
+    if(canCancel&&e.target===cancel&&['Enter',' '].includes(e.key))return;
+    if(e.key==='Escape'&&canCancel)cancel.click();
+    e.preventDefault();return;
+  }
   if($('proCompare')?.open) return;
   if($('modal').classList.contains('open')){if(e.key==='Escape')closeFullPreview();return;}
   if($('sheet').classList.contains('open') && e.key === 'Escape'){ $('sheet').classList.remove('open'); return; }

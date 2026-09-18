@@ -3369,8 +3369,22 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     for(const p of list){ if(!need.has(p.docId)) need.set(p.docId,[]); need.get(p.docId).push(p.srcIndex); }
     for(const [docId,indices] of need){
       signal?.throwIfAborted();
-      const src = await PDFDocument.load(docs.get(docId).libBytes);
-      copied.set(docId,await out.copyPages(src,indices));
+      const source=docs.get(docId),src=await PDFDocument.load(source.libBytes);
+      // Page copies omit catalog layer state; reject before hidden content can
+      // become visible. Reuse this parsed source for the cached safety check.
+      await PDFPrivacy.assertSupportedSource(source,signal,src);
+      const unique=[...new Set(indices)],firstCopies=await out.copyPages(src,unique);
+      const remaining=new Map(unique.map((index,i)=>[index,firstCopies[i]])),sourceCopies=[];
+      for(const index of indices){
+        signal?.throwIfAborted();
+        if(remaining.has(index)){sourceCopies.push(remaining.get(index));remaining.delete(index);}
+        else{
+          // One PDF-lib copier reuses the source page's mutable content/resource
+          // arrays. A separate copier keeps edits and Pro marks on this copy.
+          sourceCopies.push((await out.copyPages(src,[index]))[0]);await idle();
+        }
+      }
+      copied.set(docId,sourceCopies);
       await idle();
     }
   }
@@ -3397,8 +3411,8 @@ function downloadPdf(bytes,name){
 }
 
 async function save(){
-  if(typeof textUpdate!=='undefined')await textUpdate;
-  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  // The save dialog serializes requests and waits for the latest text layout.
+  // Waiting once here can swallow a save when newer input replaces that task.
   if(!pages.length || document.body.classList.contains('is-busy')) return;
   if(document.body.dataset.mode==='pro' && typeof proPrimaryAction==='function') return proPrimaryAction();
   return openBasicSaveDialog();
@@ -3697,7 +3711,15 @@ window.addEventListener('resize', () => {
 /* ── 단축키 ── */
 document.addEventListener('keydown', e => {
   if(document.querySelector('dialog[open]'))return;
-  if(document.body.classList.contains('is-busy')){ if(e.key==='Escape' && !$('busyCancel').hidden) $('busyCancel').click(); e.preventDefault(); return; }
+  if(document.body.classList.contains('is-busy')){
+    const cancel=$('busyCancel'),canCancel=!cancel.hidden&&!cancel.disabled;
+    if(e.key==='Tab'){
+      e.preventDefault();const target=canCancel?cancel:$('busy');if(!canCancel)target.tabIndex=-1;target.focus({preventScroll:true});return;
+    }
+    if(canCancel&&e.target===cancel&&['Enter',' '].includes(e.key))return;
+    if(e.key==='Escape'&&canCancel)cancel.click();
+    e.preventDefault();return;
+  }
   if($('proCompare')?.open) return;
   if($('modal').classList.contains('open')){if(e.key==='Escape')closeFullPreview();return;}
   if($('sheet').classList.contains('open') && e.key === 'Escape'){ $('sheet').classList.remove('open'); return; }
@@ -4060,7 +4082,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.6, 라이선스 보기">v6.4.6</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.7, 라이선스 보기">v6.4.7</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -12195,7 +12217,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 </script>
 <!-- ocr-table-worker-source:end -->
 <!-- privacy-assets:start -->
-<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/84a05a771d363a1028367276a52c3acf9d92fe124ce5c82b22054f1cf1a11c7d.zlib","sha256":"84a05a771d363a1028367276a52c3acf9d92fe124ce5c82b22054f1cf1a11c7d","bytes":26643},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
+<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/488612bcf5de6d01e7845e3e087de2a4cdc3b410aff5372ad2d32cc6a9bccf93.zlib","sha256":"488612bcf5de6d01e7845e3e087de2a4cdc3b410aff5372ad2d32cc6a9bccf93","bytes":26829},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
 
 <!-- privacy-assets:end -->
 <!-- app-license:start -->
@@ -13063,6 +13085,20 @@ function observeThumbnail(p){
   const isMasked=pages=>pages.some(p=>p.annots?.some(a=>a.shape==='redaction'));
   const maskKey=p=>JSON.stringify([p.docId,p.srcIndex,p.rotation,(p.annots||[]).filter(a=>a.shape==='redaction').map(a=>[a.nx,a.ny,a.nw,a.nh])]);
   const currentOCR=(record,page)=>page.uid!=null&&record.uid===page.uid&&record.privacyKey===maskKey(page)&&record.words?.some(w=>w.text?.trim());
+  const layerChecks=new WeakMap();
+  async function assertSupportedSource(source,signal,parsed){
+    signal?.throwIfAborted();if(!source)throw Error('처리할 원본 문서를 확인하지 못했습니다.');
+    if(!layerChecks.has(source)){
+      const inspect=doc=>doc.catalog.has(PDFLib.PDFName.of('OCProperties'));
+      if(parsed)layerChecks.set(source,inspect(parsed));
+      else{const check=PDFLib.PDFDocument.load(source.libBytes).then(inspect);layerChecks.set(source,check);check.catch(()=>layerChecks.delete(source));}
+    }
+    const hasLayers=await layerChecks.get(source);signal?.throwIfAborted();
+    if(hasLayers)throw Object.assign(Error('레이어 표시 설정이 있는 PDF를 안전하게 재구성할 수 없어 처리를 중단했습니다. 원본 프로그램에서 필요한 레이어만 포함한 PDF로 다시 저장한 뒤 사용해 주세요.'),{code:'PRIVACY_OPTIONAL_CONTENT'});
+  }
+  async function assertSupportedSources(list,sources,signal){
+    for(const id of new Set(list.map(p=>p.docId)))await assertSupportedSource(sources.get(id),signal);
+  }
   function nativeRecord(content,viewport,uid){
     const v=viewport.transform,w=viewport.width,h=viewport.height,words=[];
     for(const item of content.items||[]){
@@ -13091,6 +13127,9 @@ function observeThumbnail(p){
   async function redact(doc,list,{signal,onProgress,sources}={}){
     if(!isMasked(list))return doc;signal?.throwIfAborted();
     const key=sources?cacheKey(list,sources):null,masks=masksFor(list);
+    // Page copying can drop catalog layer visibility before this document reaches
+    // MuPDF. Check the original sources, including unmasked pages in this export.
+    if(sources)await assertSupportedSources(list,sources,signal);
     const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});
     const result=await PDFPrivacyNative.run(bytes,masks,{signal,onProgress});signal?.throwIfAborted();
     if(sources&&key!==cacheKey(list,sources))throw new DOMException('마스킹 설정이 바뀌었습니다.','AbortError');
@@ -13116,7 +13155,7 @@ function observeThumbnail(p){
     return clean;
   }
   const inherit=(target,source)=>{if(safe.has(source))safe.add(target);return target;};
-  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,redact,cached,clearCache,inherit};
+  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,redact,cached,clearCache,inherit,assertSupportedSource,assertSupportedSources};
   if(typeof module!=='undefined')module.exports={isMasked,maskKey,nativeRecord,currentOCR};
 })(globalThis);
 </script>
@@ -16741,7 +16780,7 @@ configureLocalOCR();syncToolsState();
  $('compareStage').append(svg);
  const doneButton=document.createElement('button');doneButton.id='reviewStampFinish';doneButton.type='button';doneButton.className='btn review-stamp-finish';doneButton.textContent='배치 완료';doneButton.setAttribute('aria-label','스탬프 배치 확정');doneButton.hidden=true;doneButton.onclick=()=>$('stampCommit').click();$('compareStage').append(doneButton);
  const moreButton=document.createElement('button');moreButton.id='reviewStampMore';moreButton.type='button';moreButton.className='btn review-stamp-more';moreButton.textContent='하나 더 찍기';moreButton.hidden=true;$('compareStage').append(moreButton);
- let gesture=null,frame=0,renderSequence=0,pending=false,lastAsset=null;
+ let gesture=null,frame=0,renderSequence=0,pending=false,pendingReview=null,lastAsset=null;
  const before=()=>typeof captureEditHistory==='function'?captureEditHistory():null;
  const history=(state,title,key)=>{if(typeof commitEditHistory==='function')commitEditHistory(state,title,key);};
  const valid=()=>stampAsset?.review&&proMode==='pro'&&proPreviewOpen&&pages.length&&!proAbort&&!$('proCompare').hasAttribute('data-error');
@@ -16786,29 +16825,35 @@ configureLocalOCR();syncToolsState();
  async function changeReview(next,{create=false}={}){
   if(stampAsset&&!stampAsset.review){toast('현재 이미지 도장을 먼저 확정하거나 배치를 취소해 주세요.');return;}
   if(gesture)cancel();const token=++renderSequence,snapshot=before(),old=stampAsset;
+  // Different controls may change before the bitmap finishes rendering. Merge
+  // their patches against the latest draft, not the last completed image.
+  const review={...(pendingReview?.asset===old?pendingReview.review:old?.review),...next};pendingReview={asset:old,review};
   pending=true;controls();$('stampStatus').textContent='스탬프 준비 중…';
   try{
-   const asset=await S.render(next);if(token!==renderSequence||old!==stampAsset)return;
+   const asset=await S.render(review);if(token!==renderSequence||pendingReview?.asset!==stampAsset)return;
    if(create&&old){storePlacement(currentStamp());stampAsset=null;}
    stampAsset={...stampAsset,...asset};$('stampThumb').src=asset.data;$('stampName').value=asset.name;$('stampActive').hidden=false;
    if(create){$('stampScope').value='current';$('stampAnchor').value='top-left';$('stampX').value=String(20+(stampMarks.length%6)*8);$('stampY').value=String(20+(stampMarks.length%6)*12);if(!old){$('stampWidth').value='50';$('stampOpacity').value='100';}stampAsset.targets=toolTargets('current').map(p=>p.uid);}
    pending=false;$('reviewStampPresets').closest('details').open=false;toolsChanged();setStampPositioning(true);history(snapshot,old?'검토 스탬프 수정':'검토 스탬프 추가',old?'review-style':null);
    $('stampStatus').textContent=pages.length?'네모 손잡이로 크기, 원형 손잡이로 화살표를 조절하세요. Enter · Esc로 배치를 마칩니다.':'PDF를 열면 미리보기에서 배치할 수 있습니다.';
   }catch(e){if(token===renderSequence){$('stampStatus').textContent='스탬프를 만들지 못했습니다. '+e.message;}}
-  finally{if(token===renderSequence){pending=false;syncReviewStamp();}}
+  finally{if(token===renderSequence){pending=false;pendingReview=null;syncReviewStamp();}}
  }
- for(const p of S.presets){const b=document.createElement('button');b.type='button';b.className='review-stamp-preset';b.dataset.preset=p.id;b.dataset.shape=p.shape;b.textContent=p.text;b.setAttribute('aria-pressed','false');b.onclick=()=>changeReview({...stampAsset?.review,preset:p.id,text:p.text,arrow:p.id!=='done'&&p.id!=='important'&&p.id!=='opinion'}, {create:true});$('reviewStampPresets').append(b);}
+ for(const p of S.presets){const b=document.createElement('button');b.type='button';b.className='review-stamp-preset';b.dataset.preset=p.id;b.dataset.shape=p.shape;b.textContent=p.text;b.setAttribute('aria-pressed','false');b.onclick=()=>changeReview({preset:p.id,text:p.text,arrow:p.id!=='done'&&p.id!=='important'&&p.id!=='opinion'}, {create:true});$('reviewStampPresets').append(b);}
  const extra=document.createElement('details');extra.className='review-stamp-extra';
  const extraTitle=document.createElement('summary');extraTitle.textContent='문구 더 보기';extra.append(extraTitle);
  const extraGrid=document.createElement('div');extraGrid.className='review-stamp-extra-grid';
  for(const button of [...$('reviewStampPresets').children].slice(8))extraGrid.append(button);
  extra.append(extraGrid);$('reviewStampPresets').append(extra);
- $('reviewStampText').oninput=()=>changeReview({...stampAsset?.review,text:$('reviewStampText').value});
- $('reviewStampColor').oninput=()=>changeReview({...stampAsset?.review,color:$('reviewStampColor').value});
- $('reviewStampHex').oninput=()=>{const value=$('reviewStampHex').value,ok=/^#[0-9a-f]{6}$/i.test(value);$('reviewStampHex').setAttribute('aria-invalid',String(!ok));if(ok)changeReview({...stampAsset?.review,color:value});};
+ $('reviewStampText').oninput=()=>changeReview({text:$('reviewStampText').value});
+ $('reviewStampColor').oninput=()=>changeReview({color:$('reviewStampColor').value});
+ $('reviewStampHex').oninput=()=>{const value=$('reviewStampHex').value,ok=/^#[0-9a-f]{6}$/i.test(value);$('reviewStampHex').setAttribute('aria-invalid',String(!ok));if(ok)changeReview({color:value});};
  $('reviewStampHex').onblur=()=>{if(stampAsset?.review){$('reviewStampHex').value=stampAsset.review.color;$('reviewStampHex').removeAttribute('aria-invalid');}};
- $('reviewStampRed').onclick=()=>changeReview({...stampAsset?.review,color:S.DEFAULT_COLOR});
- $('reviewStampArrow').onchange=()=>changeReview({...stampAsset?.review,arrow:$('reviewStampArrow').checked});
+ $('reviewStampRed').onclick=()=>changeReview({color:S.DEFAULT_COLOR});
+ $('reviewStampArrow').onchange=()=>changeReview({arrow:$('reviewStampArrow').checked});
+ // Scope edits replace the placement object while keeping the same review
+ // draft. Follow only that known replacement; switching stamps still cancels it.
+ const changeScope=$('stampScope').oninput;$('stampScope').oninput=e=>{const asset=stampAsset,draft=pendingReview;changeScope(e);if(draft&&draft===pendingReview&&draft.asset===asset)draft.asset=stampAsset;};
  function storePlacement(mark){if(!mark?.targets.length)return;if(stampEditing)stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,mark);else stampMarks.push(mark);stampEditing=null;renderStampMarks();}
  moreButton.onclick=()=>{
   if(!valid()||pending)return;cancel();const snapshot=before(),mark=currentStamp();storePlacement(mark);
@@ -16868,13 +16913,13 @@ configureLocalOCR();syncToolsState();
  // review metadata, rather than flattening the arrow into a saved thumbnail.
  const oldSave=$('stampSave').onclick;$('stampSave').onclick=()=>{if(!stampAsset?.review)return oldSave();try{if(stampShelf.length>=8)throw Error('보관함은 최대 8개입니다.');const next=[...stampShelf,{...stampAsset,review:S.normalize(stampAsset.review)}];localStorage.setItem('pdfstudio-stamps-v1',JSON.stringify(next));stampShelf=next;renderStampShelf();$('stampStatus').textContent='색상과 화살표를 함께 보관했습니다.';}catch(e){toast(e.message,true);}};
  const oldPng=$('stampPng').onclick;$('stampPng').onclick=async()=>{if(!stampAsset?.review)return oldPng();try{toolDownload(await S.png(currentStamp()),(stampAsset.name||'검토 스탬프')+'.png','image/png');}catch(e){toast(e.message,true);}};
- for(const id of ['stampClear','stampCommit']){const action=$(id).onclick;$(id).onclick=()=>{if(pending&&id==='stampCommit')return;const snapshot=before();++renderSequence;pending=false;cancel();action();history(snapshot,id==='stampCommit'?'도장 배치 확정':'도장 배치 취소');syncReviewStamp();};}
+ for(const id of ['stampClear','stampCommit']){const action=$(id).onclick;$(id).onclick=()=>{if(pending&&id==='stampCommit')return;const snapshot=before();++renderSequence;pending=false;pendingReview=null;cancel();action();history(snapshot,id==='stampCommit'?'도장 배치 확정':'도장 배치 취소');syncReviewStamp();};}
  globalThis.syncReviewStamp=syncReviewStamp;globalThis.cancelReviewStampGesture=cancel;globalThis.reviewStampPending=()=>pending;
- globalThis.finishReviewStampForNavigation=()=>{if(stampAsset?.review&&!pending){cancel();$('stampCommit').click();}};
+ globalThis.finishReviewStampForNavigation=()=>{if(typeof historyApplying!=='undefined'&&historyApplying)return;if(stampAsset?.review&&!pending){cancel();$('stampCommit').click();}};
  const clone=m=>m?{...m,targets:m.targets?.slice(),...(m.review?{review:S.normalize(m.review)}:{})}:null;
  const hashes=new WeakMap();function stampSignature(m){if(!m)return null;if(!hashes.has(m)){let a=2166136261,b=5381;for(const s of [m.data||'',m.sourceData||''])for(let i=0;i<s.length;i++){a=Math.imul(a^s.charCodeAt(i),16777619);b=Math.imul(b,33)^s.charCodeAt(i);}hashes.set(m,[a>>>0,b>>>0,(m.data||'').length]);}const{data,sourceData,...rest}=m;return {...rest,image:hashes.get(m)};}
  globalThis.captureStampHistory=()=>{const fields=Object.fromEntries([...stampControlIds,'stampName'].map(id=>[id,$(id).value]));return {asset:clone(stampAsset),marks:stampMarks.map(clone),editing:stampEditing?{...stampEditing,mark:clone(stampEditing.mark)}:null,fields,signature:JSON.stringify([stampSignature(stampAsset),stampMarks.map(stampSignature),stampEditing?{index:stampEditing.index,mark:stampSignature(stampEditing.mark)}:null,fields])};};
- globalThis.restoreStampHistory=state=>{++renderSequence;pending=false;cancel();stampAsset=clone(state.asset);stampMarks=state.marks.map(clone);stampEditing=state.editing?{...state.editing,mark:clone(state.editing.mark)}:null;for(const[id,value]of Object.entries(state.fields))$(id).value=value;$('stampActive').hidden=!stampAsset;if(stampAsset)$('stampThumb').src=stampAsset.data;renderStampMarks();toolsChanged();setStampPositioning(!!stampAsset?.review);};
+ globalThis.restoreStampHistory=state=>{++renderSequence;pending=false;pendingReview=null;cancel();stampAsset=clone(state.asset);stampMarks=state.marks.map(clone);stampEditing=state.editing?{...state.editing,mark:clone(state.editing.mark)}:null;for(const[id,value]of Object.entries(state.fields))$(id).value=value;$('stampActive').hidden=!stampAsset;if(stampAsset)$('stampThumb').src=stampAsset.data;renderStampMarks();toolsChanged();setStampPositioning(!!stampAsset?.review);};
  syncReviewStamp();
 })();
 </script>
@@ -17381,21 +17426,25 @@ async function openTextEditor(point,existing){
   if(textEditPending){await textUpdate;if(textOpening||document.body.classList.contains('is-busy'))return;}
   if(!finishTextEdit(true))return;
   const page=pages.find(p=>p.uid===previewUid);if(!page)return;
+  const rotation=page.rotation,tool=annoStyle.tool,mode=typeof proMode==='undefined'?null:proMode;
+  const current=()=>previewUid===page.uid&&pages.includes(page)&&page.rotation===rotation&&annoStyle.tool===tool&&(typeof proMode==='undefined'||proMode===mode)&&!document.body.classList.contains('is-busy')&&(!existing||page.annots?.includes(existing));
   textOpening=true;
   try{
     const source=await docs.get(page.docId).pdfjsDoc.getPage(page.srcIndex+1);
+    if(!current())return;
     const vp=source.getViewport({scale:1,rotation:(source.rotate+page.rotation)%360}),unit=source.userUnit||1;
     await PDFMarkupText.load(existing?.font||textStyle.font);
-    if(previewUid!==page.uid)return;
+    if(!current())return;
     if(typeof prepareInlineTextView==='function')await prepareInlineTextView(page,existing?.fontSize||textStyle.fontSize,vp.width*unit);
-    if(previewUid!==page.uid)return;
+    if(!current())return;
     const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',boldRanges:[],nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
     if(!existing&&isMobile())a.maxWidth=Math.min(a.maxWidth,Math.max(textStyle.fontSize*2,($('pvBody').clientWidth-40)*a.pageWidth/$('pvCanvas').clientWidth));
     const snapshot=existing?{bold:false,boldRanges:[],italic:false,strike:false,...structuredClone(a)}:null;
     if(typeof flushTextHistory==='function')flushTextHistory();
     const history=typeof captureEditHistory==='function'?captureEditHistory():null;
     // Restore natural font proportions when reopening text from older versions.
-    await relayoutText(a);if(!existing)(page.annots||=[]).push(a);
+    const laidOut=structuredClone(a);await relayoutText(laidOut);if(!current())return;
+    Object.assign(a,laidOut);if(!existing)(page.annots||=[]).push(a);
     textEditing={page,a,snapshot,revision:0};selAnno=a.id;setTool('none');
     $('textEditor').hidden=false;$('textInput').value=a.text;$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
     $('textError').textContent='';$('textApply').disabled=false;
@@ -17918,7 +17967,13 @@ async function prepareBasicSave(state){
 async function openBasicSaveDialog({scope='all'}={}){
   const dialog=$('basicSaveDialog');if(dialog.open)return basicSaveState?.pending;
   if(!pages.length||document.body.classList.contains('is-busy'))return;
-  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(typeof textUpdate!=='undefined'){
+    // Typing or changing fonts can replace the layout promise while Save waits.
+    do{await textUpdate;}while(typeof textEditPending!=='undefined'&&textEditPending);
+  }
+  // Another save or export may have started while the text layout was pending.
+  if(dialog.open)return basicSaveState?.pending;
+  if(!pages.length||document.body.classList.contains('is-busy'))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const mode=proMode,chosen=new Set(selected().map(p=>p.uid));
   let options;try{if(mode==='pro')options=readProOptions();}catch(e){toast(e.message,true);return;}
@@ -18159,7 +18214,7 @@ syncHistoryControls();
 </script>
 <script id="privacy-ui">
 'use strict';
-let privacyPage=null,privacyGesture=null,privacySelection=null,privacyRenderToken=0,privacyRenderTask=null;
+let privacyPage=null,privacyGesture=null,privacySelection=null,privacyRenderToken=0,privacyRenderTask=null,privacyPageReady=false;
 const documentChecks=new WeakMap();
 let documentConfirmationPending=false;
 async function documentPreflight(list=pages){
@@ -18209,27 +18264,31 @@ function renderPrivacyOverlay(){
 }
 async function showPrivacyPage(p){
   finishPrivacyGesture(true);
-  const token=++privacyRenderToken;privacyRenderTask?.cancel();privacyPage=p;privacySelection=null;
+  const token=++privacyRenderToken;privacyRenderTask?.cancel();privacyPage=p;privacySelection=null;privacyPageReady=false;
+  // A failed navigation must never leave another page's image available for
+  // drawing masks against the newly selected page.
+  $('privacyCanvas').width=$('privacyCanvas').height=0;$('privacyOverlay').replaceChildren();$('privacyDelete').disabled=true;
   const index=pages.indexOf(p);$('privacyPageLabel').textContent=(index+1)+' / '+pages.length+'페이지';$('privacyPrev').disabled=index<=0;$('privacyNext').disabled=index>=pages.length-1;
   $('privacyEditStatus').textContent='페이지 준비 중…';$('privacyOverlay').style.pointerEvents='none';let task;
   try{
+    await PDFPrivacy.assertSupportedSources([p],docs);if(token!==privacyRenderToken)return;
     const doc=await buildEditedDocument([{...p,annots:(p.annots||[]).filter(a=>a.shape!=='redaction')}]);if(token!==privacyRenderToken)return;
     task=pdfjsLib.getDocument({data:await doc.save(),...DOC_OPTS});const pdf=await task.promise,page=await pdf.getPage(1),base=page.getViewport({scale:1});
     const vp=page.getViewport({scale:Math.min(2,1600/Math.max(base.width,base.height))});if(token!==privacyRenderToken)return;
     const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);canvas.id='privacyCanvas';
     privacyRenderTask=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'});await privacyRenderTask.promise;if(token!==privacyRenderToken)return;
     const old=$('privacyCanvas');old.replaceWith(canvas);old.width=old.height=0;$('privacyPaper').style.aspectRatio=base.width+'/'+base.height;
-    $('privacyOverlay').setAttribute('viewBox','0 0 1000 1000');$('privacyOverlay').setAttribute('preserveAspectRatio','none');renderPrivacyOverlay();
-  }catch(e){if(token===privacyRenderToken&&e.name!=='RenderingCancelledException')$('privacyEditStatus').textContent='페이지를 열지 못했습니다. 다시 시도해 주세요.';}
-  finally{if(task)await task.destroy();if(token===privacyRenderToken)$('privacyOverlay').style.pointerEvents='';}
+    $('privacyOverlay').setAttribute('viewBox','0 0 1000 1000');$('privacyOverlay').setAttribute('preserveAspectRatio','none');privacyPageReady=true;renderPrivacyOverlay();
+  }catch(e){if(token===privacyRenderToken&&e.name!=='RenderingCancelledException')$('privacyEditStatus').textContent=e.code==='PRIVACY_OPTIONAL_CONTENT'?e.message:'페이지를 열지 못했습니다. 다시 시도해 주세요.';}
+  finally{if(task)await task.destroy();if(token===privacyRenderToken)$('privacyOverlay').style.pointerEvents=privacyPageReady?'':'none';}
 }
 $('privacyOpen').onclick=()=>{if(!pages.length)return;$('privacyDialog').showModal();void showPrivacyPage(pages.find(p=>p.uid===previewUid)||pages[0]);};
 $('privacyClose').onclick=$('privacyDone').onclick=()=>$('privacyDialog').close();
-$('privacyDialog').addEventListener('close',()=>{finishPrivacyGesture(true);privacyRenderToken++;privacyRenderTask?.cancel();$('privacyCanvas').width=$('privacyCanvas').height=0;renderAnnots();toolsChanged();syncCounts();});
+$('privacyDialog').addEventListener('close',()=>{finishPrivacyGesture(true);privacyRenderToken++;privacyRenderTask?.cancel();privacyPageReady=false;$('privacyOverlay').style.pointerEvents='none';$('privacyCanvas').width=$('privacyCanvas').height=0;renderAnnots();toolsChanged();syncCounts();});
 for(const [id,step]of [['privacyPrev',-1],['privacyNext',1]])$(id).onclick=()=>{const p=pages[pages.indexOf(privacyPage)+step];if(p)void showPrivacyPage(p);};
 const privacyPoint=e=>{const r=$('privacyOverlay').getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};};
 $('privacyOverlay').addEventListener('pointerdown',e=>{
-  if(!privacyPage||e.button>0)return;const point=privacyPoint(e),handle=e.target.dataset.maskHandle,hit=e.target.dataset.maskId;
+  if(!privacyPage||!privacyPageReady||e.button>0)return;const point=privacyPoint(e),handle=e.target.dataset.maskHandle,hit=e.target.dataset.maskId;
   if(hit||handle){privacySelection=hit||privacySelection;const a=privacyPage.annots.find(a=>a.id===privacySelection);if(!a)return;e.preventDefault();privacyGesture={a,point,mode:handle?'resize':'move',handle,snapshot:{...a},before:captureEditHistory(),pointer:e.pointerId,page:privacyPage};$('privacyOverlay').setPointerCapture(e.pointerId);renderPrivacyOverlay();return;}
   e.preventDefault();const a={id:'a'+(++annoUidSeq),shape:'redaction',nx:point.x,ny:point.y,nw:0,nh:0,fill:'#111111',stroke:'none',lineWidth:0,opacity:1};
   privacyGesture={a,point,before:captureEditHistory(),pointer:e.pointerId,page:privacyPage};(privacyPage.annots||=[]).push(a);privacySelection=a.id;$('privacyOverlay').setPointerCapture(e.pointerId);renderPrivacyOverlay();
@@ -18240,7 +18299,7 @@ $('privacyOverlay').addEventListener('pointermove',e=>{const g=privacyGesture;if
   else Object.assign(g.a,{nx:Math.min(p.x,g.point.x),ny:Math.min(p.y,g.point.y),nw:Math.abs(p.x-g.point.x),nh:Math.abs(p.y-g.point.y)});renderPrivacyOverlay();});
 function finishPrivacyGesture(cancel){const g=privacyGesture;if(!g)return;privacyGesture=null;if(cancel||g.a.nw<.003||g.a.nh<.003){if(g.snapshot)Object.assign(g.a,g.snapshot);else g.page.annots=g.page.annots.filter(a=>a!==g.a);privacySelection=null;}else commitEditHistory(g.before,'개인정보 마스킹');renderPrivacyOverlay();proInvalidate();}
 $('privacyOverlay').addEventListener('pointerup',()=>finishPrivacyGesture(false));$('privacyOverlay').addEventListener('pointercancel',()=>finishPrivacyGesture(true));
-$('privacyDelete').onclick=()=>{if(!privacyPage||!privacySelection)return;const before=captureEditHistory();privacyPage.annots=privacyPage.annots.filter(a=>a.id!==privacySelection);privacySelection=null;commitEditHistory(before,'마스킹 영역 삭제');renderPrivacyOverlay();proInvalidate();};
+$('privacyDelete').onclick=()=>{if(!privacyPage||!privacyPageReady||!privacySelection)return;const before=captureEditHistory();privacyPage.annots=privacyPage.annots.filter(a=>a.id!==privacySelection);privacySelection=null;commitEditHistory(before,'마스킹 영역 삭제');renderPrivacyOverlay();proInvalidate();};
 $('privacyDialog').addEventListener('keydown',e=>{if(e.key==='Delete'&&!e.target.matches('input,textarea')){e.preventDefault();$('privacyDelete').click();}});
 syncPrivacy();
 </script>
@@ -18593,7 +18652,10 @@ syncProcessingLocation();syncOCRPreparation();
   const HOVER_DELAY_MS=1000,TOUCH_DELAY_MS=320;
   let active=null,timer=null,origin=null,keyboard=true;
   const hide=()=>{clearTimeout(timer);timer=null;origin=null;if(active)active.removeAttribute('aria-describedby');active=null;tooltip.hidden=true;};
-  const show=button=>{hide();const text=button.dataset.helpFor.split(' ').map(id=>document.getElementById(id)).filter(source=>source&&!source.hidden).map(source=>source.textContent.trim()).filter(Boolean).join('\n\n');if(!text)return;active=button;tooltip.textContent=text;tooltip.hidden=false;button.setAttribute('aria-describedby',tooltip.id);const r=button.getBoundingClientRect(),w=tooltip.offsetWidth,h=tooltip.offsetHeight;tooltip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left-8))+'px';tooltip.style.top=(r.bottom+h+14<innerHeight?r.bottom+8:Math.max(8,r.top-h-8))+'px';};
+  const show=button=>{hide();const text=button.dataset.helpFor.split(' ').map(id=>document.getElementById(id)).filter(source=>source&&!source.hidden).map(source=>source.textContent.trim()).filter(Boolean).join('\n\n');if(!text)return;
+    // Body children are inert behind a modal's top layer, regardless of z-index.
+    const host=button.closest('dialog[open]')||document.body;if(tooltip.parentNode!==host)host.append(tooltip);
+    active=button;tooltip.textContent=text;tooltip.hidden=false;button.setAttribute('aria-describedby',tooltip.id);const r=button.getBoundingClientRect(),w=tooltip.offsetWidth,h=tooltip.offsetHeight;tooltip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left-8))+'px';tooltip.style.top=(r.bottom+h+14<innerHeight?r.bottom+8:Math.max(8,r.top-h-8))+'px';};
   let seq=0;
   for(const source of document.querySelectorAll('.pro-hint:not([role]),.pro-panel-head p,.pdf-save-note,.compare-details,.deskew-direction')){
     if(!source.textContent.trim()||source.closest('.gemini-dialog')||['privacyStatus','ocrConfidence'].includes(source.id))continue;
@@ -18612,6 +18674,7 @@ syncProcessingLocation();syncOCRPreparation();
   document.addEventListener('pointerdown',()=>{keyboard=false;},true);
   document.addEventListener('keydown',e=>{keyboard=true;if(e.key==='Escape')hide();},true);window.addEventListener('resize',hide);document.addEventListener('scroll',hide,true);
   window.addEventListener('blur',hide);document.addEventListener('visibilitychange',()=>{if(document.hidden)hide();});
+  document.addEventListener('close',e=>{if(active&&e.target.contains(active))hide();},true);
 })();
 </script>
 <!-- markup-runtime:end -->

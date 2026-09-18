@@ -27,5 +27,7 @@ Verification:
   did not reproduce in the current browser sandbox (the original instead reached
   its missing-WebCrypto boundary); the failing import path has been removed.
 
-`--web` on the local OCR fixture generator creates `.deploy/__qa-local-ocr.html`.
-Remove that one test file after QA and before deploying.
+`--web` on the local OCR fixture generator creates private QA fixtures outside
+`.deploy/`. Serve them with the local QA server; do not add QA pages to the public
+deployment directory. The v6.4.7 deployment finalizer also removes unrelated
+generated files while retaining valid hashed runtime assets for open sessions.

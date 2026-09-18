@@ -4,7 +4,10 @@
   const HOVER_DELAY_MS=1000,TOUCH_DELAY_MS=320;
   let active=null,timer=null,origin=null,keyboard=true;
   const hide=()=>{clearTimeout(timer);timer=null;origin=null;if(active)active.removeAttribute('aria-describedby');active=null;tooltip.hidden=true;};
-  const show=button=>{hide();const text=button.dataset.helpFor.split(' ').map(id=>document.getElementById(id)).filter(source=>source&&!source.hidden).map(source=>source.textContent.trim()).filter(Boolean).join('\n\n');if(!text)return;active=button;tooltip.textContent=text;tooltip.hidden=false;button.setAttribute('aria-describedby',tooltip.id);const r=button.getBoundingClientRect(),w=tooltip.offsetWidth,h=tooltip.offsetHeight;tooltip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left-8))+'px';tooltip.style.top=(r.bottom+h+14<innerHeight?r.bottom+8:Math.max(8,r.top-h-8))+'px';};
+  const show=button=>{hide();const text=button.dataset.helpFor.split(' ').map(id=>document.getElementById(id)).filter(source=>source&&!source.hidden).map(source=>source.textContent.trim()).filter(Boolean).join('\n\n');if(!text)return;
+    // Body children are inert behind a modal's top layer, regardless of z-index.
+    const host=button.closest('dialog[open]')||document.body;if(tooltip.parentNode!==host)host.append(tooltip);
+    active=button;tooltip.textContent=text;tooltip.hidden=false;button.setAttribute('aria-describedby',tooltip.id);const r=button.getBoundingClientRect(),w=tooltip.offsetWidth,h=tooltip.offsetHeight;tooltip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left-8))+'px';tooltip.style.top=(r.bottom+h+14<innerHeight?r.bottom+8:Math.max(8,r.top-h-8))+'px';};
   let seq=0;
   for(const source of document.querySelectorAll('.pro-hint:not([role]),.pro-panel-head p,.pdf-save-note,.compare-details,.deskew-direction')){
     if(!source.textContent.trim()||source.closest('.gemini-dialog')||['privacyStatus','ocrConfidence'].includes(source.id))continue;
@@ -23,4 +26,5 @@
   document.addEventListener('pointerdown',()=>{keyboard=false;},true);
   document.addEventListener('keydown',e=>{keyboard=true;if(e.key==='Escape')hide();},true);window.addEventListener('resize',hide);document.addEventListener('scroll',hide,true);
   window.addEventListener('blur',hide);document.addEventListener('visibilitychange',()=>{if(document.hidden)hide();});
+  document.addEventListener('close',e=>{if(active&&e.target.contains(active))hide();},true);
 })();

@@ -61,6 +61,9 @@ export async function process(data,progress=()=>{}){
   const started=performance.now(),doc=M.Document.openDocument(data.bytes,'application/pdf');
   try{
     if(!doc.isPDF())throw Error('PDF 문서가 아닙니다.');doc.disableJS();
+    const trailer=doc.getTrailer(),root=trailer.get('Root'),layers=root.get('OCProperties');
+    try{if(!layers.isNull())throw Error('레이어 표시 설정이 있는 PDF를 안전하게 재구성할 수 없어 처리를 중단했습니다. 원본 프로그램에서 필요한 레이어만 포함한 PDF로 다시 저장한 뒤 사용해 주세요.');}
+    finally{layers.destroy();root.destroy();trailer.destroy();}
     if(data.masks.length!==doc.countPages())throw Error('마스킹 페이지 대응이 일치하지 않습니다.');
     // Widgets/comments become regular PDF drawing commands, never page images.
     doc.bake(true,true);let maskedPages=0,convertedImages=0;

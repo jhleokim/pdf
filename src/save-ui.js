@@ -59,7 +59,13 @@ async function prepareBasicSave(state){
 async function openBasicSaveDialog({scope='all'}={}){
   const dialog=$('basicSaveDialog');if(dialog.open)return basicSaveState?.pending;
   if(!pages.length||document.body.classList.contains('is-busy'))return;
-  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(typeof textUpdate!=='undefined'){
+    // Typing or changing fonts can replace the layout promise while Save waits.
+    do{await textUpdate;}while(typeof textEditPending!=='undefined'&&textEditPending);
+  }
+  // Another save or export may have started while the text layout was pending.
+  if(dialog.open)return basicSaveState?.pending;
+  if(!pages.length||document.body.classList.contains('is-busy'))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const mode=proMode,chosen=new Set(selected().map(p=>p.uid));
   let options;try{if(mode==='pro')options=readProOptions();}catch(e){toast(e.message,true);return;}

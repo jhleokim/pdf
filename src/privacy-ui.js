@@ -1,5 +1,5 @@
 'use strict';
-let privacyPage=null,privacyGesture=null,privacySelection=null,privacyRenderToken=0,privacyRenderTask=null;
+let privacyPage=null,privacyGesture=null,privacySelection=null,privacyRenderToken=0,privacyRenderTask=null,privacyPageReady=false;
 const documentChecks=new WeakMap();
 let documentConfirmationPending=false;
 async function documentPreflight(list=pages){
@@ -49,27 +49,31 @@ function renderPrivacyOverlay(){
 }
 async function showPrivacyPage(p){
   finishPrivacyGesture(true);
-  const token=++privacyRenderToken;privacyRenderTask?.cancel();privacyPage=p;privacySelection=null;
+  const token=++privacyRenderToken;privacyRenderTask?.cancel();privacyPage=p;privacySelection=null;privacyPageReady=false;
+  // A failed navigation must never leave another page's image available for
+  // drawing masks against the newly selected page.
+  $('privacyCanvas').width=$('privacyCanvas').height=0;$('privacyOverlay').replaceChildren();$('privacyDelete').disabled=true;
   const index=pages.indexOf(p);$('privacyPageLabel').textContent=(index+1)+' / '+pages.length+'페이지';$('privacyPrev').disabled=index<=0;$('privacyNext').disabled=index>=pages.length-1;
   $('privacyEditStatus').textContent='페이지 준비 중…';$('privacyOverlay').style.pointerEvents='none';let task;
   try{
+    await PDFPrivacy.assertSupportedSources([p],docs);if(token!==privacyRenderToken)return;
     const doc=await buildEditedDocument([{...p,annots:(p.annots||[]).filter(a=>a.shape!=='redaction')}]);if(token!==privacyRenderToken)return;
     task=pdfjsLib.getDocument({data:await doc.save(),...DOC_OPTS});const pdf=await task.promise,page=await pdf.getPage(1),base=page.getViewport({scale:1});
     const vp=page.getViewport({scale:Math.min(2,1600/Math.max(base.width,base.height))});if(token!==privacyRenderToken)return;
     const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);canvas.id='privacyCanvas';
     privacyRenderTask=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'});await privacyRenderTask.promise;if(token!==privacyRenderToken)return;
     const old=$('privacyCanvas');old.replaceWith(canvas);old.width=old.height=0;$('privacyPaper').style.aspectRatio=base.width+'/'+base.height;
-    $('privacyOverlay').setAttribute('viewBox','0 0 1000 1000');$('privacyOverlay').setAttribute('preserveAspectRatio','none');renderPrivacyOverlay();
-  }catch(e){if(token===privacyRenderToken&&e.name!=='RenderingCancelledException')$('privacyEditStatus').textContent='페이지를 열지 못했습니다. 다시 시도해 주세요.';}
-  finally{if(task)await task.destroy();if(token===privacyRenderToken)$('privacyOverlay').style.pointerEvents='';}
+    $('privacyOverlay').setAttribute('viewBox','0 0 1000 1000');$('privacyOverlay').setAttribute('preserveAspectRatio','none');privacyPageReady=true;renderPrivacyOverlay();
+  }catch(e){if(token===privacyRenderToken&&e.name!=='RenderingCancelledException')$('privacyEditStatus').textContent=e.code==='PRIVACY_OPTIONAL_CONTENT'?e.message:'페이지를 열지 못했습니다. 다시 시도해 주세요.';}
+  finally{if(task)await task.destroy();if(token===privacyRenderToken)$('privacyOverlay').style.pointerEvents=privacyPageReady?'':'none';}
 }
 $('privacyOpen').onclick=()=>{if(!pages.length)return;$('privacyDialog').showModal();void showPrivacyPage(pages.find(p=>p.uid===previewUid)||pages[0]);};
 $('privacyClose').onclick=$('privacyDone').onclick=()=>$('privacyDialog').close();
-$('privacyDialog').addEventListener('close',()=>{finishPrivacyGesture(true);privacyRenderToken++;privacyRenderTask?.cancel();$('privacyCanvas').width=$('privacyCanvas').height=0;renderAnnots();toolsChanged();syncCounts();});
+$('privacyDialog').addEventListener('close',()=>{finishPrivacyGesture(true);privacyRenderToken++;privacyRenderTask?.cancel();privacyPageReady=false;$('privacyOverlay').style.pointerEvents='none';$('privacyCanvas').width=$('privacyCanvas').height=0;renderAnnots();toolsChanged();syncCounts();});
 for(const [id,step]of [['privacyPrev',-1],['privacyNext',1]])$(id).onclick=()=>{const p=pages[pages.indexOf(privacyPage)+step];if(p)void showPrivacyPage(p);};
 const privacyPoint=e=>{const r=$('privacyOverlay').getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};};
 $('privacyOverlay').addEventListener('pointerdown',e=>{
-  if(!privacyPage||e.button>0)return;const point=privacyPoint(e),handle=e.target.dataset.maskHandle,hit=e.target.dataset.maskId;
+  if(!privacyPage||!privacyPageReady||e.button>0)return;const point=privacyPoint(e),handle=e.target.dataset.maskHandle,hit=e.target.dataset.maskId;
   if(hit||handle){privacySelection=hit||privacySelection;const a=privacyPage.annots.find(a=>a.id===privacySelection);if(!a)return;e.preventDefault();privacyGesture={a,point,mode:handle?'resize':'move',handle,snapshot:{...a},before:captureEditHistory(),pointer:e.pointerId,page:privacyPage};$('privacyOverlay').setPointerCapture(e.pointerId);renderPrivacyOverlay();return;}
   e.preventDefault();const a={id:'a'+(++annoUidSeq),shape:'redaction',nx:point.x,ny:point.y,nw:0,nh:0,fill:'#111111',stroke:'none',lineWidth:0,opacity:1};
   privacyGesture={a,point,before:captureEditHistory(),pointer:e.pointerId,page:privacyPage};(privacyPage.annots||=[]).push(a);privacySelection=a.id;$('privacyOverlay').setPointerCapture(e.pointerId);renderPrivacyOverlay();
@@ -80,6 +84,6 @@ $('privacyOverlay').addEventListener('pointermove',e=>{const g=privacyGesture;if
   else Object.assign(g.a,{nx:Math.min(p.x,g.point.x),ny:Math.min(p.y,g.point.y),nw:Math.abs(p.x-g.point.x),nh:Math.abs(p.y-g.point.y)});renderPrivacyOverlay();});
 function finishPrivacyGesture(cancel){const g=privacyGesture;if(!g)return;privacyGesture=null;if(cancel||g.a.nw<.003||g.a.nh<.003){if(g.snapshot)Object.assign(g.a,g.snapshot);else g.page.annots=g.page.annots.filter(a=>a!==g.a);privacySelection=null;}else commitEditHistory(g.before,'개인정보 마스킹');renderPrivacyOverlay();proInvalidate();}
 $('privacyOverlay').addEventListener('pointerup',()=>finishPrivacyGesture(false));$('privacyOverlay').addEventListener('pointercancel',()=>finishPrivacyGesture(true));
-$('privacyDelete').onclick=()=>{if(!privacyPage||!privacySelection)return;const before=captureEditHistory();privacyPage.annots=privacyPage.annots.filter(a=>a.id!==privacySelection);privacySelection=null;commitEditHistory(before,'마스킹 영역 삭제');renderPrivacyOverlay();proInvalidate();};
+$('privacyDelete').onclick=()=>{if(!privacyPage||!privacyPageReady||!privacySelection)return;const before=captureEditHistory();privacyPage.annots=privacyPage.annots.filter(a=>a.id!==privacySelection);privacySelection=null;commitEditHistory(before,'마스킹 영역 삭제');renderPrivacyOverlay();proInvalidate();};
 $('privacyDialog').addEventListener('keydown',e=>{if(e.key==='Delete'&&!e.target.matches('input,textarea')){e.preventDefault();$('privacyDelete').click();}});
 syncPrivacy();
