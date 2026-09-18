@@ -14,7 +14,7 @@
  $('compareStage').append(svg);
  const doneButton=document.createElement('button');doneButton.id='reviewStampFinish';doneButton.type='button';doneButton.className='btn review-stamp-finish';doneButton.textContent='배치 완료';doneButton.setAttribute('aria-label','스탬프 배치 확정');doneButton.hidden=true;doneButton.onclick=()=>$('stampCommit').click();$('compareStage').append(doneButton);
  const moreButton=document.createElement('button');moreButton.id='reviewStampMore';moreButton.type='button';moreButton.className='btn review-stamp-more';moreButton.textContent='하나 더 찍기';moreButton.hidden=true;$('compareStage').append(moreButton);
- let gesture=null,frame=0,renderSequence=0,pending=false,lastAsset=null;
+ let gesture=null,frame=0,renderSequence=0,pending=false,pendingReview=null,lastAsset=null;
  const before=()=>typeof captureEditHistory==='function'?captureEditHistory():null;
  const history=(state,title,key)=>{if(typeof commitEditHistory==='function')commitEditHistory(state,title,key);};
  const valid=()=>stampAsset?.review&&proMode==='pro'&&proPreviewOpen&&pages.length&&!proAbort&&!$('proCompare').hasAttribute('data-error');
@@ -59,29 +59,35 @@
  async function changeReview(next,{create=false}={}){
   if(stampAsset&&!stampAsset.review){toast('현재 이미지 도장을 먼저 확정하거나 배치를 취소해 주세요.');return;}
   if(gesture)cancel();const token=++renderSequence,snapshot=before(),old=stampAsset;
+  // Different controls may change before the bitmap finishes rendering. Merge
+  // their patches against the latest draft, not the last completed image.
+  const review={...(pendingReview?.asset===old?pendingReview.review:old?.review),...next};pendingReview={asset:old,review};
   pending=true;controls();$('stampStatus').textContent='스탬프 준비 중…';
   try{
-   const asset=await S.render(next);if(token!==renderSequence||old!==stampAsset)return;
+   const asset=await S.render(review);if(token!==renderSequence||pendingReview?.asset!==stampAsset)return;
    if(create&&old){storePlacement(currentStamp());stampAsset=null;}
    stampAsset={...stampAsset,...asset};$('stampThumb').src=asset.data;$('stampName').value=asset.name;$('stampActive').hidden=false;
    if(create){$('stampScope').value='current';$('stampAnchor').value='top-left';$('stampX').value=String(20+(stampMarks.length%6)*8);$('stampY').value=String(20+(stampMarks.length%6)*12);if(!old){$('stampWidth').value='50';$('stampOpacity').value='100';}stampAsset.targets=toolTargets('current').map(p=>p.uid);}
    pending=false;$('reviewStampPresets').closest('details').open=false;toolsChanged();setStampPositioning(true);history(snapshot,old?'검토 스탬프 수정':'검토 스탬프 추가',old?'review-style':null);
    $('stampStatus').textContent=pages.length?'네모 손잡이로 크기, 원형 손잡이로 화살표를 조절하세요. Enter · Esc로 배치를 마칩니다.':'PDF를 열면 미리보기에서 배치할 수 있습니다.';
   }catch(e){if(token===renderSequence){$('stampStatus').textContent='스탬프를 만들지 못했습니다. '+e.message;}}
-  finally{if(token===renderSequence){pending=false;syncReviewStamp();}}
+  finally{if(token===renderSequence){pending=false;pendingReview=null;syncReviewStamp();}}
  }
- for(const p of S.presets){const b=document.createElement('button');b.type='button';b.className='review-stamp-preset';b.dataset.preset=p.id;b.dataset.shape=p.shape;b.textContent=p.text;b.setAttribute('aria-pressed','false');b.onclick=()=>changeReview({...stampAsset?.review,preset:p.id,text:p.text,arrow:p.id!=='done'&&p.id!=='important'&&p.id!=='opinion'}, {create:true});$('reviewStampPresets').append(b);}
+ for(const p of S.presets){const b=document.createElement('button');b.type='button';b.className='review-stamp-preset';b.dataset.preset=p.id;b.dataset.shape=p.shape;b.textContent=p.text;b.setAttribute('aria-pressed','false');b.onclick=()=>changeReview({preset:p.id,text:p.text,arrow:p.id!=='done'&&p.id!=='important'&&p.id!=='opinion'}, {create:true});$('reviewStampPresets').append(b);}
  const extra=document.createElement('details');extra.className='review-stamp-extra';
  const extraTitle=document.createElement('summary');extraTitle.textContent='문구 더 보기';extra.append(extraTitle);
  const extraGrid=document.createElement('div');extraGrid.className='review-stamp-extra-grid';
  for(const button of [...$('reviewStampPresets').children].slice(8))extraGrid.append(button);
  extra.append(extraGrid);$('reviewStampPresets').append(extra);
- $('reviewStampText').oninput=()=>changeReview({...stampAsset?.review,text:$('reviewStampText').value});
- $('reviewStampColor').oninput=()=>changeReview({...stampAsset?.review,color:$('reviewStampColor').value});
- $('reviewStampHex').oninput=()=>{const value=$('reviewStampHex').value,ok=/^#[0-9a-f]{6}$/i.test(value);$('reviewStampHex').setAttribute('aria-invalid',String(!ok));if(ok)changeReview({...stampAsset?.review,color:value});};
+ $('reviewStampText').oninput=()=>changeReview({text:$('reviewStampText').value});
+ $('reviewStampColor').oninput=()=>changeReview({color:$('reviewStampColor').value});
+ $('reviewStampHex').oninput=()=>{const value=$('reviewStampHex').value,ok=/^#[0-9a-f]{6}$/i.test(value);$('reviewStampHex').setAttribute('aria-invalid',String(!ok));if(ok)changeReview({color:value});};
  $('reviewStampHex').onblur=()=>{if(stampAsset?.review){$('reviewStampHex').value=stampAsset.review.color;$('reviewStampHex').removeAttribute('aria-invalid');}};
- $('reviewStampRed').onclick=()=>changeReview({...stampAsset?.review,color:S.DEFAULT_COLOR});
- $('reviewStampArrow').onchange=()=>changeReview({...stampAsset?.review,arrow:$('reviewStampArrow').checked});
+ $('reviewStampRed').onclick=()=>changeReview({color:S.DEFAULT_COLOR});
+ $('reviewStampArrow').onchange=()=>changeReview({arrow:$('reviewStampArrow').checked});
+ // Scope edits replace the placement object while keeping the same review
+ // draft. Follow only that known replacement; switching stamps still cancels it.
+ const changeScope=$('stampScope').oninput;$('stampScope').oninput=e=>{const asset=stampAsset,draft=pendingReview;changeScope(e);if(draft&&draft===pendingReview&&draft.asset===asset)draft.asset=stampAsset;};
  function storePlacement(mark){if(!mark?.targets.length)return;if(stampEditing)stampMarks.splice(Math.min(stampEditing.index,stampMarks.length),0,mark);else stampMarks.push(mark);stampEditing=null;renderStampMarks();}
  moreButton.onclick=()=>{
   if(!valid()||pending)return;cancel();const snapshot=before(),mark=currentStamp();storePlacement(mark);
@@ -141,12 +147,12 @@
  // review metadata, rather than flattening the arrow into a saved thumbnail.
  const oldSave=$('stampSave').onclick;$('stampSave').onclick=()=>{if(!stampAsset?.review)return oldSave();try{if(stampShelf.length>=8)throw Error('보관함은 최대 8개입니다.');const next=[...stampShelf,{...stampAsset,review:S.normalize(stampAsset.review)}];localStorage.setItem('pdfstudio-stamps-v1',JSON.stringify(next));stampShelf=next;renderStampShelf();$('stampStatus').textContent='색상과 화살표를 함께 보관했습니다.';}catch(e){toast(e.message,true);}};
  const oldPng=$('stampPng').onclick;$('stampPng').onclick=async()=>{if(!stampAsset?.review)return oldPng();try{toolDownload(await S.png(currentStamp()),(stampAsset.name||'검토 스탬프')+'.png','image/png');}catch(e){toast(e.message,true);}};
- for(const id of ['stampClear','stampCommit']){const action=$(id).onclick;$(id).onclick=()=>{if(pending&&id==='stampCommit')return;const snapshot=before();++renderSequence;pending=false;cancel();action();history(snapshot,id==='stampCommit'?'도장 배치 확정':'도장 배치 취소');syncReviewStamp();};}
+ for(const id of ['stampClear','stampCommit']){const action=$(id).onclick;$(id).onclick=()=>{if(pending&&id==='stampCommit')return;const snapshot=before();++renderSequence;pending=false;pendingReview=null;cancel();action();history(snapshot,id==='stampCommit'?'도장 배치 확정':'도장 배치 취소');syncReviewStamp();};}
  globalThis.syncReviewStamp=syncReviewStamp;globalThis.cancelReviewStampGesture=cancel;globalThis.reviewStampPending=()=>pending;
- globalThis.finishReviewStampForNavigation=()=>{if(stampAsset?.review&&!pending){cancel();$('stampCommit').click();}};
+ globalThis.finishReviewStampForNavigation=()=>{if(typeof historyApplying!=='undefined'&&historyApplying)return;if(stampAsset?.review&&!pending){cancel();$('stampCommit').click();}};
  const clone=m=>m?{...m,targets:m.targets?.slice(),...(m.review?{review:S.normalize(m.review)}:{})}:null;
  const hashes=new WeakMap();function stampSignature(m){if(!m)return null;if(!hashes.has(m)){let a=2166136261,b=5381;for(const s of [m.data||'',m.sourceData||''])for(let i=0;i<s.length;i++){a=Math.imul(a^s.charCodeAt(i),16777619);b=Math.imul(b,33)^s.charCodeAt(i);}hashes.set(m,[a>>>0,b>>>0,(m.data||'').length]);}const{data,sourceData,...rest}=m;return {...rest,image:hashes.get(m)};}
  globalThis.captureStampHistory=()=>{const fields=Object.fromEntries([...stampControlIds,'stampName'].map(id=>[id,$(id).value]));return {asset:clone(stampAsset),marks:stampMarks.map(clone),editing:stampEditing?{...stampEditing,mark:clone(stampEditing.mark)}:null,fields,signature:JSON.stringify([stampSignature(stampAsset),stampMarks.map(stampSignature),stampEditing?{index:stampEditing.index,mark:stampSignature(stampEditing.mark)}:null,fields])};};
- globalThis.restoreStampHistory=state=>{++renderSequence;pending=false;cancel();stampAsset=clone(state.asset);stampMarks=state.marks.map(clone);stampEditing=state.editing?{...state.editing,mark:clone(state.editing.mark)}:null;for(const[id,value]of Object.entries(state.fields))$(id).value=value;$('stampActive').hidden=!stampAsset;if(stampAsset)$('stampThumb').src=stampAsset.data;renderStampMarks();toolsChanged();setStampPositioning(!!stampAsset?.review);};
+ globalThis.restoreStampHistory=state=>{++renderSequence;pending=false;pendingReview=null;cancel();stampAsset=clone(state.asset);stampMarks=state.marks.map(clone);stampEditing=state.editing?{...state.editing,mark:clone(state.editing.mark)}:null;for(const[id,value]of Object.entries(state.fields))$(id).value=value;$('stampActive').hidden=!stampAsset;if(stampAsset)$('stampThumb').src=stampAsset.data;renderStampMarks();toolsChanged();setStampPositioning(!!stampAsset?.review);};
  syncReviewStamp();
 })();

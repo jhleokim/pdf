@@ -4,6 +4,20 @@
   const isMasked=pages=>pages.some(p=>p.annots?.some(a=>a.shape==='redaction'));
   const maskKey=p=>JSON.stringify([p.docId,p.srcIndex,p.rotation,(p.annots||[]).filter(a=>a.shape==='redaction').map(a=>[a.nx,a.ny,a.nw,a.nh])]);
   const currentOCR=(record,page)=>page.uid!=null&&record.uid===page.uid&&record.privacyKey===maskKey(page)&&record.words?.some(w=>w.text?.trim());
+  const layerChecks=new WeakMap();
+  async function assertSupportedSource(source,signal,parsed){
+    signal?.throwIfAborted();if(!source)throw Error('처리할 원본 문서를 확인하지 못했습니다.');
+    if(!layerChecks.has(source)){
+      const inspect=doc=>doc.catalog.has(PDFLib.PDFName.of('OCProperties'));
+      if(parsed)layerChecks.set(source,inspect(parsed));
+      else{const check=PDFLib.PDFDocument.load(source.libBytes).then(inspect);layerChecks.set(source,check);check.catch(()=>layerChecks.delete(source));}
+    }
+    const hasLayers=await layerChecks.get(source);signal?.throwIfAborted();
+    if(hasLayers)throw Object.assign(Error('레이어 표시 설정이 있는 PDF를 안전하게 재구성할 수 없어 처리를 중단했습니다. 원본 프로그램에서 필요한 레이어만 포함한 PDF로 다시 저장한 뒤 사용해 주세요.'),{code:'PRIVACY_OPTIONAL_CONTENT'});
+  }
+  async function assertSupportedSources(list,sources,signal){
+    for(const id of new Set(list.map(p=>p.docId)))await assertSupportedSource(sources.get(id),signal);
+  }
   function nativeRecord(content,viewport,uid){
     const v=viewport.transform,w=viewport.width,h=viewport.height,words=[];
     for(const item of content.items||[]){
@@ -32,6 +46,9 @@
   async function redact(doc,list,{signal,onProgress,sources}={}){
     if(!isMasked(list))return doc;signal?.throwIfAborted();
     const key=sources?cacheKey(list,sources):null,masks=masksFor(list);
+    // Page copying can drop catalog layer visibility before this document reaches
+    // MuPDF. Check the original sources, including unmasked pages in this export.
+    if(sources)await assertSupportedSources(list,sources,signal);
     const bytes=await doc.save({useObjectStreams:true,updateFieldAppearances:false});
     const result=await PDFPrivacyNative.run(bytes,masks,{signal,onProgress});signal?.throwIfAborted();
     if(sources&&key!==cacheKey(list,sources))throw new DOMException('마스킹 설정이 바뀌었습니다.','AbortError');
@@ -57,6 +74,6 @@
     return clean;
   }
   const inherit=(target,source)=>{if(safe.has(source))safe.add(target);return target;};
-  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,redact,cached,clearCache,inherit};
+  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,redact,cached,clearCache,inherit,assertSupportedSource,assertSupportedSources};
   if(typeof module!=='undefined')module.exports={isMasked,maskKey,nativeRecord,currentOCR};
 })(globalThis);

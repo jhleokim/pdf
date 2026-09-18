@@ -36,21 +36,25 @@ async function openTextEditor(point,existing){
   if(textEditPending){await textUpdate;if(textOpening||document.body.classList.contains('is-busy'))return;}
   if(!finishTextEdit(true))return;
   const page=pages.find(p=>p.uid===previewUid);if(!page)return;
+  const rotation=page.rotation,tool=annoStyle.tool,mode=typeof proMode==='undefined'?null:proMode;
+  const current=()=>previewUid===page.uid&&pages.includes(page)&&page.rotation===rotation&&annoStyle.tool===tool&&(typeof proMode==='undefined'||proMode===mode)&&!document.body.classList.contains('is-busy')&&(!existing||page.annots?.includes(existing));
   textOpening=true;
   try{
     const source=await docs.get(page.docId).pdfjsDoc.getPage(page.srcIndex+1);
+    if(!current())return;
     const vp=source.getViewport({scale:1,rotation:(source.rotate+page.rotation)%360}),unit=source.userUnit||1;
     await PDFMarkupText.load(existing?.font||textStyle.font);
-    if(previewUid!==page.uid)return;
+    if(!current())return;
     if(typeof prepareInlineTextView==='function')await prepareInlineTextView(page,existing?.fontSize||textStyle.fontSize,vp.width*unit);
-    if(previewUid!==page.uid)return;
+    if(!current())return;
     const a=existing||{id:'a'+(++annoUidSeq),shape:'text',...textStyle,text:'',boldRanges:[],nx:point.x,ny:point.y,pageWidth:vp.width*unit,pageHeight:vp.height*unit,maxWidth:Math.max(textStyle.fontSize*2,Math.min(vp.width*unit*.72,vp.width*unit*(1-point.x)-12))};
     if(!existing&&isMobile())a.maxWidth=Math.min(a.maxWidth,Math.max(textStyle.fontSize*2,($('pvBody').clientWidth-40)*a.pageWidth/$('pvCanvas').clientWidth));
     const snapshot=existing?{bold:false,boldRanges:[],italic:false,strike:false,...structuredClone(a)}:null;
     if(typeof flushTextHistory==='function')flushTextHistory();
     const history=typeof captureEditHistory==='function'?captureEditHistory():null;
     // Restore natural font proportions when reopening text from older versions.
-    await relayoutText(a);if(!existing)(page.annots||=[]).push(a);
+    const laidOut=structuredClone(a);await relayoutText(laidOut);if(!current())return;
+    Object.assign(a,laidOut);if(!existing)(page.annots||=[]).push(a);
     textEditing={page,a,snapshot,revision:0};selAnno=a.id;setTool('none');
     $('textEditor').hidden=false;$('textInput').value=a.text;$('textInput').style.fontFamily=PDFMarkupText.families[a.font].family;
     $('textError').textContent='';$('textApply').disabled=false;
