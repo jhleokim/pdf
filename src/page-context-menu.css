@@ -1,0 +1,19 @@
+.page-context-menu{position:fixed;z-index:1000;width:228px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;padding:5px;border:1px solid var(--line-2);border-radius:7px;background:var(--surface);color:var(--ink);box-shadow:var(--sh-2),0 2px 6px #0001;animation:page-menu-in 100ms ease-out;overscroll-behavior:contain}
+.page-context-menu[hidden]{display:none}
+.page-context-heading{padding:7px 10px 6px;color:var(--ink-3);font-size:11px;font-weight:600}
+.page-context-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:7px 10px;border:0;border-radius:4px;background:transparent;color:inherit;text-align:left;font:inherit;font-size:13px;cursor:pointer}
+.page-context-menu .ic{width:17px;height:17px;flex:none;color:var(--ink-3)}
+.page-context-menu button:focus{outline:none;background:var(--accent-wash);color:var(--accent-ink)}
+.page-context-menu button:focus .ic{color:inherit}
+.page-context-menu button:focus-visible{outline:1px solid var(--accent-line);outline-offset:-1px}
+.page-context-menu button.danger{color:var(--danger)}
+.page-context-menu button.danger .ic{color:inherit}
+.page-context-menu button.danger:focus{background:var(--danger-wash)}
+.page-context-menu button:disabled{opacity:.4;cursor:default}
+.page-context-divider{height:1px;background:var(--line);margin:4px 5px}
+#board .pfoot .acts{display:flex;opacity:1}
+#board .pfoot [data-act=menu]{display:inline-flex;align-items:center;justify-content:center}
+@keyframes page-menu-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media(pointer:coarse),(max-width:880px){.page-context-menu button{min-height:44px}#board .pfoot{height:auto;min-height:44px}#board .pfoot [data-act=menu]{min-width:44px;min-height:44px}#board .pfoot .acts>button:not([data-act=menu]){display:none}}
+@media(max-width:880px){body[data-mode=pro][data-pro-view=pages] #board .pfoot .acts{display:flex}body[data-mode=pro][data-pro-view=pages] #board .pfoot .acts>button:not([data-act=menu]){display:none}}
+@media(prefers-reduced-motion:reduce){.page-context-menu{animation:none}}

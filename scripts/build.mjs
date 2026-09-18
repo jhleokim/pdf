@@ -88,8 +88,9 @@ block('ppocr-v5-licenses','<details hidden><summary>PP-OCRv5 licenses</summary><
 if(!standalone)html=html.replace('네트워크 0건','기기에서 인식');
 if(!html.includes('<!-- work-progress-ui:start -->'))html=html.replace(/<div id="busy"[^>]*><div class="box">[\s\S]*?<\/div><\/div>/,'');
 block('work-progress-ui','<div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button><div class="busy-metrics" id="busyMetrics" aria-live="off"><div class="busy-stat"><strong id="busyPercent">전체 작업 0%</strong><span id="busyElapsed">0분 00초 경과</span></div><progress id="busyProgress" max="100" value="0" aria-label="작업 진행률"></progress><div id="busyRemaining">남은 시간 계산 중</div></div></div></div>','</body>');
-block('markup-runtime',['markup-arrow.js','markup-assets.js','markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js','privacy-ui.js','compression-diagnosis.js','print-ui.js','page-navigation.js','processing-status.js','ui-help.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
+block('markup-runtime',['markup-arrow.js','markup-assets.js','markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js','privacy-ui.js','compression-diagnosis.js','print-ui.js','page-navigation.js','page-context-menu.js','processing-status.js','ui-help.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
 block('planning-ux-styles','<style>\n'+read('src/planning-ux.css')+'\n</style>','</head>');
+block('page-context-styles','<style>\n'+read('src/page-context-menu.css')+'\n</style>','</head>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')
   .replace('<h1>PDF 페이지 편집기</h1>', '<h1>PDF Studio</h1>')
   .replace('OFFLINE · 로컬 처리', '내 기기에서 안전하게')
