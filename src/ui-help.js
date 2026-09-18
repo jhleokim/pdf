@@ -9,7 +9,8 @@
   for(const source of document.querySelectorAll('.pro-hint:not([role]),.pro-panel-head p,.pdf-save-note,.compare-details,.deskew-direction')){
     if(!source.textContent.trim()||source.closest('.gemini-dialog')||['privacyStatus','ocrConfidence'].includes(source.id))continue;
     source.id||='help-source-'+(++seq);source.classList.add('help-source');let anchor=source.previousElementSibling;
-    if(anchor?.matches('label'))anchor=anchor.querySelector('span')||anchor;
+    if(source.matches('.pdf-save-note'))anchor=source.parentElement.querySelector('.pdf-filename-label')||source.parentElement;
+    else if(anchor?.matches('label'))anchor=anchor.querySelector('span')||anchor;
     else{const summary=source.closest('details')?.querySelector(':scope > summary');anchor=summary?.querySelector(':scope > span:nth-child(2)')||summary||source.parentElement.querySelector('h2,label')||source.parentElement;}
     const previous=anchor.querySelector(':scope > .help-dot');if(previous){previous.dataset.helpFor+=' '+source.id;continue;}
     const button=document.createElement('button');button.type='button';button.className='help-dot';button.textContent='?';button.setAttribute('aria-label','도움말');button.dataset.helpFor=source.id;anchor.append(button);

@@ -50,3 +50,18 @@ test('compression never discards explicitly requested stamps or OCR',()=>{
   assert.equal(selectOutput(base,candidate,{...o,stamps:[{}]}).bytes,candidate);
   assert.equal(selectOutput(base,candidate,{...o,ocr:[{}]}).bytes,candidate);
 });
+
+test('noncontiguous export retains original page ordinals for numbering and maps OCR by UID',async()=>{
+  await vm.runInContext(`(async()=>{
+    const doc=await PDFLib.PDFDocument.create();doc.addPage([400,600]);doc.addPage([400,600]);
+    const options={number:true,startNumber:10,skipPages:1,numberPosition:'bottom-center',paper:'original',crop:false};
+    await PDFProDocument.applyDocument(doc,options,{pageIndices:[1,4]});
+    await PDFOCR.apply(doc,[{uid:'omitted',words:[{text:'EXCLUDED',box:[.1,.1,.4,.15]}]},{uid:'fifth',words:[{text:'FIFTH',box:[.1,.1,.4,.15]}]}],{pageIds:['second','fifth']});
+    const pdf=await pdfjsLib.getDocument({data:await doc.save(),isEvalSupported:false}).promise;
+    try{
+      const first=(await(await pdf.getPage(1)).getTextContent()).items.map(i=>i.str.trim()).filter(Boolean);
+      const second=(await(await pdf.getPage(2)).getTextContent()).items.map(i=>i.str.trim()).filter(Boolean);
+      assert.deepEqual(first,['10']);assert.deepEqual(second,['13','FIFTH']);
+    }finally{await pdf.destroy();}
+  })()`,ctx);
+});

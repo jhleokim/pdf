@@ -1319,6 +1319,12 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .pdf-save-result[data-phase=downloaded]{border-color:var(--accent-line);background:var(--accent-wash)}
 .pdf-save-note{font-size:11px;line-height:1.6;color:var(--ink-3);margin:12px 0 0}.pdf-save-error{font-size:12px;line-height:1.6;color:var(--danger);margin:7px 0 0}.pdf-save-error:empty{display:none}
 .pdf-save-actions{display:flex;justify-content:flex-end;gap:8px;padding:15px 22px 20px}.pdf-save-actions .btn{height:39px}.pdf-save-actions .primary{min-width:148px}
+.pdf-save-scope{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:0;padding:0;margin:0 0 8px;min-width:0}
+.pdf-save-scope legend{padding:0;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.pdf-save-scope label{display:flex;align-items:center;gap:6px;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:5px;cursor:pointer;font-size:12px;min-width:0}
+.pdf-save-scope label:has(:checked){border-color:var(--accent);background:var(--accent-wash)}
+.pdf-save-scope label:has(:disabled){opacity:.5;cursor:default}.pdf-save-scope input{margin:0;accent-color:var(--accent);flex:none}
+.pdf-save-scope small{margin-left:auto;color:var(--ink-2);white-space:nowrap}.pdf-save-pages{margin:0 0 17px;color:var(--ink-2);font-size:11px;line-height:1.5;max-height:54px;overflow:auto;overflow-wrap:anywhere}
 @keyframes save-preparing{from{transform:translateX(-110%)}to{transform:translateX(390%)}}
 @keyframes save-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:880px){
@@ -4015,7 +4021,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.3, 라이선스 보기">v6.4.3</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.4, 라이선스 보기">v6.4.4</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -4897,6 +4903,11 @@ Apache License
 <dialog id="basicSaveDialog" class="pdf-save-dialog" aria-labelledby="basicSaveTitle" aria-describedby="basicSaveSummary">
   <header class="pdf-save-head"><div class="pdf-save-heading"><span class="pdf-save-mark"><svg class="ic"><use href="#i-file"/></svg></span><div><h2 id="basicSaveTitle">PDF 저장</h2><p id="basicSaveSummary"></p></div></div><button class="btn quiet icon" id="basicSaveClose" aria-label="저장 창 닫기"><svg class="ic"><use href="#i-x"/></svg></button></header>
   <div class="pdf-save-body">
+    <fieldset class="pdf-save-scope"><legend>저장 범위</legend>
+      <label><input type="radio" name="pdfSaveScope" id="basicSaveAll" value="all" checked><span>전체 페이지</span><small id="basicSaveAllCount"></small></label>
+      <label><input type="radio" name="pdfSaveScope" id="basicSaveSelected" value="selected"><span>선택한 페이지</span><small id="basicSaveSelectedCount"></small></label>
+    </fieldset>
+    <p id="basicSavePages" class="pdf-save-pages"></p>
     <label class="pdf-filename-label" for="basicSaveFilename">파일 이름</label>
     <div class="pdf-filename"><input id="basicSaveFilename" type="text" maxlength="100" autocomplete="off" spellcheck="false" aria-describedby="basicFilenameError"><span>.pdf</span></div>
     <p id="basicFilenameError" class="pdf-save-error" role="alert"></p>
@@ -13777,13 +13788,13 @@ function observeThumbnail(p){
     canvas.width=canvas.height=0;
     return image;
   }
-  async function applyDocument(doc,options,{pageOffset=0,signal,onProgress}={}) {
+  async function applyDocument(doc,options,{pageOffset=0,pageIndices=[],signal,onProgress}={}) {
     const pages=doc.getPages();
     const font=options.number ? await doc.embedFont(P.StandardFonts.Helvetica) : null;
     const mark=options.watermark ? await watermarkImage(doc,options.watermark) : null;
     for(let i=0;i<pages.length;i++) {
       if(signal?.aborted) throw new DOMException('취소했습니다.','AbortError');
-      const page=pages[i], ordinal=pageOffset+i;
+      const page=pages[i], ordinal=pageIndices[i]??pageOffset+i;
       geometry(page,options,ordinal+1);
       const b=visibleBox(page), r=turn(page), u=unit(page);
       const w=r%180 ? b.height : b.width, h=r%180 ? b.width : b.height;
@@ -14420,7 +14431,7 @@ if(typeof module!=='undefined')module.exports=root.PDFVisionResult;
     page.resetPosition();
     return true;
   }
-  async function processDocument(doc,options,{signal,docOptions={},pageOffset=0,pageIds=[],deskewCache,deskewKeys=[],onProgress}={}){
+  async function processDocument(doc,options,{signal,docOptions={},pageOffset=0,pageIndices=[],pageIds=[],deskewCache,deskewKeys=[],onProgress}={}){
     const report={changed:0,pages:[]};
     const overrides=options.deskewAngles||{},own=(o,k)=>k!==undefined&&Object.prototype.hasOwnProperty.call(o,k);
     const cache=deskewCache instanceof Map?deskewCache:null;
@@ -14443,8 +14454,8 @@ if(typeof module!=='undefined')module.exports=root.PDFVisionResult;
     // Manual 0 means keep this page level as supplied, rather than run detection.
     const plans=doc.getPages().map((page,i)=>{
       const pageId=pageIds[i],manual=own(overrides,pageId),angle=manual?overrides[pageId]:undefined;
-      if(manual&&(!Number.isFinite(angle)||Math.abs(angle)>60))throw new Error(`${pageOffset+i+1}페이지: 회전 각도는 −60°부터 +60°까지 입력해 주세요.`);
-      if(manual&&angle&&page.node.Annots()?.size())throw new Error(`${pageOffset+i+1}페이지: 링크·주석·양식이 있어 위치를 보존해야 하므로 기울기를 변경할 수 없습니다. 이 페이지를 자동 또는 0°로 되돌려 주세요.`);
+      if(manual&&(!Number.isFinite(angle)||Math.abs(angle)>60))throw new Error(`${(pageIndices[i]??pageOffset+i)+1}페이지: 회전 각도는 −60°부터 +60°까지 입력해 주세요.`);
+      if(manual&&angle&&page.node.Annots()?.size())throw new Error(`${(pageIndices[i]??pageOffset+i)+1}페이지: 링크·주석·양식이 있어 위치를 보존해야 하므로 기울기를 변경할 수 없습니다. 이 페이지를 자동 또는 0°로 되돌려 주세요.`);
       return {page,pageId,manual,angle};
     });
     if(!options.deskew&&!plans.some(p=>p.manual))return report;
@@ -14493,7 +14504,7 @@ if(typeof module!=='undefined')module.exports=root.PDFVisionResult;
           rotation:r,userUnit:PDFProDocument.unit(page)});
         result.changed=!!result.angle&&apply(page,result.angle,{cropCorners});
         if(result.changed)report.changed++;
-        report.pages.push({page:pageOffset+i+1,pageId,...result});
+        report.pages.push({page:(pageIndices[i]??pageOffset+i)+1,pageId,...result});
         onProgress?.((i+1)/plans.length);
         await new Promise(resolve=>setTimeout(resolve,0));
       }
@@ -14936,11 +14947,10 @@ function proInvalidate(message){
   if(message) $('proStatus').textContent=message;
 }
 function syncProAction(){
-  const ready=!!proResult;
-  $('proExportLabel').textContent=ready?'PDF 다운로드':'결과 만들기';
+  $('proExportLabel').textContent='PDF 저장';
   if(proMode==='pro'){
-    $('btnSave').querySelector('span').textContent=ready?'PDF 다운로드':'Pro 결과 만들기';
-    $('btnSave').title=ready?'완성된 PDF를 다운로드합니다':'현재 Pro 설정으로 결과를 만듭니다';
+    $('btnSave').querySelector('span').textContent='PDF 저장';
+    $('btnSave').title='저장할 페이지와 파일 이름을 선택합니다';
   }
 }
 function syncProState(){
@@ -15044,7 +15054,7 @@ function proNumberInput(id,min,max,integer=false){
   }
   return n;
 }
-function readProOptions(strict=false){
+function readProOptions(strict=false,sourcePages=pages){
   if(strict&&typeof validateDeskewInput==='function')validateDeskewInput();
   if(strict&&$('proOptimize').checked&&$('proCompressionMode').value==='preserve'&&$('proTargetMB').value&&!$('proTargetMB').checkValidity())throw Error('목표 용량은 0.1~2,000 MB 사이로 입력해 주세요.');
   const crop=$('proCrop').checked, number=$('proNumber').checked;
@@ -15060,7 +15070,7 @@ function readProOptions(strict=false){
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
     numberPosition:$('proNumberPosition').value,watermark:$('proWatermark').value.trim().slice(0,40)
   };
-  return typeof readToolOptions==='function'&&typeof toolsRevision!=='undefined'?readToolOptions(options,strict):options;
+  return typeof readToolOptions==='function'&&typeof toolsRevision!=='undefined'?readToolOptions(options,strict,sourcePages):options;
 }
 function refreshProControls(){
   $('proBWThresholdValue').value=$('proBWThreshold').value;
@@ -15109,12 +15119,6 @@ function startProWork(label){
   busy(true,label);syncProState();
 }
 function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);progress(0);syncProState();}
-async function processProDoc(doc,options,pageOffset){
-  const signal=proAbort.signal;
-  checkProAbort();
-  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),...(typeof deskewCallbacks==='function'?deskewCallbacks(pages):{}),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
-  checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
-}
 async function verifyProText(before,after,signal,quiet=false,verification={}){
   let a,b;
   try{
@@ -15198,28 +15202,28 @@ function proSummary(report,textCheck){
   if(report.notes?.length)lines.push(...report.notes);
   return lines.join('\n');
 }
-async function createProResult({reveal=true}={}){
-  if(!pages.length||document.body.classList.contains('is-busy'))return;
-  let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
-  if(typeof confirmDocumentExport==='function'&&!await confirmDocumentExport())return;
-  proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
-  try{
-    const edited=await buildEditedDocument(pages,{signal:proAbort.signal});checkProAbort();
-    const fingerprint=proFingerprint();
-    const original=PDFProResult.unchangedSource(pages,docs);
+async function buildProExport(list,options,{signal,pageIndices=[],quiet=true,onProgress=()=>{}}={}){
+  if(!list.length)throw new Error('저장할 페이지를 선택해 주세요.');
+  const check=()=>signal?.throwIfAborted();check();
+    const edited=await buildEditedDocument(list,{signal,onProgress:(n,total)=>onProgress(n/total*20,'편집 내용 반영 '+n+' / '+total+'페이지')});check();
+    const original=PDFProResult.unchangedSource(list,docs);
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
     // Reload the baseline so new marks cannot reuse cached, already-saved
     // content streams created while baking the user's Basic annotations.
-    const doc=PDFPrivacy.inherit(await PDFLib.PDFDocument.load(before),edited);checkProAbort();
-    const report=await processProDoc(doc,options,0);
-    const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(pages);
-    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,ocr:options.ocr,ocrApplied:true,onText:text=>{report.privateText=text;},onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.privateExport=true;}
-    const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const doc=PDFPrivacy.inherit(await PDFLib.PDFDocument.load(before),edited);check();
+    const applied=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageIds:list.map(p=>p.uid),pageIndices,...(typeof deskewCallbacks==='function'?deskewCallbacks(list):{}),onProgress:(n,label)=>onProgress(20+n*58,label)});check();
+    const report={...applied.report,outputDoc:applied.doc,settings:describeProSettings(options,applied.report,applied.report.deskew)};
+    const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(list);
+    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,list,{signal:signal,ocr:options.ocr,ocrApplied:true,onText:text=>{report.privateText=text;},onProgress:(n,total)=>{onProgress(n/total*95,'개인정보 영구 삭제 '+n+' / '+total+'페이지');}});report.privateExport=true;}
+    const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});check();
     // A reference for size reporting never authorizes falling back to the
     // original document after redaction.
-    const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,masked?PDFProResult.sourceReference(pages,docs):original);
+    const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,masked?PDFProResult.sourceReference(list,docs):original);
     const bytes=result.bytes;
-    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
+    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,signal,quiet,{deskew:report.deskew,options});check();
+    return {bytes,report,result,textCheck,masked};
+}
+function publishProExport({bytes,report,result,textCheck,masked},options,fingerprint,reveal=false){
     const hasPageEffects=!result.retained&&!!(masked||report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
     const {outputDoc,...previewReport}=report;
     proResult={bytes,fingerprint,hasPageEffects,report:previewReport};
@@ -15241,6 +15245,16 @@ async function createProResult({reveal=true}={}){
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     if(reveal)$('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
     return proResult;
+}
+async function createProResult({reveal=true}={}){
+  if(!pages.length||document.body.classList.contains('is-busy'))return;
+  let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
+  if(typeof confirmDocumentExport==='function'&&!await confirmDocumentExport())return;
+  proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
+  try{
+    const fingerprint=proFingerprint();
+    const {bytes,report,result,textCheck,masked}=await buildProExport(pages,options,{signal:proAbort.signal,quiet:false,onProgress:(n,label)=>{progress(n);busy(true,label);}});checkProAbort();
+    return publishProExport({bytes,report,result,textCheck,masked},options,fingerprint,reveal);
   }catch(e){
     if(e.name==='AbortError')toast('작업을 취소했습니다. 편집 중인 문서는 유지됩니다.');
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
@@ -15258,12 +15272,9 @@ $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();};
 for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();});
 $('proReset').onclick=resetProOptions;$('proExport').onclick=proPrimaryAction;$('proPreview').onclick=()=>setLivePreviewOpen(isCompactPro()?true:!proPreviewOpen);
-function proPrimaryAction(){return proResult?downloadProResult():createProResult();}
+function proPrimaryAction(){return openBasicSaveDialog();}
 function downloadProResult(){
-  if(!proResult)return;
-  if(proResult.fingerprint!==proFingerprint()){proInvalidate();syncProState();toast('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.',true);return;}
-  const name=pdfFilename($('proFilename').value);if(!name){$('proFilename').focus();toast('파일 이름을 입력해 주세요.',true);return;}
-  downloadPdf(proResult.bytes,name+'.pdf');toast('Pro 결과 PDF 다운로드를 시작했습니다');
+  return openBasicSaveDialog();
 }
 $('proDownload').onclick=downloadProResult;
 const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>파일 추가</span>';proAddFiles.setAttribute('aria-label','PDF 또는 사진 추가');proAddFiles.title='PDF 또는 사진 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);
@@ -16287,11 +16298,11 @@ function currentStamp(){
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
 function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
-function readToolOptions(o,strict=false){
+function readToolOptions(o,strict=false,sourcePages=pages){
   if(strict&&typeof reviewStampPending==='function'&&reviewStampPending())throw new Error('스탬프 문구·색상을 반영하고 있습니다. 잠시 후 다시 시도하세요.');
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
-  const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
-  const stale=ocrRecords.some(r=>pages.some(p=>p.uid===r.uid)&&!valid.includes(r));
+  const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,sourcePages.find(p=>p.uid===r.uid),o));
+  const stale=ocrRecords.some(r=>sourcePages.some(p=>p.uid===r.uid)&&!valid.includes(r));
   if(strict&&ocrAccepted&&stale)throw new Error('OCR 후 페이지 또는 보정 설정이 바뀌었습니다. 텍스트 인식에서 다시 인식하거나 결과를 지워 주세요.');
   o.ocr=ocrAccepted?valid.filter(ocrCanEmbed).map(r=>({...r,words:r.words.filter(w=>w.text?.trim())})):[];return o;
 }
@@ -17692,7 +17703,7 @@ syncHighlightControls();
 </script>
 <script id="save-ui">
 /* Prepare once; the user's download click stays synchronous on mobile browsers. */
-let basicSaveState=null,documentFilename=null;
+let basicSaveState=null,documentFilename=null,savePreparation=Promise.resolve();
 function pdfFilename(value){
   let name=String(value).trim().replace(/\.pdf$/i,'').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/[. ]+$/g,'').slice(0,100);
   if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name))name='_'+name;
@@ -17708,21 +17719,36 @@ function syncBasicSaveAction(){
   const valid=!!pdfFilename($('basicSaveFilename').value);
   $('basicFilenameError').textContent=valid?'':'파일 이름을 입력해 주세요.';
   $('basicSaveFilename').setAttribute('aria-invalid',String(!valid));
-  $('basicSaveDownload').disabled=state.phase==='preparing'||!valid;
-  $('basicSaveDownloadLabel').textContent=state.phase==='preparing'?'준비 중…':state.phase==='error'?'다시 준비':state.phase==='downloaded'?'다시 다운로드':'PDF 다운로드';
+  $('basicSaveDownload').disabled=state.phase==='preparing'||!valid||!state.pages.length;
+  $('basicSaveDownloadLabel').textContent=state.phase==='preparing'?'준비 중…':state.phase==='error'||state.phase==='idle'?'다시 준비':state.phase==='downloaded'?'다시 다운로드':'PDF 다운로드';
   $('basicSaveResult').dataset.phase=state.phase;
   $('basicSaveStateIcon').setAttribute('href',state.phase==='error'?'#i-alert':state.phase==='preparing'?'#i-file':'#i-check');
 }
 async function prepareBasicSave(state){
   state.phase='preparing';state.bytes=null;$('basicSaveError').textContent='';
-  $('basicSaveStatus').textContent='PDF 준비 중…';$('basicSaveDetail').textContent='모든 페이지와 편집 내용을 포함합니다.';syncBasicSaveAction();
+  $('basicSaveStatus').textContent='PDF 준비 중…';$('basicSaveDetail').textContent=state.pages.length+'페이지의 편집 내용을 포함합니다.';syncBasicSaveAction();
   const active=()=>basicSaveState===state&&!state.controller.signal.aborted;
   try{
+    if(!state.pages.length)throw new Error('편집 화면에서 저장할 페이지를 선택해 주세요.');
+    if(state.mode==='pro')state.options=readProOptions(true,state.pages);
+    if(!await confirmDocumentExport(state.pages)){
+      if(active()){state.phase='idle';$('basicSaveStatus').textContent='저장 준비를 취소했습니다';$('basicSaveDetail').textContent='저장 범위를 바꾸거나 다시 준비할 수 있습니다.';}
+      return;
+    }
+    if(!active())return;
+    let bytes;
+    if(state.mode==='pro'){
+      const cached=state.scope==='all'&&proResult?.fingerprint===state.fingerprint?proResult:null;
+      const result=cached||await buildProExport(state.pages,state.options,{signal:state.controller.signal,pageIndices:state.pageIndices,onProgress:(n,label)=>{if(active())$('basicSaveDetail').textContent=label+' · '+Math.round(n)+'%';}});
+      bytes=result.bytes;
+      if(active()&&!cached&&state.scope==='all')publishProExport(result,state.options,state.fingerprint);
+    }else{
     let out=await buildEditedDocument(state.pages,{signal:state.controller.signal,onProgress:(done,total)=>{if(active())$('basicSaveDetail').textContent=done+' / '+total+'페이지 반영';}});
     if(!active())return;
     $('basicSaveStatus').textContent='글꼴과 편집 내용을 저장하는 중…';await idle();
     out=await finalizePrivateExport(out,state.pages,{signal:state.controller.signal,onProgress:(n,total)=>{if(active())$('basicSaveDetail').textContent='개인정보 영구 삭제 '+n+' / '+total+'페이지';}});
-    const bytes=await out.save({useObjectStreams:true,updateFieldAppearances:false});
+    bytes=await out.save({useObjectStreams:true,updateFieldAppearances:false});
+    }
     if(!active())return;
     state.bytes=bytes;state.phase='ready';
     $('basicSaveStatus').textContent='다운로드할 준비가 됐습니다';$('basicSaveDetail').textContent=state.pages.length+'페이지 · '+formatBytes(bytes.length);
@@ -17736,22 +17762,50 @@ async function prepareBasicSave(state){
 }
 async function openBasicSaveDialog(){
   const dialog=$('basicSaveDialog');if(dialog.open)return basicSaveState?.pending;
-  if(!await confirmDocumentExport())return;
+  if(!pages.length||document.body.classList.contains('is-busy'))return;
+  if(typeof textUpdate!=='undefined')await textUpdate;
+  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
+  const mode=proMode,chosen=new Set(selected().map(p=>p.uid));
+  let options;try{if(mode==='pro')options=readProOptions();}catch(e){toast(e.message,true);return;}
   const list=pages.map(p=>({...p,annots:structuredClone(p.annots||[])}));
-  const textCount=list.reduce((n,p)=>n+p.annots.filter(a=>a.shape==='text').length,0);
-  const state={pages:list,controller:new AbortController(),phase:'preparing',bytes:null,pending:null};basicSaveState=state;
+  basicSaveState={allPages:list,chosen,mode,options,fingerprint:proFingerprint(),controller:new AbortController()};
   $('basicSaveFilename').value=documentFilename??suggestedPdfFilename();
-  $('basicSaveSummary').textContent='전체 '+list.length+'페이지'+(textCount?' · 추가한 텍스트 '+textCount+'개':'');
+  $('basicSaveAllCount').textContent=list.length+'쪽';$('basicSaveSelectedCount').textContent=chosen.size+'쪽';
+  $('basicSaveSelected').disabled=!chosen.size;
+  if(mode==='pro')cancelLivePreview();
   dialog.showModal();$('basicSaveFilename').focus();$('basicSaveFilename').select();
-  state.pending=prepareBasicSave(state);return state.pending;
+  return changeBasicSaveScope('all');
 }
+function savePageRange(indices){
+  const ranges=[];let start,end;
+  for(const index of indices){const n=index+1;if(start===undefined)start=end=n;else if(n===end+1)end=n;else{ranges.push(start===end?String(start):start+'–'+end);start=end=n;}}
+  if(start!==undefined)ranges.push(start===end?String(start):start+'–'+end);
+  return ranges.join(', ');
+}
+function changeBasicSaveScope(scope){
+  const previous=basicSaveState;if(!previous)return;
+  previous.controller.abort();
+  const {allPages,chosen,mode,options,fingerprint}=previous;
+  const pageIndices=allPages.flatMap((p,i)=>scope==='all'||chosen.has(p.uid)?[i]:[]);
+  const state={allPages,chosen,mode,options,fingerprint,scope,pageIndices,pages:pageIndices.map(i=>allPages[i]),controller:new AbortController(),phase:'preparing',bytes:null,pending:null};basicSaveState=state;
+  $('basicSaveAll').checked=scope==='all';$('basicSaveSelected').checked=scope==='selected';
+  $('basicSaveSummary').textContent=(scope==='all'?'전체 ':'선택한 ')+state.pages.length+'페이지 저장';
+  $('basicSavePages').textContent=pageIndices.length?savePageRange(pageIndices)+'쪽 · 현재 문서 순서대로 저장':'편집 화면에서 페이지를 먼저 선택해 주세요.';
+  $('basicSaveError').textContent='';$('basicSaveStatus').textContent='PDF 준비 중…';$('basicSaveDetail').textContent=state.pages.length+'페이지';syncBasicSaveAction();
+  // Finish cancellation before reusing PDF workers and font/redaction caches.
+  const prior=savePreparation;
+  state.pending=savePreparation=(async()=>{await prior.catch(()=>{});if(basicSaveState===state&&!state.controller.signal.aborted)await prepareBasicSave(state);})();
+  return state.pending;
+}
+for(const id of ['basicSaveAll','basicSaveSelected'])$(id).addEventListener('change',e=>{if(e.target.checked)void changeBasicSaveScope(e.target.value);});
 function closeBasicSaveDialog(){
   basicSaveState?.controller.abort();basicSaveState=null;$('basicSaveDialog').close();
+  if(proMode==='pro')scheduleLivePreview();
 }
 function downloadBasicSave(){
   const state=basicSaveState;if(!state)return;
   const name=pdfFilename($('basicSaveFilename').value);syncBasicSaveAction();if(!name||state.phase==='preparing')return;
-  if(state.phase==='error'){state.pending=prepareBasicSave(state);return state.pending;}
+  if(state.phase==='error'||state.phase==='idle'){state.pending=savePreparation=prepareBasicSave(state);return state.pending;}
   if(!state.bytes)return;
   try{
     downloadPdf(state.bytes,name+'.pdf');state.phase='downloaded';$('basicSaveFilename').value=name;
@@ -18224,7 +18278,8 @@ syncProcessingLocation();syncOCRPreparation();
   for(const source of document.querySelectorAll('.pro-hint:not([role]),.pro-panel-head p,.pdf-save-note,.compare-details,.deskew-direction')){
     if(!source.textContent.trim()||source.closest('.gemini-dialog')||['privacyStatus','ocrConfidence'].includes(source.id))continue;
     source.id||='help-source-'+(++seq);source.classList.add('help-source');let anchor=source.previousElementSibling;
-    if(anchor?.matches('label'))anchor=anchor.querySelector('span')||anchor;
+    if(source.matches('.pdf-save-note'))anchor=source.parentElement.querySelector('.pdf-filename-label')||source.parentElement;
+    else if(anchor?.matches('label'))anchor=anchor.querySelector('span')||anchor;
     else{const summary=source.closest('details')?.querySelector(':scope > summary');anchor=summary?.querySelector(':scope > span:nth-child(2)')||summary||source.parentElement.querySelector('h2,label')||source.parentElement;}
     const previous=anchor.querySelector(':scope > .help-dot');if(previous){previous.dataset.helpFor+=' '+source.id;continue;}
     const button=document.createElement('button');button.type='button';button.className='help-dot';button.textContent='?';button.setAttribute('aria-label','도움말');button.dataset.helpFor=source.id;anchor.append(button);

@@ -100,13 +100,13 @@
     canvas.width=canvas.height=0;
     return image;
   }
-  async function applyDocument(doc,options,{pageOffset=0,signal,onProgress}={}) {
+  async function applyDocument(doc,options,{pageOffset=0,pageIndices=[],signal,onProgress}={}) {
     const pages=doc.getPages();
     const font=options.number ? await doc.embedFont(P.StandardFonts.Helvetica) : null;
     const mark=options.watermark ? await watermarkImage(doc,options.watermark) : null;
     for(let i=0;i<pages.length;i++) {
       if(signal?.aborted) throw new DOMException('취소했습니다.','AbortError');
-      const page=pages[i], ordinal=pageOffset+i;
+      const page=pages[i], ordinal=pageIndices[i]??pageOffset+i;
       geometry(page,options,ordinal+1);
       const b=visibleBox(page), r=turn(page), u=unit(page);
       const w=r%180 ? b.height : b.width, h=r%180 ? b.width : b.height;

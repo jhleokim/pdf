@@ -26,7 +26,7 @@
   const textContent=(await(await pdf.getPage(1)).getTextContent()).items.map(x=>x.str).join(' ');assert(textContent.includes('회의 자료')&&textContent.includes('검토 완료'),'Saved Korean text is not searchable');await pdf.destroy();
   assert($('basicSaveStatus').textContent==='다운로드를 시작했습니다','Download feedback claims disk completion');record('Named downloads reuse prepared bytes and preserve searchable Korean text');
   $('basicSaveFilename').value=' ';$('basicSaveFilename').dispatchEvent(new Event('input'));assert($('basicSaveDownload').disabled&&$('basicFilenameError').textContent,'Empty filename allowed');
-  assert(pdfFilename('A/B:test.pdf')==='A_B_test'&&pdfFilename('CON')==='_CON','Invalid/reserved filename');closeBasicSaveDialog();assert(!basicSaveState&&state.controller.signal.aborted,'Closing save retained active state');record('Filename validation and close release the prepared result');
+  assert(pdfFilename('A/B:test.pdf')==='A_B_test'&&pdfFilename('CON')==='_CON','Invalid/reserved filename');$('basicSaveFilename').value='문서 검토';$('basicSaveFilename').dispatchEvent(new Event('input'));closeBasicSaveDialog();assert(!basicSaveState&&state.controller.signal.aborted,'Closing save retained active state');record('Filename validation and close release the prepared result');
   let release,entered=0;const gate=new Promise(r=>release=r);
   buildEditedDocument=async(...args)=>{if(++entered===1)await gate;return build(...args)};
   const canceled=save();for(let i=0;i<50&&!basicSaveState;i++)await wait(10);const canceledState=basicSaveState;closeBasicSaveDialog();const replacement=save();release();await Promise.all([canceled,replacement]);await wait(30);
