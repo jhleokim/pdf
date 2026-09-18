@@ -1,14 +1,19 @@
 /* Undo stores document metadata; PDF bytes, thumbnails and image assets are shared. */
 class EditHistoryStack{
-  constructor(limit=50,budget=8*1024*1024){this.undo=[];this.redo=[];this.limit=limit;this.budget=budget;}
+  constructor(limit=50,budget=8*1024*1024,sourceBudget=128*1024*1024){this.undo=[];this.redo=[];this.limit=limit;this.budget=budget;this.sourceBudget=sourceBudget;}
   push(before,after,label,key=null,windowMs=700){
     if(!before||before.signature===after.signature)return false;
     const now=Date.now(),last=this.undo.at(-1);
     if(key&&last?.key===key&&now-last.time<=windowMs&&last.after.signature===before.signature){last.after=after;last.time=now;if(last.before.signature===after.signature)this.undo.pop();}
     else this.undo.push({before,after,label,key,time:now});
     this.redo=[];
-    const cost=()=>this.undo.reduce((n,e)=>n+(e.before.signature.length+e.after.signature.length)*2,0);
-    while(this.undo.length>1&&(this.undo.length>this.limit||cost()>this.budget))this.undo.shift();
+    const cost=()=>this.undo.reduce((n,e)=>n+(e.before.signature.length+e.after.signature.length)*2+(e.before.extraBytes||0)+(e.after.extraBytes||0),0);
+    const active=new Set((after.sources||[]).map(([,d])=>d));
+    const sourceCost=()=>{const retained=new Set();let bytes=0;for(const entry of this.undo)for(const state of [entry.before,entry.after])for(const [,d]of state.sources||[])if(!active.has(d)&&!retained.has(d)){retained.add(d);bytes+=d.libBytes?.byteLength||0;}return bytes;};
+    // Source PDFs are shared, but an old import/Pro conversion can otherwise
+    // retain gigabytes despite a small metadata history. Keep the newest undo
+    // transaction even when that single document exceeds the source budget.
+    while(this.undo.length>1&&(this.undo.length>this.limit||cost()>this.budget||sourceCost()>this.sourceBudget))this.undo.shift();
     return true;
   }
   take(redo=false){const from=redo?this.redo:this.undo,to=redo?this.undo:this.redo,entry=from.pop();if(!entry)return null;entry.key=null;to.push(entry);return {state:redo?entry.after:entry.before,label:entry.label};}
@@ -24,15 +29,33 @@ function captureEditHistory(){
     if(annotations?.signature!==signature){annotations={signature,value:structuredClone(page.annots||[])};historyAnnotationCache.set(page,annotations);}
     return {page,rotation:page.rotation,deskewAngle:page.deskewAngle,deskewCrop:typeof page.deskewCrop==='boolean'?page.deskewCrop:undefined,annots:annotations.value,signature};
   });
-  const sources=[...docs];for(const [,d]of sources)historyDocuments.add(d);
+  const used=new Set(pages.map(p=>p.docId)),sources=[...docs].filter(([id])=>used.has(id));for(const [,d]of sources)historyDocuments.add(d);
   const stamps=typeof captureStampHistory==='function'?captureStampHistory():null;
   return {rows,sources,origCount,selected:selected().map(p=>p.uid),previewUid,selAnno,stamps,
     signature:JSON.stringify([rows.map(r=>[r.page.uid,r.rotation,r.signature,r.deskewAngle,r.deskewCrop]),sources.map(([id])=>id),origCount,stamps?.signature])};
 }
 function collectHistoryDocuments(){
-  const retained=new Set(docs.values());
-  for(const entry of [...editHistory.undo,...editHistory.redo])for(const state of [entry.before,entry.after])for(const [,d]of state.sources)retained.add(d);
-  for(const d of historyDocuments)if(!retained.has(d)){historyDocuments.delete(d);void d.pdfjsDoc?.destroy().catch(()=>{});}
+  const used=new Set(pages.map(p=>p.docId));
+  // Removed pages remain undoable through their snapshots. They must not keep
+  // their source in every subsequent snapshot or in the current document map.
+  for(const [id,d]of docs)if(!used.has(id)){historyDocuments.add(d);docs.delete(id);}
+  const retained=new Set(docs.values()),retainedPages=new Set(pages.map(p=>p.uid));
+  for(const entry of [...editHistory.undo,...editHistory.redo])for(const state of [entry.before,entry.after]){
+    for(const [,d]of state.sources)retained.add(d);
+    for(const row of state.rows||[])retainedPages.add(row.page.uid);
+  }
+  for(const d of historyDocuments)if(!retained.has(d)){historyDocuments.delete(d);void Promise.resolve().then(()=>d.pdfjsDoc?.destroy()).catch(()=>{});}
+  // Deleted-page recognition stays available to undo, but must not outlive the
+  // last current/undo/redo reference to that page. Keep the array identity when
+  // nothing expires so an open OCR correction draft is not invalidated.
+  if(typeof ocrRecords!=='undefined'&&ocrRecords.some(record=>!retainedPages.has(record.uid))){
+    const chooser=typeof $==='function'?$('ocrResultPage'):null,shown=chooser?ocrRecords[Number(chooser.value)]?.uid:null;
+    ocrRecords=ocrRecords.filter(record=>retainedPages.has(record.uid));
+    if(typeof renderOCRResults==='function'){
+      renderOCRResults();const index=shown?ocrRecords.findIndex(record=>record.uid===shown):-1;
+      if(chooser&&index>=0){chooser.value=String(index);if(typeof renderOCRText==='function')renderOCRText();}
+    }
+  }
 }
 function commitEditHistory(before,label,key=null){
   if(!before||historyApplying)return;
@@ -110,7 +133,7 @@ async function restoreDocumentHistory(redo){
     pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;if(typeof r.deskewCrop==='boolean')r.page.deskewCrop=r.deskewCrop;else delete r.page.deskewCrop;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     if(state.stamps&&typeof restoreStampHistory==='function')restoreStampHistory(state.stamps);
     if(state.proTransfer)restoreProTransferSettings(state.proTransfer);
-    if(state.pageOcr){const ids=new Set(state.pageOcr.map(r=>r.uid));ocrRecords=ocrRecords.filter(r=>!ids.has(r.uid));ocrRecords.push(...state.pageOcr.filter(r=>r.record&&pages.some(p=>p.uid===r.uid)).map(r=>r.record));}
+    if(state.pageOcr){const ids=new Set(state.pageOcr.map(r=>r.uid)),active=new Set(pages.map(p=>p.uid));ocrRecords=ocrRecords.filter(r=>!ids.has(r.uid)).concat(state.pageOcr.filter(r=>r.record&&active.has(r.uid)).map(r=>r.record));}
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;

@@ -6,14 +6,14 @@ const item=(str,x=20,y=40)=>({str,fontName:'f',transform:[10,0,0,10,x,y],width:2
 const textContent=items=>({items,styles:{f:{ascent:.8,descent:-.2}}});
 const cropReport=page=>({page,cropped:true,matrix:[1,0,0,1,0,0],cropBounds:{x:10,y:10,width:80,height:80},rotation:0,userUnit:1});
 function harness(beforePages,afterPages,verificationHelper=helper.verify){
-  const destroyed=[0,0],reads=[[],[]],helperCalls=[],progress=[],busy=[];
-  const pdfs=[beforePages,afterPages].map((pages,index)=>({numPages:pages.length,async getPage(number){reads[index].push(number);return {async getTextContent(){return pages[number-1];}};},async destroy(){destroyed[index]++;}}));
+  const destroyed=[0,0],reads=[[],[]],cleaned=[[],[]],helperCalls=[],progress=[],busy=[];
+  const pdfs=[beforePages,afterPages].map((pages,index)=>({numPages:pages.length,async getPage(number){reads[index].push(number);return {async getTextContent(){return pages[number-1];},cleanup(){cleaned[index].push(number);}};},async destroy(){destroyed[index]++;}}));
   let opened=0;
   const context=vm.createContext({DOMException,DOC_OPTS:{},pdfjsLib:{getDocument:()=>({promise:Promise.resolve(pdfs[opened++])})},
     PDFProTextVerification:{verify(...args){helperCalls.push(args);return verificationHelper(...args);}},
     idle:async()=>{},busy:(...args)=>busy.push(args),progress:value=>progress.push(value)});
   vm.runInContext(snippet('async function verifyProText(','function describeProSettings(')+snippet('function proSummary(','async function createProResult('),context);
-  return {verify:(verification={},quiet=true,signal)=>context.verifyProText(new Uint8Array([1]),new Uint8Array([2]),signal,quiet,verification),summary:context.proSummary,destroyed,reads,helperCalls,progress,busy};
+  return {verify:(verification={},quiet=true,signal)=>context.verifyProText(new Uint8Array([1]),new Uint8Array([2]),signal,quiet,verification),summary:context.proSummary,destroyed,reads,cleaned,helperCalls,progress,busy,context};
 }
 test('multi-page verification routes only cropped pages to geometry verification and accumulates retained/excluded counts',async()=>{
   const before=[plain('A B'),textContent([item('KEEP'),item('EDGE',0)]),textContent([item('outside',0,0)])];
@@ -55,6 +55,25 @@ test('a truly blank source retains the no-searchable-text explanation and quiet 
 });
 test('cancellation and page-count mismatch are failures with PDF cleanup',async()=>{
   const controller=new AbortController();controller.abort();const cancelled=harness([plain('A')],[plain('A')]);
-  await assert.rejects(()=>cancelled.verify({},true,controller.signal),error=>error.name==='AbortError');assert.deepEqual(cancelled.destroyed,[1,1]);assert.deepEqual(cancelled.reads,[[],[]]);
+  await assert.rejects(()=>cancelled.verify({},true,controller.signal),error=>error.name==='AbortError');assert.deepEqual(cancelled.destroyed,[0,0]);assert.deepEqual(cancelled.reads,[[],[]]);
   const mismatch=harness([plain('A')],[plain('A'),plain('B')]);await assert.rejects(()=>mismatch.verify(),/페이지 수가 달라졌습니다/);assert.deepEqual(mismatch.destroyed,[1,1]);
+});
+test('hundreds of pages are released before verification advances to the next pair',async()=>{
+  const list=Array.from({length:400},(_,i)=>plain('PAGE '+i)),h=harness(list,list);let ticks=0;
+  h.context.idle=async()=>{ticks++;assert.equal(h.cleaned[0].length,ticks);assert.equal(h.cleaned[1].length,ticks);};
+  const result=await h.verify();assert.equal(result.checked,400);assert.equal(ticks,400);assert.deepEqual(h.destroyed,[1,1]);
+});
+test('comparison failure releases both current pages, without visiting the remaining pages',async()=>{
+  const h=harness([plain('FIRST'),plain('KEEP'),plain('LATER')],[plain('FIRST'),plain('MISSING'),plain('LATER')]);
+  await assert.rejects(h.verify(),/2페이지/);assert.deepEqual(h.cleaned,[[1,2],[1,2]]);assert.deepEqual(h.reads,[[1,2],[1,2]]);
+});
+test('a loading failure closes its loading task even before a PDF proxy exists',async()=>{
+  const h=harness([],[]);let destroyed=0;
+  h.context.pdfjsLib.getDocument=()=>({promise:Promise.reject(new Error('broken PDF')),async destroy(){destroyed++;}});
+  await assert.rejects(h.verify(),/broken PDF/);assert.equal(destroyed,1);
+});
+test('canceling while the PDF is loading terminates that task and reports cancellation',async()=>{
+  const h=harness([],[]),controller=new AbortController();let rejectLoad,destroyed=0;
+  h.context.pdfjsLib.getDocument=()=>({promise:new Promise((_,reject)=>rejectLoad=reject),async destroy(){destroyed++;rejectLoad(new Error('worker terminated'));}});
+  const result=h.verify({},true,controller.signal),rejected=assert.rejects(result,{name:'AbortError'});controller.abort();await rejected;assert.equal(destroyed,1);
 });

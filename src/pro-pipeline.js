@@ -4,7 +4,9 @@
   const check=signal=>{if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');};
   async function rasterize(doc,options,{signal,docOptions={},onProgress}={}){
     const P=PDFLib,before=await doc.save({useObjectStreams:true,updateFieldAppearances:false});check(signal);
-    const task=pdfjsLib.getDocument({data:before.slice(),...docOptions});
+    // This fresh serialization is only consumed here. Transfer it to PDF.js
+    // instead of retaining an extra complete document-sized byte copy.
+    const task=pdfjsLib.getDocument({data:before,...docOptions});
     const output=await P.PDFDocument.create();
     const report={imageCount:doc.getPageCount(),sourceImageCount:0,processed:0,changed:0,skipped:0,originalImageBytes:0,resultImageBytes:0,skipReasons:{},notes:[],rasterized:true};
     for(const [,object] of doc.context.enumerateIndirectObjects())if(object instanceof P.PDFRawStream&&String(object.dict.get(P.PDFName.of('Subtype')))==='/Image'){report.originalImageBytes+=object.getContents().length;report.sourceImageCount++;}

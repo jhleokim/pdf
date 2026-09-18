@@ -48,6 +48,17 @@ test('invalid mask and page mapping fail rather than returning an unredacted doc
  await assert.rejects(engine.process({bytes,masks:[]}));await assert.rejects(engine.process({bytes,masks:[[[NaN,0,.2,.2]]]}));
 });
 
+test('a 400-page document redacts separated ranges without losing text or page order', {timeout:20000},async()=>{
+ const [engine]=await runtime,d=await P.PDFDocument.create(),font=await d.embedFont(P.StandardFonts.Helvetica),masks=[];
+ for(let i=0;i<400;i++){
+  const page=d.addPage([400,300]);page.drawText('SECRET '+i,{font,x:30,y:240,size:18});page.drawText('PUBLIC PAGE '+i,{font,x:30,y:30,size:18});
+  masks.push(i%7===0?[[0,0,1,.4]]:[]);
+ }
+ const progress=[],out=await engine.process({bytes:await d.save(),masks},(done,total)=>progress.push([done,total]));
+ const text=await inspect(out.bytes);assert.equal(text.length,400);assert.equal(progress.length,400);assert.deepEqual(progress.at(-1),[400,400]);
+ for(let i=0;i<400;i++){assert(text[i].includes('PUBLIC PAGE '+i),'public text and page order '+i);assert.equal(text[i].includes('SECRET '+i),i%7!==0,'mask coverage '+i);}
+});
+
 test('hidden-property scanning preserves literal text, escaped parentheses and drawing commands',async()=>{
  const {stripHiddenProperties}=await import('../src/privacy-content.mjs'),encode=s=>new TextEncoder().encode(s),decode=b=>new TextDecoder().decode(b);
  for(const separator of [' ','\0','% comment\n']){

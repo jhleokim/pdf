@@ -8,33 +8,45 @@ async function duplicatePages(list){
   const options=readProOptions(),before=captureEditHistory(),positions=captureBoardPositions();
   busy(true,'페이지를 복제하는 중…');
   try{
-  const copies=originals.map(p=>({...p,uid:'p'+(++uidSeq),el:null,canvas:null,
-    thumbRatio:p.thumbRatio||(p.canvas?.height?p.canvas.width/p.canvas.height:Math.SQRT1_2),
-    annots:structuredClone(p.annots||[]).map(a=>({...a,id:'a'+(++annoUidSeq)}))}));
+  const copies=[],records=[],byUid=new Map(ocrRecords.map(r=>[r.uid,r]));let extraBytes=0;
+  const at=pages.indexOf(originals.at(-1))+1;
+  const nextOptions={...options,deskewAngles:{...options.deskewAngles},deskewCropByPage:{...options.deskewCropByPage}};
+  for(let i=0;i<originals.length;i++){
+    const p=originals[i],copy={...p,uid:'p'+(++uidSeq),el:null,canvas:null,
+      thumbRatio:p.thumbRatio||(p.canvas?.height?p.canvas.width/p.canvas.height:Math.SQRT1_2),
+      annots:structuredClone(p.annots||[]).map(a=>({...a,id:'a'+(++annoUidSeq)}))};
+    copies.push(copy);
+    if(Number.isFinite(p.deskewAngle))nextOptions.deskewAngles[copy.uid]=p.deskewAngle;
+    if(p.deskewCrop===true)nextOptions.deskewCropByPage[copy.uid]=true;
+    const record=byUid.get(p.uid);
+    if(record&&ocrRecordCurrent(record,p,options)){
+      const cloned=structuredClone(record);cloned.uid=copy.uid;cloned.key=ocrKey(copy,nextOptions);cloned.page=at+i+1;
+      if(cloned.privacyKey)cloned.privacyKey=PDFPrivacy.maskKey(copy);
+      records.push(cloned);extraBytes+=JSON.stringify(cloned).length*2;
+    }
+    // OCR-rich pages can carry thousands of word boxes. Yield while preparing
+    // the new transaction, before changing the visible document or stamp scope.
+    if(i%8===7){progress((i+1)/originals.length*90);await idle();}
+  }
   // Reuse the source PDF, not a rendered page. Canvases belong to the bounded
   // thumbnail cache and must never be shared (eviction clears their pixels).
   const ids=new Map(originals.map((p,i)=>[p.uid,copies[i].uid]));
   const extend=mark=>!mark||mark.scope==='all'?mark:{...mark,targets:[...(mark.targets||[]),...(mark.targets||[]).filter(id=>ids.has(id)).map(id=>ids.get(id))]};
   stampMarks=stampMarks.map(extend);stampAsset=extend(stampAsset);
   if(stampEditing)stampEditing={...stampEditing,mark:extend(stampEditing.mark)};
-  const at=pages.indexOf(originals.at(-1))+1;pages.splice(at,0,...copies);
-  const nextOptions=readProOptions(),records=[];
-  for(let i=0;i<originals.length;i++){
-    const record=ocrRecords.find(r=>r.uid===originals[i].uid&&ocrRecordCurrent(r,originals[i],options));
-    if(record){const copy=structuredClone(record);copy.uid=copies[i].uid;copy.key=ocrKey(copies[i],nextOptions);copy.page=at+i+1;
-      if(copy.privacyKey)copy.privacyKey=PDFPrivacy.maskKey(copies[i]);records.push(copy);}
-  }
-  ocrRecords.push(...records);render();copies.forEach(p=>p.el.classList.add('selected'));
+  pages=[...pages.slice(0,at),...copies,...pages.slice(at)];
+  ocrRecords=ocrRecords.concat(records);render();copies.forEach(p=>p.el.classList.add('selected'));
   lastClicked=at;syncCounts();toolsChanged();animateBoardFrom(positions,copies[0].uid);
-  await showPreview(copies[0]);copies[0].el.focus({preventScroll:true});copies[0].el.scrollIntoView({block:'nearest',inline:'nearest'});
-  const after=captureEditHistory();
+  const after=captureEditHistory();after.previewUid=copies[0].uid;
   // Only these new OCR records belong to this undo entry; unrelated results
   // recognized later must not be overwritten when undoing page duplication.
   before.pageOcr=copies.map(p=>({uid:p.uid,record:null}));
-  after.pageOcr=copies.map(p=>({uid:p.uid,record:records.find(r=>r.uid===p.uid)||null}));
+  const copiedRecords=new Map(records.map(r=>[r.uid,r]));
+  after.pageOcr=copies.map(p=>({uid:p.uid,record:copiedRecords.get(p.uid)||null}));after.extraBytes=extraBytes;
   editHistory.push(before,after,'페이지 복제');collectHistoryDocuments();syncHistoryControls();
+  await showPreview(copies[0]);copies[0].el.focus({preventScroll:true});copies[0].el.scrollIntoView({block:'nearest',inline:'nearest'});
   toast(copies.length+'페이지를 복제했습니다');
-  }finally{busy(false);}
+  }finally{progress(0);busy(false);}
 }
 
 (()=>{
@@ -106,7 +118,7 @@ async function duplicatePages(list){
   menu.addEventListener('pointermove',e=>{const item=e.target.closest('button:not(:disabled)');if(item&&e.pointerType==='mouse')item.focus({preventScroll:true});});
   menu.addEventListener('click',async e=>{
     const button=e.target.closest('button[data-action]');if(!button||button.disabled||blocked())return;
-    const list=pages.filter(p=>targets.includes(p.uid)),p=pages.find(p=>p.uid===targetUid),action=button.dataset.action;close(true);
+    const chosen=new Set(targets),list=pages.filter(p=>chosen.has(p.uid)),p=pages.find(p=>p.uid===targetUid),action=button.dataset.action;close(true);
     if(!list.length||!p)return;
     try{
       await textUpdate;if(blocked())return;

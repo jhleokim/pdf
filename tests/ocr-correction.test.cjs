@@ -49,3 +49,19 @@ test('deleting a final word preserves the boundary before the next line',()=>{
   const draft=api.createDraft(source);context.PDFOCRLines.update(draft,0,{indices:[0,1]},'원래');
   const result=api.materialize(draft)[0];assert.equal(result.text,'원래\n다음줄');assert.equal(result.words[1].text,'');assert.equal(result.words[1].separator,'\n');
 });
+
+test('correction change totals follow page switching, spacing edits, deletion and undo',()=>{
+  const source=[...fixture(),{uid:'plain',words:[],text:'원본'},{uid:'skip',skipped:true,words:[],text:'유지'}],draft=api.createDraft(source),tracker=api.createChangeTracker(draft);
+  assert.equal(tracker.refresh(0).count,0);api.updateWord(draft,0,0,'교정');assert.equal(tracker.refresh(0).count,1);
+  draft.records[0].words[1].separator=' ';draft.records[0].correctionLines=[{text:'교정 문장',indices:[0,1]}];assert.deepEqual(plain(tracker.refresh(0)),{count:2,estimated:1});
+  draft.records[1].text='수정';assert.deepEqual(plain(tracker.refresh(1)),{count:3,estimated:1});
+  draft.records[2].text='건너뛴 페이지';assert.equal(tracker.refresh(2).count,3);
+  draft.records[0]=structuredClone(source[0]);assert.deepEqual(plain(tracker.refresh(0)),{count:1,estimated:0});
+  draft.records[1].text='원본';assert.equal(tracker.refresh(1).count,0);assert.equal(api.changedWords(draft),0);
+});
+
+test('typing on one page never scans text from 500 other OCR pages',()=>{
+  const draft=api.createDraft(Array.from({length:501},()=>fixture()[0])),tracker=api.createChangeTracker(draft);
+  for(let p=1;p<draft.records.length;p++)Object.defineProperty(draft.records[p],'words',{get(){throw new Error('Unrelated page text was scanned');}});
+  for(let i=0;i<30;i++){api.updateWord(draft,0,0,'교정 '+i);assert.equal(tracker.refresh(0).count,1);}
+});

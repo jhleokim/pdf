@@ -84,7 +84,7 @@ export async function process(data,progress=()=>{}){
     scrub(doc);
     const out=doc.saveToBuffer('garbage=4,compress=yes');
     try{return {bytes:out.asUint8Array().slice(),maskedPages,convertedImages,seconds:(performance.now()-started)/1000};}finally{out.destroy();}
-  }finally{doc.destroy();}
+  }finally{doc.destroy();M.emptyStore();}
 }
 
 if(typeof WorkerGlobalScope!=='undefined'){

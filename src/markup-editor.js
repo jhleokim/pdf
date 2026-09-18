@@ -125,15 +125,33 @@ window.addEventListener('resize',positionTextEditor);$('pvBody').addEventListene
 /* A draggable page action uses the same board insertion point as page reordering. */
 let blankPointer=null,blankClickUntil=0;
 const boardMotion=new Map();
+const BOARD_MOTION_LIMIT=80;
 function blankDragClickBlocked(){return Date.now()<blankClickUntil;}
-function captureBoardPositions(){return new Map(pages.filter(p=>p.el).map(p=>[p.uid,p.el.getBoundingClientRect()]));}
+function boardMotionNearViewport(rect){
+  const margin=240,width=globalThis.innerWidth,height=globalThis.innerHeight;
+  return (!Number.isFinite(width)||rect.right>=-margin&&rect.left<=width+margin)&&(!Number.isFinite(height)||rect.bottom>=-margin&&rect.top<=height+margin);
+}
+function captureBoardPositions(){
+  const before=new Map();if(matchMedia('(prefers-reduced-motion: reduce)').matches)return before;
+  const visible=typeof thumbVisible==='undefined'?null:thumbVisible;let measured=0;
+  for(const p of pages){
+    if(!p.el||visible&&!visible.has(p)&&!boardMotion.has(p.el))continue;
+    if(measured++>=BOARD_MOTION_LIMIT)break;
+    const rect=p.el.getBoundingClientRect();if(boardMotionNearViewport(rect))before.set(p.uid,rect);
+  }
+  return before;
+}
 function animateBoardFrom(before,addedUid){
   // Snapshot the visible positions first, then cancel old motion before measuring
   // the new layout. Retargeting from transformed bounds compounds the offset.
   for(const animation of boardMotion.values())animation.cancel();boardMotion.clear();
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const bounds=pages.map(p=>[p,p.el.getBoundingClientRect()]);
+  // render() resets the visibility observer. Use the captured IDs rather than
+  // measuring every card again while the observer waits for its next callback.
+  const candidates=pages.filter(p=>p.el&&(before.has(p.uid)||p.uid===addedUid)).slice(0,BOARD_MOTION_LIMIT+1);
+  const bounds=candidates.map(p=>[p,p.el.getBoundingClientRect()]);
   for(const [p,r] of bounds){
+    if(!boardMotionNearViewport(r))continue;
     const old=before.get(p.uid);let frames;
     if(old){const dx=old.left-r.left,dy=old.top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)frames=[{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}];}
     else if(p.uid===addedUid)frames=[{opacity:0,transform:'scale(.97)'},{opacity:1,transform:'scale(1)'}];

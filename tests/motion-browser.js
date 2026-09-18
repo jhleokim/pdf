@@ -4,28 +4,37 @@
  const test=async(name,fn)=>{try{await fn();checks.push('PASS '+name)}catch(e){failures.push('FAIL '+name+': '+e.message)}report()};
  const motion=el=>el.getAnimations().filter(a=>a.effect.getKeyframes().some(k=>'transform' in k));
  const order=()=>pages.map(p=>p.uid).join(',');
- const settle=async()=>{marker.remove();for(const p of pages)for(const a of motion(p.el))a.finish();await frame()};
+ const visible=r=>r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight;
+ const captured=before=>{const list=pages.filter(p=>before.has(p.uid));assert(list.length>0,'No visible cards were captured');return list;};
+ const targets=before=>new Map(captured(before).map(p=>[p.uid,boardCardRect(p.el)]));
+ const continuity=(before,label)=>{
+  let checked=0,maxJump=0;for(const p of captured(before)){const a=before.get(p.uid),b=p.el.getBoundingClientRect();assert(motion(p.el).length<=1,'stacked movement');if(!visible(a)&&!visible(b))continue;checked++;maxJump=Math.max(maxJump,Math.hypot(a.left-b.left,a.top-b.top));}
+  assert(checked>0,'No on-screen cards were checked');assert(maxJump<2,label+': '+maxJump.toFixed(1)+'px');
+ };
+ const reached=expected=>{assert(expected.size>0,'No destination positions were checked');for(const p of pages){const a=expected.get(p.uid);if(!a)continue;const b=p.el.getBoundingClientRect();assert(Math.hypot(a.left-b.left,a.top-b.top)<2,'Card did not settle at its destination: '+p.uid);assert(motion(p.el).length===0,'movement did not settle');}};
+ const settle=async()=>{marker.remove();for(const p of pages)for(const a of motion(p.el))a.finish();await frame();await frame()};
  try{
-  await setupMotionDocument();await frame();
+  await setupMotionDocument();for(let i=0;i<20&&!captureBoardPositions().size;i++)await frame();
   await test('Interrupted card movement stays continuous with one animation per card',async()=>{
-   let before=captureBoardPositions();board.insertBefore(marker,pages[0].el);animateBoardFrom(before);await wait(50);
+   let before=captureBoardPositions();captured(before);board.insertBefore(marker,pages[0].el);animateBoardFrom(before);
+   assert(captured(before).some(p=>visible(p.el.getBoundingClientRect())&&motion(p.el).length),'Visible cards did not animate');await wait(50);
    before=captureBoardPositions();board.appendChild(marker);animateBoardFrom(before);
    const active=Math.max(...pages.map(p=>motion(p.el).length));
-   const jump=Math.max(...pages.map(p=>{const a=before.get(p.uid),b=p.el.getBoundingClientRect();return Math.hypot(a.left-b.left,a.top-b.top)}));
-   assert(active<=1,'overlapping animations: '+active);assert(jump<2,'retarget jump: '+jump.toFixed(1)+'px');await settle();
+   const expected=targets(before);
+   assert(active<=1,'overlapping animations: '+active);continuity(before,'retarget jump');await wait(250);reached(expected);await settle();
   });await settle();
   await test('Frame-by-frame retargeting settles without stacked or stranded motion',async()=>{
-   for(let i=0;i<18;i++){
+   let expected;for(let i=0;i<18;i++){
     await frame();const before=captureBoardPositions();board.insertBefore(marker,pages[i%2?1:3].el);animateBoardFrom(before);
-    for(const p of pages){const a=before.get(p.uid),b=p.el.getBoundingClientRect();assert(motion(p.el).length<=1,'stacked movement');assert(Math.hypot(a.left-b.left,a.top-b.top)<2,'visible jump while retargeting')}
+    continuity(before,'visible jump while retargeting');expected=targets(before);
    }
-   await wait(300);assert(pages.every(p=>motion(p.el).length===0),'movement did not settle');await settle();
+   await wait(300);assert(pages.every(p=>motion(p.el).length===0),'movement did not settle');reached(expected);await settle();
   });await settle();
   await test('Desktop reorder animates and commits at the displayed marker',async()=>{
    const data=new DataTransfer(),card=pages[0].el,target=pages[2].el.getBoundingClientRect();
    card.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:data}));
    board.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:data,clientX:target.left+4,clientY:target.top+12}));
-   const animated=pages.some(p=>motion(p.el).length>0);
+   const animated=pages.some(p=>visible(p.el.getBoundingClientRect())&&motion(p.el).length>0);
    const moved=pages[0].uid,anchor=marker.nextElementSibling?.dataset.uid,expected=pages.slice(1).map(p=>p.uid),at=anchor?expected.indexOf(anchor):expected.length;expected.splice(at<0?expected.length:at,0,moved);
    board.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));
    assert(animated,'cards snap to the new grid positions');assert(order()===expected.join(','),'drop does not match the marker');assert(!marker.parentNode,'drag marker remains');await settle();
@@ -50,8 +59,7 @@
    document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:73,clientX:target.left+4,clientY:target.top+12}));
    await wait(60);const before=captureBoardPositions();document.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:73}));
    assert(order()===original&&!blankPointer&&!document.querySelector('.blank-page-ghost')&&!marker.parentNode,'cancel left a page or drag state');
-   const jump=Math.max(...pages.map(p=>{const a=before.get(p.uid),b=p.el.getBoundingClientRect();return Math.hypot(a.left-b.left,a.top-b.top)}));
-   assert(jump<2,'gap closes abruptly: '+jump.toFixed(1)+'px');await settle();
+   continuity(before,'gap closes abruptly');const expected=targets(before);await wait(250);reached(expected);await settle();
   });await settle();
   await test('Rapid zoom and editing transitions leave the latest page aligned',async()=>{
    if(isMobile())setMobileView('preview');

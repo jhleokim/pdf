@@ -449,11 +449,20 @@
     abortIfNeeded(signal);
     let images = doc.context.enumerateIndirectObjects().filter(([, object]) =>
       object instanceof lib.PDFRawStream && nameValue(pdfValue(object.dict, 'Subtype', lib)) === '/Image');
-    let masks=maskImages(doc,lib);
+    let masks;
     const report = { imageCount: images.length, processed: 0, changed: 0, skipped: 0,
       originalImageBytes: 0, resultImageBytes: 0, skipReasons: {}, notes: [] };
     for (const [, stream] of images) report.originalImageBytes += stream.getContents().length;
     report.resultImageBytes = report.originalImageBytes;
+    if(!settings.optimize&&!isEnhanced(settings)){
+      // The default Pro settings do not process images. Avoid graph traversal,
+      // decoding, and one event-loop delay for every image in a large document.
+      report.skipped=images.length;report.attempts=0;report.placementResized=0;report.targetBytes=targetBytes;
+      if(images.length){report.skipReasons.noAction=images.length;report.notes=[REASONS.noAction];}
+      else report.notes=['처리할 이미지가 없습니다. 텍스트와 벡터는 원본을 유지했습니다.'];
+      onProgress?.({completed:images.length,total:images.length,changed:0});abortIfNeeded(signal);return report;
+    }
+    masks=maskImages(doc,lib);
     onProgress?.({completed:0,total:images.length,changed:0,phase:'중복 이미지를 확인하는 중…'});
     // Repeated embedded assets are unified before any decoding or JPEG work.
     if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates=duplicate.count;report.resultImageBytes-=duplicate.bytes;images=images.filter(([ref])=>doc.context.lookup(ref) instanceof lib.PDFRawStream);masks=maskImages(doc,lib);}
@@ -472,6 +481,9 @@
       }
     }
     report.attempts=0;report.placementResized=0;report.targetBytes=targetBytes;
+    // Keep references, not source streams, across the whole conversion loop.
+    // Replacing an image can then release its old encoded buffer immediately.
+    images=images.map(([ref])=>ref);
     const skip = code => {
       report.skipped++;
       report.skipReasons[code] = (report.skipReasons[code] || 0) + 1;
@@ -479,7 +491,7 @@
     if (onProgress) onProgress({ completed: 0, total: images.length, changed: 0 });
     for (let i = 0; i < images.length; i++) {
       abortIfNeeded(signal);
-      const [ref, stream] = images[i];
+      const ref=images[i],stream=doc.context.lookup(ref);
       try {
         if (!settings.optimize && !isEnhanced(settings)) throw failure('noAction');
         if(masks.has(stream))throw failure('maskSource');
@@ -520,7 +532,7 @@
       await pause();
     }
     abortIfNeeded(signal);
-    if(settings.optimize){const duplicate=await deduplicateImages(doc,signal);report.duplicates+=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
+    if(settings.optimize&&report.changed){const duplicate=await deduplicateImages(doc,signal);report.duplicates+=duplicate.count;report.resultImageBytes-=duplicate.bytes;}
     report.notes = Object.keys(report.skipReasons).map(code => REASONS[code] || REASONS.decodeFailed);
     if(report.duplicates)report.notes.push('동일한 이미지 '+report.duplicates+'개를 공유하여 중복 데이터를 제거했습니다.');
     if(report.placementResized)report.notes.push('배치 크기에 맞춰 이미지 '+report.placementResized+'개의 해상도를 조정했습니다.');
