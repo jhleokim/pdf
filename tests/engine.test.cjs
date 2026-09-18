@@ -252,6 +252,17 @@ test('cancellation stops before mutation and unsupported streams are counted wit
   assert.equal(doc.context.lookup(ref), stream);
 });
 
+test('disabled image processing skips a thousand images without per-image work or timers',async()=>{
+ const doc=await P.PDFDocument.create();doc.addPage();const originals=[];
+ for(let i=0;i<1000;i++)originals.push(image(doc,{Filter:'JBIG2Decode',BitsPerComponent:1}));
+ await doc.flush();const progress=[],originalTimer=globalThis.setTimeout;let delays=0;
+ globalThis.setTimeout=(...args)=>{delays++;return originalTimer(...args);};
+ let result;try{result=await engine.processDocument(doc,{optimize:false},{onProgress:p=>progress.push(p)});}finally{globalThis.setTimeout=originalTimer;}
+ assert.equal(result.imageCount,1000);assert.equal(result.skipped,1000);assert.equal(result.changed,0);assert.equal(result.processed,0);
+ assert.equal(result.originalImageBytes,result.resultImageBytes);assert.equal(result.skipReasons.noAction,1000);assert.equal(delays,0);assert.equal(progress.length,1);assert.equal(progress[0].completed,1000);
+ for(const [ref,stream]of originals)assert.equal(doc.context.lookup(ref),stream);
+});
+
 test('grayscale transforms RGB pixels when optimization is off, without altering the source stream', async () => {
   let encodedPixels;
   globalThis.document={createElement(){

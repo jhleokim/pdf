@@ -105,8 +105,12 @@ function transferProToBasic(request){
     // Publish only after every page succeeds. Original pages remain in undo history.
     clearPreview();docs.clear();docs.set(docId,{name,libBytes:result.bytes.slice(),pdfjsDoc:pdf,kind:'pdf',color:SWATCH[(docSeq-1)%SWATCH.length],count:next.length});pdf=null;pages=next;
     resetTools();for(const id of proControlIds){const e=$(id);if(e.type==='checkbox')e.checked=false;else if(e.tagName==='SELECT')e.value=[...e.options].find(o=>o.defaultSelected)?.value||e.options[0].value;else e.value=e.defaultValue;}refreshProControls();
-    proInvalidate();displayProMode('basic');render();for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));previewUid=shown;syncCounts();await showPreview(pages.find(p=>p.uid===shown)||pages[0]);
+    proInvalidate();displayProMode('basic');render();for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));previewUid=shown;syncCounts();
     const after=captureEditHistory();snapshot.proTransfer=settings;after.proTransfer=captureProTransferSettings();editHistory.push(snapshot,after,'Pro 편집을 Basic에 반영');collectHistoryDocuments();syncHistoryControls();
+    // The document and undo transaction are committed before rendering. A
+    // failed preview must not report that the already-published edit was lost.
+    try{await showPreview(pages.find(p=>p.uid===shown)||pages[0]);}
+    catch(e){console.error(e);toast('Pro 편집은 반영됐지만 미리보기를 표시하지 못했습니다. 페이지를 다시 선택해 주세요.',true);return true;}
     toast('Pro 편집을 반영했습니다. Ctrl+Z로 전환 전 편집 상태를 복원할 수 있습니다.');return true;
    }catch(e){if(e.name!=='AbortError'){console.error(e);toast('Basic으로 전환하지 못했습니다. Pro 편집 내용은 유지됩니다.',true);}return false;}
    finally{if(pdf)await pdf.destroy().catch(()=>{});finishProWork();}
@@ -185,16 +189,26 @@ function startProWork(label){
 }
 function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);progress(0);syncProState();}
 async function verifyProText(before,after,signal,quiet=false,verification={}){
-  let a,b;
+  const tasks=[];
+  const check=()=>signal?.throwIfAborted();
+  const close=()=>Promise.allSettled(tasks.map(entry=>entry.closed||(entry.closed=Promise.resolve().then(()=>typeof entry.task.destroy==='function'?entry.task.destroy():entry.pdf?.destroy()))));
+  const abort=()=>{void close();};
+  async function load(bytes){
+    check();const entry={task:pdfjsLib.getDocument({data:bytes.slice(),...DOC_OPTS})};tasks.push(entry);
+    entry.pdf=await entry.task.promise;check();return entry.pdf;
+  }
   try{
-    a=await pdfjsLib.getDocument({data:before.slice(),...DOC_OPTS}).promise;
-    b=await pdfjsLib.getDocument({data:after.slice(),...DOC_OPTS}).promise;
+    check();signal?.addEventListener('abort',abort,{once:true});
+    const a=await load(before),b=await load(after);
     if(a.numPages!==b.numPages)throw new Error('결과의 페이지 수가 달라졌습니다.');
     let characters=0,checked=0,excludedItems=0,excludedCharacters=0,uncheckedPages=0,sourceCharacters=0;
     for(let i=1;i<=a.numPages;i++){
       if(signal?.aborted)throw new DOMException('취소했습니다.','AbortError');
-      const [ap,bp]=await Promise.all([a.getPage(i),b.getPage(i)]);
+      let ap,bp;
+      try{
+      ap=await a.getPage(i);check();bp=await b.getPage(i);check();
       const [at,bt]=await Promise.all([ap.getTextContent(),bp.getTextContent()]);
+      check();
       // Include invisible OCR; an added page number may append text.
       const original=at.items.map(x=>x.str||'').join('').replace(/\s/g,'');
       sourceCharacters+=original.length;
@@ -213,10 +227,12 @@ async function verifyProText(before,after,signal,quiet=false,verification={}){
       }
       checked++;
       if(!quiet){busy(true,`기존 텍스트 확인 중… ${i}/${a.numPages}`);progress(80+i/a.numPages*18);}
+      }finally{ap?.cleanup();bp?.cleanup();}
       await idle();
     }
     return {characters,checked,excludedItems,excludedCharacters,uncheckedPages,sourceCharacters};
-  }finally{await Promise.allSettled([a?.destroy(),b?.destroy()]);}
+  }catch(error){check();throw error;}
+  finally{signal?.removeEventListener('abort',abort);await close();}
 }
 function describeProSettings(o,report,deskew,offset){
   const applied=[];

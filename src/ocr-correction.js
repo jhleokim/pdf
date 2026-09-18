@@ -7,7 +7,18 @@
   function createDraft(records){if(!Array.isArray(records))throw new TypeError('교정할 인식 결과가 필요합니다.');return {original:copy(records),records:copy(records)};}
   function updateWord(draft,page,index,text){const word=draft.records[page]?.words?.[index];if(!word||draft.records[page].skipped)throw new RangeError('수정할 텍스트 영역이 없습니다.');word.text=singleLine(text);return word.text;}
   const wordChanged=(word,original)=>word.text!==original.text||word.separator!==original.separator;
-  function changedWords(draft){let count=0;draft.records.forEach((record,p)=>{if(record.skipped)return;if(record.words?.length)record.words.forEach((word,w)=>{if(wordChanged(word,draft.original[p].words[w]))count++;});else if(record.text!==draft.original[p].text)count++;});return count;}
+  function pageWordChanges(record,original){if(record.skipped)return 0;if(!record.words?.length)return Number(record.text!==original.text);let count=0;record.words.forEach((word,w)=>{if(wordChanged(word,original.words[w]))count++;});return count;}
+  function changedWords(draft){return draft.records.reduce((count,record,p)=>count+pageWordChanges(record,draft.original[p]),0);}
+  function createChangeTracker(draft){
+    const words=new Map(),estimated=draft.records.map(record=>record.correctionLines?.length||0);
+    let count=0,lineCount=estimated.reduce((sum,n)=>sum+n,0);
+    return {refresh(page){
+      const record=draft.records[page],next=pageWordChanges(record,draft.original[page]);
+      count+=next-(words.get(page)||0);words.set(page,next);
+      const lines=record.correctionLines?.length||0;lineCount+=lines-estimated[page];estimated[page]=lines;
+      return {count,estimated:lineCount};
+    }};
+  }
   function refreshTables(record){if(record.tables?.length&&globalThis.PDFOCRTables)record.tables=record.tables.map(table=>PDFOCRTables.refresh(table,record.words||[]));return record;}
   function changedTables(draft){return draft.records.reduce((count,record,p)=>count+(JSON.stringify(record.tables||[])!==JSON.stringify(draft.original[p].tables||[])?1:0),0);}
   function changedItems(draft){return changedWords(draft)+changedTables(draft);}
@@ -22,14 +33,14 @@
     clear(){entries=[];chars=0;},get size(){return entries.length;},get chars(){return chars;}
   });}
   function clipTraceParts(traces,axis,index,lo,hi){const along=axis==='x'?1:0,parts=[];for(const trace of traces||[]){if(trace.index!==index||!Array.isArray(trace.points)||trace.points.length<2)continue;const points=[...trace.points].sort((a,b)=>a[along]-b[along]),start=Math.max(lo,points[0][along]),end=Math.min(hi,points.at(-1)[along]);if(end<=start)continue;const at=value=>{for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i];if(a[along]<=value&&b[along]>=value){const t=(value-a[along])/Math.max(1e-9,b[along]-a[along]);return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];}}return [...points.at(-1)];};parts.push([at(start),...points.filter(point=>point[along]>start&&point[along]<end),at(end)]);}return parts;}
-  const data=Object.freeze({createDraft,updateWord,changedWords,changedTables,changedItems,refreshTables,materialize,boxOf,singleLine,boundaryPointerValue,checkTableReplacement,createTableHistory,clipTraceParts});
+  const data=Object.freeze({createDraft,updateWord,changedWords,createChangeTracker,changedTables,changedItems,refreshTables,materialize,boxOf,singleLine,boundaryPointerValue,checkTableReplacement,createTableHistory,clipTraceParts});
   let active=null;
   function open(options={}){
     if(active)return Promise.reject(new Error('텍스트 교정 창이 이미 열려 있습니다.'));
     const dialog=document.getElementById('ocrCorrectionDialog');
     if(!dialog||typeof dialog.showModal!=='function')return Promise.reject(new Error('텍스트 교정 창을 준비하지 못했습니다. 페이지를 다시 열어 주세요.'));
     if(!options.records?.length||typeof options.renderPage!=='function')return Promise.reject(new Error('교정할 페이지와 미리보기가 필요합니다.'));
-    const $=name=>document.getElementById('ocrCorrection'+name),draft=createDraft(options.records);
+    const $=name=>document.getElementById('ocrCorrection'+name),draft=createDraft(options.records),changeTracker=createChangeTracker(draft);
     const listeners=new AbortController(),savedFocus=document.activeElement;
     let page=Math.max(0,Math.min(draft.records.length-1,Number(options.initialIndex)||0)),zoom=1,selected=-1,closed=false,applying=false,renderSequence=0,renderAbort=null;
     let rendered=false;
@@ -46,7 +57,7 @@
     const motion=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
     function scrollNear(container,node){if(!node)return;const c=container.getBoundingClientRect(),n=node.getBoundingClientRect();let top=container.scrollTop,left=container.scrollLeft;if(n.top<c.top+12)top-=c.top+12-n.top;else if(n.bottom>c.bottom-12)top+=n.bottom-c.bottom+12;if(n.left<c.left+12)left-=c.left+12-n.left;else if(n.right>c.right-12)left+=n.right-c.right+12;container.scrollTo({top,left,behavior:motion()});}
     function grow(input){input.style.height='auto';input.style.height=Math.min(220,Math.max(29,input.scrollHeight+2))+'px';}
-    function refreshChanges(){if(JSON.stringify(draft.records[page].tables||[])===tableOriginalSignatures[page])tableDirtyPages.delete(page);else tableDirtyPages.add(page);const count=changedWords(draft),tables=tableDirtyPages.size,estimated=draft.records.reduce((n,r)=>n+(r.correctionLines?.length||0),0);$('Changes').textContent=(count||tables?[count?`${count}개 텍스트 영역 수정`:'',tables?`${tables}개 페이지의 표 변경`:''].filter(Boolean).join(' · ')+' · 적용 전':'수정한 영역 없음')+(estimated?` · 크게 고친 ${estimated}개 줄은 글줄 범위로 저장`:'');$('Apply').disabled=!(count||tables)||applying||tableBusy||!!cellProposal;}
+    function refreshChanges(){if(JSON.stringify(draft.records[page].tables||[])===tableOriginalSignatures[page])tableDirtyPages.delete(page);else tableDirtyPages.add(page);const {count,estimated}=changeTracker.refresh(page),tables=tableDirtyPages.size;$('Changes').textContent=(count||tables?[count?`${count}개 텍스트 영역 수정`:'',tables?`${tables}개 페이지의 표 변경`:''].filter(Boolean).join(' · ')+' · 적용 전':'수정한 영역 없음')+(estimated?` · 크게 고친 ${estimated}개 줄은 글줄 범위로 저장`:'');$('Apply').disabled=!(count||tables)||applying||tableBusy||!!cellProposal;}
     function showError(message){$('Error').textContent=message||'';$('Error').hidden=!message;}
     function focusWord(index,fromBox=false,scrollImage=true){
       const lineIndex=index<0?-1:wordLines.get(index),field=fieldNodes.get(lineIndex);if(!field)return;

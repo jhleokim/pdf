@@ -73,7 +73,7 @@ function toast(msg, isErr){
   clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3400);
 }
 const progress = p => { $('bar').style.width = (p <= 0 || p >= 100 ? 0 : p) + '%'; globalThis.PDFWorkProgress?.update(p); };
-const busy = (on, label) => { $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); syncLeaveWarning(); if(on)globalThis.PDFWorkProgress?.start();else globalThis.PDFWorkProgress?.stop(); };
+const busy = (on, label) => { const wasBusy=document.body.classList.contains('is-busy'); $('busyText').textContent = label || '처리 중…'; $('busy').classList.toggle('on', !!on); document.body.classList.toggle('is-busy',!!on); syncLeaveWarning(); if(on&&!wasBusy)globalThis.PDFWorkProgress?.start();else if(!on&&wasBusy)globalThis.PDFWorkProgress?.stop(); };
 const buzz = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(_){} };
 
 /* ════════════════════════════════════════════════════════════
@@ -126,54 +126,64 @@ async function imageToPdfBytes(file){
   return doc.save({ useObjectStreams: true });
 }
 
+let importController=null;
 async function loadFiles(fileList){
-  if(document.body.classList.contains('is-busy')) return;
-  const all = [...fileList];
-  const files = all.filter(f => isPdf(f) || isImage(f));
-  if(!files.length){ toast('PDF 또는 이미지 파일만 추가할 수 있습니다', true); return; }
-  if(files.length < all.length) toast(`지원하지 않는 파일 ${all.length - files.length}개는 건너뜁니다`, true);
-  if(typeof textUpdate!=='undefined')await textUpdate;
-  if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
-  const history=typeof captureEditHistory==='function'?captureEditHistory():null;
-
-  busy(true, '문서를 읽는 중…');
-  await idle();
-  for(const file of files){
-    try{
-      const image = !isPdf(file) && isImage(file);
-      busy(true, `${file.name} — ${image ? '사진을 페이지로 변환 중…' : '여는 중…'}`);
-      await idle();
-
-      const raw = image ? await imageToPdfBytes(file) : new Uint8Array(await file.arrayBuffer());
-      const libBytes = raw.slice(0);           // pdf.js가 원본 버퍼를 가져가므로 사본 확보
-      const pdf = await pdfjsLib.getDocument({ data: raw, ...DOC_OPTS }).promise;
-
-      const docId = 'd' + (++docSeq);
-      docs.set(docId, { name: file.name, libBytes, pdfjsDoc: pdf, kind: image ? 'image' : 'pdf',
-        color: SWATCH[(docSeq - 1) % SWATCH.length], count: pdf.numPages });
-
-      for(let i = 1; i <= pdf.numPages; i++){
-        const sourcePage=await pdf.getPage(i),size=sourcePage.getViewport({scale:1});
-        const canvas=null,thumbRatio=size.width/size.height;
-        pages.push({ thumbRatio, uid: 'p' + (++uidSeq), docId, srcIndex: i - 1, rotation: 0, canvas });
-        origCount++;
-        if(pdf.numPages > 1) busy(true, `${file.name} — ${i}/${pdf.numPages}페이지`);
-        progress(i / pdf.numPages * 100);
-        if(i % 4 === 0) await idle();          // 메인스레드 양보 (UI 멈춤 방지)
+  if(importController||document.body.classList.contains('is-busy'))return;
+  const all=[...fileList],files=all.filter(f=>isPdf(f)||isImage(f));
+  if(!files.length){toast('PDF 또는 이미지 파일만 추가할 수 있습니다',true);return;}
+  if(files.length<all.length)toast(`지원하지 않는 파일 ${all.length-files.length}개는 건너뜁니다`,true);
+  const controller=new AbortController(),signal=controller.signal;importController=controller;
+  const cancel=$('busyCancel');
+  let history=null,started=false,priorCancel,priorHidden,priorDisabled;
+  try{
+    if(typeof textUpdate!=='undefined')await textUpdate;
+    if(document.body.classList.contains('is-busy')||(typeof finishTextEdit==='function'&&!finishTextEdit(true)))return;
+    history=typeof captureEditHistory==='function'?captureEditHistory():null;
+    priorCancel=cancel.onclick;priorHidden=cancel.hidden;priorDisabled=cancel.disabled;
+    busy(true,'문서를 읽는 중…');started=true;cancel.hidden=false;cancel.disabled=false;
+    cancel.onclick=()=>{controller.abort();$('busyText').textContent='불러오기를 취소하는 중…';};
+    await idle();
+    for(let fileIndex=0;fileIndex<files.length;fileIndex++){
+      const file=files[fileIndex];let loading=null,pdf=null,committed=false;
+      const abort=()=>{void loading?.destroy().catch(()=>{});};
+      try{
+        signal.throwIfAborted();
+        const image=!isPdf(file)&&isImage(file);
+        busy(true,`${file.name} — ${image?'사진을 페이지로 변환 중…':'여는 중…'}`);await idle();
+        const raw=image?await imageToPdfBytes(file):new Uint8Array(await file.arrayBuffer());signal.throwIfAborted();
+        const libBytes=raw.slice(0);
+        loading=pdfjsLib.getDocument({data:raw,...DOC_OPTS});signal.addEventListener('abort',abort,{once:true});pdf=await loading.promise;
+        const entries=[];
+        for(let i=1;i<=pdf.numPages;i++){
+          signal.throwIfAborted();const sourcePage=await pdf.getPage(i),size=sourcePage.getViewport({scale:1});
+          entries.push({thumbRatio:size.width/size.height,uid:'p'+(++uidSeq),srcIndex:i-1,rotation:0,canvas:null});
+          if(pdf.numPages>1)busy(true,`${file.name} — ${i}/${pdf.numPages}페이지`);
+          progress((fileIndex+i/pdf.numPages)/files.length*100);if(i%4===0)await idle();
+        }
+        signal.throwIfAborted();
+        // Commit a complete readable file; cancellation or a corrupt later
+        // page must not leave a silently truncated document in the workspace.
+        const docId='d'+(++docSeq);
+        docs.set(docId,{name:file.name,libBytes,pdfjsDoc:pdf,kind:image?'image':'pdf',color:SWATCH[(docSeq-1)%SWATCH.length],count:pdf.numPages});
+        for(const p of entries){p.docId=docId;pages.push(p);}origCount+=entries.length;committed=true;
+      }catch(e){
+        if(signal.aborted)break;
+        console.error(e);const m=e?.message||'';
+        const msg=/password/i.test(m)?'암호가 설정된 파일입니다':/디코딩/.test(m)?'이미지를 읽을 수 없습니다':'손상되었거나 읽을 수 없는 파일입니다';
+        toast(`${file.name} — ${msg}`,true);
+      }finally{
+        signal.removeEventListener('abort',abort);if(!committed)await loading?.destroy().catch(()=>{});
       }
-    }catch(e){
-      console.error(e);
-      const m = e && e.message || '';
-      const msg = /password/i.test(m) ? '암호가 설정된 파일입니다'
-        : /디코딩/.test(m) ? '이미지를 읽을 수 없습니다'
-        : '손상되었거나 읽을 수 없는 파일입니다';
-      toast(`${file.name} — ${msg}`, true);
+    }
+  }finally{
+    try{
+      if(started){render();if(pages.length&&!previewUid)void showPreview(pages[0]);if(typeof commitEditHistory==='function')commitEditHistory(history,'파일 추가');}
+    }finally{
+      if(started){busy(false);progress(0);if(signal.aborted)toast('불러오기를 취소했습니다. 완료된 파일과 기존 편집은 유지됩니다.');}
+      if(started){cancel.onclick=priorCancel;cancel.hidden=priorHidden;cancel.disabled=priorDisabled;}
+      importController=null;
     }
   }
-  busy(false); progress(0);
-  render();
-  if(pages.length && !previewUid) showPreview(pages[0]);
-  if(typeof commitEditHistory==='function')commitEditHistory(history,'파일 추가');
 }
 
 async function renderThumb(pdf, pageNo, maxWidth=300){
@@ -184,8 +194,9 @@ async function renderThumb(pdf, pageNo, maxWidth=300){
   const vp = page.getViewport({ scale });
   const canvas = document.createElement('canvas');
   canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
-  await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-  return canvas;
+  try{await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;return canvas;}
+  catch(error){canvas.width=canvas.height=0;throw error;}
+  finally{page.cleanup();}
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -193,7 +204,7 @@ async function renderThumb(pdf, pageNo, maxWidth=300){
    ════════════════════════════════════════════════════════════ */
 function render(){
   syncLeaveWarning();
-  const has = pages.length > 0 || docs.size > 0;
+  const has = pages.length > 0;
   $('empty').hidden = has;
   $('boardWrap').hidden = !has;
   $('previewPanel').hidden = !has;
@@ -412,7 +423,7 @@ async function showPreview(p){
   c.style.height = Math.floor(vp.height / dpr) + 'px';
   const task=page.render({canvasContext:c.getContext('2d'),viewport:vp});pvRenderTask=task;
   try{await task.promise;}catch(e){c.width=c.height=0;if(my!==pvToken||e.name==='RenderingCancelledException')return;throw e;}
-  finally{if(pvRenderTask===task)pvRenderTask=null;}
+  finally{if(pvRenderTask===task)pvRenderTask=null;page.cleanup();}
   if(my !== pvToken){c.width=c.height=0;return;}
   const old=$('pvCanvas');c.setAttribute('aria-label',old.getAttribute('aria-label')||'페이지 미리보기');old.replaceWith(c);old.width=old.height=0;
 
@@ -757,9 +768,9 @@ async function insertBlankPage(options={}){
     pages.splice(at,0,page);render();
     page.el.classList.add('selected');lastClicked=at;syncCounts();
     if(positions)animateBoardFrom(positions,page.uid);
-    await showPreview(page);
-    page.el.scrollIntoView({block:'nearest',inline:'nearest'});
     if(typeof commitEditHistory==='function')commitEditHistory(history,'빈 페이지 추가');
+    try{await showPreview(page);}catch(e){console.error(e);toast('빈 페이지는 추가됐습니다. 미리보기를 다시 열어 주세요.',true);return;}
+    page.el.scrollIntoView({block:'nearest',inline:'nearest'});
     toast(`${at+1}번에 빈 페이지를 추가했습니다`);
   }catch(e){
     if(pdf)await pdf.destroy().catch(()=>{});
@@ -767,6 +778,7 @@ async function insertBlankPage(options={}){
   }finally{busy(false);}
 }
 function remove(list){
+  if(document.body.classList.contains('is-busy'))return;
   if(!list.length) return;
   if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>remove(list)))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
@@ -783,6 +795,7 @@ function remove(list){
   if(typeof commitEditHistory==='function')commitEditHistory(history,'페이지 삭제');
 }
 function rotate(list, deg){
+  if(document.body.classList.contains('is-busy'))return;
   if(!list.length) return;
   if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>rotate(list,deg)))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
@@ -799,6 +812,7 @@ function rotate(list, deg){
 
 /* ── 순서 변경 공통 커밋 ── */
 function commitMove(uids, anchorUid, positions=captureBoardPositions()){
+  if(document.body.classList.contains('is-busy'))return;
   if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>commitMove(uids,anchorUid)))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const set = new Set(uids);
@@ -1260,6 +1274,7 @@ $('btnRotL').onclick = $('mbRotL').onclick = () => rotate(selected(), -90);
 $('btnRotR').onclick = $('mbRotR').onclick = () => rotate(selected(), 90);
 $('btnSave').onclick = $('mbSave').onclick = save;
 $('btnReset').onclick = () => {
+  if(document.body.classList.contains('is-busy'))return;
   if(!confirm('불러온 문서와 편집 내용을 모두 지웁니다. 계속할까요?')) return;
   if(typeof releasePrintJob==='function')releasePrintJob();
   if(typeof clearEditHistory==='function')clearEditHistory();
