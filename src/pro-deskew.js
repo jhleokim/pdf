@@ -105,7 +105,7 @@
     page.resetPosition();
     return true;
   }
-  async function processDocument(doc,options,{signal,docOptions={},pageOffset=0,pageIds=[],deskewCache,deskewKeys=[],onProgress}={}){
+  async function processDocument(doc,options,{signal,docOptions={},pageOffset=0,pageIndices=[],pageIds=[],deskewCache,deskewKeys=[],onProgress}={}){
     const report={changed:0,pages:[]};
     const overrides=options.deskewAngles||{},own=(o,k)=>k!==undefined&&Object.prototype.hasOwnProperty.call(o,k);
     const cache=deskewCache instanceof Map?deskewCache:null;
@@ -128,8 +128,8 @@
     // Manual 0 means keep this page level as supplied, rather than run detection.
     const plans=doc.getPages().map((page,i)=>{
       const pageId=pageIds[i],manual=own(overrides,pageId),angle=manual?overrides[pageId]:undefined;
-      if(manual&&(!Number.isFinite(angle)||Math.abs(angle)>60))throw new Error(`${pageOffset+i+1}페이지: 회전 각도는 −60°부터 +60°까지 입력해 주세요.`);
-      if(manual&&angle&&page.node.Annots()?.size())throw new Error(`${pageOffset+i+1}페이지: 링크·주석·양식이 있어 위치를 보존해야 하므로 기울기를 변경할 수 없습니다. 이 페이지를 자동 또는 0°로 되돌려 주세요.`);
+      if(manual&&(!Number.isFinite(angle)||Math.abs(angle)>60))throw new Error(`${(pageIndices[i]??pageOffset+i)+1}페이지: 회전 각도는 −60°부터 +60°까지 입력해 주세요.`);
+      if(manual&&angle&&page.node.Annots()?.size())throw new Error(`${(pageIndices[i]??pageOffset+i)+1}페이지: 링크·주석·양식이 있어 위치를 보존해야 하므로 기울기를 변경할 수 없습니다. 이 페이지를 자동 또는 0°로 되돌려 주세요.`);
       return {page,pageId,manual,angle};
     });
     if(!options.deskew&&!plans.some(p=>p.manual))return report;
@@ -178,7 +178,7 @@
           rotation:r,userUnit:PDFProDocument.unit(page)});
         result.changed=!!result.angle&&apply(page,result.angle,{cropCorners});
         if(result.changed)report.changed++;
-        report.pages.push({page:pageOffset+i+1,pageId,...result});
+        report.pages.push({page:(pageIndices[i]??pageOffset+i)+1,pageId,...result});
         onProgress?.((i+1)/plans.length);
         await new Promise(resolve=>setTimeout(resolve,0));
       }

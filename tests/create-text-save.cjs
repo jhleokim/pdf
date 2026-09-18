@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),root=path.resolve(__dirname,'..');
 const offline=process.argv.includes('--standalone'),name=offline?'text-save-standalone':'text-save';
 const input=offline?'dist/PDF-Studio-Standalone-v'+fs.readFileSync(path.join(root,'VERSION'),'utf8').trim()+'.html':'index.html';
-const html=fs.readFileSync(path.join(root,input),'utf8').replace('<head>','<head><meta http-equiv="Content-Security-Policy" content="connect-src blob: data:">');
+const html=fs.readFileSync(path.join(root,input),'utf8').replace('<head>',`<head><meta http-equiv="Content-Security-Policy" content="connect-src ${offline?'':"'self' "}blob: data:">`);
 const code=fs.readFileSync(path.join(__dirname,'text-save-browser.js'),'utf8');
 fs.mkdirSync(path.join(__dirname,'fixtures'),{recursive:true});
 fs.writeFileSync(path.join(__dirname,'fixtures',name+'.html'),html.replace('</body>','<output id="textSaveChecks" style="position:fixed;left:8px;bottom:4px;z-index:99999;background:white;color:black;white-space:pre-wrap;font:11px monospace">Running</output><script>'+code+'</script></body>'));

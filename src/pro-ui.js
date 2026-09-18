@@ -12,11 +12,10 @@ function proInvalidate(message){
   if(message) $('proStatus').textContent=message;
 }
 function syncProAction(){
-  const ready=!!proResult;
-  $('proExportLabel').textContent=ready?'PDF 다운로드':'결과 만들기';
+  $('proExportLabel').textContent='PDF 저장';
   if(proMode==='pro'){
-    $('btnSave').querySelector('span').textContent=ready?'PDF 다운로드':'Pro 결과 만들기';
-    $('btnSave').title=ready?'완성된 PDF를 다운로드합니다':'현재 Pro 설정으로 결과를 만듭니다';
+    $('btnSave').querySelector('span').textContent='PDF 저장';
+    $('btnSave').title='저장할 페이지와 파일 이름을 선택합니다';
   }
 }
 function syncProState(){
@@ -120,7 +119,7 @@ function proNumberInput(id,min,max,integer=false){
   }
   return n;
 }
-function readProOptions(strict=false){
+function readProOptions(strict=false,sourcePages=pages){
   if(strict&&typeof validateDeskewInput==='function')validateDeskewInput();
   if(strict&&$('proOptimize').checked&&$('proCompressionMode').value==='preserve'&&$('proTargetMB').value&&!$('proTargetMB').checkValidity())throw Error('목표 용량은 0.1~2,000 MB 사이로 입력해 주세요.');
   const crop=$('proCrop').checked, number=$('proNumber').checked;
@@ -136,7 +135,7 @@ function readProOptions(strict=false){
     skipPages:number?proNumberInput('proSkipPages',0,99999,true):0,
     numberPosition:$('proNumberPosition').value,watermark:$('proWatermark').value.trim().slice(0,40)
   };
-  return typeof readToolOptions==='function'&&typeof toolsRevision!=='undefined'?readToolOptions(options,strict):options;
+  return typeof readToolOptions==='function'&&typeof toolsRevision!=='undefined'?readToolOptions(options,strict,sourcePages):options;
 }
 function refreshProControls(){
   $('proBWThresholdValue').value=$('proBWThreshold').value;
@@ -185,12 +184,6 @@ function startProWork(label){
   busy(true,label);syncProState();
 }
 function finishProWork(){proAbort=null;$('busyCancel').hidden=true;busy(false);progress(0);syncProState();}
-async function processProDoc(doc,options,pageOffset){
-  const signal=proAbort.signal;
-  checkProAbort();
-  const result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset,pageIds:pages.map(p=>p.uid),...(typeof deskewCallbacks==='function'?deskewCallbacks(pages):{}),onProgress:(n,label)=>{progress(20+n*58);busy(true,label);}});
-  checkProAbort();return {...result.report,outputDoc:result.doc,settings:describeProSettings(options,result.report,result.report.deskew)};
-}
 async function verifyProText(before,after,signal,quiet=false,verification={}){
   let a,b;
   try{
@@ -274,28 +267,28 @@ function proSummary(report,textCheck){
   if(report.notes?.length)lines.push(...report.notes);
   return lines.join('\n');
 }
-async function createProResult({reveal=true}={}){
-  if(!pages.length||document.body.classList.contains('is-busy'))return;
-  let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
-  if(typeof confirmDocumentExport==='function'&&!await confirmDocumentExport())return;
-  proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
-  try{
-    const edited=await buildEditedDocument(pages,{signal:proAbort.signal});checkProAbort();
-    const fingerprint=proFingerprint();
-    const original=PDFProResult.unchangedSource(pages,docs);
+async function buildProExport(list,options,{signal,pageIndices=[],quiet=true,onProgress=()=>{}}={}){
+  if(!list.length)throw new Error('저장할 페이지를 선택해 주세요.');
+  const check=()=>signal?.throwIfAborted();check();
+    const edited=await buildEditedDocument(list,{signal,onProgress:(n,total)=>onProgress(n/total*20,'편집 내용 반영 '+n+' / '+total+'페이지')});check();
+    const original=PDFProResult.unchangedSource(list,docs);
     const before=await edited.save({useObjectStreams:true,updateFieldAppearances:false});
     // Reload the baseline so new marks cannot reuse cached, already-saved
     // content streams created while baking the user's Basic annotations.
-    const doc=PDFPrivacy.inherit(await PDFLib.PDFDocument.load(before),edited);checkProAbort();
-    const report=await processProDoc(doc,options,0);
-    const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(pages);
-    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,pages,{signal:proAbort.signal,ocr:options.ocr,ocrApplied:true,onText:text=>{report.privateText=text;},onProgress:(n,total)=>{busy(true,'개인정보 영구 삭제 '+n+' / '+total+'페이지');progress(n/total*95);}});report.privateExport=true;}
-    const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});checkProAbort();
+    const doc=PDFPrivacy.inherit(await PDFLib.PDFDocument.load(before),edited);check();
+    const applied=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageIds:list.map(p=>p.uid),pageIndices,...(typeof deskewCallbacks==='function'?deskewCallbacks(list):{}),onProgress:(n,label)=>onProgress(20+n*58,label)});check();
+    const report={...applied.report,outputDoc:applied.doc,settings:describeProSettings(options,applied.report,applied.report.deskew)};
+    const masked=typeof PDFPrivacy!=='undefined'&&PDFPrivacy.isMasked(list);
+    if(masked){report.outputDoc=await finalizePrivateExport(report.outputDoc,list,{signal:signal,ocr:options.ocr,ocrApplied:true,onText:text=>{report.privateText=text;},onProgress:(n,total)=>{onProgress(n/total*95,'개인정보 영구 삭제 '+n+' / '+total+'페이지');}});report.privateExport=true;}
+    const candidate=await report.outputDoc.save({useObjectStreams:true,updateFieldAppearances:false});check();
     // A reference for size reporting never authorizes falling back to the
     // original document after redaction.
-    const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,masked?PDFProResult.sourceReference(pages,docs):original);
+    const result=PDFProResult.selectOutput(before,candidate,masked?{...options,rasterize:true,optimize:false}:options,masked?PDFProResult.sourceReference(list,docs):original);
     const bytes=result.bytes;
-    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,proAbort.signal,false,{deskew:report.deskew,options});checkProAbort();
+    const textCheck=report.rasterized&&!result.retained?{rasterized:true,characters:0}:await verifyProText(before,bytes,signal,quiet,{deskew:report.deskew,options});check();
+    return {bytes,report,result,textCheck,masked};
+}
+function publishProExport({bytes,report,result,textCheck,masked},options,fingerprint,reveal=false){
     const hasPageEffects=!result.retained&&!!(masked||report.changed||report.stamps||report.ocr?.pages||report.deskew?.changed||options.number||options.watermark||options.paper!=='original'||options.crop&&options.margins.some(n=>n>0));
     const {outputDoc,...previewReport}=report;
     proResult={bytes,fingerprint,hasPageEffects,report:previewReport};
@@ -317,6 +310,16 @@ async function createProResult({reveal=true}={}){
     $('proStatus').textContent='결과를 확인하고 다운로드하세요.';
     if(reveal)$('proResult').scrollIntoView({behavior:'smooth',block:'nearest'});
     return proResult;
+}
+async function createProResult({reveal=true}={}){
+  if(!pages.length||document.body.classList.contains('is-busy'))return;
+  let options;try{options=readProOptions(true);}catch(e){toast(e.message,true);return;}
+  if(typeof confirmDocumentExport==='function'&&!await confirmDocumentExport())return;
+  proInvalidate();startProWork('편집본을 준비하는 중…');await idle();
+  try{
+    const fingerprint=proFingerprint();
+    const {bytes,report,result,textCheck,masked}=await buildProExport(pages,options,{signal:proAbort.signal,quiet:false,onProgress:(n,label)=>{progress(n);busy(true,label);}});checkProAbort();
+    return publishProExport({bytes,report,result,textCheck,masked},options,fingerprint,reveal);
   }catch(e){
     if(e.name==='AbortError')toast('작업을 취소했습니다. 편집 중인 문서는 유지됩니다.');
     else{console.error(e);toast(e.message||'Pro 결과를 만들지 못했습니다.',true);$('proStatus').textContent=e.message;}
@@ -334,12 +337,9 @@ $('proOpen').onclick=()=>pickFiles(false);
 $('proPreset').onchange=()=>{const p=proPresets[$('proPreset').value];$('proResolution').value=p.resolution;$('proQuality').value=p.quality;refreshProControls();proInvalidate();if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();};
 for(const id of proControlIds)$(id).addEventListener('input',()=>{refreshProControls();proInvalidate('설정이 바뀌었습니다. 결과를 다시 만들어 주세요.');if(typeof syncToolsState==='function')syncToolsState();scheduleLivePreview();});
 $('proReset').onclick=resetProOptions;$('proExport').onclick=proPrimaryAction;$('proPreview').onclick=()=>setLivePreviewOpen(isCompactPro()?true:!proPreviewOpen);
-function proPrimaryAction(){return proResult?downloadProResult():createProResult();}
+function proPrimaryAction(){return openBasicSaveDialog();}
 function downloadProResult(){
-  if(!proResult)return;
-  if(proResult.fingerprint!==proFingerprint()){proInvalidate();syncProState();toast('편집 내용이 바뀌었습니다. 결과를 다시 만들어 주세요.',true);return;}
-  const name=pdfFilename($('proFilename').value);if(!name){$('proFilename').focus();toast('파일 이름을 입력해 주세요.',true);return;}
-  downloadPdf(proResult.bytes,name+'.pdf');toast('Pro 결과 PDF 다운로드를 시작했습니다');
+  return openBasicSaveDialog();
 }
 $('proDownload').onclick=downloadProResult;
 const proAddFiles=document.createElement('button');proAddFiles.id='proAddFiles';proAddFiles.className='btn pro-add-files';proAddFiles.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span>파일 추가</span>';proAddFiles.setAttribute('aria-label','PDF 또는 사진 추가');proAddFiles.title='PDF 또는 사진 추가';proAddFiles.onclick=()=>pickFiles(false);document.querySelector('.tools').prepend(proAddFiles);

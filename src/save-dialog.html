@@ -1,6 +1,11 @@
 <dialog id="basicSaveDialog" class="pdf-save-dialog" aria-labelledby="basicSaveTitle" aria-describedby="basicSaveSummary">
   <header class="pdf-save-head"><div class="pdf-save-heading"><span class="pdf-save-mark"><svg class="ic"><use href="#i-file"/></svg></span><div><h2 id="basicSaveTitle">PDF 저장</h2><p id="basicSaveSummary"></p></div></div><button class="btn quiet icon" id="basicSaveClose" aria-label="저장 창 닫기"><svg class="ic"><use href="#i-x"/></svg></button></header>
   <div class="pdf-save-body">
+    <fieldset class="pdf-save-scope"><legend>저장 범위</legend>
+      <label><input type="radio" name="pdfSaveScope" id="basicSaveAll" value="all" checked><span>전체 페이지</span><small id="basicSaveAllCount"></small></label>
+      <label><input type="radio" name="pdfSaveScope" id="basicSaveSelected" value="selected"><span>선택한 페이지</span><small id="basicSaveSelectedCount"></small></label>
+    </fieldset>
+    <p id="basicSavePages" class="pdf-save-pages"></p>
     <label class="pdf-filename-label" for="basicSaveFilename">파일 이름</label>
     <div class="pdf-filename"><input id="basicSaveFilename" type="text" maxlength="100" autocomplete="off" spellcheck="false" aria-describedby="basicFilenameError"><span>.pdf</span></div>
     <p id="basicFilenameError" class="pdf-save-error" role="alert"></p>

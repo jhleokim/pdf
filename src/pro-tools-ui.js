@@ -72,11 +72,11 @@ function currentStamp(){
     x:proNumberInput('stampX',0,2000),y:proNumberInput('stampY',0,2000),width:proNumberInput('stampWidth',3,300),opacity:proNumberInput('stampOpacity',5,100)/100};
 }
 function ocrKey(p,o){return JSON.stringify([PADDLE_MODEL_CACHE_TAG,p.uid,p.docId,p.srcIndex,p.rotation,p.annots||[],o.deskewAngles?.[p.uid],o.deskewCropByPage?.[p.uid]===true,['optimize','maxDimension','jpegQuality','blackWhite','bwThreshold','contrast','whitePoint','rasterize','deskew','crop','margins','paper'].map(k=>o[k])]);}
-function readToolOptions(o,strict=false){
+function readToolOptions(o,strict=false,sourcePages=pages){
   if(strict&&typeof reviewStampPending==='function'&&reviewStampPending())throw new Error('스탬프 문구·색상을 반영하고 있습니다. 잠시 후 다시 시도하세요.');
   const mark=currentStamp();o.stamps=[...stampMarks,...(mark?[mark]:[])];
-  const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,pages.find(p=>p.uid===r.uid),o));
-  const stale=ocrRecords.some(r=>pages.some(p=>p.uid===r.uid)&&!valid.includes(r));
+  const valid=ocrRecords.filter(r=>ocrRecordCurrent(r,sourcePages.find(p=>p.uid===r.uid),o));
+  const stale=ocrRecords.some(r=>sourcePages.some(p=>p.uid===r.uid)&&!valid.includes(r));
   if(strict&&ocrAccepted&&stale)throw new Error('OCR 후 페이지 또는 보정 설정이 바뀌었습니다. 텍스트 인식에서 다시 인식하거나 결과를 지워 주세요.');
   o.ocr=ocrAccepted?valid.filter(ocrCanEmbed).map(r=>({...r,words:r.words.filter(w=>w.text?.trim())})):[];return o;
 }

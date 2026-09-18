@@ -16,6 +16,12 @@
 .pdf-save-result[data-phase=downloaded]{border-color:var(--accent-line);background:var(--accent-wash)}
 .pdf-save-note{font-size:11px;line-height:1.6;color:var(--ink-3);margin:12px 0 0}.pdf-save-error{font-size:12px;line-height:1.6;color:var(--danger);margin:7px 0 0}.pdf-save-error:empty{display:none}
 .pdf-save-actions{display:flex;justify-content:flex-end;gap:8px;padding:15px 22px 20px}.pdf-save-actions .btn{height:39px}.pdf-save-actions .primary{min-width:148px}
+.pdf-save-scope{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:0;padding:0;margin:0 0 8px;min-width:0}
+.pdf-save-scope legend{padding:0;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.pdf-save-scope label{display:flex;align-items:center;gap:6px;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:5px;cursor:pointer;font-size:12px;min-width:0}
+.pdf-save-scope label:has(:checked){border-color:var(--accent);background:var(--accent-wash)}
+.pdf-save-scope label:has(:disabled){opacity:.5;cursor:default}.pdf-save-scope input{margin:0;accent-color:var(--accent);flex:none}
+.pdf-save-scope small{margin-left:auto;color:var(--ink-2);white-space:nowrap}.pdf-save-pages{margin:0 0 17px;color:var(--ink-2);font-size:11px;line-height:1.5;max-height:54px;overflow:auto;overflow-wrap:anywhere}
 @keyframes save-preparing{from{transform:translateX(-110%)}to{transform:translateX(390%)}}
 @keyframes save-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:880px){
