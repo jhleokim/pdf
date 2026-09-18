@@ -302,6 +302,7 @@ function makeCard(p, idx){
       <span class="acts">
         <button class="icon-btn" data-act="rot" title="오른쪽 회전"><svg class="ic"><use href="#i-rot-r"/></svg></button>
         <button class="icon-btn del" data-act="del" title="삭제"><svg class="ic"><use href="#i-trash"/></svg></button>
+        <button type="button" class="icon-btn" data-act="menu" title="페이지 작업" aria-label="${idx+1}페이지 작업" aria-haspopup="menu" aria-expanded="false"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></button>
       </span>
     </div>`;
   // Keep the imported raster immutable; rotate a display copy and layer the

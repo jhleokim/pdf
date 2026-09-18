@@ -56,7 +56,7 @@ async function prepareBasicSave(state){
     console.error(e);
   }finally{if(active())syncBasicSaveAction();}
 }
-async function openBasicSaveDialog(){
+async function openBasicSaveDialog({scope='all'}={}){
   const dialog=$('basicSaveDialog');if(dialog.open)return basicSaveState?.pending;
   if(!pages.length||document.body.classList.contains('is-busy'))return;
   if(typeof textUpdate!=='undefined')await textUpdate;
@@ -70,7 +70,7 @@ async function openBasicSaveDialog(){
   $('basicSaveSelected').disabled=!chosen.size;
   if(mode==='pro')cancelLivePreview();
   dialog.showModal();$('basicSaveFilename').focus();$('basicSaveFilename').select();
-  return changeBasicSaveScope('all');
+  return changeBasicSaveScope(scope);
 }
 function savePageRange(indices){
   const ranges=[];let start,end;
