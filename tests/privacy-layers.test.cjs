@@ -60,12 +60,59 @@ test('ordinary subset and repeated-page builds reuse the loaded no-layer source 
  const copies=await h.build([row('plain',0,1),row('plain',0,2)]);assert.equal(copies.getPageCount(),2);assert.equal(h.loads,2,'No second parse is added by either safety check');assert.equal(h.copies,3);
 });
 
-for(const mode of ['subset','repeated','merged'])test('unmasked '+mode+' builds reject optional layers before copying their content',async()=>{
+for(const mode of ['repeated','merged'])test('unmasked '+mode+' builds reject optional layers before copying their content',async()=>{
  const layeredDoc=await layered(),plain=await P.PDFDocument.create();plain.addPage();
  const source={libBytes:await layeredDoc.save(),count:2},h=buildClient(new Map([['layered',source],['plain',{libBytes:await plain.save(),count:1}]]));
  const rows=[row('layered',0,1)];if(mode==='repeated')rows.push(row('layered',0,2));if(mode==='merged')rows.push(row('plain',0,2));
  await assert.rejects(h.build(rows),error=>error.code==='PRIVACY_OPTIONAL_CONTENT'&&error.message.includes('필요한 레이어만'));
  assert.equal(h.copies,0);assert.equal(h.loads,1,'Guard uses the already parsed original source');assert.equal(await text(source.libBytes),'PUBLIC\n\n');
+});
+
+test('an unmasked subset preserves OFF layers with the same catalog and page references',async()=>{
+ const original=await layered(),source={libBytes:await original.save(),count:2},h=buildClient(new Map([['layered',source]]));
+ const out=await h.build([row('layered',0,1)]),bytes=await out.save(),reloaded=await P.PDFDocument.load(bytes);
+ const config=reloaded.catalog.lookup(N('OCProperties')),layer=config.lookup(N('OCGs')).get(0);
+ assert.equal(config.lookup(N('D')).lookup(N('OFF')).get(0),layer);
+ assert.equal(reloaded.getPage(0).node.Resources().lookup(N('Properties')).get(N('Hidden')),layer);
+ assert.equal(await text(bytes),'PUBLIC\n\n');assert.equal(h.loads,1);assert.equal(h.copies,0);
+ assert.equal(reloaded.getPageCount(),1);assert.equal(await text(source.libBytes),'PUBLIC\n\n');
+});
+
+test('header/footer layer metadata does not block a one-page preview or turn its text into an image',async()=>{
+ const original=await P.PDFDocument.create();for(let n=0;n<12;n++)original.addPage([595,842]).drawText('PAGE '+(n+1));
+ const layer=original.context.register(original.context.obj({Type:'OCG',Name:P.PDFString.of('Header/Footer'),Usage:{PageElement:{Subtype:'HF'}}}));
+ original.catalog.set(N('OCProperties'),original.context.obj({OCGs:[layer],D:{Order:[],RBGroups:[]}}));
+ const source={libBytes:await original.save(),count:12},h=buildClient(new Map([['report',source]]));
+ const out=await h.build([row('report',10,11)]),bytes=await out.save();
+ assert.equal(out.getPageCount(),1);assert.match(await text(bytes),/PAGE 11/);
+ assert.equal(out.getPage(0).getWidth(),595);assert.equal(out.getPage(0).getHeight(),842);
+ assert.equal(out.catalog.lookup(N('OCProperties')).lookup(N('D')).lookup(N('Order')).size(),0);
+ assert.equal(h.loads,1);assert.equal(h.copies,0);assert.ok(bytes.length<source.libBytes.length);
+});
+
+test('layer membership in a Form XObject and reordered subsets retain their shared visibility state',async()=>{
+ const original=await layered();original.addPage([400,300]).drawText('THIRD');
+ const ctx=original.context,layer=original.catalog.lookup(N('OCProperties')).lookup(N('OCGs')).get(0);
+ const membership=ctx.register(ctx.obj({Type:'OCMD',OCGs:[layer],P:'AnyOn'}));
+ const form=ctx.register(ctx.flateStream('1 0 0 rg 0 0 30 30 re f',{Type:'XObject',Subtype:'Form',BBox:[0,0,30,30],Resources:{},OC:membership}));
+ original.getPage(0).node.Resources().set(N('XObject'),ctx.obj({OptionalForm:form}));
+ original.getPage(0).pushOperators(P.PDFOperator.of('/OptionalForm Do'));
+ const h=buildClient(new Map([['layered',{libBytes:await original.save(),count:3}]]));
+ const out=await h.build([row('layered',0,1),row('layered',2,3)]),bytes=await out.save();
+ assert.equal(await text(bytes),'PUBLIC\n\n');
+ const reloaded=await P.PDFDocument.load(bytes),outputLayer=reloaded.catalog.lookup(N('OCProperties')).lookup(N('OCGs')).get(0);
+ const outputForm=reloaded.getPage(0).node.Resources().lookup(N('XObject')).lookup(N('OptionalForm'));
+ assert.equal(outputForm.dict.lookup(N('OC')).lookup(N('OCGs')).get(0),outputLayer);
+ const reversed=await h.build([row('layered',2,3),row('layered',0,1)]);
+ assert.match(await text(await reversed.save()),/THIRD/);assert.equal(reversed.getPageCount(),2);
+});
+
+test('layer-aware copying refuses duplicate indices and stops before copying when cancelled',async()=>{
+ const source=await layered(),out=await P.PDFDocument.create(),h=client();
+ await assert.rejects(h.api.copyLayeredPages(out,source,[0,0]),/구성을 확인/);
+ const controller=new AbortController();controller.abort();
+ await assert.rejects(h.api.copyLayeredPages(out,source,[0],controller.signal),{name:'AbortError'});
+ assert.equal(out.context.enumerateIndirectObjects().length,3,'No source page or layer resources were copied');
 });
 
 test('a complete unmasked single-source export retains layer configuration and original visible content',async()=>{

@@ -5,15 +5,34 @@
   const maskKey=p=>JSON.stringify([p.docId,p.srcIndex,p.rotation,(p.annots||[]).filter(a=>a.shape==='redaction').map(a=>[a.nx,a.ny,a.nw,a.nh])]);
   const currentOCR=(record,page)=>page.uid!=null&&record.uid===page.uid&&record.privacyKey===maskKey(page)&&record.words?.some(w=>w.text?.trim());
   const layerChecks=new WeakMap();
+  const hasLayers=doc=>doc.catalog.has(PDFLib.PDFName.of('OCProperties'));
+  async function copyLayeredPages(target,source,indices,signal){
+    signal?.throwIfAborted();
+    if(!hasLayers(source)||hasLayers(target)||target.getPageCount()||new Set(indices).size!==indices.length)throw Error('레이어 페이지를 복사할 구성을 확인하지 못했습니다.');
+    await source.flush();signal?.throwIfAborted();
+    const originals=source.getPages();
+    if(indices.some(index=>!Number.isInteger(index)||index<0||index>=originals.length))throw Error('복사할 페이지를 확인하지 못했습니다.');
+    // The catalog and page resources must share one reference map. Separate
+    // copyPages/catalog copiers create different OCGs and lose hidden states.
+    const copier=PDFLib.PDFObjectCopier.for(source.context,target.context),pages=[];
+    for(const index of indices){
+      signal?.throwIfAborted();
+      const node=copier.copy(originals[index].node);
+      pages.push(PDFLib.PDFPage.of(node,target.context.register(node),target));
+    }
+    const key=PDFLib.PDFName.of('OCProperties');
+    target.catalog.set(key,copier.copy(source.catalog.get(key)));
+    signal?.throwIfAborted();return pages;
+  }
   async function assertSupportedSource(source,signal,parsed){
     signal?.throwIfAborted();if(!source)throw Error('처리할 원본 문서를 확인하지 못했습니다.');
     if(!layerChecks.has(source)){
-      const inspect=doc=>doc.catalog.has(PDFLib.PDFName.of('OCProperties'));
+      const inspect=hasLayers;
       if(parsed)layerChecks.set(source,inspect(parsed));
       else{const check=PDFLib.PDFDocument.load(source.libBytes).then(inspect);layerChecks.set(source,check);check.catch(()=>layerChecks.delete(source));}
     }
-    const hasLayers=await layerChecks.get(source);signal?.throwIfAborted();
-    if(hasLayers)throw Object.assign(Error('레이어 표시 설정이 있는 PDF를 안전하게 재구성할 수 없어 처리를 중단했습니다. 원본 프로그램에서 필요한 레이어만 포함한 PDF로 다시 저장한 뒤 사용해 주세요.'),{code:'PRIVACY_OPTIONAL_CONTENT'});
+    const layered=await layerChecks.get(source);signal?.throwIfAborted();
+    if(layered)throw Object.assign(Error('레이어 표시 설정이 있는 PDF를 안전하게 재구성할 수 없어 처리를 중단했습니다. 원본 프로그램에서 필요한 레이어만 포함한 PDF로 다시 저장한 뒤 사용해 주세요.'),{code:'PRIVACY_OPTIONAL_CONTENT'});
   }
   async function assertSupportedSources(list,sources,signal){
     for(const id of new Set(list.map(p=>p.docId)))await assertSupportedSource(sources.get(id),signal);
@@ -74,6 +93,6 @@
     return clean;
   }
   const inherit=(target,source)=>{if(safe.has(source))safe.add(target);return target;};
-  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,redact,cached,clearCache,inherit,assertSupportedSource,assertSupportedSources};
+  root.PDFPrivacy={isMasked,maskKey,nativeRecord,flatten,redact,cached,clearCache,inherit,hasLayers,copyLayeredPages,assertSupportedSource,assertSupportedSources};
   if(typeof module!=='undefined')module.exports={isMasked,maskKey,nativeRecord,currentOCR};
 })(globalThis);

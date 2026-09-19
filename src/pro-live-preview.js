@@ -124,7 +124,7 @@ async function updateLivePreview(seq){
       let result;
       if(savedTarget){
         const saved=await PDFLib.PDFDocument.load(savedTarget.bytes),pageDoc=await PDFLib.PDFDocument.create();
-        const [savedPage]=await pageDoc.copyPages(saved,[offset]);pageDoc.addPage(savedPage);
+        const [savedPage]=PDFPrivacy.hasLayers(saved)?await PDFPrivacy.copyLayeredPages(pageDoc,saved,[offset],signal):await pageDoc.copyPages(saved,[offset]);pageDoc.addPage(savedPage);
         result={doc:pageDoc,report:{...savedTarget.report,deskew:{...savedTarget.report.deskew,pages:[savedTarget.report.deskew?.pages?.[offset]].filter(Boolean)}}};
       }else result=await PDFProPipeline.apply(doc,options,{signal,docOptions:DOC_OPTS,pageOffset:offset,pageIds:[p.uid],...(typeof deskewCallbacks==='function'?deskewCallbacks([p]):{})});check();
       report=result.report;
