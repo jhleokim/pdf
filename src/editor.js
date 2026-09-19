@@ -1217,10 +1217,15 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     for(const [docId,indices] of need){
       signal?.throwIfAborted();
       const source=docs.get(docId),src=await PDFDocument.load(source.libBytes);
-      // Page copies omit catalog layer state; reject before hidden content can
-      // become visible. Reuse this parsed source for the cached safety check.
+      const unique=[...new Set(indices)];
+      if(need.size===1&&unique.length===indices.length&&!PDFPrivacy.isMasked(list)&&PDFPrivacy.hasLayers(src)){
+        copied.set(docId,await PDFPrivacy.copyLayeredPages(out,src,indices,signal));
+        await idle();continue;
+      }
+      // Merging layer configurations or redacting layered content requires a
+      // separate policy. Keep those paths closed instead of exposing hidden data.
       await PDFPrivacy.assertSupportedSource(source,signal,src);
-      const unique=[...new Set(indices)],firstCopies=await out.copyPages(src,unique);
+      const firstCopies=await out.copyPages(src,unique);
       const remaining=new Map(unique.map((index,i)=>[index,firstCopies[i]])),sourceCopies=[];
       for(const index of indices){
         signal?.throwIfAborted();

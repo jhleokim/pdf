@@ -8,7 +8,7 @@ const context=vm.createContext({console,setTimeout,clearTimeout,TextEncoder,Text
 for(const marker of ['sourceMappingURL=pdf-lib.min.js.map','pdfjs-dist/build/pdf"]','pdfjs-dist/build/pdf.worker']){
  const script=scripts.find(s=>s.includes(marker));assert.ok(script,marker);vm.runInContext(script,context);
 }
-vm.runInContext(`const {PDFDocument,degrees}=PDFLib;let pages=[],docs=new Map();const PDFPrivacy={isMasked:()=>false,clearCache(){},assertSupportedSource:async()=>{},redact:async doc=>doc};const idle=async()=>{};
+vm.runInContext(`const {PDFDocument,degrees}=PDFLib;let pages=[],docs=new Map();const PDFPrivacy={isMasked:()=>false,hasLayers:()=>false,clearCache(){},assertSupportedSource:async()=>{},redact:async doc=>doc};const idle=async()=>{};
  async function bakeAnnots(doc,page,state){for(const a of state.annots)page.drawText(a.text,{x:35,y:400,size:12});}`,context);
 vm.runInContext(editor.slice(editor.indexOf('async function buildEditedDocument('),editor.indexOf('function downloadPdf(')),context);
 vm.runInContext(fs.readFileSync(path.join(root,'src/pro-document.js'),'utf8'),context);

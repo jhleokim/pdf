@@ -60,6 +60,18 @@ test('closing a preview cancels in-flight work without publishing an obsolete re
  assert.equal(h.element('proPreviewLabel').textContent,'페이지 미리보기');
 });
 
+test('previewing a saved target-size result retains its optional-content configuration',async()=>{
+ const h=harness();let loads=0,copies=0;
+ h.c.readProOptions=()=>({targetBytes:50000});h.c.proResult={fingerprint:'',bytes:new Uint8Array([4]),report:{changed:0,skipped:0,imageCount:0,notes:[],deskew:{pages:[]}}};
+ const saved={},pageDoc={addPage(){},save:async()=>new Uint8Array([5]),copyPages(){throw Error('Ordinary page copying loses layer state');}};
+ h.c.PDFLib.PDFDocument={load:async()=>++loads===2?saved:{},create:async()=>pageDoc};
+ h.c.PDFPrivacy={hasLayers:doc=>doc===saved,copyLayeredPages:async(target,source,indices,signal)=>{
+  assert.equal(target,pageDoc);assert.equal(source,saved);assert.deepEqual(Array.from(indices),[0]);assert.equal(signal.aborted,false);copies++;return [{}];
+ }};
+ await vm.runInContext('updateLivePreview(0)',h.c);
+ assert.equal(copies,1);assert.equal(h.element('compareState').textContent,'저장 결과 미리보기');assert.deepEqual(h.published,['compareBefore','compareAfter']);
+});
+
 test('deskew temporarily fits the page at zoom one, follows available height, then restores the saved zoom without PDF processing',async()=>{
  const h=harness();h.element('compareZoom').value='2';const first=vm.runInContext('updateLivePreview(0)',h.c);
  for(let n=0;!h.isWaiting();n++){if(n>10000)throw Error('Preview never reached processing: '+h.element('compareNote').textContent);await new Promise(r=>setImmediate(r));}h.release();await first;

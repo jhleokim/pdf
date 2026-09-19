@@ -1,10 +1,10 @@
 # PDF Studio — Basic & Pro
 
-현재 소스 버전: **v6.4.7**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다. [합동 유지보수 점검](docs/release-v6.4.7.md) · [대용량 작업 점검 및 한계](docs/release-v6.4.6.md)
+현재 소스 버전: **v6.4.8**. 화면 우측 하단에서 확인할 수 있습니다. 이 문서는 빌드·운영 방법을 설명하며 배포 완료 기록은 아닙니다. [레이어 PDF 미리보기 수정](docs/release-v6.4.8.md) · [합동 유지보수 점검](docs/release-v6.4.7.md) · [대용량 작업 점검 및 한계](docs/release-v6.4.6.md)
 
 브라우저에서 PDF 페이지를 정리하고 문서를 다듬는 편집기입니다. 기본 편집과 로컬 OCR은 기기에서 처리합니다. 웹과 단독 실행 HTML 모두 **Paddle OCR(PP-OCRv5 경량 한국어)**이 기본이며 Tesseract를 두 번째 옵션으로 제공합니다. 웹에서는 Google Vision이 세 번째 옵션으로 표시됩니다.
 
-| 구성 | 웹 v6.4.7 | 단독 실행 HTML v6.4.7 |
+| 구성 | 웹 v6.4.8 | 단독 실행 HTML v6.4.8 |
 |---|---|---|
 | OCR 모델 | PP-OCRv5 기본 · Tesseract.js 7.0.0 · Google Vision | 동일한 두 로컬 엔진 제공, Vision 제외 |
 | 모델 준비 | 선택한 엔진의 첫 인식 때 필요한 파일 다운로드. PP-OCRv5 모델 약 18.2MB, 실행 코드·WASM 별도 | 두 엔진·모델·언어 데이터를 HTML에 내장, 선택한 엔진만 초기화 |
@@ -12,7 +12,11 @@
 | 문서 처리 | Tesseract·PP-OCRv5는 브라우저 안에서 처리 | 브라우저 안에서 처리 |
 | 인식 결과 교정 | 원본 영역과 텍스트를 연결한 교정 창 | 같은 교정 창 제공 |
 | Google Vision | 드롭다운에 바로 표시, 실행 전 전송 동의 | 옵션·동의 창·API 연결 모듈 제외 |
-| 배포·전달물 | `.deploy/index.html`과 런타임 자산, API Worker | `dist/PDF-Studio-Standalone-v6.4.7.html` 한 파일 |
+| 배포·전달물 | `.deploy/index.html`과 런타임 자산, API Worker | `dist/PDF-Studio-Standalone-v6.4.8.html` 한 파일 |
+
+## v6.4.8 레이어 PDF 미리보기 수정
+
+v6.4.7의 레이어 검사로 일반 보고서의 Pro 미리보기까지 막히던 문제를 수정했습니다. 단일 원본에서 중복 없이 페이지를 꺼낼 때 원본 레이어 표시 설정과 페이지 자원을 함께 복사합니다. 숨긴 내용은 계속 숨기며 텍스트와 도형을 이미지로 바꾸지 않습니다. 레이어 문서의 병합·반복 복제·개인정보 마스킹은 기존 제한을 유지합니다. [실문서 검증 및 범위](docs/release-v6.4.8.md)
 
 ## v6.4.7 합동 유지보수 점검
 
@@ -72,7 +76,7 @@ npm test
 node scripts/build-deploy.mjs
 ```
 
-모델 준비 스크립트와 모델 출처는 아래의 PP-OCRv5 설명을 참고하세요. 웹 배포에는 `scripts/build-deploy.mjs`가 생성한 `.deploy/` 전체가 필요합니다. 스탠드얼론 결과는 `dist/PDF-Studio-Standalone-v6.4.7.html`입니다. 우측 하단 버전을 누르면 라이선스와 소스 링크를 볼 수 있습니다.
+모델 준비 스크립트와 모델 출처는 아래의 PP-OCRv5 설명을 참고하세요. 웹 배포에는 `scripts/build-deploy.mjs`가 생성한 `.deploy/` 전체가 필요합니다. 스탠드얼론 결과는 `dist/PDF-Studio-Standalone-v6.4.8.html`입니다. 우측 하단 버전을 누르면 라이선스와 소스 링크를 볼 수 있습니다.
 
 ## OCR 모델 선택과 진행 안내
 
