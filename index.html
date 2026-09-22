@@ -1339,6 +1339,98 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 .privacy-dialog,.document-check-dialog{margin:auto}
 @media(min-width:961px){.pro-footer-actions{display:none}}
 #ocrStatus:empty,#privacyStatus:empty{display:none}
+.privacy-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.privacy-actions>.btn{flex:1;justify-content:center;min-width:100px}
+.privacy-auto{position:fixed;inset:0;box-sizing:border-box;width:min(1320px,calc(100vw - 40px));height:min(900px,calc(100dvh - 40px));max-width:none;max-height:none;margin:auto;padding:0;overflow:hidden;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:var(--sh-3)}
+.privacy-auto[open]{display:flex;flex-direction:column;animation:privacy-auto-enter .15s ease-out}
+.privacy-auto:has(.privacy-auto-review[hidden]){width:min(680px,calc(100vw - 40px));height:auto;max-height:calc(100dvh - 40px)}
+.privacy-auto::backdrop{background:rgba(20,24,28,.4)}
+.privacy-auto [hidden]{display:none!important}.privacy-auto *{box-sizing:border-box}
+.privacy-auto-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex:none;padding:20px 24px 18px;border-bottom:1px solid var(--line)}
+.privacy-auto h2{margin:0;font-size:20px;font-weight:720;letter-spacing:-.035em}.privacy-auto h3{margin:0;font-size:12px;font-weight:650}
+.privacy-auto-head p{margin:6px 0 0;font-size:12px;line-height:1.65;color:var(--ink-2)}
+.privacy-auto-head>.btn{flex:none}.privacy-auto .btn{justify-content:center;white-space:nowrap}.privacy-auto .btn:disabled{cursor:default}
+.privacy-auto-setup{min-height:0;overflow:auto;overscroll-behavior:contain;padding:22px 24px 24px}
+.privacy-auto-settings-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.privacy-auto-field{display:flex;min-width:0;flex-direction:column;gap:7px;font-size:12px;font-weight:550;color:var(--ink)}
+.privacy-auto select,.privacy-auto input[type=text]{width:100%;min-width:0;height:38px;padding:7px 10px;border:1px solid var(--line-2);border-radius:4px;color:var(--ink);background:var(--surface);font:inherit;font-size:13px;font-weight:400}
+.privacy-auto select{padding-right:24px}.privacy-auto input::placeholder{color:var(--ink-3)}
+.privacy-auto input[type=checkbox]{width:16px;height:16px;margin:0;flex:none;accent-color:var(--accent);cursor:pointer}
+.privacy-auto input[type=checkbox]:disabled{cursor:default}
+.privacy-auto-types-section{margin-top:24px}.privacy-auto-types-section>h3{margin-bottom:9px}
+.privacy-auto-types{display:grid;grid-template-columns:1fr 1fr;column-gap:20px;row-gap:2px;min-width:0;margin:0;padding:0;border:0}
+.privacy-auto-types>label{display:flex;align-items:center;gap:10px;min-height:38px;margin:0;padding:7px 0;font-size:13px;font-weight:400;line-height:1.5;cursor:pointer}
+.privacy-auto-types>label:has(input:disabled){color:var(--ink-3);cursor:default}
+.privacy-auto-types>label>span{min-width:0}.privacy-auto-style{margin-top:22px}.privacy-auto-style select{max-width:calc(50% - 8px)}
+.privacy-auto-presets{margin-top:22px;border-top:1px solid var(--line);padding-top:10px}
+.privacy-auto-presets summary{width:fit-content;padding:7px 0;color:var(--ink-2);font-size:12px;font-weight:500;cursor:pointer;list-style-position:inside}
+.privacy-auto-preset-save{display:flex;align-items:flex-end;gap:8px;padding-top:9px}.privacy-auto-preset-save>.privacy-auto-field{flex:1}.privacy-auto-preset-save>.btn{flex:none;height:38px}
+.privacy-auto-setup-status{margin:20px 0 0;color:var(--ink-2);font-size:12px;line-height:1.65;overflow-wrap:anywhere}.privacy-auto-setup-status:empty{display:none}
+.privacy-auto-setup-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin-top:20px}
+.privacy-auto-review{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.privacy-auto-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;padding:8px 16px;border-bottom:1px solid var(--line)}
+.privacy-auto-pages{display:flex;align-items:center;gap:5px;min-width:0}.privacy-auto-pages select{width:auto;min-width:100px;max-width:220px;height:34px;font-size:12px}.privacy-auto-pages .btn.icon{width:34px;height:34px;font-size:22px;font-weight:400}
+.privacy-auto-workspace{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);flex:1;min-height:0;overflow:hidden}
+.privacy-auto-original,.privacy-auto-results{display:flex;flex-direction:column;min-width:0;min-height:0}.privacy-auto-results{border-left:1px solid var(--line)}
+.privacy-auto-pane-head{display:flex;align-items:center;justify-content:space-between;flex:none;min-height:42px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.privacy-auto-scroll{flex:1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;background:var(--sheet);padding:24px;scrollbar-gutter:stable}
+.privacy-auto-paper{position:relative;max-width:100%;margin:auto;background:white;box-shadow:0 2px 5px rgba(20,24,28,.1),0 12px 28px -14px rgba(20,24,28,.3)}
+.privacy-auto-paper canvas{display:block;width:100%;height:auto}
+.privacy-auto-overlay{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+.privacy-auto-region{fill:#151719;fill-opacity:.16;stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:all;cursor:pointer;touch-action:none}
+.privacy-auto-region[data-selected=false]{fill-opacity:.025;stroke:var(--ink-3);stroke-dasharray:4 3}
+.privacy-auto-region[data-active=true]{fill-opacity:.24;stroke-width:2;stroke:var(--accent);cursor:move}
+.privacy-auto-region:hover{stroke-width:2}.privacy-auto-region:focus-visible{outline:2px solid var(--accent);outline-offset:3px;stroke-width:2}
+.privacy-auto-handle{fill:var(--surface);stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:all;touch-action:none;cursor:nwse-resize}
+.privacy-auto-handle[data-corner=ne],.privacy-auto-handle[data-corner=sw]{cursor:nesw-resize}
+.privacy-auto-handle[data-edge=n],.privacy-auto-handle[data-edge=s]{cursor:ns-resize}.privacy-auto-handle[data-edge=e],.privacy-auto-handle[data-edge=w]{cursor:ew-resize}
+.privacy-auto-handle:focus-visible{fill:var(--accent);outline:2px solid var(--accent);outline-offset:3px}
+.privacy-auto-selection-tools{display:flex;justify-content:space-between;align-items:center;gap:4px;flex:none;padding:5px 10px;border-bottom:1px solid var(--line)}
+.privacy-auto-selection-tools .btn{min-height:32px;height:auto;padding:6px;font-size:11px;font-weight:500}
+.privacy-auto-candidates{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:4px 10px 10px}
+.privacy-auto-candidate{position:relative;display:flex;align-items:flex-start;gap:10px;min-width:0;padding:12px 10px;margin:0;border:1px solid transparent;border-bottom-color:var(--line);border-radius:3px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background .12s,border-color .12s}
+.privacy-auto-candidate>input[type=checkbox]{margin-top:2px}.privacy-auto-candidate-body{flex:1;min-width:0}
+.privacy-auto-candidate-check{display:flex;align-items:center;justify-content:center;flex:none;width:24px;min-height:28px;margin:-4px 0 -4px -4px;cursor:pointer}.privacy-auto-candidate-check:has(input:disabled){cursor:default}
+.privacy-auto-candidate:hover{background:var(--paper)}.privacy-auto-candidate[data-selected=true] .privacy-auto-kind{color:var(--accent-ink)}
+.privacy-auto-candidate[data-active=true]{border-color:var(--accent-line);background:var(--accent-wash);box-shadow:inset 2px 0 var(--accent)}
+.privacy-auto-candidate:focus-visible,.privacy-auto-candidate:focus-within{outline:2px solid var(--accent);outline-offset:-2px}
+.privacy-auto-kind{display:block;margin-bottom:4px;color:var(--ink-2);font-size:11px;font-weight:600;line-height:1.4}
+.privacy-auto-text{display:block;overflow-wrap:anywhere;white-space:pre-wrap;color:var(--ink);font-size:14px;line-height:1.65;font-variant-numeric:tabular-nums}
+.privacy-auto-meta{display:block;margin-top:4px;color:var(--ink-2);font-size:11px;line-height:1.55;overflow-wrap:anywhere}
+.privacy-auto-result-empty{margin:0;padding:28px 14px;color:var(--ink-2);font-size:13px;line-height:1.7}
+.privacy-auto-more{flex:none;align-self:center;min-height:36px;margin:4px 10px 8px;font-size:12px}
+.privacy-auto-confirmation{flex:none;padding:12px 16px;border-top:1px solid var(--line);background:var(--surface)}
+.privacy-auto-confirmation>label{display:flex;align-items:center;gap:9px;min-height:32px;line-height:1.6;font-size:12px;cursor:pointer}
+.privacy-auto-review-status{margin:5px 0 0;color:var(--ink-2);font-size:11px;line-height:1.6;overflow-wrap:anywhere}.privacy-auto-review-status:empty{display:none}
+.privacy-auto-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding:13px 20px;border-top:1px solid var(--line);background:var(--surface)}
+.privacy-auto-status{min-width:0;color:var(--ink-2);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.privacy-auto-actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto}.privacy-auto-actions .btn{min-width:72px}
+.privacy-auto [role=status][data-error=true],.privacy-auto [role=status][data-state=error]{color:var(--danger,#bc3535)}
+.privacy-auto button:focus-visible,.privacy-auto input:focus-visible,.privacy-auto select:focus-visible,.privacy-auto summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.privacy-auto-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.privacy-auto[data-busy=true] .privacy-auto-overlay{visibility:hidden}.privacy-auto[data-dragging=true] .privacy-auto-region{transition:none}
+@keyframes privacy-auto-enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:760px){
+  .privacy-auto,.privacy-auto:has(.privacy-auto-review[hidden]){width:calc(100vw - 12px);max-height:calc(100dvh - 12px);border-radius:6px}
+  .privacy-auto{height:calc(100dvh - 12px)}
+  .privacy-auto-head{gap:10px;padding:12px 14px}.privacy-auto h2{font-size:18px}.privacy-auto-head p{font-size:11px;margin-top:4px}
+  .privacy-auto .btn{min-height:44px;height:auto}.privacy-auto .btn.icon{min-width:44px;width:44px;height:44px;padding:0}
+  .privacy-actions>.btn{min-height:44px}
+  .privacy-auto select,.privacy-auto input[type=text]{height:44px;font-size:16px}.privacy-auto input[type=checkbox]{width:18px;height:18px}
+  .privacy-auto .help-dot::after{inset:-13px}
+  .privacy-auto-setup{padding:18px 16px}.privacy-auto-settings-row{gap:12px}.privacy-auto-types{column-gap:12px}.privacy-auto-types>label{min-height:44px}
+  .privacy-auto-style select{max-width:none}.privacy-auto-preset-save{gap:6px;flex-wrap:wrap}.privacy-auto-preset-save>.privacy-auto-field{flex-basis:100%}.privacy-auto-presets summary{min-height:44px;padding:12px 0}
+  .privacy-auto-toolbar{padding:6px 10px;gap:8px}.privacy-auto-pages{gap:2px}.privacy-auto-pages select{min-width:80px;max-width:150px;font-size:14px}
+  .privacy-auto-workspace{display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain}
+  .privacy-auto-original{height:38dvh;min-height:190px;flex:none}.privacy-auto-results{min-height:300px;flex:1;border-left:0;border-top:1px solid var(--line)}
+  .privacy-auto-pane-head{min-height:36px;padding:8px 12px}.privacy-auto-scroll{padding:16px 20px}.privacy-auto-selection-tools{padding:2px 8px}
+  .privacy-auto-candidates{min-height:120px;padding:3px 8px 8px}.privacy-auto-candidate{min-height:62px;padding:11px 8px}.privacy-auto-text{font-size:14px}.privacy-auto-meta{font-size:11px}
+  .privacy-auto-candidate-check{width:44px;min-height:44px;margin:-5px 0 -5px -8px}
+  .privacy-auto-confirmation{padding:8px 12px}.privacy-auto-confirmation>label{min-height:44px;font-size:12px}.privacy-auto-review-status{margin-top:2px}
+  .privacy-auto-footer{padding:10px 12px;gap:8px;flex-wrap:wrap}.privacy-auto-status:not(:empty){flex:1 1 100%;font-size:11px}.privacy-auto-actions{gap:6px}.privacy-auto-actions .btn{padding-inline:12px}
+}
+@media(max-width:400px){.privacy-auto-settings-row{grid-template-columns:1fr}.privacy-auto-head p{max-width:260px}.privacy-auto-types{grid-template-columns:1fr 1fr;column-gap:8px}.privacy-auto-types>label{font-size:12px;gap:7px}.privacy-auto-toolbar>.btn{padding-inline:8px;font-size:12px}}
+@media(max-height:620px) and (min-width:761px){.privacy-auto-head{padding:10px 20px}.privacy-auto-head p{margin-top:3px}.privacy-auto-setup{padding-top:14px;padding-bottom:14px}.privacy-auto-types-section,.privacy-auto-style,.privacy-auto-presets{margin-top:16px}.privacy-auto-footer{padding-top:9px;padding-bottom:9px}}
+@media(prefers-reduced-motion:reduce){.privacy-auto[open]{animation:none}.privacy-auto-candidate{transition:none}}
 </style>
 <!-- pro-styles:end -->
 <!-- full-preview-styles:start -->
@@ -1819,7 +1911,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
 
 <details class="pro-section" id="privacySection">
   <summary><span class="pro-section-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="M8 12h8"/></svg></span><span>개인정보 마스킹<small id="privacySummary">사용 안 함</small></span><svg class="ic pro-chevron"><use href="#i-chev-up"/></svg></summary>
-  <div class="pro-section-body"><button type="button" class="btn" id="privacyOpen" disabled>가릴 영역 지정</button><p class="pro-hint">영역을 지정한 뒤 텍스트 인식을 실행하고 결과를 PDF에 포함하세요. 가린 내용은 제거하고, 마스킹 후 확인한 OCR 텍스트는 검색·복사할 수 있게 저장합니다.</p><p id="privacyStatus" role="status" class="pro-hint"></p></div>
+  <div class="pro-section-body"><div class="privacy-actions"><button type="button" class="btn" id="privacyAutoOpen" disabled>자동 탐지</button><button type="button" class="btn" id="privacyOpen" disabled>직접 지정</button></div><p class="pro-hint">자동 탐지는 전체 OCR 후 사용할 수 있습니다. 원본에서 후보를 확인한 뒤 적용하세요. 가린 내용은 저장 시 영구 삭제됩니다.</p><p id="privacyStatus" role="status" class="pro-hint"></p></div>
 </details>
 <dialog id="privacyDialog" class="privacy-dialog" aria-labelledby="privacyTitle">
   <header><div><h2 id="privacyTitle">개인정보 마스킹</h2><span id="privacyPageLabel"></span></div><button type="button" id="privacyClose" class="btn quiet icon" aria-label="마스킹 창 닫기">×</button></header>
@@ -1889,6 +1981,7 @@ body[data-mode=pro].pro-preview-open .pfoot{height:30px;font-size:9px}
     <p id="ocrPreparation" class="ocr-preparation" role="status"></p>
       <label class="pro-field" for="ocrLanguage"><span>인식 언어</span><select id="ocrLanguage"><option value="kor+eng">한국어 + 영어</option><option value="eng">영어</option></select></label>
     <label class="pro-field" for="ocrLayout"><span>문서 구성</span><select id="ocrLayout"><option value="auto">자동</option><option value="6">본문 위주 · 한 단</option><option value="11">흩어진 글자 · 서식과 영수증</option></select></label>
+    <label class="review-stamp-arrow-option"><input id="ocrWholePage" type="checkbox">페이지 전체 인식 · 개인정보 탐지용</label>
     <button class="btn" id="ocrSample" hidden>현재 페이지 인식</button>
     <div class="pro-two-fields"><label class="pro-field" for="ocrScope"><span>인식 범위</span><select id="ocrScope"><option value="current" selected>현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label><button class="btn" id="ocrRun">텍스트 인식</button></div>
       <p id="ocrProcessingNote" class="pro-hint">기존 글자를 유지하면서 스캔 영역을 추가 인식합니다. Paddle OCR은 기기에서 처리합니다.</p>
@@ -2949,11 +3042,23 @@ function remove(list){
 }
 function rotate(list, deg){
   if(document.body.classList.contains('is-busy'))return;
-  if(!list.length) return;
+  if(!list.length||!Number.isFinite(deg)||deg%90!==0) return;
   if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>rotate(list,deg)))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const history=typeof captureEditHistory==='function'?captureEditHistory():null;
-  list.forEach(p => p.rotation = ((p.rotation + deg) % 360 + 360) % 360);
+  const turn=((deg%360)+360)%360;
+  list.forEach(p => {
+    // Masks use normalized display coordinates. Rotate them with the source
+    // so a later PDF export still removes the same confidential content.
+    for(const a of p.annots||[]){
+      if(a.shape!=='redaction')continue;
+      const {nx,ny,nw,nh}=a;
+      if(turn===90)Object.assign(a,{nx:Math.max(0,1-ny-nh),ny:nx,nw:nh,nh:nw});
+      else if(turn===180)Object.assign(a,{nx:Math.max(0,1-nx-nw),ny:Math.max(0,1-ny-nh)});
+      else if(turn===270)Object.assign(a,{nx:ny,ny:Math.max(0,1-nx-nw),nw:nh,nh:nw});
+    }
+    p.rotation = ((p.rotation + deg) % 360 + 360) % 360;
+  });
   const keep = new Set(list.map(p => p.uid));
   render();
   pages.forEach(p => { if(keep.has(p.uid)) p.el.classList.add('selected'); });
@@ -4087,7 +4192,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.4.8, 라이선스 보기">v6.4.8</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.5.0, 라이선스 보기">v6.5.0</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -12222,7 +12327,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 </script>
 <!-- ocr-table-worker-source:end -->
 <!-- privacy-assets:start -->
-<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/488612bcf5de6d01e7845e3e087de2a4cdc3b410aff5372ad2d32cc6a9bccf93.zlib","sha256":"488612bcf5de6d01e7845e3e087de2a4cdc3b410aff5372ad2d32cc6a9bccf93","bytes":26829},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
+<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/d23a20c930e80b3689a9871fde2798bc34e7d2693a3e8b6a461a16d4a0c3d7b0.zlib","sha256":"d23a20c930e80b3689a9871fde2798bc34e7d2693a3e8b6a461a16d4a0c3d7b0","bytes":26872},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
 
 <!-- privacy-assets:end -->
 <!-- app-license:start -->
@@ -12889,6 +12994,72 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 &lt;http://www.gnu.org/licenses/&gt;.
 </pre></details><footer><button class="btn" id="appLicenseClose">닫기</button></footer></dialog><script>document.getElementById('appLicenseOpen').onclick=()=>document.getElementById('appLicenseDialog').showModal();document.getElementById('appLicenseClose').onclick=()=>document.getElementById('appLicenseDialog').close();</script>
 <!-- app-license:end -->
+<!-- privacy-auto-dialog:start -->
+<dialog id="privacyAutoDialog" class="privacy-auto" aria-labelledby="privacyAutoTitle" aria-describedby="privacyAutoDescription">
+  <header class="privacy-auto-head">
+    <div>
+      <h2 id="privacyAutoTitle">개인정보 자동 탐지</h2>
+      <p id="privacyAutoDescription">OCR 결과에서 후보를 찾습니다. 원본과 대조한 뒤 적용하세요.</p>
+    </div>
+    <button type="button" class="btn icon quiet" id="privacyAutoClose" aria-label="개인정보 자동 탐지 닫기"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+  </header>
+
+  <div class="privacy-auto-setup" id="privacyAutoSetup">
+    <div class="privacy-auto-settings-row">
+      <label class="privacy-auto-field" for="privacyAutoScope"><span>탐지 범위</span><select id="privacyAutoScope"><option value="current">현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label>
+      <label class="privacy-auto-field" for="privacyAutoPreset"><span>프리셋</span><select id="privacyAutoPreset"><option value="numbers">번호 중심</option><option value="contact">연락처 포함</option><option value="custom">직접 선택</option></select></label>
+    </div>
+    <div class="privacy-auto-types-section">
+      <h3 id="privacyAutoTypesTitle">찾을 정보</h3>
+      <fieldset class="privacy-auto-types" id="privacyAutoTypes" aria-labelledby="privacyAutoTypesTitle"></fieldset>
+    </div>
+    <label class="privacy-auto-field privacy-auto-style" for="privacyAutoStyle"><span>가리는 방식</span><select id="privacyAutoStyle"><option value="full">전체 가리기</option><option value="partial">일부 남기기</option></select></label>
+    <p class="pro-hint" id="privacyAutoStyleHelp">일부 남기기는 글자 위치를 추정합니다. 가릴 영역이 정확한지 원본에서 확인하세요.</p>
+    <details class="privacy-auto-presets">
+      <summary>내 프리셋 저장</summary>
+      <div class="privacy-auto-preset-save">
+        <label class="privacy-auto-field" for="privacyAutoPresetName"><span>프리셋 이름</span><input id="privacyAutoPresetName" type="text" maxlength="24" autocomplete="off" placeholder="예: 계약서 공유용"></label>
+        <button type="button" class="btn" id="privacyAutoPresetSave">저장</button>
+        <button type="button" class="btn quiet" id="privacyAutoPresetDelete" disabled>삭제</button>
+      </div>
+    </details>
+    <p class="privacy-auto-setup-status" id="privacyAutoSetupStatus" role="status" aria-live="polite"></p>
+    <div class="privacy-auto-setup-actions">
+      <button type="button" class="btn" id="privacyAutoOCR">OCR로 이동</button>
+      <button type="button" class="btn primary" id="privacyAutoFind" disabled>개인정보 찾기</button>
+    </div>
+  </div>
+
+  <div class="privacy-auto-review" id="privacyAutoReview" hidden>
+    <div class="privacy-auto-toolbar">
+      <div class="privacy-auto-pages">
+        <button type="button" class="btn icon quiet" id="privacyAutoPrev" aria-label="이전 탐지 페이지">‹</button>
+        <label class="privacy-auto-sr" for="privacyAutoPage">검토할 페이지</label><select id="privacyAutoPage"></select>
+        <button type="button" class="btn icon quiet" id="privacyAutoNext" aria-label="다음 탐지 페이지">›</button>
+      </div>
+      <button type="button" class="btn quiet" id="privacyAutoEditSettings">탐지 설정</button>
+    </div>
+    <div class="privacy-auto-workspace">
+      <section class="privacy-auto-original" aria-labelledby="privacyAutoOriginalTitle">
+        <div class="privacy-auto-pane-head"><h3 id="privacyAutoOriginalTitle">원본과 가릴 영역</h3></div>
+        <div class="privacy-auto-scroll" id="privacyAutoScroll"><div class="privacy-auto-paper" id="privacyAutoPaper"><canvas id="privacyAutoCanvas" aria-label="개인정보 후보를 확인할 원본 페이지"></canvas><svg class="privacy-auto-overlay" id="privacyAutoOverlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="group" aria-label="개인정보 후보 영역. 선택한 영역의 경계를 드래그하여 조절"></svg></div></div>
+      </section>
+      <section class="privacy-auto-results" aria-labelledby="privacyAutoResultsTitle">
+        <div class="privacy-auto-pane-head"><h3 id="privacyAutoResultsTitle">탐지 후보</h3></div>
+        <div class="privacy-auto-selection-tools"><button type="button" class="btn quiet" id="privacyAutoSelectPage">이 페이지 선택</button><button type="button" class="btn quiet" id="privacyAutoClearSelection">전체 선택 해제</button></div>
+        <div class="privacy-auto-candidates" id="privacyAutoCandidates" role="group" aria-label="가릴 개인정보 후보"></div>
+        <button type="button" class="btn quiet privacy-auto-more" id="privacyAutoMore" hidden>후보 더 보기</button>
+        <div class="privacy-auto-confirmation"><label for="privacyAutoPageConfirm"><input type="checkbox" id="privacyAutoPageConfirm"><span>이 페이지의 가릴 영역을 확인했습니다</span></label><p class="privacy-auto-review-status" id="privacyAutoReviewStatus" role="status" aria-live="polite"></p></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="privacy-auto-footer">
+    <span class="privacy-auto-status" id="privacyAutoStatus" role="status" aria-live="polite"></span>
+    <div class="privacy-auto-actions"><button type="button" class="btn" id="privacyAutoCancel">닫기</button><button type="button" class="btn primary" id="privacyAutoApply" disabled>선택 영역 적용</button></div>
+  </footer>
+</dialog>
+<!-- privacy-auto-dialog:end -->
 <!-- paddle-bootstrap:start -->
 <script id="paddle-bootstrap">globalThis.PDFOCRAssetInfo={"modelBytes":18245305,"totalBytes":43248590};globalThis.PDFTesseractManifest={"ocr-client":{"bytes":62961,"sha256":"000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e","file":"tesseract.min.js","url":"/ocr/tesseract/7.0.0/000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e-tesseract.min.js"},"ocr-core":{"bytes":3896484,"sha256":"eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680","file":"tesseract-core-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680-tesseract-core-lstm.wasm.js"},"ocr-core-fast":{"bytes":3905767,"sha256":"861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3","file":"tesseract-core-relaxedsimd-lstm.wasm.js","url":"/ocr/tesseract/7.0.0/861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3-tesseract-core-relaxedsimd-lstm.wasm.js"},"ocr-worker":{"bytes":111307,"sha256":"576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d","file":"worker.min.js","url":"/ocr/tesseract/7.0.0/576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d-worker.min.js"},"ocr-lang-kor":{"bytes":1572336,"sha256":"78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126","file":"lang/kor.traineddata.gz","url":"/ocr/tesseract/7.0.0/78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126-kor.traineddata.gz"},"ocr-lang-eng":{"bytes":2952873,"sha256":"45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91","file":"lang/eng.traineddata.gz","url":"/ocr/tesseract/7.0.0/45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91-eng.traineddata.gz"}};
 (function(){const runtimeURL="/ocr/ppocr-v5/adapter-a7e0e29871813259.js";globalThis.PDFPaddleLoad=()=>globalThis.PDFPaddleReady??=new Promise((resolve,reject)=>{if(globalThis.PDFPaddleV5){resolve(globalThis.PDFPaddleV5);return;}const script=document.createElement("script");let timer=setTimeout(()=>{script.remove();reject(new Error("Paddle 엔진 준비 시간이 초과됐습니다. 다시 시도해 주세요."));},30000);script.onload=()=>{clearTimeout(timer);script.remove();globalThis.PDFPaddleV5?resolve(globalThis.PDFPaddleV5):reject(new Error("Paddle 엔진을 준비하지 못했습니다."));};script.onerror=()=>{clearTimeout(timer);script.remove();reject(new Error("Paddle 엔진을 불러오지 못했습니다. 연결을 확인해 주세요."));};script.src=runtimeURL;document.head.append(script);}).catch(error=>{globalThis.PDFPaddleReady=null;throw error;});})();</script>
@@ -14203,10 +14374,29 @@ function observeThumbnail(p){
     // Empty replacements deliberately remove their covered words, not a page.
     return words.flatMap((word,index)=>replacements.has(index)?[replacements.get(index)]:covered.has(index)?[]:[word]);
   }
+  function embeddingWords(record){
+    const words=correctionWords(record).filter(word=>word.text?.trim()),native=record.nativeTextBoxes;
+    if(record.nativeTextUnmapped===true)return [];
+    if(native===undefined)return words;
+    const validBox=box=>Array.isArray(box)&&box.length===4&&box.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&box[2]>box[0]&&box[3]>box[1];
+    if(!Array.isArray(native)||!native.every(validBox))throw new Error('기존 검색 텍스트의 위치를 확인하지 못했습니다. 다시 인식해 주세요.');
+    if(!native.length)return words;
+    // A bounded row index avoids comparing every OCR word against every native
+    // run on dense contracts. It retains only references during this page pass.
+    const rows=Array.from({length:64},()=>[]),row=y=>Math.min(63,Math.floor(y*64));
+    for(const box of native)for(let i=row(box[1]);i<=row(box[3]);i++)rows[i].push(box);
+    return words.filter(word=>{
+      const box=word.box;if(!validBox(box))return false;
+      for(let i=row(box[1]);i<=row(box[3]);i++)for(const other of rows[i]){
+        if(box[0]<other[2]&&box[2]>other[0]&&box[1]<other[3]&&box[3]>other[1])return false;
+      }
+      return true;
+    });
+  }
   async function apply(doc,records,{pageIds=[],signal}={}){
     check(signal);
     // Validate all replacement metadata before adding a font or content stream.
-    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:correctionWords(r).filter(w=>w.text?.trim())})).filter(r=>r.words.length);
+    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:embeddingWords(r)})).filter(r=>r.words.length);
     if(!active.length)return {pages:0,words:0};
     // A large line correction needs estimated proportional widths. Keep the
     // untouched Vision word font/geometry independent of that approximation.
@@ -14233,7 +14423,7 @@ function observeThumbnail(p){
     }
     return {pages,words};
   }
-  globalThis.PDFOCR={session,apply};
+  globalThis.PDFOCR={session,apply,correctionWords};
 })();
 </script>
 <script id="pro-gemini">
@@ -16445,7 +16635,7 @@ async function startPaddleSession(language,signal,onProgress,layout){
     return {...result,words,canEmbed:valid,modelCacheTag:PADDLE_MODEL_CACHE_TAG,coordinateStatus:valid?'detected-lines':'unavailable',geometryNote:valid?'':'줄 위치를 확인하지 못했습니다. 텍스트는 저장할 수 있지만 검색용 PDF에는 포함하지 않습니다.'};
   }};
 }
-const ocrActionIds=['ocrSample','ocrRun','ocrProvider','ocrCorrect'];
+const ocrActionIds=['ocrSample','ocrRun','ocrProvider','ocrCorrect','ocrWholePage'];
 // Completed pages survive a failed batch in memory, independently of accepted PDF text.
 // One entry per page/provider; removed pages and explicit clear/reset release their text.
 const ocrCheckpoints=new Map();
@@ -16603,7 +16793,7 @@ function moveStamp(e){const g=placementGesture;if(!g||g.id!==e.pointerId)return;
 $('compareAfterScroll').addEventListener('pointermove',moveStamp);
 $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGesture;if(!g||g.id!==e.pointerId)return;moveStamp(e);$('stampAnchor').value='top-left';$('stampX').value=(g.x*25.4/72).toFixed(1);$('stampY').value=(g.y*25.4/72).toFixed(1);g.ghost.remove();placementGesture=null;toolsChanged();});
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
-async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,consent=false,force=false){
+async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,consent=false,force=false,wholePage=$('ocrWholePage')?.checked===true){
   if(ocrRunning||proAbort||!pages.length)return;
   if(!['tesseract','paddle-v5','gemini','vision'].includes(provider))return;
   if(provider==='vision'&&typeof PDFVision==='undefined')return;
@@ -16614,8 +16804,8 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   // search layer on every completed page or checkpoint validation.
   let o;try{o=readProOptions(false,[]);}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
-  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='',failed=false;
-  const unchanged=()=>{const current=readProOptions(false,[]);return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
+  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,wholePageSetting=$('ocrWholePage')?.checked===true,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='',failed=false;
+  const unchanged=()=>{const current=readProOptions(false,[]);return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&wholePageSetting===($('ocrWholePage')?.checked===true)&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
   const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions(false,[])))ocrCheckpoints.set(provider+':'+p.uid,record);};
   const publish=()=>{
     const merged=new Map(ocrRecords.map(r=>[r.uid,r]));for(const r of fresh)merged.set(r.uid,r);
@@ -16635,7 +16825,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
-      const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&(r.skipped||provider!=='paddle-v5'||ocrCanEmbed(r));
+      const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(!wholePage||r.coverage==='full')&&(provider!=='tesseract'||r.layout===layout)&&(r.skipped||provider!=='paddle-v5'||ocrCanEmbed(r));
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask,source;
@@ -16647,10 +16837,10 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
         const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
         const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
-        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:false});
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:wholePage});
         const existing=policy.action==='skip';
         checkProAbort();update(.05);
-        if(existing){const record={uid:p.uid,key,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout};fresh.push(record);remember(p,record);completed++;update(1);await idle();continue;}
+        if(existing){const record={uid:p.uid,key,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,coverage:'none',confidence:0,source:provider,language,layout};fresh.push(record);remember(p,record);completed++;update(1);await idle();continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
         // Ordinary scans use the already opened PDF.js page. Edited/masked pages
         // still use the full pipeline so cloud OCR never receives hidden pixels.
@@ -16663,6 +16853,15 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const base=page.getViewport({scale:1});
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
+          let nativeTextBoxes,nativeTextUnmapped=false;
+          if(wholePage){
+            const native=await waitForOCR(page.getTextContent(),workSignal),items=(native.items||[]).filter(item=>item.str?.trim());
+            // Use this exact rendered page, after edits and Pro geometry. These
+            // boxes suppress duplicate hidden OCR over surviving native text.
+            const nativeWords=PDFPrivacy.nativeRecord(native,vp,p.uid).words;
+            nativeTextBoxes=nativeWords.map(word=>word.box);
+            nativeTextUnmapped=nativeWords.length<items.length;
+          }
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
           if(policy.preserveExisting){const content=await waitForOCR(page.getTextContent(),workSignal);PDFOCRPolicy.coverExisting(canvas.getContext('2d'),content.items,vp);}
           update(.12);
@@ -16707,7 +16906,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
           const result=await waitForOCR(engine.recognize(canvas),workSignal);checkProAbort();
           recognizedMs+=performance.now()-recognizedAt;measuredPages++;
           globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
-          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
+          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,coverage:policy.preserveExisting?'gaps':'full',...(wholePage?{nativeTextBoxes,nativeTextUnmapped}:{}),privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});source?.cleanup();}
       progress((i+1)/list.length*95);await idle();
@@ -17178,11 +17377,11 @@ async function requestVisionOCR(sample){
   if(ocrRunning||proAbort||ocrDefaultProvider()!=='vision')return;
   const list=toolTargets(sample?'current':$('ocrScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
+  visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value,wholePage:$('ocrWholePage')?.checked===true};
   visionReady=false;$('visionConsent').checked=false;$('visionConfirm').disabled=true;
   const indices=list.map(p=>pages.indexOf(p)+1),ranges=[];
   for(let i=0;i<indices.length;){const start=indices[i];let end=start;while(indices[i+1]===end+1)end=indices[++i];ranges.push(start===end?String(start):start+'–'+end);i++;}
-  $('visionConfirmScope').textContent=`대상 ${ranges.join(', ')}쪽 · 최대 ${list.length}페이지의 이미지를 전송합니다. 이미 완료한 페이지는 재사용하며, 혼합 문서는 기존 텍스트 영역을 제외합니다.`;
+  $('visionConfirmScope').textContent=`대상 ${ranges.join(', ')}쪽 · 최대 ${list.length}페이지의 이미지를 전송합니다. `+(visionPending.wholePage?'기존 텍스트와 개인정보를 포함한 페이지 전체가 전송됩니다.':'이미 완료한 페이지는 재사용하며, 혼합 문서는 기존 텍스트 영역을 제외합니다.');
   $('visionAvailability').textContent='서버 연결을 확인하는 중…';$('visionDialog').showModal();
   const ctrl=new AbortController();visionCheck?.abort();visionCheck=ctrl;const timer=setTimeout(()=>ctrl.abort(),10000);
   try{const status=await PDFVision.available(ctrl.signal);if(visionCheck!==ctrl||!$('visionDialog').open)return;
@@ -17197,8 +17396,8 @@ $('visionDialog').addEventListener('close',()=>{visionCheck?.abort();visionCheck
 $('visionConfirm').onclick=()=>{
   if(!visionReady||!$('visionConsent').checked||!visionPending||!$('visionDialog').open||ocrRunning||proAbort)return;
   const pending=visionPending;let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  if(ocrDefaultProvider()!=='vision'||pending.fingerprint!==proFingerprint()||pending.language!==$('ocrLanguage').value||pending.keys.some((key,i)=>key!==ocrKey(pending.list[i],options))){$('visionDialog').close();toast('문서 또는 설정이 바뀌었습니다. 다시 확인해 주세요.',true);return;}
-  $('visionDialog').close();void runOCR(false,'vision',pending.list,true);
+  if(ocrDefaultProvider()!=='vision'||pending.fingerprint!==proFingerprint()||pending.language!==$('ocrLanguage').value||pending.wholePage!==($('ocrWholePage')?.checked===true)||pending.keys.some((key,i)=>key!==ocrKey(pending.list[i],options))){$('visionDialog').close();toast('문서 또는 설정이 바뀌었습니다. 다시 확인해 주세요.',true);return;}
+  $('visionDialog').close();void runOCR(false,'vision',pending.list,true,false,pending.wholePage);
 };
 </script>
 <!-- pro-runtime:end -->
@@ -18196,7 +18395,11 @@ async function restoreDocumentHistory(redo){
     pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;if(typeof r.deskewCrop==='boolean')r.page.deskewCrop=r.deskewCrop;else delete r.page.deskewCrop;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     if(state.stamps&&typeof restoreStampHistory==='function')restoreStampHistory(state.stamps);
     if(state.proTransfer)restoreProTransferSettings(state.proTransfer);
-    if(state.pageOcr){const ids=new Set(state.pageOcr.map(r=>r.uid)),active=new Set(pages.map(p=>p.uid));ocrRecords=ocrRecords.filter(r=>!ids.has(r.uid)).concat(state.pageOcr.filter(r=>r.record&&active.has(r.uid)).map(r=>r.record));}
+    if(state.pageOcr){
+      const ids=new Set(state.pageOcr.map(r=>r.uid)),active=new Set(pages.map(p=>p.uid));ocrRecords=ocrRecords.filter(r=>!ids.has(r.uid)).concat(state.pageOcr.filter(r=>r.record&&active.has(r.uid)).map(r=>r.record));
+      if(typeof ocrCheckpoints!=='undefined')for(const [key,record]of ocrCheckpoints)if(ids.has(record.uid))ocrCheckpoints.delete(key);
+      if(typeof renderOCRResults==='function')renderOCRResults();
+    }
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;
@@ -18272,6 +18475,7 @@ async function confirmDocumentExport(list=pages){
 $('documentCheckAccept').onchange=()=>{$('documentCheckContinue').disabled=!$('documentCheckAccept').checked;};
 async function finalizePrivateExport(doc,list,callbacks={}){return PDFPrivacy.isMasked(list)?PDFPrivacy.flatten(doc,{...callbacks,pageSources:list,docOptions:DOC_OPTS}):doc;}
 function syncPrivacy(){
+  if(typeof syncPrivacyAuto==='function')syncPrivacyAuto();
   const count=pages.reduce((n,p)=>n+(p.annots||[]).filter(a=>a.shape==='redaction').length,0);
   if(!count)PDFPrivacy.clearCache();
   $('privacyOpen').disabled=!pages.length||!!proAbort;$('privacySummary').textContent=count?count+'개 영역':'사용 안 함';
@@ -18326,6 +18530,527 @@ $('privacyOverlay').addEventListener('pointerup',()=>finishPrivacyGesture(false)
 $('privacyDelete').onclick=()=>{if(!privacyPage||!privacyPageReady||!privacySelection)return;const before=captureEditHistory();privacyPage.annots=privacyPage.annots.filter(a=>a.id!==privacySelection);privacySelection=null;commitEditHistory(before,'마스킹 영역 삭제');renderPrivacyOverlay();proInvalidate();};
 $('privacyDialog').addEventListener('keydown',e=>{if(e.key==='Delete'&&!e.target.matches('input,textarea')){e.preventDefault();$('privacyDelete').click();}});
 syncPrivacy();
+</script>
+<script id="privacy-detect">
+/* Local, review-first suggestions over OCR text. No document leaves the browser. */
+(function(root){
+  'use strict';
+  const TYPES=Object.freeze([
+    {id:'rrn',label:'주민·외국인등록번호',partialLabel:'뒤 7자리'},
+    {id:'account',label:'계좌번호',partialLabel:'끝 4자리만 유지'},
+    {id:'card',label:'카드번호',partialLabel:'처음·끝 4자리 유지'},
+    {id:'phone',label:'전화번호',partialLabel:'가운데 번호'},
+    {id:'email',label:'이메일',partialLabel:'아이디 일부'},
+    {id:'name',label:'이름',partialLabel:'이름 가운데'},
+    {id:'address',label:'주소',partialLabel:'상세 주소'}
+  ].map(Object.freeze));
+  const PRESETS=Object.freeze([
+    {id:'numbers',name:'번호 중심',types:Object.freeze(['rrn','account','card']),style:'full'},
+    {id:'contact',name:'연락처 포함',types:Object.freeze(['rrn','account','card','phone','email']),style:'full'}
+  ].map(Object.freeze));
+  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000;
+  function fail(message,code='PRIVACY_DETECT_INVALID'){const e=new Error(message);e.code=code;throw e;}
+  function normalizeSettings(value={}){
+    const types=Array.isArray(value?.types)?value.types:PRESETS[0].types;
+    return {types:TYPES.map(type=>type.id).filter(id=>types.includes(id)),style:value?.style==='partial'?'partial':'full'};
+  }
+  const validBox=b=>Array.isArray(b)&&b.length===4&&b.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&b[2]>b[0]&&b[3]>b[1];
+  const union=boxes=>boxes.reduce((a,b)=>[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[2],b[2]),Math.max(a[3],b[3])],[1,1,0,0]);
+  function tokensFor(record){
+    if(!record||record.skipped||!Array.isArray(record.words))fail('이 페이지의 텍스트를 먼저 인식해 주세요.','PRIVACY_DETECT_OCR_REQUIRED');
+    const words=record.words;
+    if(words.length>MAX_WORDS)fail('한 페이지의 인식 영역이 너무 많습니다. 페이지나 인식 범위를 나누어 주세요.','PRIVACY_DETECT_LIMIT');
+    let chars=0;
+    for(const word of words){
+      if(!word||typeof word.text!=='string')fail('인식 텍스트 형식을 확인하지 못했습니다. 텍스트를 다시 인식해 주세요.');
+      chars+=word.text.length;
+      if(chars>MAX_CHARS||word.text.length>MAX_RUN)fail('한 페이지의 인식 텍스트가 너무 큽니다. 인식 범위를 나누어 주세요.','PRIVACY_DETECT_LIMIT');
+      if(word.text.trim()&&!validBox(word.box))fail('인식 텍스트의 위치가 올바르지 않습니다. 텍스트를 다시 인식해 주세요.');
+    }
+    const covered=new Set(),replacements=new Map(),corrections=record.correctionLines;
+    if(corrections!==undefined){
+      const invalid=()=>fail('OCR 교정 글줄의 위치를 확인하지 못했습니다. 교정 내용을 다시 확인해 주세요.','PRIVACY_DETECT_CORRECTION');
+      if(!Array.isArray(corrections)||corrections.length>words.length)invalid();
+      for(const line of corrections){
+        if(!line||!Array.isArray(line.indices)||!line.indices.length||typeof line.text!=='string'||line.text.length>MAX_RUN||/[\u0000-\u001f\u007f\u2028\u2029]/.test(line.text)||!validBox(line.box))invalid();
+        chars+=line.text.length;if(chars>MAX_CHARS)fail('교정 텍스트가 너무 큽니다. 인식 범위를 나누어 주세요.','PRIVACY_DETECT_LIMIT');
+        const indices=[...line.indices].sort((a,b)=>a-b),local=new Set();
+        for(const index of indices){if(!Number.isInteger(index)||index<0||index>=words.length||local.has(index)||covered.has(index)||!validBox(words[index].box))invalid();local.add(index);}
+        const bounds=union(indices.map(index=>words[index].box));
+        if(bounds.some((v,i)=>Math.abs(v-line.box[i])>1e-6))invalid();
+        for(const index of indices)covered.add(index);
+        replacements.set(indices[0],{text:line.text,box:[...line.box],separator:words[indices.at(-1)].separator??'\n',indices,corrected:true});
+      }
+    }
+    const result=[];
+    words.forEach((word,index)=>{
+      if(replacements.has(index)){const replacement=replacements.get(index);if(replacement.text.trim())result.push(replacement);}
+      else if(!covered.has(index)&&word.text.trim())result.push({text:word.text,box:[...word.box],separator:word.separator??' ',indices:[index],corrected:!!word.corrected});
+    });
+    return result;
+  }
+  function sameRow(a,b){
+    if(a.indices.at(-1)+1!==b.indices[0])return false;
+    if(/[\r\n\u2028\u2029]/.test(a.separator))return false;
+    const x=a.box,y=b.box,ha=x[3]-x[1],hb=y[3]-y[1],height=Math.min(ha,hb),overlap=Math.min(x[3],y[3])-Math.max(x[1],y[1]);
+    const punctuation=/^[\p{P}\p{S}]+$/u.test(a.text)||/^[\p{P}\p{S}]+$/u.test(b.text);
+    if(punctuation){const large=ha>=hb?x:y,small=ha>=hb?y:x,center=(small[1]+small[3])/2,h=Math.max(ha,hb);if(center<large[1]-.15*h||center>large[3]+.25*h)return false;}
+    else if(overlap<height*.55||Math.max(ha,hb)>height*2||Math.abs(x[1]+x[3]-y[1]-y[3])>height*1.3)return false;
+    if(y[0]<x[0]||y[0]-x[2]<-.001)return false;
+    const glyphA=(x[2]-x[0])/Math.max(1,a.text.length),glyphB=(y[2]-y[0])/Math.max(1,b.text.length);
+    // Never join distant table columns merely because they have the same y.
+    return y[0]-x[2]<=Math.min(.045,Math.max(glyphA,glyphB)*2.5);
+  }
+  function runsFor(tokens){
+    const runs=[];let current,previous;
+    for(const token of tokens){
+      const separator=previous?String(previous.separator).replace(/[^\t ]/g,'').slice(0,2):'';
+      if(!current||!sameRow(previous,token)||current.text.length+separator.length+token.text.length>MAX_RUN){current={text:'',segments:[]};runs.push(current);}
+      else current.text+=separator;
+      const start=current.text.length;current.text+=token.text;current.segments.push({...token,start,end:current.text.length});previous=token;
+    }
+    return runs;
+  }
+  const digitPositions=text=>{const out=[];for(let i=0;i<text.length;i++)if(text[i]>='0'&&text[i]<='9')out.push(i);return out;};
+  const digits=text=>text.replace(/[^0-9]/g,'');
+  function rrnValid(value){
+    const v=digits(value);if(v.length!==13||!/[1-8]/.test(v[6]))return false;
+    const year=(/[3478]/.test(v[6])?2000:1900)+Number(v.slice(0,2)),month=Number(v.slice(2,4)),day=Number(v.slice(4,6));
+    if(month<1||month>12||day<1)return false;
+    const leap=year%4===0&&(year%100!==0||year%400===0),days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+    return day<=days[month-1];
+  }
+  function cardValid(value){
+    const v=digits(value);if(v.length<13||v.length>19||/^([0-9])\1+$/.test(v))return false;
+    let sum=0,double=false;for(let i=v.length-1;i>=0;i--){let n=Number(v[i]);if(double){n*=2;if(n>9)n-=9;}sum+=n;double=!double;}return sum%10===0;
+  }
+  const addressValid=v=>v.length>=6&&v.length<180&&/(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|[가-힣]{2,10}(?:시|군|구))/.test(v)&&/[가-힣0-9]+(?:로|길|동|읍|면|리|구)(?:\s|[0-9]|$)/.test(v);
+  const numericBoundary=(text,start,end)=>!/[0-9A-Za-z]/.test(text[start-1]||'')&&!/[0-9A-Za-z]/.test(text[end]||'');
+  function hitsFor(text){
+    const hits=[];
+    function scan(type,pattern,accept,reason){
+      for(const match of text.matchAll(pattern)){
+        const value=match.groups?.value??match[0],start=match.index+match[0].lastIndexOf(value),end=start+value.length;
+        if(accept&&!accept(value,start,end))continue;
+        hits.push({type,text:value,start,end,reason});
+        if(hits.length>MAX_CANDIDATES*2)fail('개인정보 후보가 너무 많습니다. 페이지나 인식 범위를 나누어 확인해 주세요.','PRIVACY_DETECT_LIMIT');
+      }
+    }
+    scan('rrn',/[0-9](?:[ \t-]{0,3}[0-9]){12}/g,(v,s,e)=>numericBoundary(text,s,e)&&rrnValid(v),'등록번호 형식과 생년월일을 확인했습니다.');
+    scan('email',/[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?){1,5}/g,(v,s,e)=>!/[A-Za-z0-9.!#$%&'*+/=?^_`{|}~@-]/.test(text[s-1]||'')&&!/[A-Za-z0-9@_-]/.test(text[e]||'')&&/\.[A-Za-z]{2,63}$/.test(v)&&!v.slice(0,v.indexOf('@')).startsWith('.')&&!v.slice(0,v.indexOf('@')).endsWith('.')&&!v.includes('..'),'이메일 형식을 확인했습니다.');
+    scan('account',/(?:^|[\s:：;|,()[\]])(?:계좌[ \t]*번호|입금[ \t]*계좌|출금[ \t]*계좌|환급[ \t]*계좌|계좌|account)[ \t]*[:：]?[ \t]*(?:[가-힣A-Za-z]{1,12}(?:은행|증권)[ \t]+)?(?<value>[0-9][0-9 \t-]{7,40}[0-9])/gi,(v,s,e)=>{const n=digits(v).length;return n>=10&&n<=16&&numericBoundary(text,s,e);},'계좌 라벨 옆의 번호입니다.');
+    scan('card',/[0-9](?:[ \t-]{0,3}[0-9]){12,18}/g,(v,s,e)=>numericBoundary(text,s,e)&&cardValid(v),'카드번호 길이와 검증 숫자를 확인했습니다.');
+    scan('phone',/(?:\+82[ \t-]{0,3}(?:10|11|16|17|18|19|2|[3-6][1-5]|70)|0(?:10|11|16|17|18|19|2|[3-6][1-5]|70|80))[ \t-]{0,3}[0-9]{3,4}[ \t-]{0,3}[0-9]{4}/g,(v,s,e)=>numericBoundary(text,s,e)&&(!/^(?:010|\+82[ \t-]*10)/.test(v)||digits(v).length===(v[0]==='+'?12:11)),'전화번호 형식을 확인했습니다.');
+    const labels='성명|예금주|고객명|계약자|채무자|채권자|신청인|수취인|성[ \t]+명';
+    const namePattern=new RegExp('(?:^|[\\s:：;|,()[\\]])(?:'+labels+')[ \\t]*[:：]?[ \\t]*(?<value>[가-힣]{2,5}|[가-힣](?:[ \\t]+[가-힣]){1,4})(?=$|[\\s,;:：()[\\]])','g');
+    scan('name',namePattern,v=>!['성명','예금주','고객명','계약자','채무자','채권자','신청인','수취인','확인','서명','필수','없음','미기재','주식회사','법인명','상호명'].includes(v.replace(/\s/g,'')),'이름 라벨 옆의 한글 이름입니다.');
+    scan('address',/(?:^|[\s:：;|,()[\]])(?:주소|소재지|거주지|주[ \t]+소)[ \t]*[:：]?[ \t]*(?<value>[^\r\n;|]{6,180})/g,addressValid,'주소 라벨 옆의 주소 형식입니다.');
+    // Stop an address at the next labelled field; its label and value are not
+    // part of this address, even when Paddle supplied one long OCR line.
+    for(const hit of hits){if(hit.type==='address'){
+      const stop=hit.text.search(/[ \t]+(?:성명|예금주|고객명|전화|연락처|휴대폰|계좌|주민|생년월일|이메일|email)[ \t]*[:：]/i);
+      if(stop>=0){hit.text=hit.text.slice(0,stop).trimEnd();hit.end=hit.start+hit.text.length;}else{hit.text=hit.text.trimEnd();hit.end=hit.start+hit.text.length;}
+    }}
+    const priority={rrn:0,email:1,account:2,card:3,phone:4,name:5,address:6};
+    hits.sort((a,b)=>priority[a.type]-priority[b.type]||a.start-b.start);
+    const chosen=[],occupied=new Uint8Array(text.length);
+    for(const hit of hits){
+      if(hit.type==='address'&&!addressValid(hit.text))continue;
+      let overlaps=false;for(let i=hit.start;i<hit.end;i++){if(occupied[i]){overlaps=true;break;}}
+      if(!overlaps){chosen.push(hit);occupied.fill(1,hit.start,hit.end);}
+    }
+    return chosen.sort((a,b)=>a.start-b.start);
+  }
+  function hiddenRange(hit,style){
+    if(style!=='partial')return [0,hit.text.length];
+    const text=hit.text,d=digitPositions(text);
+    if(hit.type==='rrn')return [d[6],d.at(-1)+1];
+    if(hit.type==='phone'){
+      const international=text.startsWith('+'),country=international?2:0,national=digits(text).slice(country),prefix=country+(international?(national.startsWith('2')?1:2):(national.startsWith('02')?2:3));
+      return [d[prefix],d[d.length-4]];
+    }
+    if(hit.type==='account')return [0,d[d.length-4]];
+    if(hit.type==='card')return [d[4],d[d.length-4]];
+    if(hit.type==='email'){const at=text.indexOf('@');return [at>3?2:at>1?1:0,at];}
+    if(hit.type==='name'){
+      const letters=[];for(let i=0;i<text.length;i++)if(/[가-힣]/.test(text[i]))letters.push(i);
+      return letters.length>2?[letters[1],letters.at(-1)]:[letters[1],letters[1]+1];
+    }
+    if(hit.type==='address'){
+      const prefix=text.match(/^(?:(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)(?:특별자치시|특별시|광역시|특별자치도|도)?[ \t]+)?(?:[가-힣]{1,12}(?:시|군|구|읍|면)[ \t]+){1,3}/)?.[0].length||0;
+      return [prefix,text.length];
+    }
+    return [0,text.length];
+  }
+  const weight=char=>/[\u1100-\uffff]/.test(char)?1:/\s/.test(char)?.35:.6;
+  function proportionalRange(text,start,end,measureText){
+    if(typeof measureText==='function'){
+      try{
+        const width=value=>{const result=measureText(value);return typeof result==='number'?result:result?.width;};
+        const total=width(text),left=start?width(text.slice(0,start)):0,right=end===text.length?total:width(text.slice(0,end));
+        if(Number.isFinite(total)&&total>0&&Number.isFinite(left)&&Number.isFinite(right)&&left>=0&&right>left&&right<=total)return [left/total,right/total];
+      }catch{ /* A missing font must not prevent review with the fallback. */ }
+    }
+    let total=0,left=0,right=0;
+    for(let i=0;i<text.length;i++){const n=weight(text[i]);total+=n;if(i<start)left+=n;if(i<end)right+=n;}
+    return [left/Math.max(total,.01),right/Math.max(total,.01)];
+  }
+  function suggestion(run,hit,style,measureText){
+    const [from,to]=hiddenRange(hit,style),start=hit.start+from,end=hit.start+to,boxes=[],wordIndices=new Set();let approximate=false,corrected=false;
+    if(!Number.isInteger(from)||!Number.isInteger(to)||to<=from)fail('가리기 범위를 계산하지 못했습니다. 전체 가리기를 사용해 주세요.');
+    for(const token of run.segments){
+      if(token.start>=end)break;if(token.end<=start)continue;
+      const a=Math.max(start,token.start)-token.start,b=Math.min(end,token.end)-token.start;
+      if(!token.text.slice(a,b).trim())continue;
+      const full=a===0&&b===token.text.length,range=full?[0,1]:proportionalRange(token.text,a,b,measureText),[l,t,r,bt]=token.box;
+      boxes.push(full?[...token.box]:[l+(r-l)*range[0],t,l+(r-l)*range[1],bt]);for(const index of token.indices)wordIndices.add(index);
+      approximate||=!full||token.corrected;corrected||=token.corrected;
+    }
+    if(!boxes.length||boxes.some(box=>!validBox(box)))fail('가리기 위치를 계산하지 못했습니다. 인식 결과를 다시 확인해 주세요.');
+    const maskedText=hit.text.slice(0,from)+hit.text.slice(from,to).replace(/[^\s-]/g,'*')+hit.text.slice(to);
+    const reason=hit.reason+(corrected?' 교정한 글줄의 위치를 추정했습니다.':approximate?' 글자 일부의 위치를 추정했습니다.':'');
+    return {type:hit.type,text:hit.text,maskedText,boxes,wordIndices:[...wordIndices],approximate,reason};
+  }
+  function detect(record,settings,measureText){
+    const selected=normalizeSettings(settings),enabled=new Set(selected.types),tokens=tokensFor(record),result=[];
+    if(!enabled.size)return result;
+    for(const run of runsFor(tokens)){
+      for(const hit of hitsFor(run.text)){if(!enabled.has(hit.type))continue;
+        result.push(suggestion(run,hit,selected.style,measureText));
+        if(result.length>MAX_CANDIDATES)fail('한 페이지의 개인정보 후보가 2,000개를 넘습니다. 인식 범위를 나누어 확인해 주세요.','PRIVACY_DETECT_LIMIT');
+      }
+    }
+    return result;
+  }
+  const api=Object.freeze({TYPES,PRESETS,normalizeSettings,detect});root.PDFPrivacyDetect=api;
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(globalThis);
+</script>
+<script id="privacy-auto-model">
+/* OCR cleanup and explicit preferences for local privacy suggestions. */
+(function(root){
+  'use strict';
+  const TYPE_IDS=['rrn','account','card','phone','email','name','address'];
+  const MAX_PRESETS=8,MAX_NAME=24,MAX_WORDS=50000,MAX_BOXES=20000,MAX_CHARS=500000,EDGE_EPSILON=1e-7;
+  let nextId=0;
+  function fail(message,code='PRIVACY_AUTO_INVALID'){const e=new Error(message);e.code=code;throw e;}
+  const validBox=b=>Array.isArray(b)&&b.length===4&&b.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&b[2]>b[0]&&b[3]>b[1];
+  const finiteArray=(a,length)=>Array.isArray(a)&&a.length===length&&a.every(Number.isFinite);
+  function normalSettings(value){
+    const selected=Array.isArray(value?.types)?value.types:['rrn','account','card'];
+    return {types:TYPE_IDS.filter(id=>selected.includes(id)),style:value?.style==='partial'?'partial':'full'};
+  }
+  function cleanName(value){
+    if(typeof value!=='string')return '';
+    const name=value.replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g,' ').replace(/\s+/gu,' ').trim();
+    return [...name].length<=MAX_NAME?name:'';
+  }
+  function readPresets(raw){
+    if(typeof raw==='string'){
+      if(raw.length>20000)return [];
+      try{raw=JSON.parse(raw);}catch{return [];}
+    }
+    if(!Array.isArray(raw))return [];
+    const result=[],seenIds=new Set(),seenNames=new Set();
+    for(const item of raw.slice(0,64)){
+      if(!item||typeof item!=='object'||typeof item.id!=='string'||!/^custom-[a-z0-9-]{1,56}$/.test(item.id))continue;
+      const name=cleanName(item.name),settings=normalSettings(item);
+      if(!name||!Array.isArray(item.types)||!settings.types.length||seenIds.has(item.id)||seenNames.has(name))continue;
+      result.push({id:item.id,name,types:settings.types,style:settings.style});seenIds.add(item.id);seenNames.add(name);
+      if(result.length===MAX_PRESETS)break;
+    }
+    return result;
+  }
+  function savePreset(list,name,settings){
+    const value=cleanName(name),result=readPresets(list),choice=normalSettings(settings);
+    if(!value)fail('프리셋 이름을 1~24자로 입력해 주세요.','PRIVACY_PRESET_NAME');
+    if(!choice.types.length)fail('프리셋에 저장할 개인정보 종류를 선택해 주세요.','PRIVACY_PRESET_TYPES');
+    const at=result.findIndex(item=>item.name===value);
+    if(at>=0)result[at]={id:result[at].id,name:value,...choice};
+    else{
+      if(result.length>=MAX_PRESETS)fail('프리셋은 8개까지 저장할 수 있습니다. 기존 프리셋을 지우거나 같은 이름으로 저장해 주세요.','PRIVACY_PRESET_LIMIT');
+      let id;do{id='custom-'+Date.now().toString(36)+'-'+(++nextId).toString(36)+'-'+Math.random().toString(36).slice(2,10);}while(result.some(item=>item.id===id));
+      result.push({id,name:value,...choice});
+    }
+    return result;
+  }
+  function removePreset(list,id){return readPresets(list).filter(item=>item.id!==id);}
+  function maskIndex(boxes){
+    if(!Array.isArray(boxes)||boxes.length>MAX_BOXES||!boxes.every(validBox))fail('개인정보 가리기 영역을 확인하지 못했습니다. 영역을 다시 확인해 주세요.');
+    const rows=Array.from({length:64},()=>[]),row=y=>Math.min(63,Math.max(0,Math.floor(y*64)));
+    for(const box of boxes)for(let i=row(box[1]-EDGE_EPSILON);i<=row(box[3]+EDGE_EPSILON);i++)rows[i].push(box);
+    return box=>{
+      for(let i=row(box[1]-EDGE_EPSILON);i<=row(box[3]+EDGE_EPSILON);i++)for(const mask of rows[i]){
+        // Exact edge contact is excluded from the searchable layer as well.
+        // A tiny normalized tolerance covers arithmetic drift at that edge.
+        if(box[0]<=mask[2]+EDGE_EPSILON&&box[2]>=mask[0]-EDGE_EPSILON&&box[1]<=mask[3]+EDGE_EPSILON&&box[3]>=mask[1]-EDGE_EPSILON)return true;
+      }
+      return false;
+    };
+  }
+  function copyWord(word){
+    const out={text:word.text,box:[...word.box]};
+    if(word.separator!==undefined){
+      if(typeof word.separator!=='string'||!/^\s{0,8}$/u.test(word.separator))fail('인식 텍스트 구분 형식이 올바르지 않습니다. 다시 인식해 주세요.');
+      out.separator=word.separator;
+    }
+    if(Number.isFinite(word.confidence)||word.confidence===null)out.confidence=word.confidence;
+    for(const field of ['uncertain','corrected','correctionLine'])if(typeof word[field]==='boolean')out[field]=word[field];
+    if(word.nativeBasis!==undefined){if(!finiteArray(word.nativeBasis,6))fail('인식 텍스트의 배치 정보를 확인하지 못했습니다.');out.nativeBasis=[...word.nativeBasis];}
+    if(word.quad!==undefined){
+      if(!Array.isArray(word.quad)||word.quad.length!==4||!word.quad.every(point=>finiteArray(point,2)))fail('인식 텍스트의 모서리 위치를 확인하지 못했습니다.');
+      out.quad=word.quad.map(point=>[...point]);
+    }
+    return out;
+  }
+  function sanitizeRecord(record,boxes,correctionWords){
+    if(!record||typeof record!=='object'||!Array.isArray(record.words))fail('정리할 OCR 결과가 없습니다. 텍스트를 먼저 인식해 주세요.');
+    const intersects=maskIndex(boxes);
+    if(record.correctionLines!==undefined&&typeof correctionWords!=='function')fail('OCR 교정 결과를 확인할 수 없습니다. 교정 내용을 다시 확인해 주세요.');
+    const effective=typeof correctionWords==='function'?correctionWords(record):record.words;
+    if(!Array.isArray(effective)||effective.length>MAX_WORDS)fail('정리할 OCR 영역이 너무 많거나 올바르지 않습니다. 인식 범위를 나누어 주세요.');
+    const words=[];let chars=0;
+    for(const word of effective){
+      if(!word||typeof word.text!=='string')fail('정리할 OCR 텍스트 형식이 올바르지 않습니다.');
+      chars+=word.text.length;if(chars>MAX_CHARS||word.text.length>60000)fail('정리할 OCR 텍스트가 너무 큽니다. 인식 범위를 나누어 주세요.');
+      if(!word.text.trim())continue;
+      if(!validBox(word.box))fail('인식 텍스트의 위치가 올바르지 않습니다. 다시 인식해 주세요.');
+      // Removing just a substring would retain guessed coordinates and may
+      // leave the original sensitive value searchable. Drop the complete run.
+      if(!intersects(word.box))words.push(copyWord(word));
+    }
+    const out={};
+    // Opaque cache keys are handed back for the controller to replace in the
+    // same transaction as the new masks. Do not retain arbitrary OCR payloads.
+    for(const field of ['uid','key','privacyKey','source','language','layout','coverage','modelCacheTag','coordinateStatus','granularity','model']){
+      if(typeof record[field]==='string'||record[field]===null)out[field]=record[field];
+    }
+    if(Number.isInteger(record.page)&&record.page>=0)out.page=record.page;
+    if(Number.isFinite(record.confidence)||record.confidence===null)out.confidence=record.confidence;
+    for(const field of ['canEmbed','nativeTextUnmapped','skipped'])if(typeof record[field]==='boolean')out[field]=record[field];
+    if(record.nativeTextBoxes!==undefined){
+      if(!Array.isArray(record.nativeTextBoxes)||record.nativeTextBoxes.length>MAX_WORDS||!record.nativeTextBoxes.every(validBox))fail('기존 검색 텍스트의 위치를 확인하지 못했습니다. 다시 인식해 주세요.');
+      out.nativeTextBoxes=record.nativeTextBoxes.map(box=>[...box]);
+    }
+    out.words=words;out.text=words.map(word=>word.text+(word.separator??' ')).join('').trim();
+    return out;
+  }
+  const api=Object.freeze({sanitizeRecord,readPresets,savePreset,removePreset});root.PDFPrivacyAutoModel=api;
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(globalThis);
+</script>
+<script id="privacy-auto-ui">
+/* Candidates are a disposable draft. Only reviewed rectangles enter the document. */
+(function(){
+  'use strict';
+  const el=id=>$('privacyAuto'+id),dialog=el('Dialog'),NS='http://www.w3.org/2000/svg',storageKey='pdfstudio-privacy-presets-v1';
+  let entries=[],pageIndex=0,active=null,shown=50,ready=false,working=false,sequence=0,controller=null,gesture=null,presets=[];
+  const confirmed=new Set();
+  const notices=new Map();
+  const settings=()=>PDFPrivacyDetect.normalizeSettings({types:[...el('Types').querySelectorAll('input:checked')].map(n=>n.value),style:el('Style').value});
+  const entry=()=>entries[pageIndex],chosen=()=>entries.flatMap(e=>e.candidates.filter(c=>c.selected));
+  const status=(id,message,error=false)=>{el(id).textContent=message;el(id).dataset.error=String(error);};
+  const notice=(id,message,error=false)=>{notices.set(id,[message,error]);status(id,message,error);};
+  const yieldUI=()=>new Promise(resolve=>setTimeout(resolve,0));
+  function geometrySafe(o,list){return !o.deskew&&!o.crop&&(!o.paper||o.paper==='original')&&list.every(p=>!o.deskewAngles?.[p.uid]&&!o.deskewCropByPage?.[p.uid]);}
+  function assess(){
+    const list=toolTargets(el('Scope').value),o=readProOptions(false,[]),records=new Map(ocrRecords.map(r=>[r.uid,r]));
+    if(!list.length)return {list,o,error:'탐지할 페이지를 선택하세요.'};
+    if(!geometrySafe(o,list))return {list,o,error:'기울기·재단·페이지 규격 변경을 끄고 페이지 전체를 다시 인식하세요.'};
+    const missing=list.filter(p=>{
+      const r=records.get(p.uid);
+      if(!r||r.skipped||r.coverage!=='full'||!Array.isArray(r.words)||!ocrRecordCurrent(r,p,o))return true;
+      if(!r.words.length)return typeof r.text!=='string'||!!r.text.trim();
+      return !r.words.some(w=>w?.text?.trim())||!r.words.every(w=>typeof w?.text==='string'&&(!w.text.trim()||ocrValidWord(w)));
+    });
+    return {list,o,records,missing,error:missing.length?list.length+'페이지 중 '+missing.length+'페이지에 전체 OCR이 필요합니다.':''};
+  }
+  function syncSetup(){
+    if(!dialog.open||!el('Review').hidden)return;
+    const state=assess();status('SetupStatus',...(notices.get('SetupStatus')||[state.error||state.list.length+'페이지 인식 완료 · 탐지할 종류를 선택하세요.']));
+    el('Find').disabled=working||ocrRunning||!!proAbort||!!state.error||!settings().types.length;
+    el('OCR').disabled=working||ocrRunning||!!proAbort||!state.list.length;el('OCR').hidden=!state.error;
+    lockControls();
+  }
+  function lockControls(){
+    for(const id of ['Scope','Preset','Style','PresetName','PresetSave','More'])el(id).disabled=working;
+    el('PresetDelete').disabled=working||!presets.some(p=>p.id===el('Preset').value);
+    for(const input of el('Types').querySelectorAll('input'))input.disabled=working;
+    for(const input of el('Candidates').querySelectorAll('input,button'))input.disabled=working;
+  }
+  function sync(){
+    const selected=chosen(),needed=entries.filter(e=>e.candidates.some(c=>c.selected));
+    el('Apply').disabled=working||!ready||!!gesture||!selected.length||needed.some(e=>!confirmed.has(e.uid));
+    el('PageConfirm').checked=!!entry()&&confirmed.has(entry().uid);
+    el('PageConfirm').disabled=working||!ready||!!gesture||!entry()?.candidates.some(c=>c.selected);
+    el('Prev').disabled=working||pageIndex===0;el('Next').disabled=working||pageIndex>=entries.length-1;
+    for(const id of ['Page','SelectPage','ClearSelection','EditSettings'])el(id).disabled=working;
+    dialog.dataset.busy=String(working);
+    lockControls();
+    if(!working&&!el('Review').hidden)status('Status',...(notices.get('Status')||[selected.length+'개 선택 · '+needed.filter(e=>confirmed.has(e.uid)).length+'/'+needed.length+'페이지 확인']));
+  }
+  function loadPresets(){try{presets=PDFPrivacyAutoModel.readPresets(localStorage.getItem(storageKey));}catch{presets=[];}}
+  function presetOptions(value='numbers'){
+    el('Preset').replaceChildren();
+    for(const p of [...PDFPrivacyDetect.PRESETS,...presets,{id:'custom',name:'직접 선택'}]){const opt=new Option(p.name,p.id);el('Preset').append(opt);}
+    el('Preset').value=value;el('PresetDelete').disabled=!presets.some(p=>p.id===value);
+  }
+  function setSettings(value){const s=PDFPrivacyDetect.normalizeSettings(value);for(const input of el('Types').querySelectorAll('input'))input.checked=s.types.includes(input.value);el('Style').value=s.style;updateTypeLabels();syncSetup();}
+  function updateTypeLabels(){for(const type of PDFPrivacyDetect.TYPES){const span=el('Types').querySelector('[data-type="'+type.id+'"]');span.textContent=type.label+(el('Style').value==='partial'?' · '+type.partialLabel:'');}}
+  for(const type of PDFPrivacyDetect.TYPES){const label=document.createElement('label'),input=document.createElement('input'),span=document.createElement('span');input.type='checkbox';input.value=type.id;span.dataset.type=type.id;label.append(input,span);el('Types').append(label);}
+  el('Preset').onchange=()=>{if(working)return;notices.clear();const value=el('Preset').value,p=[...PDFPrivacyDetect.PRESETS,...presets].find(p=>p.id===value);el('PresetDelete').disabled=!presets.some(p=>p.id===value);if(p){el('PresetName').value=presets.includes(p)?p.name:'';setSettings(p);}};
+  for(const id of ['Types','Style'])el(id).onchange=()=>{if(working)return;notices.clear();el('Preset').value='custom';el('PresetDelete').disabled=true;updateTypeLabels();syncSetup();};
+  el('Scope').onchange=()=>{if(working)return;notices.clear();syncSetup();};
+  el('PresetSave').onclick=()=>{if(working)return;try{const next=PDFPrivacyAutoModel.savePreset(presets,el('PresetName').value,settings());localStorage.setItem(storageKey,JSON.stringify(next));presets=next;presetOptions(next.find(p=>p.name===el('PresetName').value.trim())?.id||'custom');notice('SetupStatus','선택한 종류와 가리는 방식만 저장했습니다.');}catch(e){notice('SetupStatus',e.message||'프리셋을 저장하지 못했습니다.',true);}};
+  el('PresetDelete').onclick=()=>{if(working)return;try{const next=PDFPrivacyAutoModel.removePreset(presets,el('Preset').value);localStorage.setItem(storageKey,JSON.stringify(next));presets=next;presetOptions('custom');notice('SetupStatus','프리셋을 삭제했습니다.');}catch{notice('SetupStatus','프리셋을 삭제하지 못했습니다.',true);}};
+  async function digestText(text){const bytes=new TextEncoder().encode(text);return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
+  const digest=record=>digestText(JSON.stringify(record));
+  function clearCanvas(){const canvas=el('Canvas');canvas.width=canvas.height=0;el('Overlay').replaceChildren();ready=false;}
+  function cancelWork(){sequence++;controller?.abort();controller=null;gesture=null;working=false;clearCanvas();dialog.dataset.dragging='false';}
+  function resetDraft(){cancelWork();notices.clear();entries=[];confirmed.clear();active=null;pageIndex=0;el('Candidates').replaceChildren();el('Page').replaceChildren();el('Review').hidden=true;el('Setup').hidden=false;status('Status','');sync();syncSetup();}
+  function close(){if(dialog.open)dialog.close();}
+  dialog.addEventListener('close',()=>{resetDraft();$('privacyAutoOpen').focus();});
+  for(const id of ['Close','Cancel'])el(id).onclick=close;
+  el('EditSettings').onclick=()=>{if(!working)resetDraft();};
+  globalThis.syncPrivacyAuto=()=>{const open=$('privacyAutoOpen');if(open)open.disabled=!pages.length||!!proAbort||ocrRunning;syncSetup();};
+  $('privacyAutoOpen').onclick=()=>{
+    if($('privacyAutoOpen').disabled)return;resetDraft();loadPresets();presetOptions();setSettings(PDFPrivacyDetect.PRESETS[0]);dialog.showModal();syncSetup();
+  };
+  el('OCR').onclick=()=>{
+    if(working||el('OCR').disabled)return;
+    const scope=el('Scope').value;close();$('ocrScope').value=scope;$('ocrWholePage').checked=true;$('ocrSection').open=true;
+    if(typeof setProView==='function')setProView('settings');$('ocrSection').scrollIntoView({block:'nearest',behavior:'smooth'});$('ocrRun').focus();
+  };
+  el('Find').onclick=async()=>{
+    if(working||el('Find').disabled)return;const state=assess();if(state.error){syncSetup();return;}
+    notices.clear();cancelWork();const token=sequence,abort=controller=new AbortController();working=true;syncSetup();sync();
+    try{
+      await PDFPrivacy.assertSupportedSources(state.list,docs);abort.signal.throwIfAborted();
+      const next=[],s=settings(),measureCanvas=document.createElement('canvas'),measureContext=measureCanvas.getContext('2d'),measured=new Map();let count=0;
+      if(measureContext)measureContext.font='16px Arial, sans-serif';
+      const measureText=typeof measureContext?.measureText==='function'?text=>{if(measured.has(text))return measured.get(text);const width=measureContext.measureText(text).width;if(measured.size<512)measured.set(text,width);return width;}:undefined;
+      for(let index=0;index<state.list.length;index++){
+        abort.signal.throwIfAborted();const p=state.list[index],record=state.records.get(p.uid);
+        if(!ocrRecordCurrent(record,p,readProOptions(false,[]))||!pages.includes(p)||!ocrRecords.includes(record))throw Error('문서나 OCR 결과가 바뀌었습니다. 다시 시작하세요.');
+        const hash=await digest(record);abort.signal.throwIfAborted();
+        const candidates=PDFPrivacyDetect.detect(record,s,measureText).map((c,i)=>({...c,id:p.uid+':'+i,selected:true,boxes:c.boxes.map(b=>[...b])}));
+        count+=candidates.length;if(count>10000)throw Error('탐지 후보가 10,000개를 넘습니다. 선택 페이지로 범위를 나누어 주세요.');
+        if(candidates.length)next.push({uid:p.uid,page:p,record,hash,candidates});
+        status('Status',Math.round((index+1)/state.list.length*100)+'% · '+(index+1)+'/'+state.list.length+'페이지 탐지');await yieldUI();
+      }
+      abort.signal.throwIfAborted();entries=next;working=false;
+      if(!next.length){notice('SetupStatus','선택한 종류의 후보가 없습니다. 탐지에서 놓친 정보는 직접 가릴 수 있습니다.');status('Status','');syncSetup();return;}
+      el('Setup').hidden=true;el('Review').hidden=false;el('Page').replaceChildren();
+      for(let i=0;i<entries.length;i++)el('Page').append(new Option((pages.indexOf(entries[i].page)+1)+'쪽 · '+entries[i].candidates.length+'개',String(i)));
+      await showPage(0);if(dialog.open&&ready)el('Page').focus();
+    }catch(e){if(token===sequence&&e.name!=='AbortError'){notice('SetupStatus',e.message||'탐지를 완료하지 못했습니다.',true);status('Status','');}}
+    finally{if(token===sequence){working=false;sync();syncSetup();}}
+  };
+  function svgNode(tag,attributes){const n=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attributes))n.setAttribute(k,v);return n;}
+  function renderOverlay(){
+    const svg=el('Overlay');svg.replaceChildren();if(!ready||!entry())return;
+    for(const c of entry().candidates)for(let i=0;i<c.boxes.length;i++){
+      const b=c.boxes[i],rect=svgNode('rect',{x:b[0]*1000,y:b[1]*1000,width:(b[2]-b[0])*1000,height:(b[3]-b[1])*1000,class:'privacy-auto-region','data-id':c.id,'data-box':i,'data-selected':c.selected,'data-active':c.id===active,tabindex:c.id===active?'0':'-1',role:'button','aria-label':PDFPrivacyDetect.TYPES.find(t=>t.id===c.type)?.label+' 영역. 방향키로 위치 조절'});svg.append(rect);
+    }
+    const c=entry().candidates.find(c=>c.id===active);if(!c)return;const bounds=svg.getBoundingClientRect();
+    c.boxes.forEach((b,i)=>{for(const [x,y,corner]of [[b[0],b[1],'nw'],[b[2],b[1],'ne'],[b[2],b[3],'se'],[b[0],b[3],'sw']])for(const size of [44,10]){
+      const w=size*1000/Math.max(bounds.width,1),h=size*1000/Math.max(bounds.height,1),n=svgNode('rect',{x:x*1000-w/2,y:y*1000-h/2,width:w,height:h,class:'privacy-auto-handle','data-id':c.id,'data-box':i,'data-corner':corner,'data-size':size});if(size===44){n.style.fill='transparent';n.style.stroke='none';}svg.append(n);
+    }});
+  }
+  function activate(c,scroll=false){active=c.id;const index=entry().candidates.indexOf(c);if(index>=shown){shown=Math.ceil((index+1)/50)*50;renderCandidates();}for(const n of el('Candidates').children)n.dataset.active=String(n.dataset.id===active);renderOverlay();if(scroll){const host=el('Candidates'),row=host.querySelector('[data-id="'+CSS.escape(c.id)+'"]');if(row){const r=row.getBoundingClientRect(),h=host.getBoundingClientRect();if(r.top<h.top)host.scrollTop+=r.top-h.top;else if(r.bottom>h.bottom)host.scrollTop+=r.bottom-h.bottom;}}}
+  function selectionChanged(){if(entry())confirmed.delete(entry().uid);sync();renderOverlay();}
+  function renderCandidates(){
+    const host=el('Candidates');host.replaceChildren();if(!entry())return;
+    for(const c of entry().candidates.slice(0,shown)){
+      const row=document.createElement('div'),input=document.createElement('input'),check=document.createElement('label'),body=document.createElement('button');row.className='privacy-auto-candidate';row.dataset.id=c.id;row.dataset.active=String(c.id===active);row.dataset.selected=String(c.selected);check.className='privacy-auto-candidate-check';check.append(input);
+      input.type='checkbox';input.checked=c.selected;input.setAttribute('aria-label',c.text+' 가리기');input.onchange=()=>{if(working){input.checked=c.selected;return;}c.selected=input.checked;row.dataset.selected=String(c.selected);activate(c);selectionChanged();};
+      body.type='button';body.className='privacy-auto-candidate-body';body.style.cssText='border:0;background:none;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer';
+      for(const [cls,text]of [['kind',PDFPrivacyDetect.TYPES.find(t=>t.id===c.type)?.label||c.type],['text',c.text+' → '+c.maskedText],['meta',c.approximate?'위치 추정 · 경계 확인':'OCR 영역']]){const span=document.createElement('span');span.className='privacy-auto-'+cls;span.textContent=text;body.append(span);}body.onclick=()=>{if(!working)activate(c);};row.append(check,body);host.append(row);
+    }
+    el('More').hidden=shown>=entry().candidates.length;el('More').textContent='다음 '+Math.min(50,entry().candidates.length-shown)+'개 보기';
+  }
+  async function verifyEntry(e){
+    const o=readProOptions(false,[]),snapshot=JSON.stringify(e.record);
+    if(!pages.includes(e.page)||!ocrRecords.includes(e.record)||!ocrRecordCurrent(e.record,e.page,o)||!geometrySafe(o,[e.page])||await digestText(snapshot)!==e.hash)throw Error('문서나 OCR 결과가 바뀌었습니다. 탐지를 다시 실행하세요.');
+    if(!pages.includes(e.page)||!ocrRecords.includes(e.record)||!ocrRecordCurrent(e.record,e.page,readProOptions(false,[]))||JSON.stringify(e.record)!==snapshot)throw Error('문서가 변경되었습니다. 탐지를 다시 실행하세요.');
+    return snapshot;
+  }
+  async function showPage(index){
+    cancelWork();const token=sequence,abort=controller=new AbortController();pageIndex=index;shown=50;active=entry()?.candidates[0]?.id;el('Page').value=String(index);renderCandidates();sync();status('ReviewStatus','원본을 불러오는 중…');
+    let canvas;
+    try{
+      await verifyEntry(entry());abort.signal.throwIfAborted();canvas=await renderOCRCorrectionPage(entry().record,{signal:abort.signal});abort.signal.throwIfAborted();
+      const target=el('Canvas');target.width=canvas.width;target.height=canvas.height;target.getContext('2d').drawImage(canvas,0,0);ready=true;renderOverlay();
+      status('ReviewStatus','영역을 끌거나 모서리로 크기를 조절하세요. 자동 탐지에는 누락·오탐이 있을 수 있습니다.');
+    }catch(e){if(token===sequence&&e.name!=='AbortError'){confirmed.delete(entry().uid);status('ReviewStatus',e.message||'원본을 표시하지 못했습니다.',true);}}
+    finally{if(canvas)canvas.width=canvas.height=0;if(token===sequence)sync();}
+  }
+  el('Page').onchange=()=>{if(!working)showPage(Number(el('Page').value));};el('Prev').onclick=()=>{if(!working&&pageIndex>0)return showPage(pageIndex-1);};el('Next').onclick=()=>{if(!working&&pageIndex<entries.length-1)return showPage(pageIndex+1);};
+  el('More').onclick=()=>{if(working)return;shown+=50;renderCandidates();};
+  el('SelectPage').onclick=()=>{if(working||!entry())return;entry().candidates.forEach(c=>c.selected=true);selectionChanged();renderCandidates();};
+  el('ClearSelection').onclick=()=>{if(working)return;entries.forEach(e=>e.candidates.forEach(c=>c.selected=false));confirmed.clear();sync();renderCandidates();renderOverlay();};
+  el('PageConfirm').onchange=()=>{if(working||!ready||gesture||!entry())return;if(el('PageConfirm').checked)confirmed.add(entry().uid);else confirmed.delete(entry().uid);sync();};
+  const point=event=>{const b=el('Overlay').getBoundingClientRect();return [(event.clientX-b.left)/b.width,(event.clientY-b.top)/b.height];};
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  el('Overlay').onpointerdown=event=>{
+    if(!ready||working||event.button!==0||gesture)return;const target=event.target.closest('[data-id]'),c=entry().candidates.find(c=>c.id===target?.dataset.id);if(!c)return;
+    const corner=target.dataset.corner,index=Number(target.dataset.box),start=point(event);activate(c,true);gesture={c,index,corner,start,box:[...c.boxes[index]],pointer:event.pointerId};el('Overlay').setPointerCapture(event.pointerId);dialog.dataset.dragging='true';event.preventDefault();sync();
+  };
+  el('Overlay').onpointermove=event=>{
+    if(!gesture||event.pointerId!==gesture.pointer)return;const g=gesture,p=point(event),b=[...g.box],dx=p[0]-g.start[0],dy=p[1]-g.start[1];
+    if(g.corner){if(g.corner.includes('w'))b[0]=clamp(b[0]+dx,0,b[2]-.001);else b[2]=clamp(b[2]+dx,b[0]+.001,1);if(g.corner.includes('n'))b[1]=clamp(b[1]+dy,0,b[3]-.001);else b[3]=clamp(b[3]+dy,b[1]+.001,1);}
+    else{const x=clamp(dx,-b[0],1-b[2]),y=clamp(dy,-b[1],1-b[3]);b[0]+=x;b[2]+=x;b[1]+=y;b[3]+=y;}
+    g.c.boxes[g.index]=b;confirmed.delete(entry().uid);updateActiveOverlay(g.c);event.preventDefault();
+  };
+  function updateActiveOverlay(candidate){
+    const svg=el('Overlay'),bounds=svg.getBoundingClientRect();
+    for(const node of svg.querySelectorAll('[data-id="'+CSS.escape(candidate.id)+'"]')){
+      const box=candidate.boxes[Number(node.dataset.box)],corner=node.dataset.corner;
+      if(corner){const size=Number(node.dataset.size),w=size*1000/Math.max(bounds.width,1),h=size*1000/Math.max(bounds.height,1);node.setAttribute('x',(corner.includes('w')?box[0]:box[2])*1000-w/2);node.setAttribute('y',(corner.includes('n')?box[1]:box[3])*1000-h/2);}
+      else{node.setAttribute('x',box[0]*1000);node.setAttribute('y',box[1]*1000);node.setAttribute('width',(box[2]-box[0])*1000);node.setAttribute('height',(box[3]-box[1])*1000);}
+    }
+  }
+  function finishPointer(event,cancel=false){if(!gesture||event.pointerId!==gesture.pointer)return;const g=gesture;gesture=null;if(cancel)g.c.boxes[g.index]=g.box;dialog.dataset.dragging='false';if(el('Overlay').hasPointerCapture(g.pointer))el('Overlay').releasePointerCapture(g.pointer);renderOverlay();sync();}
+  el('Overlay').onpointerup=e=>finishPointer(e);el('Overlay').onpointercancel=e=>finishPointer(e,true);el('Overlay').onlostpointercapture=e=>finishPointer(e,true);
+  el('Overlay').onkeydown=event=>{
+    if(!ready||working||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;const target=event.target.closest('[data-id]'),c=entry().candidates.find(c=>c.id===target?.dataset.id);if(!c)return;event.preventDefault();const b=c.boxes[Number(target.dataset.box)],step=event.shiftKey?.01:.001,dx=event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0,dy=event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0,x=clamp(dx,-b[0],1-b[2]),y=clamp(dy,-b[1],1-b[3]);c.boxes[Number(target.dataset.box)]=[b[0]+x,b[1]+y,b[2]+x,b[3]+y];selectionChanged();el('Overlay').querySelector('[data-id="'+CSS.escape(c.id)+'"][data-box="'+target.dataset.box+'"]')?.focus();
+  };
+  el('Apply').onclick=async()=>{
+    if(working||el('Apply').disabled)return;const token=sequence;notices.delete('Status');working=true;sync();status('Status','확인한 영역을 적용하는 중…');
+    try{
+      const touched=entries.filter(e=>e.candidates.some(c=>c.selected)),reviewed=new Map();
+      for(const e of touched){reviewed.set(e,await verifyEntry(e));if(token!==sequence)return;}
+      await PDFPrivacy.assertSupportedSources(pages,docs);if(token!==sequence)return;
+      // Recheck synchronously after the last await. No document mutation precedes this point.
+      const o=readProOptions(false,[]);if(touched.some(e=>!pages.includes(e.page)||!ocrRecords.includes(e.record)||!ocrRecordCurrent(e.record,e.page,o)||!confirmed.has(e.uid)||JSON.stringify(e.record)!==reviewed.get(e))||!geometrySafe(o,touched.map(e=>e.page)))throw Error('문서가 변경되었습니다. 탐지를 다시 실행하세요.');
+      let nextId=annoUidSeq;
+      const changes=touched.map(e=>{
+        const additions=e.candidates.filter(c=>c.selected).flatMap(c=>c.boxes.map(b=>({id:'a'+(++nextId),shape:'redaction',nx:b[0],ny:b[1],nw:b[2]-b[0],nh:b[3]-b[1],fill:'#111111',stroke:'none',lineWidth:0,opacity:1})));
+        const annots=[...(e.page.annots||[]),...additions],masks=annots.filter(a=>a.shape==='redaction').map(a=>[a.nx,a.ny,a.nx+a.nw,a.ny+a.nh]),copy={...e.page,annots};
+        const record=PDFPrivacyAutoModel.sanitizeRecord(e.record,masks,PDFOCR.correctionWords);record.key=ocrKey(copy,o);record.privacyKey=PDFPrivacy.maskKey(copy);
+        return {e,annots,record};
+      });
+      const before=captureEditHistory();before.pageOcr=changes.map(({e})=>({uid:e.uid,record:e.record}));before.extraBytes=JSON.stringify(before.pageOcr).length*2;
+      const replacements=new Map(changes.map(c=>[c.e.uid,c.record]));
+      const rollback={annots:changes.map(c=>[c.e.page,c.e.page.annots]),records:ocrRecords,sequence:annoUidSeq,checkpoints:[...ocrCheckpoints],undo:editHistory.undo.slice(),redo:editHistory.redo.slice()};
+      try{
+        for(const c of changes)c.e.page.annots=c.annots;annoUidSeq=nextId;ocrRecords=ocrRecords.map(r=>replacements.get(r.uid)||r);
+        for(const [key,record]of ocrCheckpoints)if(replacements.has(record.uid))ocrCheckpoints.delete(key);
+        const after=captureEditHistory();after.pageOcr=changes.map(c=>({uid:c.e.uid,record:c.record}));after.extraBytes=JSON.stringify(after.pageOcr).length*2;
+        editHistory.push(before,after,'개인정보 자동 마스킹');
+      }catch(error){
+        for(const [page,annots]of rollback.annots)page.annots=annots;ocrRecords=rollback.records;annoUidSeq=rollback.sequence;
+        ocrCheckpoints.clear();for(const [key,record]of rollback.checkpoints)ocrCheckpoints.set(key,record);
+        editHistory.undo=rollback.undo;editHistory.redo=rollback.redo;throw error;
+      }
+      collectHistoryDocuments();syncHistoryControls();
+      close();renderOCRResults();renderAnnots();toolsChanged();syncCounts();syncPrivacy();
+      toast(changes.length+'페이지에 가릴 영역을 적용했습니다. 가린 내용은 검색 텍스트에서도 제외됩니다.');
+    }catch(e){if(token===sequence)notice('Status',e.message||'영역을 적용하지 못했습니다.',true);}
+    finally{if(token===sequence){working=false;sync();}}
+  };
+  syncPrivacyAuto();
+})();
 </script>
 <script id="compression-diagnosis">
 'use strict';

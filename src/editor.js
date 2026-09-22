@@ -796,11 +796,23 @@ function remove(list){
 }
 function rotate(list, deg){
   if(document.body.classList.contains('is-busy'))return;
-  if(!list.length) return;
+  if(!list.length||!Number.isFinite(deg)||deg%90!==0) return;
   if(typeof deferHistoryEdit==='function'&&deferHistoryEdit(()=>rotate(list,deg)))return;
   if(typeof finishTextEdit==='function'&&!finishTextEdit(true))return;
   const history=typeof captureEditHistory==='function'?captureEditHistory():null;
-  list.forEach(p => p.rotation = ((p.rotation + deg) % 360 + 360) % 360);
+  const turn=((deg%360)+360)%360;
+  list.forEach(p => {
+    // Masks use normalized display coordinates. Rotate them with the source
+    // so a later PDF export still removes the same confidential content.
+    for(const a of p.annots||[]){
+      if(a.shape!=='redaction')continue;
+      const {nx,ny,nw,nh}=a;
+      if(turn===90)Object.assign(a,{nx:Math.max(0,1-ny-nh),ny:nx,nw:nh,nh:nw});
+      else if(turn===180)Object.assign(a,{nx:Math.max(0,1-nx-nw),ny:Math.max(0,1-ny-nh)});
+      else if(turn===270)Object.assign(a,{nx:ny,ny:Math.max(0,1-nx-nw),nw:nh,nh:nw});
+    }
+    p.rotation = ((p.rotation + deg) % 360 + 360) % 360;
+  });
   const keep = new Set(list.map(p => p.uid));
   render();
   pages.forEach(p => { if(keep.has(p.uid)) p.el.classList.add('selected'); });

@@ -3,7 +3,7 @@ const source=fs.readFileSync(path.join(__dirname,'../src/pro-tools-ui.js'),'utf8
 const section=(from,to)=>source.slice(source.indexOf(from),source.indexOf(to,source.indexOf(from)));
 const helpers=section('function ocrValidWord(','function configureLocalOCR(')+section('function waitForOCR(','let toolsRevision=')+section('function ocrKey(','function syncToolsState(');
 const word=()=>({text:'계약',box:[.1,.1,.2,.2],separator:'\n',confidence:99});
-function harness(count,{searchable=false,failPage=0,cancelAtYield=0}={}){
+function harness(count,{searchable=false,mixed=false,failPage=0,cancelAtYield=0,onRecognize,nativeUnmapped=false}={}){
   const nodes=new Map(),stats={pageReads:0,textReads:0,operatorReads:0,recognitions:0,closes:0,cleanup:0,yields:0,publications:0,optionScopes:[],canvases:[],maxCanvas:0};
   const pages=Array.from({length:count},(_,i)=>({uid:'p'+i,docId:'doc',srcIndex:i,rotation:0,annots:[]}));
   const options={paper:'original',whitePoint:255,optimize:false,maxDimension:2400,jpegQuality:.8,blackWhite:false,bwThreshold:128,contrast:0,rasterize:false,deskew:false,crop:false,margins:[0,0,0,0]};
@@ -11,7 +11,7 @@ function harness(count,{searchable=false,failPage=0,cancelAtYield=0}={}){
     PADDLE_MODEL_CACHE_TAG:'fixture',pages,ocrRecords:[],ocrCheckpoints:new Map(),ocrAccepted:false,ocrRunning:false,proAbort:null,stampMarks:[],
     ocrActionIds:['ocrRun'],currentStamp:()=>null,
     $:id=>{if(!nodes.has(id))nodes.set(id,{value:({ocrLanguage:'kor+eng',ocrLayout:'auto',ocrScope:'all'})[id]||'',classList:{remove(){},toggle(){}},scrollIntoView(){}});return nodes.get(id);},
-    PDFPrivacy:{isMasked:()=>false,maskKey:()=>null},
+    PDFPrivacy:{isMasked:()=>false,maskKey:()=>null,nativeRecord:require('../src/privacy-export.js').nativeRecord},
     PDFOCRPolicy:require('../src/ocr-page-policy.js'),
     pdfjsLib:{OPS:{paintImageXObject:1,paintInlineImageXObject:2,paintImageMaskXObject:3,paintImageXObjectRepeat:4,paintInlineImageXObjectGroup:5}},
     proFingerprint:()=>JSON.stringify(pages),toolTargets:()=>pages,
@@ -20,14 +20,14 @@ function harness(count,{searchable=false,failPage=0,cancelAtYield=0}={}){
     finishProWork(){context.proAbort=null;},progress(){},busy(){},toast(){},toolsChanged(){},
     renderOCRResults(){stats.publications++;},
     async idle(){stats.yields++;if(stats.yields===cancelAtYield)context.proAbort.abort(new DOMException('Stopped','AbortError'));},
-    document:{createElement(type){assert.equal(type,'canvas');let width=0,height=0;const c={get width(){return width;},set width(n){width=n;},get height(){return height;},set height(n){height=n;stats.maxCanvas=Math.max(stats.maxCanvas,stats.canvases.filter(c=>c.width&&c.height).length);},getContext:()=>({})};stats.canvases.push(c);return c;}},
+    document:{createElement(type){assert.equal(type,'canvas');let width=0,height=0;const c={get width(){return width;},set width(n){width=n;},get height(){return height;},set height(n){height=n;stats.maxCanvas=Math.max(stats.maxCanvas,stats.canvases.filter(c=>c.width&&c.height).length);},getContext:()=>({save(){},restore(){},translate(){},rotate(){},fillRect(){}})};stats.canvases.push(c);return c;}},
     docs:new Map([['doc',{pdfjsDoc:{async getPage(n){stats.pageReads++;return {
-      async getTextContent(){stats.textReads++;return {items:searchable?[{str:'기존 검색 텍스트'}]:[]};},
-      async getOperatorList(){stats.operatorReads++;return {fnArray:searchable?[]:[1]};},
-      getViewport:({scale})=>({width:595*scale,height:842*scale}),
+      async getTextContent(){stats.textReads++;return {items:searchable?[{str:'기존 검색 텍스트',...(nativeUnmapped?{}:{transform:[12,0,0,12,60,700],width:100})}]:[]};},
+      async getOperatorList(){stats.operatorReads++;return {fnArray:searchable&&!mixed?[]:[1]};},
+      getViewport:({scale})=>({width:595*scale,height:842*scale,scale,transform:[scale,0,0,-scale,0,842*scale]}),
       render:()=>({promise:Promise.resolve(),cancel(){}}),cleanup(){stats.cleanup++;}
     };}}}]]),
-    PDFOCR:{async session(){return {async recognize(){stats.recognitions++;if(stats.recognitions===failPage)throw new Error('Synthetic page failure');return {text:'계약',words:[word()]};},async close(){stats.closes++;}};}},
+    PDFOCR:{async session(){return {async recognize(){stats.recognitions++;onRecognize?.(context,stats);if(stats.recognitions===failPage)throw new Error('Synthetic page failure');return {text:'계약',words:[word()],coverage:'untrusted-engine-value'};},async close(){stats.closes++;}};}},
     buildEditedDocument(){throw new Error('Unedited scans must not rebuild the document');}
   };
   vm.createContext(context);vm.runInContext(helpers+section('async function runOCR(','function renderOCRResults('),context);
@@ -112,4 +112,32 @@ test('correcting active pages does not lose OCR data belonging to a deleted page
   await c.$('ocrCorrect').onclick();
   assert.equal(c.ocrRecords[1],retained);assert.equal(c.ocrRecords[2].words[0].text,'교정');assert.equal(c.ocrRecords[2].page,1);
   assert.equal(c.ocrAccepted,false);assert.equal(c.ocrCheckpoints.get('tesseract:p2').text,'교정');
+});
+
+test('whole-page OCR rereads 350 previously skipped native pages and then reuses completed full checkpoints',async()=>{
+ const h=harness(350,{searchable:true});await h.run();
+ assert.equal(h.stats.recognitions,0);assert.ok(h.context.ocrRecords.every(r=>r.skipped&&r.coverage==='none'));
+ h.context.$('ocrWholePage').checked=true;await h.run();
+ assert.equal(h.stats.recognitions,350);assert.equal(h.context.ocrRecords.length,350);assert.equal(h.stats.maxCanvas,1);
+ assert.ok(h.context.ocrRecords.every(r=>!r.skipped&&r.coverage==='full'&&r.nativeTextBoxes.length===1&&!r.nativeTextUnmapped));
+ const reads=h.stats.pageReads;await h.run();assert.equal(h.stats.pageReads,reads);assert.equal(h.stats.recognitions,350);
+ assert.ok(h.stats.canvases.every(c=>c.width===0&&c.height===0));
+});
+
+test('full recognition cannot reuse a gaps-only result or engine-supplied coverage claims',async()=>{
+ const h=harness(2,{searchable:true,mixed:true});await h.run();
+ assert.ok(h.context.ocrRecords.every(r=>r.coverage==='gaps'&&r.nativeTextBoxes===undefined));
+ h.context.$('ocrWholePage').checked=true;await h.run();
+ assert.equal(h.stats.recognitions,4);assert.ok(h.context.ocrRecords.every(r=>r.coverage==='full'&&r.nativeTextBoxes.length===1));
+});
+
+test('changing whole-page mode while recognizing does not publish results under a changed scope',async()=>{
+ const h=harness(2,{onRecognize:c=>{c.$('ocrWholePage').checked=false;}});h.context.$('ocrWholePage').checked=true;await h.run();
+ assert.equal(h.context.ocrRecords.length,0);assert.equal(h.stats.publications,0);assert.match(h.nodes.get('ocrStatus').textContent,/설정이 바뀌었습니다/);
+});
+
+test('native text with missing geometry keeps full detection results but marks embedding unsafe',async()=>{
+ const h=harness(1,{searchable:true,nativeUnmapped:true});h.context.$('ocrWholePage').checked=true;await h.run();
+ assert.equal(h.context.ocrRecords[0].coverage,'full');assert.equal(h.context.ocrRecords[0].nativeTextUnmapped,true);
+ assert.equal(h.context.ocrRecords[0].words.length,1);assert.equal(h.context.ocrRecords[0].nativeTextBoxes.length,0);
 });

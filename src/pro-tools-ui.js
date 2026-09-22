@@ -42,7 +42,7 @@ async function startPaddleSession(language,signal,onProgress,layout){
     return {...result,words,canEmbed:valid,modelCacheTag:PADDLE_MODEL_CACHE_TAG,coordinateStatus:valid?'detected-lines':'unavailable',geometryNote:valid?'':'줄 위치를 확인하지 못했습니다. 텍스트는 저장할 수 있지만 검색용 PDF에는 포함하지 않습니다.'};
   }};
 }
-const ocrActionIds=['ocrSample','ocrRun','ocrProvider','ocrCorrect'];
+const ocrActionIds=['ocrSample','ocrRun','ocrProvider','ocrCorrect','ocrWholePage'];
 // Completed pages survive a failed batch in memory, independently of accepted PDF text.
 // One entry per page/provider; removed pages and explicit clear/reset release their text.
 const ocrCheckpoints=new Map();
@@ -200,7 +200,7 @@ function moveStamp(e){const g=placementGesture;if(!g||g.id!==e.pointerId)return;
 $('compareAfterScroll').addEventListener('pointermove',moveStamp);
 $('compareAfterScroll').addEventListener('pointerup',e=>{const g=placementGesture;if(!g||g.id!==e.pointerId)return;moveStamp(e);$('stampAnchor').value='top-left';$('stampX').value=(g.x*25.4/72).toFixed(1);$('stampY').value=(g.y*25.4/72).toFixed(1);g.ghost.remove();placementGesture=null;toolsChanged();});
 $('compareAfterScroll').addEventListener('pointercancel',()=>{placementGesture?.ghost.remove();placementGesture=null;});
-async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,consent=false,force=false){
+async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,consent=false,force=false,wholePage=$('ocrWholePage')?.checked===true){
   if(ocrRunning||proAbort||!pages.length)return;
   if(!['tesseract','paddle-v5','gemini','vision'].includes(provider))return;
   if(provider==='vision'&&typeof PDFVision==='undefined')return;
@@ -211,8 +211,8 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   // search layer on every completed page or checkpoint validation.
   let o;try{o=readProOptions(false,[]);}catch(e){toast(e.message,true);return;}
   o={...o,stamps:[],ocr:[],number:false,watermark:''};
-  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='',failed=false;
-  const unchanged=()=>{const current=readProOptions(false,[]);return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
+  const snapshot=proFingerprint(),fresh=[],language=$('ocrLanguage').value,layout=$('ocrLayout').value,wholePageSetting=$('ocrWholePage')?.checked===true,keys=list.map(p=>ocrKey(p,o));let engine=null,recognizingPage=0,position=0,reused=0,completed=0,status='',failed=false;
+  const unchanged=()=>{const current=readProOptions(false,[]);return snapshot===proFingerprint()&&language===$('ocrLanguage').value&&wholePageSetting===($('ocrWholePage')?.checked===true)&&(provider!=='tesseract'||layout===$('ocrLayout').value)&&list.every((p,i)=>keys[i]===ocrKey(p,current));};
   const remember=(p,record)=>{if(pages.includes(p)&&ocrRecordCurrent(record,p,readProOptions(false,[])))ocrCheckpoints.set(provider+':'+p.uid,record);};
   const publish=()=>{
     const merged=new Map(ocrRecords.map(r=>[r.uid,r]));for(const r of fresh)merged.set(r.uid,r);
@@ -232,7 +232,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
   try{
     for(let i=0;i<list.length;i++){
       checkProAbort();position=i;const p=list[i],index=pages.indexOf(p);recognizingPage=index+1;const key=ocrKey(p,o);
-      const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(provider!=='tesseract'||r.layout===layout)&&(r.skipped||provider!=='paddle-v5'||ocrCanEmbed(r));
+      const matches=r=>r&&r.uid===p.uid&&ocrRecordCurrent(r,p,o)&&r.source===provider&&r.language===language&&(!wholePage||r.coverage==='full')&&(provider!=='tesseract'||r.layout===layout)&&(r.skipped||provider!=='paddle-v5'||ocrCanEmbed(r));
       const checkpoint=ocrCheckpoints.get(provider+':'+p.uid),cached=!force&&matches(checkpoint)&&checkpoint;
       if(cached){fresh.push({...cached,page:index+1});reused++;update(1);await idle();continue;}
       let pdfTask,source;
@@ -244,10 +244,10 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         source=await waitForOCR(docs.get(p.docId).pdfjsDoc.getPage(p.srcIndex+1),proAbort.signal);
         const content=await waitForOCR(source.getTextContent(),workSignal),operators=await waitForOCR(source.getOperatorList(),workSignal);
         const imageOps=['paintImageXObject','paintInlineImageXObject','paintImageMaskXObject','paintImageXObjectRepeat','paintInlineImageXObjectGroup'].map(k=>pdfjsLib.OPS[k]);
-        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:false});
+        const policy=PDFOCRPolicy.decide({items:[...content.items,...(p.annots||[]).filter(a=>a.shape==='text').map(a=>({str:a.text}))],hasImages:operators.fnArray.some(fn=>imageOps.includes(fn)),force:wholePage});
         const existing=policy.action==='skip';
         checkProAbort();update(.05);
-        if(existing){const record={uid:p.uid,key,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,confidence:0,source:provider,language,layout};fresh.push(record);remember(p,record);completed++;update(1);await idle();continue;}
+        if(existing){const record={uid:p.uid,key,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null,page:index+1,words:[],text:'검색 가능한 텍스트가 있어 건너뛰었습니다.',skipped:true,coverage:'none',confidence:0,source:provider,language,layout};fresh.push(record);remember(p,record);completed++;update(1);await idle();continue;}
         busy(true,`${index+1}쪽 · 인식용 페이지 준비 중…`);
         // Ordinary scans use the already opened PDF.js page. Edited/masked pages
         // still use the full pipeline so cloud OCR never receives hidden pixels.
@@ -260,6 +260,15 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
         const base=page.getViewport({scale:1});
         const scale=Math.min(300/72,(provider==='paddle-v5'?2367:3400)/Math.max(base.width,base.height),Math.sqrt(9000000/(base.width*base.height))),vp=page.getViewport({scale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
         try{
+          let nativeTextBoxes,nativeTextUnmapped=false;
+          if(wholePage){
+            const native=await waitForOCR(page.getTextContent(),workSignal),items=(native.items||[]).filter(item=>item.str?.trim());
+            // Use this exact rendered page, after edits and Pro geometry. These
+            // boxes suppress duplicate hidden OCR over surviving native text.
+            const nativeWords=PDFPrivacy.nativeRecord(native,vp,p.uid).words;
+            nativeTextBoxes=nativeWords.map(word=>word.box);
+            nativeTextUnmapped=nativeWords.length<items.length;
+          }
           const render=page.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport:vp,background:'white'}),abort=()=>render.cancel();proAbort.signal.addEventListener('abort',abort,{once:true});try{await render.promise;}finally{proAbort.signal.removeEventListener('abort',abort);}checkProAbort();
           if(policy.preserveExisting){const content=await waitForOCR(page.getTextContent(),workSignal);PDFOCRPolicy.coverExisting(canvas.getContext('2d'),content.items,vp);}
           update(.12);
@@ -304,7 +313,7 @@ async function runOCR(sample,provider=ocrDefaultProvider(),confirmedList=null,co
           const result=await waitForOCR(engine.recognize(canvas),workSignal);checkProAbort();
           recognizedMs+=performance.now()-recognizedAt;measuredPages++;
           globalThis.PDFWorkProgress?.sample(timingKey,performance.now()-recognizedAt);
-          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
+          const record={...result,source:provider,language,layout,uid:p.uid,key,page:index+1,coverage:policy.preserveExisting?'gaps':'full',...(wholePage?{nativeTextBoxes,nativeTextUnmapped}:{}),privacyKey:PDFPrivacy.isMasked([p])?PDFPrivacy.maskKey(p):null};fresh.push(record);remember(p,record);completed++;
         }finally{canvas.width=canvas.height=0;}
       }finally{clearTimeout(pageTimer);if(pdfTask)await waitForOCR(pdfTask.destroy(),AbortSignal.timeout(2000)).catch(()=>{});source?.cleanup();}
       progress((i+1)/list.length*95);await idle();
