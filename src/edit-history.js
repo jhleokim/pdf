@@ -133,7 +133,11 @@ async function restoreDocumentHistory(redo){
     pages=state.rows.map(r=>{r.page.rotation=r.rotation;if(Number.isFinite(r.deskewAngle))r.page.deskewAngle=r.deskewAngle;else delete r.page.deskewAngle;if(typeof r.deskewCrop==='boolean')r.page.deskewCrop=r.deskewCrop;else delete r.page.deskewCrop;r.page.annots=structuredClone(r.annots);return r.page;});origCount=state.origCount;
     if(state.stamps&&typeof restoreStampHistory==='function')restoreStampHistory(state.stamps);
     if(state.proTransfer)restoreProTransferSettings(state.proTransfer);
-    if(state.pageOcr){const ids=new Set(state.pageOcr.map(r=>r.uid)),active=new Set(pages.map(p=>p.uid));ocrRecords=ocrRecords.filter(r=>!ids.has(r.uid)).concat(state.pageOcr.filter(r=>r.record&&active.has(r.uid)).map(r=>r.record));}
+    if(state.pageOcr){
+      const ids=new Set(state.pageOcr.map(r=>r.uid)),active=new Set(pages.map(p=>p.uid));ocrRecords=ocrRecords.filter(r=>!ids.has(r.uid)).concat(state.pageOcr.filter(r=>r.record&&active.has(r.uid)).map(r=>r.record));
+      if(typeof ocrCheckpoints!=='undefined')for(const [key,record]of ocrCheckpoints)if(ids.has(record.uid))ocrCheckpoints.delete(key);
+      if(typeof renderOCRResults==='function')renderOCRResults();
+    }
     lastClicked=null;render();const picked=new Set(state.selected);for(const p of pages)p.el.classList.toggle('selected',picked.has(p.uid));
     const shown=pages.find(p=>p.uid===state.previewUid)||pages[0];if(shown)await showPreview(shown);
     $('pvBody').scrollTop=view.top;$('pvBody').scrollLeft=view.left;

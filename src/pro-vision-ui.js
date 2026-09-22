@@ -4,11 +4,11 @@ async function requestVisionOCR(sample){
   if(ocrRunning||proAbort||ocrDefaultProvider()!=='vision')return;
   const list=toolTargets(sample?'current':$('ocrScope').value);if(!list.length){toast('인식할 페이지를 선택하세요.');return;}
   let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value};
+  visionPending={list:[...list],fingerprint:proFingerprint(),keys:list.map(p=>ocrKey(p,options)),language:$('ocrLanguage').value,wholePage:$('ocrWholePage')?.checked===true};
   visionReady=false;$('visionConsent').checked=false;$('visionConfirm').disabled=true;
   const indices=list.map(p=>pages.indexOf(p)+1),ranges=[];
   for(let i=0;i<indices.length;){const start=indices[i];let end=start;while(indices[i+1]===end+1)end=indices[++i];ranges.push(start===end?String(start):start+'–'+end);i++;}
-  $('visionConfirmScope').textContent=`대상 ${ranges.join(', ')}쪽 · 최대 ${list.length}페이지의 이미지를 전송합니다. 이미 완료한 페이지는 재사용하며, 혼합 문서는 기존 텍스트 영역을 제외합니다.`;
+  $('visionConfirmScope').textContent=`대상 ${ranges.join(', ')}쪽 · 최대 ${list.length}페이지의 이미지를 전송합니다. `+(visionPending.wholePage?'기존 텍스트와 개인정보를 포함한 페이지 전체가 전송됩니다.':'이미 완료한 페이지는 재사용하며, 혼합 문서는 기존 텍스트 영역을 제외합니다.');
   $('visionAvailability').textContent='서버 연결을 확인하는 중…';$('visionDialog').showModal();
   const ctrl=new AbortController();visionCheck?.abort();visionCheck=ctrl;const timer=setTimeout(()=>ctrl.abort(),10000);
   try{const status=await PDFVision.available(ctrl.signal);if(visionCheck!==ctrl||!$('visionDialog').open)return;
@@ -23,6 +23,6 @@ $('visionDialog').addEventListener('close',()=>{visionCheck?.abort();visionCheck
 $('visionConfirm').onclick=()=>{
   if(!visionReady||!$('visionConsent').checked||!visionPending||!$('visionDialog').open||ocrRunning||proAbort)return;
   const pending=visionPending;let options;try{options=readProOptions();}catch(e){toast(e.message,true);return;}
-  if(ocrDefaultProvider()!=='vision'||pending.fingerprint!==proFingerprint()||pending.language!==$('ocrLanguage').value||pending.keys.some((key,i)=>key!==ocrKey(pending.list[i],options))){$('visionDialog').close();toast('문서 또는 설정이 바뀌었습니다. 다시 확인해 주세요.',true);return;}
-  $('visionDialog').close();void runOCR(false,'vision',pending.list,true);
+  if(ocrDefaultProvider()!=='vision'||pending.fingerprint!==proFingerprint()||pending.language!==$('ocrLanguage').value||pending.wholePage!==($('ocrWholePage')?.checked===true)||pending.keys.some((key,i)=>key!==ocrKey(pending.list[i],options))){$('visionDialog').close();toast('문서 또는 설정이 바뀌었습니다. 다시 확인해 주세요.',true);return;}
+  $('visionDialog').close();void runOCR(false,'vision',pending.list,true,false,pending.wholePage);
 };

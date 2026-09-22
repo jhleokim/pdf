@@ -66,7 +66,7 @@ export async function process(data,progress=()=>{}){
     finally{layers.destroy();root.destroy();trailer.destroy();}
     if(data.masks.length!==doc.countPages())throw Error('마스킹 페이지 대응이 일치하지 않습니다.');
     // Widgets/comments become regular PDF drawing commands, never page images.
-    doc.bake(true,true);let maskedPages=0,convertedImages=0;
+    doc.bake(true,true);let maskedPages=0,convertedImages=0,lastYield=performance.now();
     for(let i=0;i<data.masks.length;i++){
       const masks=data.masks[i];if(masks.length){
         const page=doc.loadPage(i),before=doc.countObjects();
@@ -82,7 +82,12 @@ export async function process(data,progress=()=>{}){
           convertedImages+=normalizeNewImages(doc,before);maskedPages++;
         }finally{page.destroy();}
       }
-      progress(i+1,data.masks.length);await new Promise(r=>setTimeout(r,0));
+      // Most pages have no masks. Per-page timers can each cost a whole system
+      // timer tick (about 15 ms on some Windows hosts). Keep progress responsive
+      // in bounded work slices; cancellation terminates this worker directly.
+      if(i+1===data.masks.length||performance.now()-lastYield>=24){
+        progress(i+1,data.masks.length);await new Promise(r=>setTimeout(r,0));lastYield=performance.now();
+      }
     }
     scrub(doc);
     const out=doc.saveToBuffer('garbage=4,compress=yes');

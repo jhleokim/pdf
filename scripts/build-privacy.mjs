@@ -21,7 +21,13 @@ export async function buildPrivacyAssets(){
   });
   const worker=await transform(`(async()=>{
     const init=await new Promise(resolve=>self.onmessage=({data})=>resolve(data));
-    globalThis.$libmupdf_wasm_Module={wasmBinary:init.wasm,locateFile:()=>''};
+    // Compile before entering Emscripten. Its default failure path rejects both
+    // the async factory and an internal ready promise, leaving one unhandled.
+    const wasmModule=await WebAssembly.compile(init.wasm);
+    globalThis.$libmupdf_wasm_Module={locateFile:()=>'',instantiateWasm(imports,receive){
+      const instance=new WebAssembly.Instance(wasmModule,imports);
+      receive(instance,wasmModule);return instance.exports;
+    }};
     ${result.outputFiles[0].text}
   })().catch(error=>self.postMessage({error:'개인정보 삭제 엔진을 시작하지 못했습니다: '+(error?.message||String(error))}));`,{format:'iife',target:'es2022',minify:true});
   assets={};const folder=resolve(root,'.deploy/privacy');mkdirSync(folder,{recursive:true});

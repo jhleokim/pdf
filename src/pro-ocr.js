@@ -126,10 +126,29 @@
     // Empty replacements deliberately remove their covered words, not a page.
     return words.flatMap((word,index)=>replacements.has(index)?[replacements.get(index)]:covered.has(index)?[]:[word]);
   }
+  function embeddingWords(record){
+    const words=correctionWords(record).filter(word=>word.text?.trim()),native=record.nativeTextBoxes;
+    if(record.nativeTextUnmapped===true)return [];
+    if(native===undefined)return words;
+    const validBox=box=>Array.isArray(box)&&box.length===4&&box.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&box[2]>box[0]&&box[3]>box[1];
+    if(!Array.isArray(native)||!native.every(validBox))throw new Error('기존 검색 텍스트의 위치를 확인하지 못했습니다. 다시 인식해 주세요.');
+    if(!native.length)return words;
+    // A bounded row index avoids comparing every OCR word against every native
+    // run on dense contracts. It retains only references during this page pass.
+    const rows=Array.from({length:64},()=>[]),row=y=>Math.min(63,Math.floor(y*64));
+    for(const box of native)for(let i=row(box[1]);i<=row(box[3]);i++)rows[i].push(box);
+    return words.filter(word=>{
+      const box=word.box;if(!validBox(box))return false;
+      for(let i=row(box[1]);i<=row(box[3]);i++)for(const other of rows[i]){
+        if(box[0]<other[2]&&box[2]>other[0]&&box[1]<other[3]&&box[3]>other[1])return false;
+      }
+      return true;
+    });
+  }
   async function apply(doc,records,{pageIds=[],signal}={}){
     check(signal);
     // Validate all replacement metadata before adding a font or content stream.
-    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:correctionWords(r).filter(w=>w.text?.trim())})).filter(r=>r.words.length);
+    const active=(records||[]).filter(r=>pageIds.includes(r.uid)&&Array.isArray(r.words)).map(r=>({...r,words:embeddingWords(r)})).filter(r=>r.words.length);
     if(!active.length)return {pages:0,words:0};
     // A large line correction needs estimated proportional widths. Keep the
     // untouched Vision word font/geometry independent of that approximation.
@@ -156,5 +175,5 @@
     }
     return {pages,words};
   }
-  globalThis.PDFOCR={session,apply};
+  globalThis.PDFOCR={session,apply,correctionWords};
 })();

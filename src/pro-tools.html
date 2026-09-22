@@ -34,6 +34,7 @@
     <p id="ocrPreparation" class="ocr-preparation" role="status"></p>
       <label class="pro-field" for="ocrLanguage"><span>인식 언어</span><select id="ocrLanguage"><option value="kor+eng">한국어 + 영어</option><option value="eng">영어</option></select></label>
     <label class="pro-field" for="ocrLayout"><span>문서 구성</span><select id="ocrLayout"><option value="auto">자동</option><option value="6">본문 위주 · 한 단</option><option value="11">흩어진 글자 · 서식과 영수증</option></select></label>
+    <label class="review-stamp-arrow-option"><input id="ocrWholePage" type="checkbox">페이지 전체 인식 · 개인정보 탐지용</label>
     <button class="btn" id="ocrSample" hidden>현재 페이지 인식</button>
     <div class="pro-two-fields"><label class="pro-field" for="ocrScope"><span>인식 범위</span><select id="ocrScope"><option value="current" selected>현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label><button class="btn" id="ocrRun">텍스트 인식</button></div>
       <p id="ocrProcessingNote" class="pro-hint">기존 글자를 유지하면서 스캔 영역을 추가 인식합니다. Paddle OCR은 기기에서 처리합니다.</p>

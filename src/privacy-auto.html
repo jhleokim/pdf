@@ -1,0 +1,64 @@
+<dialog id="privacyAutoDialog" class="privacy-auto" aria-labelledby="privacyAutoTitle" aria-describedby="privacyAutoDescription">
+  <header class="privacy-auto-head">
+    <div>
+      <h2 id="privacyAutoTitle">개인정보 자동 탐지</h2>
+      <p id="privacyAutoDescription">OCR 결과에서 후보를 찾습니다. 원본과 대조한 뒤 적용하세요.</p>
+    </div>
+    <button type="button" class="btn icon quiet" id="privacyAutoClose" aria-label="개인정보 자동 탐지 닫기"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+  </header>
+
+  <div class="privacy-auto-setup" id="privacyAutoSetup">
+    <div class="privacy-auto-settings-row">
+      <label class="privacy-auto-field" for="privacyAutoScope"><span>탐지 범위</span><select id="privacyAutoScope"><option value="current">현재 페이지</option><option value="selected">선택한 페이지</option><option value="all">모든 페이지</option></select></label>
+      <label class="privacy-auto-field" for="privacyAutoPreset"><span>프리셋</span><select id="privacyAutoPreset"><option value="numbers">번호 중심</option><option value="contact">연락처 포함</option><option value="custom">직접 선택</option></select></label>
+    </div>
+    <div class="privacy-auto-types-section">
+      <h3 id="privacyAutoTypesTitle">찾을 정보</h3>
+      <fieldset class="privacy-auto-types" id="privacyAutoTypes" aria-labelledby="privacyAutoTypesTitle"></fieldset>
+    </div>
+    <label class="privacy-auto-field privacy-auto-style" for="privacyAutoStyle"><span>가리는 방식</span><select id="privacyAutoStyle"><option value="full">전체 가리기</option><option value="partial">일부 남기기</option></select></label>
+    <p class="pro-hint" id="privacyAutoStyleHelp">일부 남기기는 글자 위치를 추정합니다. 가릴 영역이 정확한지 원본에서 확인하세요.</p>
+    <details class="privacy-auto-presets">
+      <summary>내 프리셋 저장</summary>
+      <div class="privacy-auto-preset-save">
+        <label class="privacy-auto-field" for="privacyAutoPresetName"><span>프리셋 이름</span><input id="privacyAutoPresetName" type="text" maxlength="24" autocomplete="off" placeholder="예: 계약서 공유용"></label>
+        <button type="button" class="btn" id="privacyAutoPresetSave">저장</button>
+        <button type="button" class="btn quiet" id="privacyAutoPresetDelete" disabled>삭제</button>
+      </div>
+    </details>
+    <p class="privacy-auto-setup-status" id="privacyAutoSetupStatus" role="status" aria-live="polite"></p>
+    <div class="privacy-auto-setup-actions">
+      <button type="button" class="btn" id="privacyAutoOCR">OCR로 이동</button>
+      <button type="button" class="btn primary" id="privacyAutoFind" disabled>개인정보 찾기</button>
+    </div>
+  </div>
+
+  <div class="privacy-auto-review" id="privacyAutoReview" hidden>
+    <div class="privacy-auto-toolbar">
+      <div class="privacy-auto-pages">
+        <button type="button" class="btn icon quiet" id="privacyAutoPrev" aria-label="이전 탐지 페이지">‹</button>
+        <label class="privacy-auto-sr" for="privacyAutoPage">검토할 페이지</label><select id="privacyAutoPage"></select>
+        <button type="button" class="btn icon quiet" id="privacyAutoNext" aria-label="다음 탐지 페이지">›</button>
+      </div>
+      <button type="button" class="btn quiet" id="privacyAutoEditSettings">탐지 설정</button>
+    </div>
+    <div class="privacy-auto-workspace">
+      <section class="privacy-auto-original" aria-labelledby="privacyAutoOriginalTitle">
+        <div class="privacy-auto-pane-head"><h3 id="privacyAutoOriginalTitle">원본과 가릴 영역</h3></div>
+        <div class="privacy-auto-scroll" id="privacyAutoScroll"><div class="privacy-auto-paper" id="privacyAutoPaper"><canvas id="privacyAutoCanvas" aria-label="개인정보 후보를 확인할 원본 페이지"></canvas><svg class="privacy-auto-overlay" id="privacyAutoOverlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="group" aria-label="개인정보 후보 영역. 선택한 영역의 경계를 드래그하여 조절"></svg></div></div>
+      </section>
+      <section class="privacy-auto-results" aria-labelledby="privacyAutoResultsTitle">
+        <div class="privacy-auto-pane-head"><h3 id="privacyAutoResultsTitle">탐지 후보</h3></div>
+        <div class="privacy-auto-selection-tools"><button type="button" class="btn quiet" id="privacyAutoSelectPage">이 페이지 선택</button><button type="button" class="btn quiet" id="privacyAutoClearSelection">전체 선택 해제</button></div>
+        <div class="privacy-auto-candidates" id="privacyAutoCandidates" role="group" aria-label="가릴 개인정보 후보"></div>
+        <button type="button" class="btn quiet privacy-auto-more" id="privacyAutoMore" hidden>후보 더 보기</button>
+        <div class="privacy-auto-confirmation"><label for="privacyAutoPageConfirm"><input type="checkbox" id="privacyAutoPageConfirm"><span>이 페이지의 가릴 영역을 확인했습니다</span></label><p class="privacy-auto-review-status" id="privacyAutoReviewStatus" role="status" aria-live="polite"></p></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="privacy-auto-footer">
+    <span class="privacy-auto-status" id="privacyAutoStatus" role="status" aria-live="polite"></span>
+    <div class="privacy-auto-actions"><button type="button" class="btn" id="privacyAutoCancel">닫기</button><button type="button" class="btn primary" id="privacyAutoApply" disabled>선택 영역 적용</button></div>
+  </footer>
+</dialog>

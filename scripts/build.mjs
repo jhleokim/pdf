@@ -42,12 +42,14 @@ block('appearance-styles','<style>\n'+read('src/appearance.css')+'\n</style>','<
 const a = html.indexOf(appStart), b = html.indexOf('</script>', a);
 if (a < 0 || b < 0) throw new Error('Missing editor-code block');
 html = html.slice(0, a + appStart.length) + '\n' + read('src/editor.js') + '\n' + html.slice(b);
-block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/pro-review-stamp.css')}\n${read('src/ocr-correction.css')}\n${read('src/pro-workspace.css')}\n${read('src/pro-deskew-ui.css')}\n${read('src/markup.css')}\n${read('src/text-save.css')}\n${read('src/ui-refinement.css')}\n</style>`, '</head>');
+block('pro-styles', `<style>\n${read('src/pro-styles.css')}\n${read('src/pro-extra.css')}\n${read('src/pro-tools.css')}\n${read('src/pro-review-stamp.css')}\n${read('src/ocr-correction.css')}\n${read('src/pro-workspace.css')}\n${read('src/pro-deskew-ui.css')}\n${read('src/markup.css')}\n${read('src/text-save.css')}\n${read('src/ui-refinement.css')}\n${read('src/privacy-auto.css')}\n</style>`, '</head>');
 const toolbarStart=html.indexOf('<div class="anno-bar" id="annoBar"'),toolbarEnd=html.indexOf('<div class="pv-body"',toolbarStart);
 if(toolbarStart<0||toolbarEnd<0)throw new Error('Missing markup toolbar');
 html=html.slice(0,toolbarStart)+read('src/markup-toolbar.html')+'\n'+html.slice(toolbarEnd);
 block('privacy-assets',privacyHTML(standalone),'</body>');
-block('app-license',read('src/app-license.html'),'</body>');
+block('app-license',read('src/app-license.html')
+  .replace(/PDF Studio v\d+\.\d+(?:\.\d+)?/, 'PDF Studio v'+version)
+  .replace('href="https://github.com/jhleokim/pdf"','href="https://github.com/jhleokim/pdf/tree/v'+version+'"'),'</body>');
 block('markup-icons',read('src/markup-icons.html'),'</body>');
 block('text-editor',read('src/text-editor.html'),'</body>');
 block('save-dialog',read('src/save-dialog.html'),'</body>');
@@ -71,6 +73,7 @@ const ocrSplit=toolPanel.indexOf('<details class="pro-section" id="ocrSection">'
 if(ocrSplit<0||!panel.includes('<div class="pro-save-name">'))throw new Error('Missing OCR section insertion point');
 const panelTail=panel.slice(panelSplit).replace('<div class="pro-save-name">',toolPanel.slice(ocrSplit)+'\n<div class="pro-save-name">');
 block('pro-panel',panel.slice(0,panelSplit)+toolPanel.slice(0,ocrSplit)+'\n'+read('src/privacy-ui.html')+'\n'+panelTail, '</main>');
+block('privacy-auto-dialog',read('src/privacy-auto.html'),'</body>');
 block('stamp-dialog',read('src/stamp-dialog.html'),'</body>');
 block('ocr-correction-dialog',read('src/ocr-correction.html'),'</body>');
 block('ocr-table-worker-source',`<script type="text/plain" id="ocr-table-worker-source">\n${read('src/ocr-tables.js').replace(/<\/script/gi,'<\\/script')}\n</script>`,'</body>');
@@ -88,7 +91,7 @@ block('ppocr-v5-licenses','<details hidden><summary>PP-OCRv5 licenses</summary><
 if(!standalone)html=html.replace('네트워크 0건','기기에서 인식');
 if(!html.includes('<!-- work-progress-ui:start -->'))html=html.replace(/<div id="busy"[^>]*><div class="box">[\s\S]*?<\/div><\/div>/,'');
 block('work-progress-ui','<div id="busy" role="status" aria-live="polite"><div class="box"><span class="spin"></span><span id="busyText">처리 중…</span><button class="btn" id="busyCancel" hidden>취소</button><div class="busy-metrics" id="busyMetrics" aria-live="off"><div class="busy-stat"><strong id="busyPercent">전체 작업 0%</strong><span id="busyElapsed">0분 00초 경과</span></div><progress id="busyProgress" max="100" value="0" aria-label="작업 진행률"></progress><div id="busyRemaining">남은 시간 계산 중</div></div></div></div>','</body>');
-block('markup-runtime',['markup-arrow.js','markup-assets.js','markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js','privacy-ui.js','compression-diagnosis.js','print-ui.js','page-navigation.js','page-context-menu.js','processing-status.js','ui-help.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
+block('markup-runtime',['markup-arrow.js','markup-assets.js','markup-text.js','markup-editor.js','text-editor-ui.js','markup-highlight.js','save-ui.js','edit-history.js','privacy-ui.js','privacy-detect.js','privacy-auto-model.js','privacy-auto-ui.js','compression-diagnosis.js','print-ui.js','page-navigation.js','page-context-menu.js','processing-status.js','ui-help.js'].map(f=>`<script id="${f.replace('.js','')}">\n${read('src/'+f)}\n</script>`).join('\n'),'</body>');
 block('planning-ux-styles','<style>\n'+read('src/planning-ux.css')+'\n</style>','</head>');
 block('page-context-styles','<style>\n'+read('src/page-context-menu.css')+'\n</style>','</head>');
 html = html.replace('<title>PDF 페이지 편집기</title>', '<title>PDF Studio — Basic &amp; Pro</title>')

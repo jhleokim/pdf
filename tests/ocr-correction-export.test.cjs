@@ -29,7 +29,7 @@ const addPage=(doc,width,height)=>doc.addPage(vm.runInContext(`[${width},${heigh
 async function parsed(doc){return pdfjsLib.getDocument({data:await doc.save(),isEvalSupported:false}).promise;}
 function streams(page){
   const contents=page.node.Contents();
-  return Array.from({length:contents?.size()||0},(_,i)=>Buffer.from(P.decodePDFRawStream(contents.lookup(i)).decode()).toString('utf8')).join('\n');
+  return Array.from({length:contents?.size()||0},(_,i)=>{const stream=contents.lookup(i);return Buffer.from(stream instanceof P.PDFRawStream?P.decodePDFRawStream(stream).decode():stream.getUnencodedContents()).toString('utf8');}).join('\n');
 }
 function fontInfo(doc,page,name){
   const fonts=page.node.Resources().lookup(P.PDFName.of('Font'));
@@ -91,6 +91,46 @@ test('paddle-v5 selects actual bundled proportional metrics even without a granu
   for(const ch of ['W','i','한',' '])near(advance(ch),font.glyphForCodePoint(ch.codePointAt(0)).advanceWidth/font.unitsPerEm*1000,'Bundled glyph width '+ch);
   assert.notEqual(advance('W'),advance('i'),'OCR fell back to uniform character widths');
   assert.ok(advance(' ')<advance('한'),'Space was given a Korean glyph width');
+});
+
+test('whole-page OCR preserves native search once and adds only uncovered scan text',async()=>{
+ const doc=await P.PDFDocument.create(),page=addPage(doc,500,700);
+ page.drawText('NATIVE TEXT',{x:50,y:600,size:18});
+ const original={uid:'one',source:'vision',coverage:'full',nativeTextBoxes:[[.1,.1,.6,.17]],words:[
+  {text:'NATIVE TEXT',box:[.1,.1,.6,.17],separator:'\n'},
+  {text:'SCANONLY',box:[.1,.4,.6,.47],separator:'\n'}
+ ]};
+ const snapshot=JSON.stringify(original),report=await PDFOCR.apply(doc,[original],{pageIds:['one']});
+ assert.equal(report.words,1);assert.equal(report.pages,1);assert.equal(JSON.stringify(original),snapshot);
+ const pdf=await parsed(doc);
+ try{
+  const text=(await(await pdf.getPage(1)).getTextContent()).items.map(item=>item.str).join(' ');
+  assert.equal((text.match(/NATIVE TEXT/g)||[]).length,1,text);assert.equal((text.match(/SCANONLY/g)||[]).length,1,text);
+ }finally{await pdf.destroy();}
+});
+
+test('pure native detection results and unmapped native geometry add no duplicate OCR streams',async()=>{
+ for(const unmapped of [false,true]){
+  const doc=await P.PDFDocument.create(),page=addPage(doc,500,700);page.drawText('ORIGINAL',{x:50,y:600,size:18});
+  const before=streams(page),report=await PDFOCR.apply(doc,[{uid:'one',source:'vision',coverage:'full',nativeTextBoxes:[[.1,.1,.6,.17]],nativeTextUnmapped:unmapped,words:[{text:'RECOGNIZED ORIGINAL',box:[.1,.1,.6,.17]}]}],{pageIds:['one']});
+  assert.equal(report.words,0);assert.equal(report.pages,0);assert.equal(streams(page),before);
+ }
+});
+
+test('native overlap filtering uses corrected effective lines and validates geometry before mutation',async()=>{
+ const doc=await P.PDFDocument.create(),page=addPage(doc,500,700);page.drawText('ORIGINAL',{x:50,y:600,size:18});
+ const words=[{text:'original',box:[.1,.1,.3,.17]},{text:'same line',box:[.4,.1,.7,.17]},{text:'SCAN ONLY',box:[.1,.4,.6,.47]}];
+ const record={uid:'one',source:'vision',nativeTextBoxes:[[.1,.1,.3,.17]],words,correctionLines:[{indices:[0,1],text:'corrected effective line',box:[.1,.1,.7,.17]}]};
+ const effective=PDFOCR.correctionWords(record);assert.equal(effective.length,2);assert.equal(effective[0].text,'corrected effective line');
+ const report=await PDFOCR.apply(doc,[record],{pageIds:['one']});assert.equal(report.words,1);
+ const pdf=await parsed(doc);
+ try{
+  const text=(await(await pdf.getPage(1)).getTextContent()).items.map(item=>item.str).join('').replace(/\s+/g,'');
+  assert.match(text,/ORIGINAL/);assert.match(text,/SCANONLY/);assert.doesNotMatch(text,/corrected/);
+ }finally{await pdf.destroy();}
+ const before=streams(page);
+ await assert.rejects(PDFOCR.apply(doc,[{uid:'one',words:[words[2]],nativeTextBoxes:[[NaN,0,1,1]]}],{pageIds:['one']}),/기존 검색 텍스트의 위치/);
+ assert.equal(streams(page),before);
 });
 
 test('edited line advance, including emitted separator space, fits its box at every page rotation',async()=>{

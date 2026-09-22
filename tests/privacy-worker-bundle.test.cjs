@@ -9,7 +9,7 @@ const fixture=async()=>{
   const b=d.saveToBuffer();try{return b.asUint8Array().slice();}finally{b.destroy();}
  }finally{d.destroy();}
 };
-async function boot(t,wasm){
+async function boot(t,wasm,{instanceFailure=false}={}){
  const assets=await runtime,code=inflateSync(assets.worker.packed).toString();
  assert.doesNotThrow(()=>new Script(code),'worker parses as a classic script');
  assert.doesNotMatch(code,/\bimport\s*(?:\(|\.)|\bexport\s*\{/,'worker has no module dependencies');
@@ -17,13 +17,17 @@ async function boot(t,wasm){
   globalThis.self=globalThis;globalThis.WorkerGlobalScope=class{};
   globalThis.postMessage=(data,transfer)=>parentPort.postMessage(data,transfer);
   globalThis.fetch=()=>{throw Error('Network forbidden in standalone test');};
-  parentPort.on('message',data=>self.onmessage({data}));
+  if(${instanceFailure})WebAssembly.Instance=class {constructor(){throw new WebAssembly.LinkError('test instance allocation failure');}};
+  parentPort.on('message',data=>{
+    if(data.testHealth){setImmediate(()=>setImmediate(()=>parentPort.postMessage({testHealthy:true})));return;}
+    self.onmessage({data});
+  });
   require('node:vm').runInThisContext(${JSON.stringify(code)});`,{eval:true});
  t.after(()=>worker.terminate());
- const messages=[],waiters=[];
+ const messages=[],waiters=[];let failure;
  worker.on('message',m=>{const next=waiters.shift();next?next.resolve(m):messages.push(m);});
- worker.on('error',e=>{for(const w of waiters.splice(0))w.reject(e);});
- const next=()=>messages.length?Promise.resolve(messages.shift()):new Promise((resolve,reject)=>waiters.push({resolve,reject}));
+ worker.on('error',e=>{failure=e;for(const w of waiters.splice(0))w.reject(e);});
+ const next=()=>failure?Promise.reject(failure):messages.length?Promise.resolve(messages.shift()):new Promise((resolve,reject)=>waiters.push({resolve,reject}));
  worker.postMessage({init:true,wasm:wasm||inflateSync(assets.wasm.packed)});
  return {worker,next};
 }
@@ -37,7 +41,17 @@ test('shipped classic worker boots offline and removes only masked text', {timeo
  }finally{s.destroy();p.destroy();}}finally{d.destroy();}
 });
 test('shipped worker reports a WASM initialization failure instead of hanging', {timeout:20000},async t=>{
- const {next}=await boot(t,new Uint8Array([1,2,3]));
+ const {worker,next}=await boot(t,new Uint8Array([1,2,3]));
  const m=await next();assert.match(m.error,/개인정보 삭제 엔진을 시작하지 못했습니다/);
  assert.notEqual(m.ready,true);
+ // Do not terminate on the first error message: an Emscripten ready-promise
+ // rejection used to crash the worker on the next turn after that message.
+ worker.postMessage({testHealth:true});assert.equal((await next()).testHealthy,true);
+});
+
+test('shipped worker reports an instance creation failure without a later unhandled rejection', {timeout:20000},async t=>{
+ const {worker,next}=await boot(t,undefined,{instanceFailure:true});
+ const m=await next();assert.match(m.error,/개인정보 삭제 엔진을 시작하지 못했습니다:.*test instance allocation failure/);
+ assert.notEqual(m.ready,true);
+ worker.postMessage({testHealth:true});assert.equal((await next()).testHealthy,true);
 });

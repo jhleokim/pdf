@@ -55,7 +55,8 @@ test('a 400-page document redacts separated ranges without losing text or page o
   masks.push(i%7===0?[[0,0,1,.4]]:[]);
  }
  const progress=[],out=await engine.process({bytes:await d.save(),masks},(done,total)=>progress.push([done,total]));
- const text=await inspect(out.bytes);assert.equal(text.length,400);assert.equal(progress.length,400);assert.deepEqual(progress.at(-1),[400,400]);
+ const text=await inspect(out.bytes);assert.equal(text.length,400);assert(progress.length>=1&&progress.length<=400);assert.deepEqual(progress.at(-1),[400,400]);
+ assert(progress.every(([done,total],i)=>total===400&&done>(progress[i-1]?.[0]||0)),'coalesced progress is monotone and completes');
  for(let i=0;i<400;i++){assert(text[i].includes('PUBLIC PAGE '+i),'public text and page order '+i);assert.equal(text[i].includes('SECRET '+i),i%7!==0,'mask coverage '+i);}
 });
 
