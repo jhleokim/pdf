@@ -26,7 +26,7 @@ function harness({count=1,renderFail=false,captureFailure=0,historyFailure=false
   focus(){this.focused=true;}
   scrollIntoView(){counters.scrollIntoView++;}
   getBoundingClientRect(){return {top:0,bottom:1000,left:0,right:1000,width:1000,height:1000};}
-  getContext(){return {drawImage(){},...(measureText?{measureText}: {})};}
+  getContext(){const context={drawImage(){},fontKerning:'auto'};if(measureText)context.measureText=text=>measureText(text,context.fontKerning);return context;}
   setPointerCapture(id){this.pointer=id;}
   hasPointerCapture(id){return this.pointer===id;}
   releasePointerCapture(){this.pointer=null;}
@@ -59,6 +59,13 @@ test('automatic masking requires current full OCR with usable text coordinates',
  const h=harness();h.open();assert.equal(h.node('privacyAutoFind').disabled,false);
 });
 
+test('malformed OCR word values return to the OCR gate instead of crashing the setup dialog',()=>{
+ for(const value of [123,{},false,null,undefined]){
+  const h=harness();h.records[0].words[0].text=value;
+  assert.doesNotThrow(()=>h.open());assert.equal(h.node('privacyAutoFind').disabled,true);assert.match(h.node('privacyAutoSetupStatus').textContent,/전체 OCR/);
+ }
+});
+
 test('a successfully recognized blank page does not block detection of the other pages',async()=>{
  const h=harness({count:2}),blank=h.records[0];blank.words=[];blank.text=' \n';
  h.open();assert.equal(h.node('privacyAutoFind').disabled,false);await h.find();
@@ -87,12 +94,28 @@ test('all selected pages need explicit confirmation and edits invalidate their p
 });
 
 test('partial-region detection uses local font metrics and review starts at the page selector',async()=>{
- const measured=[],h=harness({measureText:text=>{measured.push(text);return {width:text.length*8};}});
+ const measured=[],kernings=[],h=harness({measureText:(text,kerning)=>{measured.push(text);kernings.push(kerning);return {width:text.length*8};}});
  h.open();h.node('privacyAutoStyle').value='partial';h.node('privacyAutoStyle').onchange();await h.find();
  assert.ok(measured.length>0);assert.equal(new Set(measured).size,measured.length,'font measurements should be cached within one detection run');
+ assert.ok(kernings.every(value=>value==='none'),'PDF glyph placement must not inherit contextual browser kerning');
  assert.equal(h.node('privacyAutoPage').focused,true);
  const body=h.node('privacyAutoCandidates').querySelector('button'),meta=body.children.find(n=>n.className==='privacy-auto-meta');
  assert.equal(meta.textContent,'위치 추정 · 경계 확인');
+});
+
+test('484-page application sizes OCR undo data page by page without one document-sized serialization',async()=>{
+ const h=harness({count:484}),safeJSON=Object.create(JSON);let oversizedWrites=0;
+ safeJSON.stringify=(value,...args)=>{
+  if(Array.isArray(value)&&value.length>1&&value.every(item=>item&&typeof item.uid==='string'&&item.record)){
+   oversizedWrites++;throw Error('document-sized OCR serialization forbidden');
+  }
+  return JSON.stringify(value,...args);
+ };
+ h.context.JSON=safeJSON;h.open();await h.find();h.confirm();
+ for(let i=1;i<484;i++){await h.node('privacyAutoNext').onclick();h.confirm();}
+ await h.apply();assert.equal(oversizedWrites,0);assert.equal(h.context.editHistory.undo.length,1);assert.equal(h.pages.every(page=>page.annots.length>0),true);
+ const saved=h.context.editHistory.undo[0];
+ assert.equal(saved.before.extraBytes,JSON.stringify(saved.before.pageOcr).length*2);assert.equal(saved.after.extraBytes,JSON.stringify(saved.after.pageOcr).length*2);
 });
 
 test('applying candidates atomically sanitizes OCR, retires checkpoints and preserves before/after data for undo',async()=>{

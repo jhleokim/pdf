@@ -19,7 +19,7 @@
       const r=records.get(p.uid);
       if(!r||r.skipped||r.coverage!=='full'||!Array.isArray(r.words)||!ocrRecordCurrent(r,p,o))return true;
       if(!r.words.length)return typeof r.text!=='string'||!!r.text.trim();
-      return !r.words.some(w=>w?.text?.trim())||!r.words.every(w=>typeof w?.text==='string'&&(!w.text.trim()||ocrValidWord(w)));
+      return !r.words.every(w=>typeof w?.text==='string'&&(!w.text.trim()||ocrValidWord(w)))||!r.words.some(w=>w.text.trim());
     });
     return {list,o,records,missing,error:missing.length?list.length+'페이지 중 '+missing.length+'페이지에 전체 OCR이 필요합니다.':''};
   }
@@ -63,6 +63,12 @@
   el('PresetDelete').onclick=()=>{if(working)return;try{const next=PDFPrivacyAutoModel.removePreset(presets,el('Preset').value);localStorage.setItem(storageKey,JSON.stringify(next));presets=next;presetOptions('custom');notice('SetupStatus','프리셋을 삭제했습니다.');}catch{notice('SetupStatus','프리셋을 삭제하지 못했습니다.',true);}};
   async function digestText(text){const bytes=new TextEncoder().encode(text);return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
   const digest=record=>digestText(JSON.stringify(record));
+  function historyOCRBytes(records){
+    // Account for the same JSON array without materializing every page's OCR
+    // as one temporary string, which can exceed browser string/heap limits.
+    let characters=2;for(let i=0;i<records.length;i++)characters+=(i?1:0)+JSON.stringify(records[i]).length;
+    return characters*2;
+  }
   function clearCanvas(){const canvas=el('Canvas');canvas.width=canvas.height=0;el('Overlay').replaceChildren();ready=false;}
   function cancelWork(){sequence++;controller?.abort();controller=null;gesture=null;working=false;clearCanvas();dialog.dataset.dragging='false';}
   function resetDraft(){cancelWork();notices.clear();entries=[];confirmed.clear();active=null;pageIndex=0;el('Candidates').replaceChildren();el('Page').replaceChildren();el('Review').hidden=true;el('Setup').hidden=false;status('Status','');sync();syncSetup();}
@@ -85,7 +91,7 @@
     try{
       await PDFPrivacy.assertSupportedSources(state.list,docs);abort.signal.throwIfAborted();
       const next=[],s=settings(),measureCanvas=document.createElement('canvas'),measureContext=measureCanvas.getContext('2d'),measured=new Map();let count=0;
-      if(measureContext)measureContext.font='16px Arial, sans-serif';
+      if(measureContext){measureContext.font='16px Arial, sans-serif';measureContext.fontKerning='none';}
       const measureText=typeof measureContext?.measureText==='function'?text=>{if(measured.has(text))return measured.get(text);const width=measureContext.measureText(text).width;if(measured.size<512)measured.set(text,width);return width;}:undefined;
       for(let index=0;index<state.list.length;index++){
         abort.signal.throwIfAborted();const p=state.list[index],record=state.records.get(p.uid);
@@ -188,13 +194,13 @@
         const record=PDFPrivacyAutoModel.sanitizeRecord(e.record,masks,PDFOCR.correctionWords);record.key=ocrKey(copy,o);record.privacyKey=PDFPrivacy.maskKey(copy);
         return {e,annots,record};
       });
-      const before=captureEditHistory();before.pageOcr=changes.map(({e})=>({uid:e.uid,record:e.record}));before.extraBytes=JSON.stringify(before.pageOcr).length*2;
+      const before=captureEditHistory();before.pageOcr=changes.map(({e})=>({uid:e.uid,record:e.record}));before.extraBytes=historyOCRBytes(before.pageOcr);
       const replacements=new Map(changes.map(c=>[c.e.uid,c.record]));
       const rollback={annots:changes.map(c=>[c.e.page,c.e.page.annots]),records:ocrRecords,sequence:annoUidSeq,checkpoints:[...ocrCheckpoints],undo:editHistory.undo.slice(),redo:editHistory.redo.slice()};
       try{
         for(const c of changes)c.e.page.annots=c.annots;annoUidSeq=nextId;ocrRecords=ocrRecords.map(r=>replacements.get(r.uid)||r);
         for(const [key,record]of ocrCheckpoints)if(replacements.has(record.uid))ocrCheckpoints.delete(key);
-        const after=captureEditHistory();after.pageOcr=changes.map(c=>({uid:c.e.uid,record:c.record}));after.extraBytes=JSON.stringify(after.pageOcr).length*2;
+        const after=captureEditHistory();after.pageOcr=changes.map(c=>({uid:c.e.uid,record:c.record}));after.extraBytes=historyOCRBytes(after.pageOcr);
         editHistory.push(before,after,'개인정보 자동 마스킹');
       }catch(error){
         for(const [page,annots]of rollback.annots)page.annots=annots;ocrRecords=rollback.records;annoUidSeq=rollback.sequence;

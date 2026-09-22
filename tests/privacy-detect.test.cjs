@@ -29,15 +29,15 @@ test('registration numbers validate real dates and discriminator but do not requ
   for(const text of ['900231-1234567','990229-1234567','001301-3234567','900000-1234567','900101-0234567','900101-9234567','990101-12345678','A900101-1234567','9001O1-1234567'])assert.equal(detect(text).filter(c=>c.type==='rrn').length,0,text);
 });
 
-test('whole OCR word uses the original exact box; Paddle lines retain labels and estimate only the matched value',()=>{
-  const exact=detect('900101-1234567')[0];assert.equal(exact.approximate,false);assert.deepEqual(exact.boxes,[[.1,.1,.8,.14]]);assert.equal(exact.maskedText,'******-*******');
+test('whole OCR word gets a bounded ink margin; Paddle lines retain labels and estimate only the matched value',()=>{
+  const exact=detect('900101-1234567')[0];assert.equal(exact.approximate,false);assert.ok(exact.boxes[0][0]<.1&&exact.boxes[0][0]>=.098&&exact.boxes[0][2]>.8&&exact.boxes[0][2]<=.802);assert.ok(exact.boxes[0][1]<.1&&exact.boxes[0][3]>.14);assert.equal(exact.maskedText,'******-*******');
   const line=detect('주민등록번호: 900101-1234567 계약금 100원')[0];assert.equal(line.text,'900101-1234567');assert.equal(line.approximate,true);assert.ok(line.boxes[0][0]>.1&&line.boxes[0][2]<.8);assert.match(line.reason,/추정/);
 });
 
 test('optional font measurements improve proportional label/value bounds while retaining the review requirement',()=>{
   const text='Resident ID: 900101-1234567',r=record(text),width=s=>[...s].reduce((n,ch)=>n+(/[ilI:]/.test(ch)?3:ch===' '?4:/[0-9]/.test(ch)?10:8),0);
   const measured=api.detect(r,settings(),width)[0],prefix=text.indexOf('900101'),expected=.1+(.8-.1)*width(text.slice(0,prefix))/width(text);
-  assert.ok(Math.abs(measured.boxes[0][0]-expected)<1e-12);assert.equal(measured.boxes[0][2],.8);assert.equal(measured.approximate,true);
+  assert.ok(measured.boxes[0][0]<=expected&&expected-measured.boxes[0][0]<=.00201);assert.ok(measured.boxes[0][2]>=.8&&measured.boxes[0][2]<=.802);assert.equal(measured.approximate,true);
   assert.notEqual(measured.boxes[0][0],api.detect(r,settings())[0].boxes[0][0]);
   assert.deepEqual(api.detect(r,settings(),s=>({width:width(s)})),api.detect(r,settings(),width),'Canvas TextMetrics may be passed directly');
 });
@@ -50,8 +50,9 @@ test('invalid/unavailable font measurements use the bounded fallback; whole word
 
 test('Vision/Tesseract segmented registration numbers produce only the corresponding boxes',()=>{
   const words=row(['주민번호:','900101','-','1234567'],{separators:[' ','','','\n']});
-  const result=api.detect({source:'vision',granularity:'word',words},settings());assert.equal(result.length,1);assert.equal(result[0].approximate,false);assert.deepEqual(result[0].wordIndices,[1,2,3]);assert.deepEqual(result[0].boxes,words.slice(1).map(w=>w.box));
-  const partial=api.detect({words},settings('partial'))[0];assert.equal(partial.maskedText,'900101-*******');assert.deepEqual(partial.wordIndices,[3]);assert.equal(partial.approximate,false);assert.deepEqual(partial.boxes,[words[3].box]);
+  const result=api.detect({source:'vision',granularity:'word',words},settings());assert.equal(result.length,1);assert.equal(result[0].approximate,false);assert.deepEqual(result[0].wordIndices,[1,2,3]);
+  for(let i=0;i<3;i++){const box=result[0].boxes[i],original=words[i+1].box;assert.ok(box[0]<=original[0]&&box[2]>=original[2]&&original[0]-box[0]<=.00201&&box[2]-original[2]<=.00201);}
+  const partial=api.detect({words},settings('partial'))[0];assert.equal(partial.maskedText,'900101-*******');assert.deepEqual(partial.wordIndices,[3]);assert.equal(partial.approximate,false);assert.equal(partial.boxes.length,1);assert.ok(partial.boxes[0][0]>words[2].box[2]&&partial.boxes[0][0]<=words[3].box[0]);
 });
 
 test('do not assemble a number across hard line breaks, distant table columns or backwards reading order',()=>{

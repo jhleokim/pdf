@@ -14,13 +14,19 @@
     {id:'numbers',name:'번호 중심',types:Object.freeze(['rrn','account','card']),style:'full'},
     {id:'contact',name:'연락처 포함',types:Object.freeze(['rrn','account','card','phone','email']),style:'full'}
   ].map(Object.freeze));
-  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000;
+  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000,MAX_ROW_NEIGHBORS=256,MAX_ROW_CHECKS=250000;
   function fail(message,code='PRIVACY_DETECT_INVALID'){const e=new Error(message);e.code=code;throw e;}
   function normalizeSettings(value={}){
     const types=Array.isArray(value?.types)?value.types:PRESETS[0].types;
     return {types:TYPES.map(type=>type.id).filter(id=>types.includes(id)),style:value?.style==='partial'?'partial':'full'};
   }
   const validBox=b=>Array.isArray(b)&&b.length===4&&b.every(n=>Number.isFinite(n)&&n>=0&&n<=1)&&b[2]>b[0]&&b[3]>b[1];
+  const validQuad=q=>{
+    if(!Array.isArray(q)||q.length!==4||!q.every(p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isFinite(n)&&n>=0&&n<=1)))return false;
+    let direction=0;
+    for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],c=q[(i+2)%4],cross=(b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]);if(Math.abs(cross)<1e-12||direction&&Math.sign(cross)!==direction)return false;direction=Math.sign(cross);}
+    return true;
+  };
   const union=boxes=>boxes.reduce((a,b)=>[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[2],b[2]),Math.max(a[3],b[3])],[1,1,0,0]);
   function tokensFor(record){
     if(!record||record.skipped||!Array.isArray(record.words))fail('이 페이지의 텍스트를 먼저 인식해 주세요.','PRIVACY_DETECT_OCR_REQUIRED');
@@ -48,21 +54,28 @@
         replacements.set(indices[0],{text:line.text,box:[...line.box],separator:words[indices.at(-1)].separator??'\n',indices,corrected:true});
       }
     }
-    const result=[];
+    const result=[];let contextEpoch=0;
     words.forEach((word,index)=>{
-      if(replacements.has(index)){const replacement=replacements.get(index);if(replacement.text.trim())result.push(replacement);}
-      else if(!covered.has(index)&&word.text.trim())result.push({text:word.text,box:[...word.box],separator:word.separator??' ',indices:[index],corrected:!!word.corrected});
+      if(replacements.has(index)){const replacement=replacements.get(index);if(replacement.text.trim())result.push({...replacement,contextEpoch});else contextEpoch++;}
+      else if(!covered.has(index)){
+        if(word.text.trim())result.push({text:word.text,box:[...word.box],separator:word.separator??' ',indices:[index],corrected:!!word.corrected,contextEpoch,granularity:record.granularity,source:record.source,...(validQuad(word.quad)?{quad:word.quad.map(p=>[...p])}:{})});
+        else contextEpoch++;
+      }
     });
     return result;
   }
   function sameRow(a,b){
+    if(a.contextEpoch!==b.contextEpoch)return false;
     if(a.indices.at(-1)+1!==b.indices[0])return false;
     if(/[\r\n\u2028\u2029]/.test(a.separator))return false;
     const x=a.box,y=b.box,ha=x[3]-x[1],hb=y[3]-y[1],height=Math.min(ha,hb),overlap=Math.min(x[3],y[3])-Math.max(x[1],y[1]);
-    const punctuation=/^[\p{P}\p{S}]+$/u.test(a.text)||/^[\p{P}\p{S}]+$/u.test(b.text);
+    const punctuationA=/^[\p{P}\p{S}]+$/u.test(a.text),punctuationB=/^[\p{P}\p{S}]+$/u.test(b.text),punctuation=punctuationA||punctuationB;
     if(punctuation){const large=ha>=hb?x:y,small=ha>=hb?y:x,center=(small[1]+small[3])/2,h=Math.max(ha,hb);if(center<large[1]-.15*h||center>large[3]+.25*h)return false;}
     else if(overlap<height*.55||Math.max(ha,hb)>height*2||Math.abs(x[1]+x[3]-y[1]-y[3])>height*1.3)return false;
-    if(y[0]<x[0]||y[0]-x[2]<-.001)return false;
+    // Vision sometimes gives a colon a slightly overlapping box. Permit only
+    // a small fraction of that punctuation box, never two overlapping values.
+    const overlapLimit=punctuation?Math.max(.001,Math.min(.006,(punctuationA?x[2]-x[0]:y[2]-y[0])*.5)):.001;
+    if(y[0]<x[0]||y[0]-x[2]<-overlapLimit)return false;
     const glyphA=(x[2]-x[0])/Math.max(1,a.text.length),glyphB=(y[2]-y[0])/Math.max(1,b.text.length);
     // Never join distant table columns merely because they have the same y.
     return y[0]-x[2]<=Math.min(.045,Math.max(glyphA,glyphB)*2.5);
@@ -76,6 +89,74 @@
       const start=current.text.length;current.text+=token.text;current.segments.push({...token,start,end:current.text.length});previous=token;
     }
     return runs;
+  }
+  const FIELD_LABELS=[
+    ['account',/^(?:계좌[ \t]*번호|입금[ \t]*계좌|출금[ \t]*계좌|환급[ \t]*계좌|계좌|account)[ \t]*[:：]?$/i],
+    ['name',/^(?:성[ \t]*명|예금주|고객명|계약자|채무자|채권자|신청인|수취인)[ \t]*[:：]?$/],
+    ['address',/^(?:주[ \t]*소|소재지|거주지)[ \t]*[:：]?$/]
+  ];
+  const fieldType=text=>text.length<=24?FIELD_LABELS.find(([,pattern])=>pattern.test(text.trim()))?.[0]:undefined;
+  function fieldRow(a,b){
+    const height=Math.min(a.height,b.height),overlap=Math.min(a.box[3],b.box[3])-Math.max(a.box[1],b.box[1]);
+    return Math.max(a.height,b.height)<=height*2&&overlap>=height*.5&&Math.abs(a.center-b.center)<=Math.max(a.height,b.height)*.55;
+  }
+  function linkedField(label,value){
+    if(value.run.text.length>180||label.epoch!==value.epoch)return null;
+    const prefix=label.run.text+' ',text=prefix+value.run.text;
+    // A whole, independently recognized value is required. Never manufacture
+    // an account or a name by joining fragments from separate table cells.
+    const complete=hitsFor(text).some(hit=>{
+      if(hit.type!==label.type||hit.start<prefix.length)return false;
+      const before=text.slice(prefix.length,hit.start).trim(),after=text.slice(hit.end).trim();
+      if(before&&!(label.type==='account'&&/^[가-힣A-Za-z]{1,12}(?:은행|증권)$/.test(before)))return false;
+      return !after||label.type==='name'&&/^\((?:인|서명)\)$/.test(after);
+    });
+    if(!complete)return null;
+    return {text,segments:[...label.run.segments,...value.run.segments.map(s=>({...s,start:s.start+prefix.length,end:s.end+prefix.length}))],contextLinked:true};
+  }
+  function contextRunsFor(runs,enabled){
+    const needed=new Set(enabled);
+    // Account context must still disambiguate a value that also passes the
+    // card checksum or phone pattern, even if account masking is unchecked.
+    if(needed.has('card')||needed.has('phone'))needed.add('account');
+    if(!runs.some(run=>needed.has(fieldType(run.text))))return runs;
+    const entries=runs.map((run,index)=>{
+      const box=union(run.segments.map(s=>s.box));
+      return {run,index,box,center:(box[1]+box[3])/2,height:box[3]-box[1],type:fieldType(run.text),epoch:run.segments[0].contextEpoch};
+    });
+    const rows=[...entries].sort((a,b)=>a.center-b.center),links=new Map();let checks=0;
+    function firstAt(y){let lo=0,hi=rows.length;while(lo<hi){const mid=(lo+hi)>>>1;if(rows[mid].center<y)lo=mid+1;else hi=mid;}return lo;}
+    for(const label of entries){
+      if(!needed.has(label.type))continue;
+      const radius=label.height*1.1,near=[];let count=0;
+      for(let i=firstAt(label.center-radius);i<rows.length&&rows[i].center<=label.center+radius;i++){
+        if(++count>MAX_ROW_NEIGHBORS||++checks>MAX_ROW_CHECKS)fail('같은 행의 인식 영역이 너무 많습니다. 인식 범위를 나누어 확인해 주세요.','PRIVACY_DETECT_LIMIT');
+        const value=rows[i],gap=value.box[0]-label.box[2],colon=/^[ \t]*[:：][ \t]*$/.test(value.run.text),overlap=colon?Math.min(.006,(value.box[2]-value.box[0])*.5):.001;
+        if(value.index!==label.index&&value.box[0]>=label.box[0]&&gap>=-overlap&&gap<=.24&&fieldRow(label,value))near.push(value);
+      }
+      near.sort((a,b)=>a.box[0]-b.box[0]||a.index-b.index);
+      let anchor=label,colon;
+      if(near[0]&&/^[ \t]*[:：][ \t]*$/.test(near[0].run.text)){
+        colon=near.shift();
+        if(colon.epoch!==label.epoch||colon.box[0]-label.box[2]>Math.min(.025,label.height*.75)||colon.box[2]-colon.box[0]>label.height*.8)continue;
+        const offset=label.run.text.length+1;
+        anchor={...label,run:{text:label.run.text+' '+colon.run.text,segments:[...label.run.segments,...colon.run.segments.map(s=>({...s,start:s.start+offset,end:s.end+offset}))]}};
+      }
+      const value=near[0];if(!value||value.type)continue;
+      const linked=linkedField(anchor,value);if(!linked)continue;
+      // Stop at the next explicit field. Two possible values, overlapping
+      // cells, or an intervening text cell make the association ambiguous.
+      let ambiguous=false;
+      for(let i=1;i<near.length;i++){
+        if(near[i].type)break;
+        if(near[i].box[0]<value.box[2]-.001||linkedField(anchor,near[i])){ambiguous=true;break;}
+      }
+      if(ambiguous)continue;
+      const candidates=links.get(value.index)||[];candidates.push({label,value,linked,colon});links.set(value.index,candidates);
+    }
+    const replacements=new Map(),consumed=new Set();
+    for(const candidates of links.values())if(candidates.length===1){const {label,value,linked,colon}=candidates[0];replacements.set(label.index,linked);consumed.add(value.index);if(colon)consumed.add(colon.index);}
+    return runs.flatMap((run,index)=>consumed.has(index)?[]:[replacements.get(index)||run]);
   }
   const digitPositions=text=>{const out=[];for(let i=0;i<text.length;i++)if(text[i]>='0'&&text[i]<='9')out.push(i);return out;};
   const digits=text=>text.replace(/[^0-9]/g,'');
@@ -148,7 +229,10 @@
     }
     return [0,text.length];
   }
-  const weight=char=>/[\u1100-\uffff]/.test(char)?1:/\s/.test(char)?.35:.6;
+  // Unkerned Helvetica-compatible advances make the no-canvas fallback useful
+  // for common PDFs. This remains an estimate, not a recovered document font.
+  const asciiAdvance=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const weight=char=>asciiAdvance[char.charCodeAt(0)-32]??(/[\u1100-\uffff]/.test(char)?1000:/\s/.test(char)?278:600);
   function proportionalRange(text,start,end,measureText){
     if(typeof measureText==='function'){
       try{
@@ -164,12 +248,42 @@
   function suggestion(run,hit,style,measureText){
     const [from,to]=hiddenRange(hit,style),start=hit.start+from,end=hit.start+to,boxes=[],wordIndices=new Set();let approximate=false,corrected=false;
     if(!Number.isInteger(from)||!Number.isInteger(to)||to<=from)fail('가리기 범위를 계산하지 못했습니다. 전체 가리기를 사용해 주세요.');
-    for(const token of run.segments){
+    // Text offsets are sorted. Find the two nearest preserved tokens once,
+    // instead of scanning a dense OCR run again for every candidate rectangle.
+    const segments=run.segments;let lo=0,hi=segments.length;
+    while(lo<hi){const mid=(lo+hi)>>>1;if(segments[mid].end<=start)lo=mid+1;else hi=mid;}
+    const firstAffected=lo,neighbors=segments[lo-1]?[segments[lo-1]]:[];lo=0;hi=segments.length;
+    while(lo<hi){const mid=(lo+hi)>>>1;if(segments[mid].start<end)lo=mid+1;else hi=mid;}
+    if(segments[lo])neighbors.push(segments[lo]);
+    for(let i=firstAffected;i<segments.length;i++){
+      const token=segments[i];
       if(token.start>=end)break;if(token.end<=start)continue;
-      const a=Math.max(start,token.start)-token.start,b=Math.min(end,token.end)-token.start;
+      let a=Math.max(start,token.start)-token.start,b=Math.min(end,token.end)-token.start;
       if(!token.text.slice(a,b).trim())continue;
+      // Separators beside preserved digits need not be hidden. Leave their
+      // spacing available for a small ink margin without covering the next digit.
+      if(style==='partial'){while(a<b&&/[\s-]/.test(token.text[a]))a++;while(b>a&&/[\s-]/.test(token.text[b-1]))b--;}
+      if(a===b)continue;
       const full=a===0&&b===token.text.length,range=full?[0,1]:proportionalRange(token.text,a,b,measureText),[l,t,r,bt]=token.box;
-      boxes.push(full?[...token.box]:[l+(r-l)*range[0],t,l+(r-l)*range[1],bt]);for(const index of token.indices)wordIndices.add(index);
+      let box=[l+(r-l)*range[0],t,l+(r-l)*range[1],bt];
+      // Paddle reports a line quadrilateral. Slice along its baseline before
+      // making the axis-aligned mask, rather than slicing the enclosing box.
+      if(token.quad){
+        const q=token.quad,mix=(u,v,f)=>[u[0]+(v[0]-u[0])*f,u[1]+(v[1]-u[1])*f],points=[mix(q[0],q[1],range[0]),mix(q[0],q[1],range[1]),mix(q[3],q[2],range[0]),mix(q[3],q[2],range[1])];
+        box=[Math.min(...points.map(p=>p[0])),Math.min(...points.map(p=>p[1])),Math.max(...points.map(p=>p[0])),Math.max(...points.map(p=>p[1]))];
+      }
+      const glyph=(r-l)/Math.max(1,[...token.text].length),padX=Math.min(.002,glyph*.12),padY=Math.min(.0015,(bt-t)*.08);
+      // Word boundaries may under-report anti-aliased tails. Internal boundaries
+      // only grow into a space/hyphen, never into a preserved letter or digit.
+      const gapAt=index=>{if(index<0||index>=token.text.length)return Infinity;if(!/[\s-]/.test(token.text[index]))return 0;const part=proportionalRange(token.text,index,index+1,measureText);return (r-l)*(part[1]-part[0])*.45;};
+      let left=Math.min(padX,gapAt(a-1)),right=Math.min(padX,gapAt(b));
+      for(const neighbor of neighbors){
+        if(neighbor===token)continue;
+        const n=neighbor.box;if(Math.min(n[3],box[3])<=Math.max(n[1],box[1]))continue;
+        if(neighbor.end<=start)left=Math.min(left,Math.max(0,(box[0]-n[2])*.45));
+        if(neighbor.start>=end)right=Math.min(right,Math.max(0,(n[0]-box[2])*.45));
+      }
+      boxes.push([Math.max(0,box[0]-left),Math.max(0,box[1]-padY),Math.min(1,box[2]+right),Math.min(1,box[3]+padY)]);for(const index of token.indices)wordIndices.add(index);
       approximate||=!full||token.corrected;corrected||=token.corrected;
     }
     if(!boxes.length||boxes.some(box=>!validBox(box)))fail('가리기 위치를 계산하지 못했습니다. 인식 결과를 다시 확인해 주세요.');
@@ -180,9 +294,11 @@
   function detect(record,settings,measureText){
     const selected=normalizeSettings(settings),enabled=new Set(selected.types),tokens=tokensFor(record),result=[];
     if(!enabled.size)return result;
-    for(const run of runsFor(tokens)){
+    for(const run of contextRunsFor(runsFor(tokens),enabled)){
       for(const hit of hitsFor(run.text)){if(!enabled.has(hit.type))continue;
-        result.push(suggestion(run,hit,selected.style,measureText));
+        const candidate=suggestion(run,hit,selected.style,measureText);
+        if(run.contextLinked)candidate.reason+=' 같은 행의 라벨과 값을 연결했습니다.';
+        result.push(candidate);
         if(result.length>MAX_CANDIDATES)fail('한 페이지의 개인정보 후보가 2,000개를 넘습니다. 인식 범위를 나누어 확인해 주세요.','PRIVACY_DETECT_LIMIT');
       }
     }

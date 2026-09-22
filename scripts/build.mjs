@@ -47,7 +47,9 @@ const toolbarStart=html.indexOf('<div class="anno-bar" id="annoBar"'),toolbarEnd
 if(toolbarStart<0||toolbarEnd<0)throw new Error('Missing markup toolbar');
 html=html.slice(0,toolbarStart)+read('src/markup-toolbar.html')+'\n'+html.slice(toolbarEnd);
 block('privacy-assets',privacyHTML(standalone),'</body>');
-block('app-license',read('src/app-license.html'),'</body>');
+block('app-license',read('src/app-license.html')
+  .replace(/PDF Studio v\d+\.\d+(?:\.\d+)?/, 'PDF Studio v'+version)
+  .replace('href="https://github.com/jhleokim/pdf"','href="https://github.com/jhleokim/pdf/tree/v'+version+'"'),'</body>');
 block('markup-icons',read('src/markup-icons.html'),'</body>');
 block('text-editor',read('src/text-editor.html'),'</body>');
 block('save-dialog',read('src/save-dialog.html'),'</body>');
