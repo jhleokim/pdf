@@ -3498,7 +3498,8 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
       await idle();
     }
   }
-  const cursor = new Map();
+  const cursor = new Map(),workNow=()=>typeof performance==='undefined'?Date.now():performance.now();
+  let lastYield=workNow();
   for(let n=0;n<list.length;n++){
     signal?.throwIfAborted();
     const p=list[n], i=cursor.get(p.docId)||0;
@@ -3507,7 +3508,10 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     if(p.rotation) pg.setRotation(degrees((pg.getRotation().angle+p.rotation)%360));
     if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache,signal);
     if(!complete) out.addPage(pg);
-    if(onProgress){onProgress(n+1,list.length);await idle();}
+    // Coalesce cheap pages into short work slices. Per-page timers can add
+    // seconds to large native documents; yielding is also needed when callers
+    // omit progress so cancellation and other UI events remain responsive.
+    if(n+1===list.length||workNow()-lastYield>=24){onProgress?.(n+1,list.length);await idle();lastYield=workNow();}
   }
   signal?.throwIfAborted();
   return PDFPrivacy.redact(out,list,{signal,onProgress,sources:docs});
@@ -4192,7 +4196,7 @@ DEALINGS IN THE FONT SOFTWARE.
 
 -->
 <!-- app-version:start -->
-<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.5.1, 라이선스 보기">v6.5.1</button>
+<button id="appLicenseOpen" class="app-version" title="버전 및 오픈소스 라이선스" aria-label="버전 6.5.2, 라이선스 보기">v6.5.2</button>
 <!-- app-version:end -->
 <!-- stamp-dialog:start -->
 <dialog id="stampEditor" class="stamp-editor" aria-labelledby="stampEditorTitle">
@@ -12327,11 +12331,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 </script>
 <!-- ocr-table-worker-source:end -->
 <!-- privacy-assets:start -->
-<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/d23a20c930e80b3689a9871fde2798bc34e7d2693a3e8b6a461a16d4a0c3d7b0.zlib","sha256":"d23a20c930e80b3689a9871fde2798bc34e7d2693a3e8b6a461a16d4a0c3d7b0","bytes":26872},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
+<script>globalThis.PDFPrivacyAssets={"worker":{"url":"/privacy/5b8d2ca8badf458013c5c577c4fa5c90524d0d6c150dd1b1d72b68bf188d4140.zlib","sha256":"5b8d2ca8badf458013c5c577c4fa5c90524d0d6c150dd1b1d72b68bf188d4140","bytes":26901},"wasm":{"url":"/privacy/32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e.zlib","sha256":"32050f81d0fe9f27482334f2bc3b7f7f7fdeb5e229a07c219fa41ca1d6f65a2e","bytes":4750395}}</script>
 
 <!-- privacy-assets:end -->
 <!-- app-license:start -->
-<dialog id="appLicenseDialog" class="document-check-dialog"><h2>오픈소스 라이선스</h2><p>PDF Studio v6.5.1 · GNU AGPL v3 이상</p><p>개인정보 영역 삭제: MuPDF.js 1.28.1<br>Copyright © Artifex Software, Inc.</p><p><a href="https://github.com/jhleokim/pdf/tree/v6.5.1" target="_blank" rel="noopener noreferrer">전체 소스 및 빌드 방법</a> · <a href="https://github.com/ArtifexSoftware/mupdf/tree/20061bd45183f5a2bff8f43675e4da91e5ac2901" target="_blank" rel="noopener noreferrer">MuPDF 소스</a></p><details><summary>GNU AGPL 라이선스 전문</summary><pre style="white-space:pre-wrap;max-height:35vh;overflow:auto;font:11px/1.5 monospace">                    GNU AFFERO GENERAL PUBLIC LICENSE
+<dialog id="appLicenseDialog" class="document-check-dialog"><h2>오픈소스 라이선스</h2><p>PDF Studio v6.5.2 · GNU AGPL v3 이상</p><p>개인정보 영역 삭제: MuPDF.js 1.28.1<br>Copyright © Artifex Software, Inc.</p><p><a href="https://github.com/jhleokim/pdf/tree/v6.5.2" target="_blank" rel="noopener noreferrer">전체 소스 및 빌드 방법</a> · <a href="https://github.com/ArtifexSoftware/mupdf/tree/20061bd45183f5a2bff8f43675e4da91e5ac2901" target="_blank" rel="noopener noreferrer">MuPDF 소스</a></p><details><summary>GNU AGPL 라이선스 전문</summary><pre style="white-space:pre-wrap;max-height:35vh;overflow:auto;font:11px/1.5 monospace">                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. &lt;http://fsf.org/&gt;
@@ -18548,7 +18552,7 @@ syncPrivacy();
     {id:'numbers',name:'번호 중심',types:Object.freeze(['rrn','account','card']),style:'full'},
     {id:'contact',name:'연락처 포함',types:Object.freeze(['rrn','account','card','phone','email']),style:'full'}
   ].map(Object.freeze));
-  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000,MAX_ROW_NEIGHBORS=256,MAX_ROW_CHECKS=250000;
+  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000,MAX_ROW_NEIGHBORS=256,MAX_ROW_CHECKS=250000,MAX_MEASURE_CHARS=1000000;
   function fail(message,code='PRIVACY_DETECT_INVALID'){const e=new Error(message);e.code=code;throw e;}
   function normalizeSettings(value={}){
     const types=Array.isArray(value?.types)?value.types:PRESETS[0].types;
@@ -18719,13 +18723,13 @@ syncPrivacy();
     }
     scan('rrn',/[0-9](?:[ \t-]{0,3}[0-9]){12}/g,(v,s,e)=>numericBoundary(text,s,e)&&rrnValid(v),'등록번호 형식과 생년월일을 확인했습니다.');
     scan('email',/[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?){1,5}/g,(v,s,e)=>!/[A-Za-z0-9.!#$%&'*+/=?^_`{|}~@-]/.test(text[s-1]||'')&&!/[A-Za-z0-9@_-]/.test(text[e]||'')&&/\.[A-Za-z]{2,63}$/.test(v)&&!v.slice(0,v.indexOf('@')).startsWith('.')&&!v.slice(0,v.indexOf('@')).endsWith('.')&&!v.includes('..'),'이메일 형식을 확인했습니다.');
-    scan('account',/(?:^|[\s:：;|,()[\]])(?:계좌[ \t]*번호|입금[ \t]*계좌|출금[ \t]*계좌|환급[ \t]*계좌|계좌|account)[ \t]*[:：]?[ \t]*(?:[가-힣A-Za-z]{1,12}(?:은행|증권)[ \t]+)?(?<value>[0-9][0-9 \t-]{7,40}[0-9])/gi,(v,s,e)=>{const n=digits(v).length;return n>=10&&n<=16&&numericBoundary(text,s,e);},'계좌 라벨 옆의 번호입니다.');
+    scan('account',/(?:^|[\s:：;|,()[\]])(?:계좌[ \t]*번호|입금[ \t]*계좌|출금[ \t]*계좌|환급[ \t]*계좌|계좌|account)[ \t]*(?:[:：][ \t]*)?(?:[가-힣A-Za-z]{1,12}(?:은행|증권)[ \t]+)?(?<value>[0-9][0-9 \t-]{7,40}[0-9])/gi,(v,s,e)=>{const n=digits(v).length;return n>=10&&n<=16&&numericBoundary(text,s,e);},'계좌 라벨 옆의 번호입니다.');
     scan('card',/[0-9](?:[ \t-]{0,3}[0-9]){12,18}/g,(v,s,e)=>numericBoundary(text,s,e)&&cardValid(v),'카드번호 길이와 검증 숫자를 확인했습니다.');
     scan('phone',/(?:\+82[ \t-]{0,3}(?:10|11|16|17|18|19|2|[3-6][1-5]|70)|0(?:10|11|16|17|18|19|2|[3-6][1-5]|70|80))[ \t-]{0,3}[0-9]{3,4}[ \t-]{0,3}[0-9]{4}/g,(v,s,e)=>numericBoundary(text,s,e)&&(!/^(?:010|\+82[ \t-]*10)/.test(v)||digits(v).length===(v[0]==='+'?12:11)),'전화번호 형식을 확인했습니다.');
     const labels='성명|예금주|고객명|계약자|채무자|채권자|신청인|수취인|성[ \t]+명';
-    const namePattern=new RegExp('(?:^|[\\s:：;|,()[\\]])(?:'+labels+')[ \\t]*[:：]?[ \\t]*(?<value>[가-힣]{2,5}|[가-힣](?:[ \\t]+[가-힣]){1,4})(?=$|[\\s,;:：()[\\]])','g');
+    const namePattern=new RegExp('(?:^|[\\s:：;|,()[\\]])(?:'+labels+')[ \\t]*(?:[:：][ \\t]*)?(?<value>[가-힣]{2,5}|[가-힣](?:[ \\t]+[가-힣]){1,4})(?=$|[\\s,;:：()[\\]])','g');
     scan('name',namePattern,v=>!['성명','예금주','고객명','계약자','채무자','채권자','신청인','수취인','확인','서명','필수','없음','미기재','주식회사','법인명','상호명'].includes(v.replace(/\s/g,'')),'이름 라벨 옆의 한글 이름입니다.');
-    scan('address',/(?:^|[\s:：;|,()[\]])(?:주소|소재지|거주지|주[ \t]+소)[ \t]*[:：]?[ \t]*(?<value>[^\r\n;|]{6,180})/g,addressValid,'주소 라벨 옆의 주소 형식입니다.');
+    scan('address',/(?:^|[\s:：;|,()[\]])(?:주소|소재지|거주지|주[ \t]+소)[ \t]*(?:[:：][ \t]*)?(?<value>[^\r\n;|]{6,180})/g,addressValid,'주소 라벨 옆의 주소 형식입니다.');
     // Stop an address at the next labelled field; its label and value are not
     // part of this address, even when Paddle supplied one long OCR line.
     for(const hit of hits){if(hit.type==='address'){
@@ -18773,7 +18777,7 @@ syncPrivacy();
         const width=value=>{const result=measureText(value);return typeof result==='number'?result:result?.width;};
         const total=width(text),left=start?width(text.slice(0,start)):0,right=end===text.length?total:width(text.slice(0,end));
         if(Number.isFinite(total)&&total>0&&Number.isFinite(left)&&Number.isFinite(right)&&left>=0&&right>left&&right<=total)return [left/total,right/total];
-      }catch{ /* A missing font must not prevent review with the fallback. */ }
+      }catch(error){if(error?.code==='PRIVACY_DETECT_LIMIT')throw error; /* A missing font may use the fallback; a work limit must abort. */ }
     }
     let total=0,left=0,right=0;
     for(let i=0;i<text.length;i++){const n=weight(text[i]);total+=n;if(i<start)left+=n;if(i<end)right+=n;}
@@ -18828,9 +18832,15 @@ syncPrivacy();
   function detect(record,settings,measureText){
     const selected=normalizeSettings(settings),enabled=new Set(selected.types),tokens=tokensFor(record),result=[];
     if(!enabled.size)return result;
+    let measuredChars=0;
+    const boundedMeasure=typeof measureText==='function'?text=>{
+      measuredChars+=text.length;
+      if(measuredChars>MAX_MEASURE_CHARS)fail('한 인식 영역에 글자가 너무 많이 합쳐졌습니다. 영역을 나눠 다시 인식한 뒤 개인정보를 확인해 주세요.','PRIVACY_DETECT_LIMIT');
+      return measureText(text);
+    }:undefined;
     for(const run of contextRunsFor(runsFor(tokens),enabled)){
       for(const hit of hitsFor(run.text)){if(!enabled.has(hit.type))continue;
-        const candidate=suggestion(run,hit,selected.style,measureText);
+        const candidate=suggestion(run,hit,selected.style,boundedMeasure);
         if(run.contextLinked)candidate.reason+=' 같은 행의 라벨과 값을 연결했습니다.';
         result.push(candidate);
         if(result.length>MAX_CANDIDATES)fail('한 페이지의 개인정보 후보가 2,000개를 넘습니다. 인식 범위를 나누어 확인해 주세요.','PRIVACY_DETECT_LIMIT');
@@ -19021,12 +19031,6 @@ syncPrivacy();
   el('PresetDelete').onclick=()=>{if(working)return;try{const next=PDFPrivacyAutoModel.removePreset(presets,el('Preset').value);localStorage.setItem(storageKey,JSON.stringify(next));presets=next;presetOptions('custom');notice('SetupStatus','프리셋을 삭제했습니다.');}catch{notice('SetupStatus','프리셋을 삭제하지 못했습니다.',true);}};
   async function digestText(text){const bytes=new TextEncoder().encode(text);return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
   const digest=record=>digestText(JSON.stringify(record));
-  function historyOCRBytes(records){
-    // Account for the same JSON array without materializing every page's OCR
-    // as one temporary string, which can exceed browser string/heap limits.
-    let characters=2;for(let i=0;i<records.length;i++)characters+=(i?1:0)+JSON.stringify(records[i]).length;
-    return characters*2;
-  }
   function clearCanvas(){const canvas=el('Canvas');canvas.width=canvas.height=0;el('Overlay').replaceChildren();ready=false;}
   function cancelWork(){sequence++;controller?.abort();controller=null;gesture=null;working=false;clearCanvas();dialog.dataset.dragging='false';}
   function resetDraft(){cancelWork();notices.clear();entries=[];confirmed.clear();active=null;pageIndex=0;el('Candidates').replaceChildren();el('Page').replaceChildren();el('Review').hidden=true;el('Setup').hidden=false;status('Status','');sync();syncSetup();}
@@ -19048,7 +19052,7 @@ syncPrivacy();
     notices.clear();cancelWork();const token=sequence,abort=controller=new AbortController();working=true;syncSetup();sync();
     try{
       await PDFPrivacy.assertSupportedSources(state.list,docs);abort.signal.throwIfAborted();
-      const next=[],s=settings(),measureCanvas=document.createElement('canvas'),measureContext=measureCanvas.getContext('2d'),measured=new Map();let count=0;
+      const next=[],s=settings(),measureCanvas=document.createElement('canvas'),measureContext=measureCanvas.getContext('2d'),measured=new Map();let count=0,batchStarted=performance.now();
       if(measureContext){measureContext.font='16px Arial, sans-serif';measureContext.fontKerning='none';}
       const measureText=typeof measureContext?.measureText==='function'?text=>{if(measured.has(text))return measured.get(text);const width=measureContext.measureText(text).width;if(measured.size<512)measured.set(text,width);return width;}:undefined;
       for(let index=0;index<state.list.length;index++){
@@ -19058,7 +19062,9 @@ syncPrivacy();
         const candidates=PDFPrivacyDetect.detect(record,s,measureText).map((c,i)=>({...c,id:p.uid+':'+i,selected:true,boxes:c.boxes.map(b=>[...b])}));
         count+=candidates.length;if(count>10000)throw Error('탐지 후보가 10,000개를 넘습니다. 선택 페이지로 범위를 나누어 주세요.');
         if(candidates.length)next.push({uid:p.uid,page:p,record,hash,candidates});
-        status('Status',Math.round((index+1)/state.list.length*100)+'% · '+(index+1)+'/'+state.list.length+'페이지 탐지');await yieldUI();
+        if(index+1===state.list.length||performance.now()-batchStarted>=12){
+          status('Status',Math.round((index+1)/state.list.length*100)+'% · '+(index+1)+'/'+state.list.length+'페이지 탐지');await yieldUI();batchStarted=performance.now();
+        }
       }
       abort.signal.throwIfAborted();entries=next;working=false;
       if(!next.length){notice('SetupStatus','선택한 종류의 후보가 없습니다. 탐지에서 놓친 정보는 직접 가릴 수 있습니다.');status('Status','');syncSetup();return;}
@@ -19142,23 +19148,34 @@ syncPrivacy();
     try{
       const touched=entries.filter(e=>e.candidates.some(c=>c.selected)),reviewed=new Map();
       for(const e of touched){reviewed.set(e,await verifyEntry(e));if(token!==sequence)return;}
-      await PDFPrivacy.assertSupportedSources(pages,docs);if(token!==sequence)return;
-      // Recheck synchronously after the last await. No document mutation precedes this point.
-      const o=readProOptions(false,[]);if(touched.some(e=>!pages.includes(e.page)||!ocrRecords.includes(e.record)||!ocrRecordCurrent(e.record,e.page,o)||!confirmed.has(e.uid)||JSON.stringify(e.record)!==reviewed.get(e))||!geometrySafe(o,touched.map(e=>e.page)))throw Error('문서가 변경되었습니다. 탐지를 다시 실행하세요.');
-      let nextId=annoUidSeq;
-      const changes=touched.map(e=>{
+      const o=readProOptions(false,[]),initialId=annoUidSeq,changes=[],beforeOcr=[],afterOcr=[];
+      let nextId=initialId,beforeBytes=4,afterBytes=4,batchStarted=performance.now();
+      // Prepare OCR copies and history sizes before touching live document state.
+      // Yield between pages so large jobs remain cancellable; the final exact
+      // snapshot recheck and transaction below must stay synchronous together.
+      for(const e of touched){
+        if(!pages.includes(e.page)||!ocrRecords.includes(e.record)||!ocrRecordCurrent(e.record,e.page,o)||JSON.stringify(e.record)!==reviewed.get(e))throw Error('문서가 변경되었습니다. 탐지를 다시 실행하세요.');
         const additions=e.candidates.filter(c=>c.selected).flatMap(c=>c.boxes.map(b=>({id:'a'+(++nextId),shape:'redaction',nx:b[0],ny:b[1],nw:b[2]-b[0],nh:b[3]-b[1],fill:'#111111',stroke:'none',lineWidth:0,opacity:1})));
         const annots=[...(e.page.annots||[]),...additions],masks=annots.filter(a=>a.shape==='redaction').map(a=>[a.nx,a.ny,a.nx+a.nw,a.ny+a.nh]),copy={...e.page,annots};
         const record=PDFPrivacyAutoModel.sanitizeRecord(e.record,masks,PDFOCR.correctionWords);record.key=ocrKey(copy,o);record.privacyKey=PDFPrivacy.maskKey(copy);
-        return {e,annots,record};
-      });
-      const before=captureEditHistory();before.pageOcr=changes.map(({e})=>({uid:e.uid,record:e.record}));before.extraBytes=historyOCRBytes(before.pageOcr);
+        const beforeRow={uid:e.uid,record:e.record},afterRow={uid:e.uid,record};
+        beforeBytes+=(changes.length?2:0)+JSON.stringify(beforeRow).length*2;afterBytes+=(changes.length?2:0)+JSON.stringify(afterRow).length*2;
+        beforeOcr.push(beforeRow);afterOcr.push(afterRow);changes.push({e,annots,record});
+        if(performance.now()-batchStarted>=12){
+          status('Status',changes.length+'/'+touched.length+'페이지 적용 준비 중…');await yieldUI();if(token!==sequence)return;batchStarted=performance.now();
+        }
+      }
+      await PDFPrivacy.assertSupportedSources(pages,docs);if(token!==sequence)return;
+      // OCR objects are mutable: identity checks alone cannot detect an in-place
+      // correction during a yield. Keep the exact full-record comparison here.
+      const currentOptions=readProOptions(false,[]);if(annoUidSeq!==initialId||touched.some(e=>!pages.includes(e.page)||!ocrRecords.includes(e.record)||!ocrRecordCurrent(e.record,e.page,currentOptions)||!confirmed.has(e.uid)||JSON.stringify(e.record)!==reviewed.get(e))||!geometrySafe(currentOptions,touched.map(e=>e.page)))throw Error('문서가 변경되었습니다. 탐지를 다시 실행하세요.');
+      const before=captureEditHistory();before.pageOcr=beforeOcr;before.extraBytes=beforeBytes;
       const replacements=new Map(changes.map(c=>[c.e.uid,c.record]));
       const rollback={annots:changes.map(c=>[c.e.page,c.e.page.annots]),records:ocrRecords,sequence:annoUidSeq,checkpoints:[...ocrCheckpoints],undo:editHistory.undo.slice(),redo:editHistory.redo.slice()};
       try{
         for(const c of changes)c.e.page.annots=c.annots;annoUidSeq=nextId;ocrRecords=ocrRecords.map(r=>replacements.get(r.uid)||r);
         for(const [key,record]of ocrCheckpoints)if(replacements.has(record.uid))ocrCheckpoints.delete(key);
-        const after=captureEditHistory();after.pageOcr=changes.map(c=>({uid:c.e.uid,record:c.record}));after.extraBytes=historyOCRBytes(after.pageOcr);
+        const after=captureEditHistory();after.pageOcr=afterOcr;after.extraBytes=afterBytes;
         editHistory.push(before,after,'개인정보 자동 마스킹');
       }catch(error){
         for(const [page,annots]of rollback.annots)page.annots=annots;ocrRecords=rollback.records;annoUidSeq=rollback.sequence;

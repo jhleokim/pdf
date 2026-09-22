@@ -1252,7 +1252,8 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
       await idle();
     }
   }
-  const cursor = new Map();
+  const cursor = new Map(),workNow=()=>typeof performance==='undefined'?Date.now():performance.now();
+  let lastYield=workNow();
   for(let n=0;n<list.length;n++){
     signal?.throwIfAborted();
     const p=list[n], i=cursor.get(p.docId)||0;
@@ -1261,7 +1262,10 @@ async function buildEditedDocument(list = pages, {signal,onProgress} = {}){
     if(p.rotation) pg.setRotation(degrees((pg.getRotation().angle+p.rotation)%360));
     if(p.annots?.length) await bakeAnnots(out,pg,p,imgCache,signal);
     if(!complete) out.addPage(pg);
-    if(onProgress){onProgress(n+1,list.length);await idle();}
+    // Coalesce cheap pages into short work slices. Per-page timers can add
+    // seconds to large native documents; yielding is also needed when callers
+    // omit progress so cancellation and other UI events remain responsive.
+    if(n+1===list.length||workNow()-lastYield>=24){onProgress?.(n+1,list.length);await idle();lastYield=workNow();}
   }
   signal?.throwIfAborted();
   return PDFPrivacy.redact(out,list,{signal,onProgress,sources:docs});

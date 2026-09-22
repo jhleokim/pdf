@@ -14,7 +14,7 @@
     {id:'numbers',name:'번호 중심',types:Object.freeze(['rrn','account','card']),style:'full'},
     {id:'contact',name:'연락처 포함',types:Object.freeze(['rrn','account','card','phone','email']),style:'full'}
   ].map(Object.freeze));
-  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000,MAX_ROW_NEIGHBORS=256,MAX_ROW_CHECKS=250000;
+  const MAX_WORDS=50000,MAX_CHARS=500000,MAX_RUN=60000,MAX_CANDIDATES=2000,MAX_ROW_NEIGHBORS=256,MAX_ROW_CHECKS=250000,MAX_MEASURE_CHARS=1000000;
   function fail(message,code='PRIVACY_DETECT_INVALID'){const e=new Error(message);e.code=code;throw e;}
   function normalizeSettings(value={}){
     const types=Array.isArray(value?.types)?value.types:PRESETS[0].types;
@@ -185,13 +185,13 @@
     }
     scan('rrn',/[0-9](?:[ \t-]{0,3}[0-9]){12}/g,(v,s,e)=>numericBoundary(text,s,e)&&rrnValid(v),'등록번호 형식과 생년월일을 확인했습니다.');
     scan('email',/[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?){1,5}/g,(v,s,e)=>!/[A-Za-z0-9.!#$%&'*+/=?^_`{|}~@-]/.test(text[s-1]||'')&&!/[A-Za-z0-9@_-]/.test(text[e]||'')&&/\.[A-Za-z]{2,63}$/.test(v)&&!v.slice(0,v.indexOf('@')).startsWith('.')&&!v.slice(0,v.indexOf('@')).endsWith('.')&&!v.includes('..'),'이메일 형식을 확인했습니다.');
-    scan('account',/(?:^|[\s:：;|,()[\]])(?:계좌[ \t]*번호|입금[ \t]*계좌|출금[ \t]*계좌|환급[ \t]*계좌|계좌|account)[ \t]*[:：]?[ \t]*(?:[가-힣A-Za-z]{1,12}(?:은행|증권)[ \t]+)?(?<value>[0-9][0-9 \t-]{7,40}[0-9])/gi,(v,s,e)=>{const n=digits(v).length;return n>=10&&n<=16&&numericBoundary(text,s,e);},'계좌 라벨 옆의 번호입니다.');
+    scan('account',/(?:^|[\s:：;|,()[\]])(?:계좌[ \t]*번호|입금[ \t]*계좌|출금[ \t]*계좌|환급[ \t]*계좌|계좌|account)[ \t]*(?:[:：][ \t]*)?(?:[가-힣A-Za-z]{1,12}(?:은행|증권)[ \t]+)?(?<value>[0-9][0-9 \t-]{7,40}[0-9])/gi,(v,s,e)=>{const n=digits(v).length;return n>=10&&n<=16&&numericBoundary(text,s,e);},'계좌 라벨 옆의 번호입니다.');
     scan('card',/[0-9](?:[ \t-]{0,3}[0-9]){12,18}/g,(v,s,e)=>numericBoundary(text,s,e)&&cardValid(v),'카드번호 길이와 검증 숫자를 확인했습니다.');
     scan('phone',/(?:\+82[ \t-]{0,3}(?:10|11|16|17|18|19|2|[3-6][1-5]|70)|0(?:10|11|16|17|18|19|2|[3-6][1-5]|70|80))[ \t-]{0,3}[0-9]{3,4}[ \t-]{0,3}[0-9]{4}/g,(v,s,e)=>numericBoundary(text,s,e)&&(!/^(?:010|\+82[ \t-]*10)/.test(v)||digits(v).length===(v[0]==='+'?12:11)),'전화번호 형식을 확인했습니다.');
     const labels='성명|예금주|고객명|계약자|채무자|채권자|신청인|수취인|성[ \t]+명';
-    const namePattern=new RegExp('(?:^|[\\s:：;|,()[\\]])(?:'+labels+')[ \\t]*[:：]?[ \\t]*(?<value>[가-힣]{2,5}|[가-힣](?:[ \\t]+[가-힣]){1,4})(?=$|[\\s,;:：()[\\]])','g');
+    const namePattern=new RegExp('(?:^|[\\s:：;|,()[\\]])(?:'+labels+')[ \\t]*(?:[:：][ \\t]*)?(?<value>[가-힣]{2,5}|[가-힣](?:[ \\t]+[가-힣]){1,4})(?=$|[\\s,;:：()[\\]])','g');
     scan('name',namePattern,v=>!['성명','예금주','고객명','계약자','채무자','채권자','신청인','수취인','확인','서명','필수','없음','미기재','주식회사','법인명','상호명'].includes(v.replace(/\s/g,'')),'이름 라벨 옆의 한글 이름입니다.');
-    scan('address',/(?:^|[\s:：;|,()[\]])(?:주소|소재지|거주지|주[ \t]+소)[ \t]*[:：]?[ \t]*(?<value>[^\r\n;|]{6,180})/g,addressValid,'주소 라벨 옆의 주소 형식입니다.');
+    scan('address',/(?:^|[\s:：;|,()[\]])(?:주소|소재지|거주지|주[ \t]+소)[ \t]*(?:[:：][ \t]*)?(?<value>[^\r\n;|]{6,180})/g,addressValid,'주소 라벨 옆의 주소 형식입니다.');
     // Stop an address at the next labelled field; its label and value are not
     // part of this address, even when Paddle supplied one long OCR line.
     for(const hit of hits){if(hit.type==='address'){
@@ -239,7 +239,7 @@
         const width=value=>{const result=measureText(value);return typeof result==='number'?result:result?.width;};
         const total=width(text),left=start?width(text.slice(0,start)):0,right=end===text.length?total:width(text.slice(0,end));
         if(Number.isFinite(total)&&total>0&&Number.isFinite(left)&&Number.isFinite(right)&&left>=0&&right>left&&right<=total)return [left/total,right/total];
-      }catch{ /* A missing font must not prevent review with the fallback. */ }
+      }catch(error){if(error?.code==='PRIVACY_DETECT_LIMIT')throw error; /* A missing font may use the fallback; a work limit must abort. */ }
     }
     let total=0,left=0,right=0;
     for(let i=0;i<text.length;i++){const n=weight(text[i]);total+=n;if(i<start)left+=n;if(i<end)right+=n;}
@@ -294,9 +294,15 @@
   function detect(record,settings,measureText){
     const selected=normalizeSettings(settings),enabled=new Set(selected.types),tokens=tokensFor(record),result=[];
     if(!enabled.size)return result;
+    let measuredChars=0;
+    const boundedMeasure=typeof measureText==='function'?text=>{
+      measuredChars+=text.length;
+      if(measuredChars>MAX_MEASURE_CHARS)fail('한 인식 영역에 글자가 너무 많이 합쳐졌습니다. 영역을 나눠 다시 인식한 뒤 개인정보를 확인해 주세요.','PRIVACY_DETECT_LIMIT');
+      return measureText(text);
+    }:undefined;
     for(const run of contextRunsFor(runsFor(tokens),enabled)){
       for(const hit of hitsFor(run.text)){if(!enabled.has(hit.type))continue;
-        const candidate=suggestion(run,hit,selected.style,measureText);
+        const candidate=suggestion(run,hit,selected.style,boundedMeasure);
         if(run.contextLinked)candidate.reason+=' 같은 행의 라벨과 값을 연결했습니다.';
         result.push(candidate);
         if(result.length>MAX_CANDIDATES)fail('한 페이지의 개인정보 후보가 2,000개를 넘습니다. 인식 범위를 나누어 확인해 주세요.','PRIVACY_DETECT_LIMIT');

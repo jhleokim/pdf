@@ -36,7 +36,7 @@ function harness({count=1,renderFail=false,captureFailure=0,historyFailure=false
  const pages=Array.from({length:count},(_,i)=>({uid:'p'+i,docId:'doc',srcIndex:i,rotation:0,annots:[]})),options={paper:'original',crop:false,deskew:false,deskewAngles:{},deskewCropByPage:{}};
  const key=(p,o)=>JSON.stringify([p.uid,p.rotation,p.annots,o.paper,o.crop,o.deskew,o.deskewAngles[p.uid]]);
  const records=pages.map((p,i)=>({uid:p.uid,key:key(p,options),page:i+1,source:'vision',coverage:'full',words:[{text:'900101-1234567',box:[.1,.2,.5,.25],separator:'\n'},{text:'PUBLIC',box:[.1,.6,.5,.65],separator:'\n'}],text:'900101-1234567\nPUBLIC',nativeTextBoxes:[],nativeTextUnmapped:false}));
- const context=vm.createContext({console,setTimeout,clearTimeout,TextEncoder,Uint8Array,AbortController,DOMException,crypto,JSON,Map,Set,structuredClone,
+ const context=vm.createContext({console,setTimeout,clearTimeout,performance,TextEncoder,Uint8Array,AbortController,DOMException,crypto,JSON,Map,Set,structuredClone,
   document:{createElement:tag=>new Node(tag),createElementNS:(_,tag)=>new Node(tag)},Option:function(text,value){const n=new Node('option');n.textContent=text;n.value=value;return n;},CSS:{escape:value=>value},
   localStorage:{getItem:key=>stored.get(key)||null,setItem:(key,value)=>stored.set(key,value)},$:node,pages,docs:new Map(),ocrRecords:records,ocrCheckpoints:new Map(records.map(r=>['vision:'+r.uid,r])),ocrRunning:false,proAbort:null,annoUidSeq:20,
   toolTargets:()=>context.pages,readProOptions:()=>options,ocrKey:key,ocrRecordCurrent:(r,p,o)=>r.key===key(p,o),
@@ -103,6 +103,20 @@ test('partial-region detection uses local font metrics and review starts at the 
  assert.equal(meta.textContent,'위치 추정 · 경계 확인');
 });
 
+test('detection batches short pages within a time budget and always reports its final page',async()=>{
+ const h=harness({count:9}),progress=[];let detected=0;
+ h.context.PDFPrivacyDetect={...detect,detect(...args){detected++;return detect.detect(...args);}};h.context.performance={now:()=>detected*5};
+ h.context.setTimeout=(done,ms)=>setTimeout(()=>{progress.push(h.node('privacyAutoStatus').textContent);done();},ms);
+ h.open();await h.find();assert.equal(detected,9);assert.equal(progress.length,3);assert.match(progress[0],/33%.*3\/9/);assert.match(progress[1],/67%.*6\/9/);assert.match(progress[2],/100%.*9\/9/);assert.equal(h.node('privacyAutoReview').hidden,false);
+});
+
+test('cancelling a detection time slice stops the remaining pages and discards its draft',async()=>{
+ const h=harness({count:9});let detected=0;
+ h.context.PDFPrivacyDetect={...detect,detect(...args){detected++;return detect.detect(...args);}};h.context.performance={now:()=>detected*5};
+ h.context.setTimeout=(done,ms)=>setTimeout(()=>{h.node('privacyAutoCancel').onclick();done();},ms);
+ h.open();await h.find();assert.equal(detected,3);assert.equal(h.node('privacyAutoDialog').open,false);assert.equal(h.node('privacyAutoCandidates').children.length,0);assert.ok(h.pages.every(p=>!p.annots.length));assert.equal(h.context.editHistory.undo.length,0);
+});
+
 test('484-page application sizes OCR undo data page by page without one document-sized serialization',async()=>{
  const h=harness({count:484}),safeJSON=Object.create(JSON);let oversizedWrites=0;
  safeJSON.stringify=(value,...args)=>{
@@ -140,6 +154,30 @@ test('allocation and history failures roll back all page, OCR, checkpoint and hi
   h.open();await h.find();h.confirm();await h.node('privacyAutoNext').onclick();h.confirm();await h.apply();
   for(let i=0;i<h.pages.length;i++)assert.equal(h.pages[i].annots,oldAnnots[i]);assert.equal(h.context.ocrRecords,beforeRecords);assert.equal(h.context.ocrCheckpoints.size,2);assert.equal(h.context.annoUidSeq,20);assert.equal(h.context.editHistory.undo.length,0);assert.equal(h.context.editHistory.redo[0].label,'prior redo');assert.match(h.node('privacyAutoStatus').textContent,/failed/);assert.equal(h.node('privacyAutoStatus').dataset.error,'true');
  }
+});
+
+test('cancel during pagewise preparation discards every staged mask and OCR copy',async()=>{
+ const h=harness({count:3});h.open();await h.find();h.confirm();for(let i=1;i<3;i++){await h.node('privacyAutoNext').onclick();h.confirm();}
+ const records=h.context.ocrRecords,annots=h.pages.map(p=>p.annots);h.context.performance={now:()=>h.counters.sanitize*20};
+ h.context.setTimeout=(done,ms)=>setTimeout(()=>{h.node('privacyAutoCancel').onclick();done();},ms);
+ await h.apply();assert.equal(h.counters.sanitize,1);assert.equal(h.node('privacyAutoDialog').open,false);
+ assert.equal(h.context.ocrRecords,records);assert.ok(h.pages.every((p,i)=>p.annots===annots[i]));assert.equal(h.context.ocrCheckpoints.size,3);assert.equal(h.context.annoUidSeq,20);assert.equal(h.context.editHistory.undo.length,0);
+});
+
+test('changes during pagewise preparation cannot publish an obsolete OCR or annotation draft',async()=>{
+ for(const change of [h=>{h.records[0].words[0].text='990101-1234567';},h=>{h.pages[0].annots.push({id:'external',shape:'rect'});},h=>{h.context.annoUidSeq++;},h=>{h.options.paper='a4';},h=>{h.context.ocrRecords=[...h.records.slice(1)];}]){
+  const h=harness({count:2});h.open();await h.find();h.confirm();await h.node('privacyAutoNext').onclick();h.confirm();
+  h.context.performance={now:()=>h.counters.sanitize*20};let changed=false;
+  h.context.setTimeout=(done,ms)=>setTimeout(()=>{if(!changed){changed=true;change(h);}done();},ms);
+  await h.apply();assert.equal(changed,true);assert.ok(h.pages.every(p=>p.annots.every(a=>a.shape!=='redaction')));assert.equal(h.context.editHistory.undo.length,0);assert.equal(h.context.ocrCheckpoints.size,2);assert.match(h.node('privacyAutoStatus').textContent,/변경되었/);
+ }
+});
+
+test('a temporary OCR edit cannot be sanitized and later hidden by restoring its source snapshot',async()=>{
+ const h=harness({count:3});h.open();await h.find();h.confirm();for(let i=1;i<3;i++){await h.node('privacyAutoNext').onclick();h.confirm();}
+ h.context.performance={now:()=>h.counters.sanitize*20};const original=h.records[1].words[1].text;
+ h.context.setTimeout=(done,ms)=>setTimeout(()=>{h.records[1].words[1].text=h.counters.sanitize===1?'TRANSIENT EDIT':original;done();},ms);
+ await h.apply();assert.equal(h.counters.sanitize,1);assert.ok(h.pages.every(p=>!p.annots.length));assert.equal(h.context.editHistory.undo.length,0);assert.match(h.node('privacyAutoStatus').textContent,/변경되었/);
 });
 
 test('no-candidate and unsupported-source messages remain visible after final UI synchronization',async()=>{
